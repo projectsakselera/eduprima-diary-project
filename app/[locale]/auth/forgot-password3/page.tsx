@@ -31,7 +31,7 @@ s lg:w-1/2"
             <div className="text-center 2xl:mb-10 mb-5">
               <h4 className="font-medium mb-4">Forgot Your Password?</h4>
               <div className="text-default-500  text-base">
-                Reset Password with Dashcode.
+                🔓 Restore access to your mission
               </div>
             </div>
             <div className="font-normal text-base text-default-500  text-center px-2 bg-default-100 rounded py-3 mb-4 mt-10">
@@ -52,8 +52,8 @@ s lg:w-1/2"
           </div>
         </div>
         <div className="absolute bottom-0 lg:block hidden text-white py-5 px-5 text-xl w-full">
-          Unlock your Project{" "}
-          <span className="text-white font-bold ms-1">performance</span>
+                          🌍 Your Work Transforms{" "}
+                <span className="text-white font-bold ms-1">Human Future</span>
         </div>
       </div>
     </div>

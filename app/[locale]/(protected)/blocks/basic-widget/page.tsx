@@ -78,7 +78,7 @@ const WidgetPage = () => {
                 <span className="block">Mr. Dianne Russell</span>
               </h4>
               <p className="text-sm text-primary-foreground dark:text-default-900 font-normal">
-                Welcome to Dashcode
+                🌟 Building tomorrow's leaders together
               </p>
             </div>
             <Image
@@ -98,7 +98,7 @@ const WidgetPage = () => {
                   <span className="block">Mr. Dianne Russell</span>
                 </div>
                 <p className="text-sm text-default-900 dark:text-default-100 font-normal">
-                  Welcome to Dashcode
+                  🚀 Ready to advance civilization today?
                 </p>
               </div>
             </div>
@@ -128,7 +128,7 @@ const WidgetPage = () => {
                   <span className="block">Mr. Dianne Russell</span>
                 </div>
                 <p className="text-sm text-wgite text-primary-foreground  font-normal">
-                  Welcome to Dashcode
+                  💡 Your mission: Enlightening humanity
                 </p>
               </div>
             </div>

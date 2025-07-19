@@ -1,6 +1,6 @@
 {
-  "name": "DashCode - Admin Dashboard",
-  "short_name": "DashCode",
+  "name": "EduPrima - Admin Dashboard",
+  "short_name": "EduPrima",
   "description": "Professional admin dashboard with Next.js, TypeScript, and modern UI components",
   "start_url": "/",
   "display": "standalone",

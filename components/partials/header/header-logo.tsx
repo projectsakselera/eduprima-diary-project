@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { Link } from '@/components/navigation'
-import DashCodeLogo from "@/components/dascode-logo"
+import { Icon } from "@/components/ui/icon"
 import { useConfig } from '@/hooks/use-config'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
@@ -13,17 +13,17 @@ const HeaderLogo = () => {
     return (
         config.layout === 'horizontal' ? (
             <Link href="/dashboard/analytics" className="flex gap-2 items-center    ">
-                <DashCodeLogo className="  text-default-900 h-8 w-8 [&>path:nth-child(3)]:text-background [&>path:nth-child(2)]:text-background" />
+                <Icon icon="ph:graduation-cap" className="text-primary h-8 w-8" />
                 <h1 className="text-xl font-semibold text-default-900 lg:block hidden ">
-                    DashCode
+                    Eduprima Space
                 </h1>
             </Link>
         ) :
             !isDesktop && (
                 <Link href="/dashboard/analytics" className="flex gap-2 items-center    ">
-                    <DashCodeLogo className="  text-default-900 h-8 w-8 [&>path:nth-child(3)]:text-background [&>path:nth-child(2)]:text-background" />
+                    <Icon icon="ph:graduation-cap" className="text-primary h-8 w-8" />
                     <h1 className="text-xl font-semibold text-default-900 lg:block hidden ">
-                        DashCode
+                        Eduprima Space
                     </h1>
                 </Link>
             )

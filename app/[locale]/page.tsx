@@ -19,9 +19,9 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
                 <Logo />
               </Link>
               <h4>
-                Unlock your Project
+                🌍 Your Work Transforms
                 <span className="text-default-800 font-bold ms-2">
-                  performance
+                  Human Future
                 </span>
               </h4>
             </div>
@@ -44,12 +44,12 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
                     <Logo />
                   </Link>
                 </div>
-                <div className="text-center 2xl:mb-10 mb-4">
-                  <h4 className="font-medium">Sign in</h4>
-                  <div className="text-default-500 text-base">
-                    Sign in to your account to start using Dashcode
+                                  <div className="text-center 2xl:mb-10 mb-4">
+                    <h4 className="font-medium">Sign in</h4>
+                    <div className="text-default-500 text-base">
+                      🎯 Access your education dashboard
+                    </div>
                   </div>
-                </div>
                 <LoginForm />
                 <div className="relative border-b-[#9AA2AF] border-opacity-[16%] border-b pt-6">
                   <div className="absolute inline-block bg-default-50 dark:bg-default-100 left-1/2 top-1/2 transform -translate-x-1/2 px-4 min-w-max text-sm text-default-500 font-normal">

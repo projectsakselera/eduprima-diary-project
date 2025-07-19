@@ -14,12 +14,12 @@ import DirectionProvider from "@/providers/direction-provider";
 import AuthProvider from "@/providers/auth.provider";
 
 export const metadata: Metadata = {
-  title: "DashCode - Professional Admin Dashboard",
+  title: "EduPrima - Professional Admin Dashboard",
   description: "Modern admin dashboard built with Next.js, TypeScript, and Tailwind CSS. Features analytics, e-commerce, CRM, project management and more.",
   keywords: ["admin dashboard", "react", "next.js", "typescript", "tailwind css", "analytics", "crm", "ecommerce"],
-  authors: [{ name: "DashCode Team" }],
-  creator: "DashCode",
-  publisher: "DashCode",
+  authors: [{ name: "EduPrima Team" }],
+  creator: "EduPrima",
+  publisher: "EduPrima",
   formatDetection: {
     email: false,
     address: false,
@@ -27,28 +27,28 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://dashcode-app.vercel.app'),
   openGraph: {
-    title: "DashCode - Professional Admin Dashboard",
+    title: "EduPrima - Professional Admin Dashboard",
     description: "Modern admin dashboard built with Next.js, TypeScript, and Tailwind CSS",
     type: "website",
     locale: "en_US",
-    siteName: "DashCode",
+    siteName: "EduPrima",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DashCode - Professional Admin Dashboard",
+    title: "EduPrima - Professional Admin Dashboard",
     description: "Modern admin dashboard built with Next.js, TypeScript, and Tailwind CSS",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "DashCode",
+    title: "EduPrima",
   },
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "DashCode",
+    "apple-mobile-web-app-title": "EduPrima",
     "msapplication-TileColor": "#000000",
     "msapplication-config": "/browserconfig.xml",
     "theme-color": "#000000",

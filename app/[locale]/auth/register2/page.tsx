@@ -2,7 +2,7 @@ import { Link } from '@/i18n/routing';
 import RegForm from "@/components/partials/auth/reg-form";
 import Social from "@/components/partials/auth/social";
 import Image from "next/image";
-import Logo from "@/components/logo";
+import { Icon } from "@/components/ui/icon";
 
 // image import
 
@@ -15,16 +15,19 @@ const Register2 = () => {
             <div className=" h-full flex flex-col bg-default-50">
               <div className="max-w-[524px] md:px-[42px] md:py-[44px] p-7  mx-auto w-full text-2xl text-default-900  mb-3 h-full flex flex-col justify-center">
                 <div className="flex justify-center items-center text-center mb-6 lg:hidden ">
-                  <Link href="/">
-                    <Logo />
+                  <Link href="/" className="flex gap-2 items-center">
+                    <Icon icon="ph:graduation-cap" className="text-primary h-12 w-12" />
+                    <h1 className="text-2xl font-semibold text-default-900">
+                      Eduprima Space
+                    </h1>
                   </Link>
                 </div>
-                <div className="text-center 2xl:mb-10 mb-5">
-                  <h4 className="font-medium">Sign up</h4>
-                  <div className="text-default-500  text-base">
-                    Create an account to start using Dashcode
+                                  <div className="text-center 2xl:mb-10 mb-5">
+                    <h4 className="font-medium">Sign up</h4>
+                    <div className="text-default-500  text-base">
+                      🌟 Join the mission to elevate humanity
+                    </div>
                   </div>
-                </div>
                 <RegForm />
                 <div className=" relative border-b-[#9AA2AF] border-opacity-[16%] border-b pt-6">
                   <div className=" absolute inline-block  bg-default-50 dark:bg-default-100 left-1/2 top-1/2 transform -translate-x-1/2 px-4 min-w-max text-sm  text-default-500  font-normal ">
@@ -45,7 +48,7 @@ const Register2 = () => {
                 </div>
               </div>
               <div className="text-xs font-normal text-default-500 z-999 pb-10 text-center">
-                Copyright 2021, Dashcode All Rights Reserved.
+                Copyright 2021, Eduprima All Rights Reserved.
               </div>
             </div>
           </div>
@@ -73,8 +76,8 @@ const Register2 = () => {
 
  max-w-[525px] mx-auto pb-20 text-center"
                 >
-                  Unlock your Project{" "}
-                  <span className="text-white font-bold ms-1">performance</span>
+                                  🌍 Your Work Transforms{" "}
+                <span className="text-white font-bold ms-1">Human Future</span>
                 </div>
               </div>
             </div>

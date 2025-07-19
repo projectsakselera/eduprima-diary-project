@@ -43,7 +43,7 @@ const InvoicePreviewPage = () => {
               <Logo />
 
               <div className="text-default-500 font-normal leading-5 mt-4 text-sm">
-                Dashcode <br />
+                Eduprima <br />
                 House# 339, New DOHS, Mohakhali, <br />
                 Dhaka - 1206, Bangladesh
                 <div className="flex space-x-2 mt-2 leading-none rtl:space-x-reverse">
@@ -52,7 +52,7 @@ const InvoicePreviewPage = () => {
                 </div>
                 <div className="mt-[6px] flex space-x-2 leading-none rtl:space-x-reverse">
                   <Icon icon="heroicons-outline:mail" />
-                  <span>Dashcode@example.com</span>
+                  <span>adm@eduprima.id</span>
                 </div>
               </div>
             </div>
@@ -71,7 +71,7 @@ const InvoicePreviewPage = () => {
                 </div>
                 <div className="mt-[6px] flex space-x-2 leading-none rtl:space-x-reverse">
                   <Icon icon="heroicons-outline:mail" />
-                  <span>Dashcode@example.com</span>
+                  <span>adm@eduprima.id</span>
                 </div>
               </div>
             </div>

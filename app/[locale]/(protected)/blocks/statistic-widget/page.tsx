@@ -75,7 +75,7 @@ const StatisticPage = () => {
                       <span className="block font-light text-default-800">Good evening,</span>
                       <span className="block text-default-900">Mr. Jone Doe</span>
                     </h4>
-                    <p className="text-sm text-default-600">Welcome to Dashcode</p>
+                    <p className="text-sm text-default-600">🌟 Building tomorrow's leaders together</p>
                   </div>
                 </div>
                 {/*  status blocks */}

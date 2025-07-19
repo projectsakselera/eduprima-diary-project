@@ -5,23 +5,16 @@ import Image from 'next/image'
 import { Icon } from "@/components/ui/icon";
 import { auth } from '@/lib/auth'
 
-const DashCodeFooter = async () => {
+const EduPrimaFooter = async () => {
     const session = await auth()
     return (
         <FooterContent>
             <div className=' md:flex  justify-between text-default-600 hidden'>
                 <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
-                    COPYRIGHT &copy; {new Date().getFullYear()} DashCode, All rights Reserved
+                    COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Space, All rights Reserved
                 </div>
                 <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
-                    Hand-crafted & Made by{" "}
-                    <a
-                        href="https://codeshaper.net"
-                        target="_blank"
-                        className="text-primary font-semibold"
-                    >
-                        Codeshaper
-                    </a>
+                    🌱 Every process, every decision contributes to building a more enlightened and educated human civilization.
                 </div>
             </div>
             <div className='flex md:hidden justify-around items-center'>
@@ -81,4 +74,4 @@ const DashCodeFooter = async () => {
     )
 }
 
-export default DashCodeFooter
+export default EduPrimaFooter

@@ -90,7 +90,7 @@ const profile = () => {
                         href="mailto:someone@example.com"
                         className="text-base text-default-600 "
                       >
-                        info@dashcode.com
+                        adm@eduprima.id
                       </a>
                     </div>
                   </li>

@@ -15,9 +15,9 @@ const ForgotPassPage = () => {
             </Link>
 
             <h4>
-              Unlock your Project{" "}
+              🌍 Your Work Transforms{" "}
               <span className="text-default-800  font-bold ms-2">
-                performance
+                Human Future
               </span>
             </h4>
           </div>
@@ -40,12 +40,12 @@ const ForgotPassPage = () => {
                   <Logo />
                 </Link>
               </div>
-              <div className="text-center 2xl:mb-10 mb-5">
-                <h4 className="font-medium mb-4">Forgot Your Password?</h4>
-                <div className="text-default-500  text-base">
-                  Reset Password with Dashcode.
+                              <div className="text-center 2xl:mb-10 mb-5">
+                  <h4 className="font-medium mb-4">Forgot Your Password?</h4>
+                  <div className="text-default-500  text-base">
+                    🔓 Restore access to your mission
+                  </div>
                 </div>
-              </div>
               <div className="font-normal text-base text-default-500  text-center px-2 bg-default-100 rounded py-3 mb-4 mt-10">
                 Enter your Email and instructions will be sent to you!
               </div>

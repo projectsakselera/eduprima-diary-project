@@ -2,7 +2,7 @@ import { Link } from '@/i18n/routing';
 import ForgotPass from "@/components/partials/auth/forgot-pass";
 import Image from "next/image";
 import Copyright from "@/components/partials/auth/copyright";
-import Logo from "@/components/logo";
+import { Icon } from "@/components/ui/icon";
 
 const ForgotPass2 = () => {
   return (
@@ -12,16 +12,19 @@ const ForgotPass2 = () => {
           <div className=" h-full flex flex-col bg-default-50">
             <div className="max-w-[524px] mx-auto  w-full  md:px-[42px] md:py-[44px] p-7 text-2xl text-default-900  mb-3 flex flex-col justify-center h-full">
               <div className="flex justify-center items-center text-center mb-6 lg:hidden ">
-                <Link href="/">
-                  <Logo />
+                <Link href="/" className="flex gap-2 items-center">
+                  <Icon icon="ph:graduation-cap" className="text-primary h-12 w-12" />
+                  <h1 className="text-2xl font-semibold text-default-900">
+                    Eduprima Space
+                  </h1>
                 </Link>
               </div>
-              <div className="text-center 2xl:mb-10 mb-5">
-                <h4 className="font-medium mb-4">Forgot Your Password?</h4>
-                <div className="text-default-500 text-base">
-                  Reset Password with Dashcode.
+                              <div className="text-center 2xl:mb-10 mb-5">
+                  <h4 className="font-medium mb-4">Forgot Your Password?</h4>
+                  <div className="text-default-500 text-base">
+                    🔓 Restore access to your mission
+                  </div>
                 </div>
-              </div>
               <div className="font-normal text-base text-default-500 text-center px-2 bg-default-100  rounded py-3 mb-4 mt-10">
                 Enter your Email and instructions will be sent to you!
               </div>
@@ -50,14 +53,11 @@ const ForgotPass2 = () => {
           }}>
           <div className="flex flex-col h-full justify-center">
             <div className="flex-1 flex flex-col justify-center items-center">
-              <Link href="/">
-                <Image
-                  height={300}
-                  width={300}
-                  src="/images/logo/logo-white.svg"
-                  alt=""
-                  className="mb-10 w-36"
-                />
+              <Link href="/" className="flex gap-3 items-center text-white">
+                <Icon icon="ph:graduation-cap" className="h-16 w-16" />
+                <h1 className="text-3xl font-semibold">
+                  Eduprima Space
+                </h1>
               </Link>
             </div>
             <div>
@@ -66,8 +66,8 @@ const ForgotPass2 = () => {
 
  max-w-[525px] mx-auto pb-20 text-center"
               >
-                Unlock your Project
-                <span className="text-white font-bold ms-1">performance</span>
+                🌍 Your Work Transforms
+                <span className="text-white font-bold ms-1">Human Future</span>
               </div>
             </div>
           </div>

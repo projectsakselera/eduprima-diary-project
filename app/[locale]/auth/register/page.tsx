@@ -17,9 +17,9 @@ const Register = () => {
               </Link>
 
               <h4>
-                Unlock your Project
+                🌍 Your Work Transforms
                 <span className="text-default-800  font-bold ms-2">
-                  performance
+                  Human Future
                 </span>
               </h4>
             </div>
@@ -42,12 +42,12 @@ const Register = () => {
                     <Logo />
                   </Link>
                 </div>
-                <div className="text-center 2xl:mb-10 mb-5">
-                  <h4 className="font-medium">Sign up</h4>
-                  <div className="text-default-500  text-base">
-                    Create an account to start using Dashcode
+                                  <div className="text-center 2xl:mb-10 mb-5">
+                    <h4 className="font-medium">Sign up</h4>
+                    <div className="text-default-500  text-base">
+                      🌟 Join the mission to elevate humanity
+                    </div>
                   </div>
-                </div>
                 <RegForm />
                 <div className=" relative border-b-[#9AA2AF] border-opacity-[16%] border-b pt-6">
                   <div className=" absolute inline-block  bg-default-50 dark:bg-default-100 left-1/2 top-1/2 transform -translate-x-1/2 px-4 min-w-max text-sm  text-default-500  font-normal ">

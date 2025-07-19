@@ -1,23 +1,16 @@
 'use client'
-import Image from 'next/image';
-import { useTheme } from "next-themes";
+import React from "react";
+import { Icon } from "@/components/ui/icon";
+import { Link } from '@/i18n/routing';
 
 const Logo = () => {
-    const { theme: mode } = useTheme();
   return (
-    <div>
-      <Image
-        src={
-          mode === "light"
-            ? "/images/logo/logo.svg"
-            : "/images/logo/logo-white.svg"
-        }
-        alt=""
-        width={300}
-        height={300}
-        className=" w-36 "
-      />
-    </div>
+    <Link href="/dashboard/analytics" className="flex gap-2 items-center">
+      <Icon icon="ph:graduation-cap" className="text-primary h-12 w-12" />
+      <h1 className="text-2xl font-semibold text-default-900">
+        Eduprima Space
+      </h1>
+    </Link>
   );
 }
 

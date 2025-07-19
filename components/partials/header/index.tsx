@@ -13,7 +13,7 @@ import LocalSwitcher from './locale-switcher'
 import HeaderLogo from "./header-logo"
 
 
-const DashCodeHeader = async () => {
+const EduPrimaHeader = async () => {
     return (
         <>
             <HeaderContent>
@@ -37,4 +37,4 @@ const DashCodeHeader = async () => {
     )
 }
 
-export default DashCodeHeader
+export default EduPrimaHeader

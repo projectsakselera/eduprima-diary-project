@@ -14,9 +14,9 @@ const LockScreen = () => {
               <Logo />
             </Link>
             <h4>
-              Unlock your Project{" "}
+              🌍 Your Work Transforms{" "}
               <span className="text-default-800 font-bold ms-2">
-                performance
+                Human Future
               </span>
             </h4>
           </div>
@@ -42,7 +42,7 @@ const LockScreen = () => {
               <div className="text-center mb-10">
                 <h4 className="font-medium mb-4">Lock Screen</h4>
                 <div className="text-default-500 text-base">
-                  Enter your password to unlock the screen!
+                  🔒 Secure your civilization-building workspace
                 </div>
               </div>
               <div className="author-bio text-center mb-8">

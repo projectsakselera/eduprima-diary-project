@@ -3,7 +3,7 @@ import LoginForm from "@/components/partials/auth/login-form";
 import Social from "@/components/partials/auth/social";
 import Image from "next/image";
 import Copyright from "@/components/partials/auth/copyright";
-import Logo from "@/components/logo";
+import { Icon } from "@/components/ui/icon";
 const Login2 = () => {
   return (
     <>
@@ -13,16 +13,19 @@ const Login2 = () => {
             <div className=" h-full flex flex-col bg-default-50">
               <div className="max-w-[524px] md:px-[42px] md:py-[44px] p-7  mx-auto w-full text-2xl text-default-900  mb-3 h-full flex flex-col justify-center">
                 <div className="flex justify-center items-center text-center mb-6 lg:hidden ">
-                  <Link href="/">
-                    <Logo />
+                  <Link href="/" className="flex gap-2 items-center">
+                    <Icon icon="ph:graduation-cap" className="text-primary h-12 w-12" />
+                    <h1 className="text-2xl font-semibold text-default-900">
+                      Eduprima Space
+                    </h1>
                   </Link>
                 </div>
-                <div className="text-center 2xl:mb-10 mb-4">
-                  <h4 className="font-medium">Sign in</h4>
-                  <div className="text-default-500  text-base">
-                    Sign in to your account to start using Dashcode
+                                  <div className="text-center 2xl:mb-10 mb-4">
+                    <h4 className="font-medium">Sign in</h4>
+                    <div className="text-default-500  text-base">
+                      🎯 Access your education dashboard
+                    </div>
                   </div>
-                </div>
                 <LoginForm />
                 <div className=" relative border-b-[#9AA2AF] border-opacity-[16%] border-b pt-6">
                   <div className=" absolute inline-block  bg-default-50 dark:bg-default-100 left-1/2 top-1/2 transform -translate-x-1/2 px-4 min-w-max text-sm  text-default-500  font-normal ">
@@ -55,14 +58,11 @@ const Login2 = () => {
           >
             <div className="flex flex-col h-full justify-center">
               <div className="flex-1 flex flex-col justify-center items-center">
-                <Link href="/">
-                  <Image
-                    src="/images/logo/logo-white.svg"
-                    alt=""
-                    width={300}
-                    height={300}
-                    className="mb-10  w-36"
-                  />
+                <Link href="/" className="flex gap-3 items-center text-white">
+                  <Icon icon="ph:graduation-cap" className="h-16 w-16" />
+                  <h1 className="text-3xl font-semibold">
+                    Eduprima Space
+                  </h1>
                 </Link>
               </div>
               <div>
@@ -71,8 +71,8 @@ const Login2 = () => {
 
  max-w-[525px] mx-auto pb-20 text-center"
                 >
-                  Unlock your Project{" "}
-                  <span className="text-white font-bold ms-1">performance</span>
+                                  🌍 Your Work Transforms{" "}
+                <span className="text-white font-bold ms-1">Human Future</span>
                 </div>
               </div>
             </div>
