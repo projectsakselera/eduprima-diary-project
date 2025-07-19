@@ -204,16 +204,16 @@ export default function DatabaseTutorPage() {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'success';
       case 'inactive':
-        return 'bg-red-100 text-red-800';
+        return 'destructive';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'warning';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'secondary';
     }
   };
 
@@ -458,7 +458,7 @@ export default function DatabaseTutorPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(tutor.status)}
-                        <Badge className={getStatusBadgeVariant(tutor.status)}>
+                        <Badge color={getStatusBadgeColor(tutor.status)}>
                           {getStatusText(tutor.status)}
                         </Badge>
                       </div>

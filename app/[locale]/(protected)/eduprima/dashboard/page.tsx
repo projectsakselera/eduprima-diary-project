@@ -1,5 +1,9 @@
 import { Metadata } from "next";
 import { useTranslations } from 'next-intl';
+import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, BookOpen, Building2, GraduationCap } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Dashboard - Eduprima Admin",
@@ -8,113 +12,109 @@ export const metadata: Metadata = {
 
 const EduprimaDashboard = () => {
   const t = useTranslations("Menu");
+  
+  const recentActivities = [
+    {
+      id: 1,
+      title: "New student registered",
+      time: "2 minutes ago",
+      type: "student" as const,
+    },
+    {
+      id: 2,
+      title: "Grade updated for Class 10A",
+      time: "15 minutes ago",
+      type: "grade" as const,
+    },
+    {
+      id: 3,
+      title: "New class schedule created",
+      time: "1 hour ago",
+      type: "schedule" as const,
+    },
+  ];
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'student':
+        return 'bg-blue-500';
+      case 'grade':
+        return 'bg-green-500';
+      case 'schedule':
+        return 'bg-purple-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">{t("welcomeMessage")}</h1>
-        <p className="text-gray-600 mt-2">{t("modernLearning")}</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("welcomeMessage")}</h1>
+        <p className="text-muted-foreground mt-2">{t("modernLearning")}</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Students</p>
-              <p className="text-2xl font-semibold text-gray-900">1,234</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Teachers</p>
-              <p className="text-2xl font-semibold text-gray-900">89</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Classes</p>
-              <p className="text-2xl font-semibold text-gray-900">45</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Subjects</p>
-              <p className="text-2xl font-semibold text-gray-900">12</p>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          title="Total Students"
+          value="1,234"
+          icon={<Users className="w-6 h-6" />}
+        />
+        <StatCard
+          title="Total Teachers"
+          value="89"
+          icon={<GraduationCap className="w-6 h-6" />}
+        />
+        <StatCard
+          title="Total Classes"
+          value="45"
+          icon={<Building2 className="w-6 h-6" />}
+        />
+        <StatCard
+          title="Total Subjects"
+          value="12"
+          icon={<BookOpen className="w-6 h-6" />}
+        />
       </div>
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">New student registered</p>
-                <p className="text-xs text-gray-500">2 minutes ago</p>
-              </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-center">
+                  <div className={`w-2 h-2 rounded-full mr-3 ${getActivityColor(activity.type)}`}></div>
+                  <div>
+                    <p className="text-sm font-medium">{activity.title}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Grade updated for Class 10A</p>
-                <p className="text-xs text-gray-500">15 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">New class schedule created</p>
-                <p className="text-xs text-gray-500">1 hour ago</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-              Add New Student
-            </button>
-            <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-              Create Class Schedule
-            </button>
-            <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-              Generate Report
-            </button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Button className="w-full">
+                Add New Student
+              </Button>
+              <Button className="w-full" variant="outline">
+                Create Class Schedule
+              </Button>
+              <Button className="w-full" variant="outline">
+                Generate Report
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

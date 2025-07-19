@@ -1,4 +1,9 @@
 import { Metadata } from "next";
+import { StatCard } from "@/components/ui/stat-card";
+import { DivisionCard } from "@/components/ui/division-card";
+import { ActivityCard } from "@/components/ui/activity-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "EM Engagement - Eduprima Admin",
@@ -11,7 +16,7 @@ export default function EMEngagementPage() {
       id: 1,
       name: "Recruitment Unit",
       description: "Mengelola rekrutmen dan seleksi tutor baru",
-      status: "active",
+      status: "active" as const,
       activeRecruitments: 8,
       totalApplications: 45,
       successRate: 78,
@@ -21,7 +26,7 @@ export default function EMEngagementPage() {
       id: 2,
       name: "Development Unit",
       description: "Mengembangkan kompetensi dan skill tutor",
-      status: "active",
+      status: "active" as const,
       activePrograms: 12,
       participants: 156,
       completionRate: 85,
@@ -31,7 +36,7 @@ export default function EMEngagementPage() {
       id: 3,
       name: "Relations Unit",
       description: "Mengelola hubungan dengan tutor dan stakeholder",
-      status: "active",
+      status: "active" as const,
       activeRelations: 24,
       satisfactionRate: 92,
       responseTime: "2.3h",
@@ -42,35 +47,35 @@ export default function EMEngagementPage() {
   const recentActivities = [
     {
       id: 1,
-      type: "recruitment",
+      division: "Recruitment",
       title: "Interview selesai untuk 5 kandidat tutor Matematika",
       description: "Proses seleksi tahap kedua untuk posisi tutor Matematika SMA",
       time: "2 jam yang lalu",
-      status: "completed",
+      status: "completed" as const,
     },
     {
       id: 2,
-      type: "development",
+      division: "Development",
       title: "Workshop 'Effective Teaching Methods' selesai",
       description: "25 tutor berpartisipasi dalam workshop pengembangan metode mengajar",
       time: "1 hari yang lalu",
-      status: "completed",
+      status: "completed" as const,
     },
     {
       id: 3,
-      type: "relations",
+      division: "Relations",
       title: "Monthly feedback session dengan tutor senior",
       description: "Sesi feedback bulanan untuk 15 tutor senior berjalan lancar",
       time: "2 hari yang lalu",
-      status: "completed",
+      status: "completed" as const,
     },
     {
       id: 4,
-      type: "recruitment",
+      division: "Recruitment",
       title: "Job posting baru untuk tutor Bahasa Inggris",
       description: "Lowongan tutor Bahasa Inggris untuk program intensif",
       time: "3 hari yang lalu",
-      status: "active",
+      status: "ongoing" as const,
     },
   ]
 
@@ -79,218 +84,115 @@ export default function EMEngagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">EM Engagement</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <h1 className="text-3xl font-bold tracking-tight">EM Engagement</h1>
+          <p className="text-muted-foreground mt-2">
             Mengelola rekrutmen, pengembangan, dan hubungan dengan tutor
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+          <Button variant="outline">
             New Recruitment
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          </Button>
+          <Button>
             Schedule Workshop
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tutors</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">247</p>
-            </div>
-            <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 dark:text-blue-400 text-lg">👨‍🏫</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Recruitments</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">8</p>
-            </div>
-            <div className="h-8 w-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 dark:text-green-400 text-lg">📋</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Development Programs</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
-            </div>
-            <div className="h-8 w-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-              <span className="text-purple-600 dark:text-purple-400 text-lg">📚</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Satisfaction Rate</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">92%</p>
-            </div>
-            <div className="h-8 w-8 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 dark:text-orange-400 text-lg">⭐</span>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          title="Total Tutors"
+          value="247"
+          icon={<span className="text-lg">👨‍🏫</span>}
+        />
+        <StatCard
+          title="Active Recruitments"
+          value="8"
+          icon={<span className="text-lg">📋</span>}
+        />
+        <StatCard
+          title="Development Programs"
+          value="12"
+          icon={<span className="text-lg">📚</span>}
+        />
+        <StatCard
+          title="Satisfaction Rate"
+          value="92%"
+          icon={<span className="text-lg">⭐</span>}
+        />
       </div>
 
       {/* Units Overview */}
-      <div className="rounded-lg border bg-card">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <span>🏢</span>
             Units Overview
-          </h2>
-        </div>
-        <div className="p-6">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {units.map((unit) => (
-              <div
+              <DivisionCard
                 key={unit.id}
-                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                    <span className="text-blue-600 dark:text-blue-400 text-lg">{unit.icon}</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                      {unit.name}
-                    </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      unit.status === 'active' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                    }`}>
-                      {unit.status}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  {unit.description}
-                </p>
-                <div className="space-y-2">
-                  {unit.id === 1 && (
-                    <>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Active Recruitments:</span>
-                        <span className="font-medium">{unit.activeRecruitments}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Total Applications:</span>
-                        <span className="font-medium">{unit.totalApplications}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Success Rate:</span>
-                        <span className="font-medium">{unit.successRate}%</span>
-                      </div>
-                    </>
-                  )}
-                  {unit.id === 2 && (
-                    <>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Active Programs:</span>
-                        <span className="font-medium">{unit.activePrograms}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Participants:</span>
-                        <span className="font-medium">{unit.participants}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Completion Rate:</span>
-                        <span className="font-medium">{unit.completionRate}%</span>
-                      </div>
-                    </>
-                  )}
-                  {unit.id === 3 && (
-                    <>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Active Relations:</span>
-                        <span className="font-medium">{unit.activeRelations}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Satisfaction Rate:</span>
-                        <span className="font-medium">{unit.satisfactionRate}%</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Avg Response Time:</span>
-                        <span className="font-medium">{unit.responseTime}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                id={unit.id}
+                name={unit.name}
+                description={unit.description}
+                status={unit.status}
+                icon={<span>{unit.icon}</span>}
+                href="#"
+                stats={
+                  unit.id === 1 ? [
+                    { label: "Active Recruitments", value: unit.activeRecruitments || 0 },
+                    { label: "Total Applications", value: unit.totalApplications || 0 },
+                    { label: "Success Rate", value: `${unit.successRate || 0}%` }
+                  ] : unit.id === 2 ? [
+                    { label: "Active Programs", value: unit.activePrograms || 0 },
+                    { label: "Participants", value: unit.participants || 0 },
+                    { label: "Completion Rate", value: `${unit.completionRate || 0}%` }
+                  ] : [
+                    { label: "Active Relations", value: unit.activeRelations || 0 },
+                    { label: "Satisfaction Rate", value: `${unit.satisfactionRate || 0}%` },
+                    { label: "Response Time", value: unit.responseTime || "N/A" }
+                  ]
+                }
+              />
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activities */}
-      <div className="rounded-lg border bg-card">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <span>📋</span>
             Recent Activities
-          </h2>
-        </div>
-        <div className="p-6">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
             {recentActivities.map((activity) => (
-              <div
+              <ActivityCard
                 key={activity.id}
-                className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <div className={`p-2 rounded-lg ${
-                  activity.type === 'recruitment' 
-                    ? 'bg-blue-100 dark:bg-blue-900' 
-                    : activity.type === 'development'
-                    ? 'bg-purple-100 dark:bg-purple-900'
-                    : 'bg-green-100 dark:bg-green-900'
-                }`}>
-                  <span className={`text-lg ${
-                    activity.type === 'recruitment' 
-                      ? 'text-blue-600 dark:text-blue-400' 
-                      : activity.type === 'development'
-                      ? 'text-purple-600 dark:text-purple-400'
-                      : 'text-green-600 dark:text-green-400'
-                  }`}>
-                    {activity.type === 'recruitment' ? '👥' : activity.type === 'development' ? '🎓' : '🤝'}
+                id={activity.id}
+                division={activity.division}
+                title={activity.title}
+                description={activity.description}
+                time={activity.time}
+                status={activity.status}
+                icon={
+                  <span>
+                    {activity.division === 'Recruitment' ? '👥' : 
+                     activity.division === 'Development' ? '🎓' : '🤝'}
                   </span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {activity.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {activity.description}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {activity.time}
-                  </p>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  activity.status === 'completed' 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                }`}>
-                  {activity.status}
-                </span>
-              </div>
+                }
+              />
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 } 

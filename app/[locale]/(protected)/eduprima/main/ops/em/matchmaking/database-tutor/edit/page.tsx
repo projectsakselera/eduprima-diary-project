@@ -1,11 +1,11 @@
 import React from 'react'
 
-export default function AddTutorPage() {
+export default function EditTutorPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Add New Tutor</h1>
-        <p className="text-gray-600">Add a new tutor to the database</p>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Tutor</h1>
+        <p className="text-gray-600">Update tutor information in the database</p>
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
@@ -19,6 +19,7 @@ export default function AddTutorPage() {
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter tutor's full name"
+                defaultValue="John Doe"
               />
             </div>
             
@@ -30,6 +31,7 @@ export default function AddTutorPage() {
                 type="email"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter tutor's email"
+                defaultValue="john.doe@example.com"
               />
             </div>
             
@@ -41,6 +43,7 @@ export default function AddTutorPage() {
                 type="tel"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter tutor's phone number"
+                defaultValue="+6281234567890"
               />
             </div>
             
@@ -48,7 +51,7 @@ export default function AddTutorPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Specialization
               </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" defaultValue="mathematics">
                 <option value="">Select specialization</option>
                 <option value="mathematics">Mathematics</option>
                 <option value="physics">Physics</option>
@@ -70,6 +73,7 @@ export default function AddTutorPage() {
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter tutor's address"
+              defaultValue="Jl. Sudirman No. 123, Jakarta Pusat"
             />
           </div>
           
@@ -83,6 +87,7 @@ export default function AddTutorPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter years of experience"
+                defaultValue="5"
               />
             </div>
             
@@ -95,6 +100,7 @@ export default function AddTutorPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter hourly rate"
+                defaultValue="150000"
               />
             </div>
           </div>
@@ -104,7 +110,7 @@ export default function AddTutorPage() {
               type="submit"
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              Add Tutor
+              Update Tutor
             </button>
             <button
               type="button"
