@@ -1,6 +1,6 @@
 'use client';
 
-import { Metadata } from "next";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,9 +35,9 @@ export default function AddTutorPage() {
     birthDate: '',
     education: '',
     experience: '',
-    subjects: [],
-    skills: [],
-    availability: [],
+    subjects: [] as string[],
+    skills: [] as string[],
+    availability: [] as string[],
     bio: '',
     hourlyRate: '',
     status: 'active'
@@ -312,7 +312,7 @@ export default function AddTutorPage() {
             {formData.subjects.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.subjects.map((subject) => (
-                  <Badge key={subject} variant="secondary" className="flex items-center gap-1">
+                  <Badge key={subject} className="flex items-center gap-1 bg-secondary text-secondary-foreground">
                     {subject}
                     <button
                       type="button"
@@ -361,7 +361,7 @@ export default function AddTutorPage() {
             {formData.skills.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="flex items-center gap-1">
+                  <Badge key={skill} className="flex items-center gap-1 bg-secondary text-secondary-foreground">
                     {skill}
                     <button
                       type="button"
