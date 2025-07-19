@@ -62,7 +62,7 @@ export default function ViewTutorPage() {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-500">Education Background</label>
-              <p className="text-sm text-gray-900">Bachelor's Degree in Mathematics from University of Indonesia</p>
+              <p className="text-sm text-gray-900">Bachelor&apos;s Degree in Mathematics from University of Indonesia</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500">Teaching Experience</label>

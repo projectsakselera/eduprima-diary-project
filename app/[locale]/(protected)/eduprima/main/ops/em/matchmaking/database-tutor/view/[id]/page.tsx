@@ -75,7 +75,7 @@ export default function ViewTutorPage() {
     if (tutorId) {
       fetchTutorData();
     }
-  }, [tutorId]);
+  }, [tutorId, mockTutorData]);
 
   const handleEdit = () => {
     router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutorId}`);

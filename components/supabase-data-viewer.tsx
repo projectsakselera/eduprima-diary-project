@@ -81,7 +81,7 @@ export function SupabaseDataViewer() {
 
   useEffect(() => {
     scanTables()
-  }, [])
+  }, [scanTables])
 
   const getColumnTypes = (data: any[]) => {
     if (data.length === 0) return []

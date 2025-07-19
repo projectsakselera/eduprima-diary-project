@@ -101,7 +101,7 @@ export default function EditTutorPage() {
     if (tutorId) {
       fetchTutorData();
     }
-  }, [tutorId]);
+  }, [tutorId, mockTutorData]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
