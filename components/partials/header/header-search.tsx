@@ -49,7 +49,7 @@ const HeaderSearch = () => {
                             >
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/calendar-page"
+                                        href="/dashcode/app/calendar"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:calendar-days" />
                                         <span>Calendar</span>
@@ -57,7 +57,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/dashboard"
+                                        href="/dashcode/dashboard"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:chart-bar" />
                                         <span>Analytics</span>
@@ -65,7 +65,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/ecommerce"
+                                        href="/dashcode/ecommerce"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:shopping-bag" />
                                         <span>eCommerce</span>
@@ -73,7 +73,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 ">
                                     <Link
-                                        href="/project"
+                                        href="/dashcode/project"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:building-library" />
                                         <span>Project Page</span>
@@ -85,7 +85,7 @@ const HeaderSearch = () => {
                                 className="[&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-normal [&_[cmdk-group-heading]]:text-default-400 [&_[cmdk-group-heading]]:mb-2.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/chat"
+                                        href="/dashcode/app/chat"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
                                         <Icon icon="heroicons:chat-bubble-bottom-center" />
                                         <span>Chat</span>
@@ -93,7 +93,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/email"
+                                        href="/dashcode/app/email"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
                                         <Icon icon="heroicons:envelope" />
                                         <span>Email</span>
@@ -101,7 +101,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/dashboard"
+                                        href="/dashcode/dashboard"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
                                         <Icon icon="heroicons:user" />
                                         <span>Sign In</span>
@@ -109,7 +109,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0">
                                     <Link
-                                        href="/calendar-page"
+                                        href="/dashcode/app/calendar"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
                                         <Icon icon="heroicons:chart-bar" />
                                         <span>Appex Chart</span>
@@ -121,7 +121,7 @@ const HeaderSearch = () => {
                                 className="[&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-normal [&_[cmdk-group-heading]]:text-default-400 [&_[cmdk-group-heading]]:mb-2.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/accordion"
+                                        href="/dashcode/components/accordion"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:bars-3" />
                                         <span>Accordion</span>
@@ -129,7 +129,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-1">
                                     <Link
-                                        href="/checkbox"
+                                        href="/dashcode/forms/checkbox"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary " >
                                         <Icon icon="heroicons:check" />
                                         <span>Checkboxes</span>
@@ -137,16 +137,14 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-1">
                                     <Link
-                                        href="/alert"
+                                        href="/dashcode/components/alert"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary " >
                                         <Icon icon="heroicons:megaphone" />
                                         <span>Alert</span>
                                     </Link>
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-1">
-                                    <Link
-                                        href="/pagination"
-                                        className="flex gap-1 items-center px-2 text-default-500 hover:text-primary " >
+                                    <Link href="/dashcode/components/pagination" className="flex gap-1 items-center px-2 text-default-500 hover:text-primary " >
                                         <Icon icon="heroicons:document-text" />
                                         <span>Pagination</span>
                                     </Link>
@@ -158,7 +156,7 @@ const HeaderSearch = () => {
                             >
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/simple-table"
+                                        href="/dashcode/table/simple-table"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:table-cells" />
                                         <span>Simple Table</span>
@@ -166,7 +164,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/tailwindui-table"
+                                        href="/dashcode/table/tailwindui-table"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:table-cells" />
                                         <span>Tailwind Ui Table</span>
@@ -174,7 +172,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/data-table"
+                                        href="/dashcode/table/data-table"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:table-cells" />
                                         <span>Tanstack Table</span>
@@ -182,7 +180,7 @@ const HeaderSearch = () => {
                                 </CommandItem>
                                 <CommandItem className="aria-selected:bg-transparent p-0">
                                     <Link
-                                        href="/calendar-page"
+                                        href="/dashcode/app/calendar"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary ">
                                         <Icon icon="heroicons:clipboard-document-list" />
                                         <span>Forms</span>

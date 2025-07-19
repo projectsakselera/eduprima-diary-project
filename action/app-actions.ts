@@ -1,7 +1,7 @@
 'use server'
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { postMessage } from "@/app/[locale]/(protected)/app/chat/utils";
+import { postMessage } from "@/app/[locale]/(protected)/dashcode/app/chat/utils";
 
 
 export const  postMessageAction = async (id: string, message: string,) => {

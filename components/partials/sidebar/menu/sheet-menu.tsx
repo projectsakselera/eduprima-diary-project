@@ -32,7 +32,7 @@ export function SheetMenu() {
             </SheetTrigger>
             <SheetContent className="sm:w-72 px-3 h-full flex flex-col" side="left">
                 <SheetHeader>
-                    <Link href="/dashboard/analytics" className="flex gap-2 items-center     ">
+                    <Link href="/dashcode/dashboard/analytics" className="flex gap-2 items-center     ">
                         <Icon icon="ph:graduation-cap" className="text-primary h-8 w-8" />
                         <h1 className="text-xl font-semibold text-default-900 ">
                             Eduprima Space

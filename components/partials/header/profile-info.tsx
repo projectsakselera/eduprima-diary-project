@@ -57,7 +57,7 @@ const ProfileInfo = async () => {
                 {session?.user?.name}
               </div>
               <Link
-                href="/dashboard"
+                href="/dashcode/dashboard"
                 className="text-xs text-default-600 hover:text-primary"
               >
                 {session?.user?.email}
@@ -74,17 +74,17 @@ const ProfileInfo = async () => {
               {
                 name: "Billing",
                 icon: "heroicons:megaphone",
-                href: "/dashboard"
+                href: "/dashcode/dashboard"
               },
               {
                 name: "Settings",
                 icon: "heroicons:paper-airplane",
-                href: "/dashboard"
+                href: "/dashcode/dashboard"
               },
               {
                 name: "Keyboard shortcuts",
                 icon: "heroicons:language",
-                href: "/dashboard"
+                href: "/dashcode/dashboard"
               },
             ].map((item, index) => (
               <Link
@@ -101,7 +101,7 @@ const ProfileInfo = async () => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <Link href="/dashboard" className="cursor-pointer">
+            <Link href="/dashcode/dashboard" className="cursor-pointer">
               <DropdownMenuItem className="flex items-center gap-2 text-sm font-medium text-default-600 capitalize px-3 py-1.5 cursor-pointer">
                 <Icon icon="heroicons:user-group" className="w-4 h-4" />
                 team
@@ -126,7 +126,7 @@ const ProfileInfo = async () => {
                     },
                   ].map((item, index) => (
                     <Link
-                      href="/dashboard"
+                      href="/dashcode/dashboard"
                       key={`message-sub-${index}`}
                       className="cursor-pointer"
                     >
@@ -138,7 +138,7 @@ const ProfileInfo = async () => {
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>
-            <Link href="/dashboard">
+            <Link href="/dashcode/dashboard">
               <DropdownMenuItem className="flex items-center gap-2 text-sm font-medium text-default-600 capitalize px-3 py-1.5 cursor-pointer">
                 <Icon icon="heroicons:variable" className="w-4 h-4" />
                 Github
@@ -163,7 +163,7 @@ const ProfileInfo = async () => {
                       name: "whatsapp",
                     },
                   ].map((item, index) => (
-                    <Link href="/dashboard" key={`message-sub-${index}`}>
+                    <Link href="/dashcode/dashboard" key={`message-sub-${index}`}>
                       <DropdownMenuItem className="text-sm font-medium text-default-600 capitalize px-3 py-1.5 cursor-pointer">
                         {item.name}
                       </DropdownMenuItem>

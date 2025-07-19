@@ -31,7 +31,7 @@ const Messages = () => {
                             Messages
                         </div>
                         <div className="text-default-800  text-xs md:text-right">
-                            <Link href="/chats" className="underline">
+                            <Link href="/dashcode/app/chat" className="underline">
                                 View all
                             </Link>
                         </div>

@@ -54,7 +54,7 @@
   "redirects": [
     {
       "source": "/dashboard",
-      "destination": "/en/dashboard/analytics",
+      "destination": "/en/dashcode/dashboard/analytics",
       "permanent": false
     }
   ],

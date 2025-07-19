@@ -31,7 +31,7 @@ const IconNav = ({ menuList }: IconNavProps) => {
       )}
     >
       <div className="text-center py-5">
-        <Link href="/dashboard/analytics">
+        <Link href="/dashcode/dashboard/analytics">
           <Icon icon="ph:graduation-cap" className="text-primary h-8 w-8 mx-auto" />
         </Link>
       </div>

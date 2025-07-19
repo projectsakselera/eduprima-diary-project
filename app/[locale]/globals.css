@@ -109,8 +109,8 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 201 42% 45%; /* Primary color untuk hover state */
+    --accent-foreground: 0 0% 100%; /* Putih untuk text hover */
     
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -141,10 +141,10 @@
 --default-600: 215.3 19.3% 34.5%;
 --default-700: 215.3 25% 26.7%;
 --default-800: 217.2 32.6% 17.5%;
---default-900: 222.2 47.4% 11.2%;
+--default-900: 201 42% 8%; /* Super dark teal instead of blue-gray */
 --default-950: 222.2 84% 4.9%;
---default: 222.2 47.4% 11.2%;
---default-foreground: 210 40% 98%;
+    --default: 201 42% 45%; /* Primary color untuk background active */
+    --default-foreground: 0 0% 100%; /* Putih untuk text */
 
 /* [ DIGANTI ] Skala Warna Primer Eduprima Teal */
 --primary-50: 202 45% 94%;
@@ -215,7 +215,7 @@
     --default-400: 215.3 19.3% 34.5%;
     --default-300: 215.3 25% 26.7%;
     --default-200: 217.2 32.6% 17.5%;
-    --default-100: 222.2 47.4% 11.2%;
+    --default-100: 201 42% 8%; /* Super dark teal for dark mode */
     --default-50: 201 30% 12%;
     --default: 213.8 100% 96.9%;
     --default-foreground: 222.2 47.4% 11.2%;
@@ -792,3 +792,70 @@
     width: 100%;
   }
 
+  /* Custom menu hover dan active states untuk light mode */
+  .menu-item-hover {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .menu-item-hover:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+  
+  .menu-item-active {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+
+  /* Override untuk menu items yang menggunakan bg-default */
+  [data-radix-collection-item] {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  [data-radix-collection-item]:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+  
+  [data-radix-collection-item][data-state="checked"],
+  [data-radix-collection-item][data-state="active"] {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+
+  /* Override untuk sidebar menu items */
+  .sidebar-menu-item {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .sidebar-menu-item:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+  
+  .sidebar-menu-item.active {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+
+  /* Override untuk Tailwind hover classes */
+  .hover\:bg-primary\/10:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+  
+  .hover\:text-primary:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+
+  /* Override untuk secondary hover classes */
+  .hover\:bg-secondary:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }
+  
+  .hover\:text-secondary-foreground:hover {
+    background-color: hsl(201 42% 45%) !important; /* Primary solid */
+    color: hsl(0 0% 100%) !important; /* Text putih */
+  }

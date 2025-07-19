@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useSession } from "next-auth/react";
-import { ChevronsUpDown, Check, CirclePlus } from 'lucide-react';
+import { ChevronsUpDown, Check } from 'lucide-react';
 
 import { cn } from "@/lib/utils"
 import {
@@ -20,60 +20,42 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/components/ui/command"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+
 import { useConfig } from "@/hooks/use-config";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { motion } from "framer-motion";
 import { useMenuHoverConfig } from "@/hooks/use-menu-hover";
+import { useRouter, usePathname } from "next/navigation";
 
-const groups = [
+const modes = [
     {
-        label: "Personal Account",
+        label: "Admin Modes",
         teams: [
             {
-                label: "Designing Workspace",
-                value: "personal",
-            },
-        ],
-    },
-    {
-        label: "Teams",
-        teams: [
-            {
-                label: "Core Workspace",
-                value: "acme-inc",
+                label: "Dashcode Theme",
+                value: "dashcode",
+                icon: "🎨",
+                description: "Template & Components Reference",
+                baseUrl: "/dashcode"
             },
             {
-                label: "Dev.Workspace",
-                value: "monsters",
+                label: "Eduprima Admin",
+                value: "eduprima", 
+                icon: "🏫",
+                description: "Learning Management System",
+                baseUrl: "/eduprima"
             },
         ],
-    },
+    }
 ]
 
-type Team = (typeof groups)[number]["teams"][number]
+type Team = (typeof modes)[number]["teams"][number]
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<typeof PopoverTrigger>
 
@@ -84,16 +66,17 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
     const [hoverConfig] = useMenuHoverConfig();
     const { hovered } = hoverConfig;
     const { data: session } = useSession();
+    const router = useRouter();
+    const pathname = usePathname();
     const [open, setOpen] = React.useState(false)
-    const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false)
-    const [selectedTeam, setSelectedTeam] = React.useState<Team>(
-        groups[0].teams[0]
-    )
+    
+    // Determine current mode based on pathname
+    const currentMode = pathname?.includes('/dashcode') ? modes[0].teams[0] : modes[0].teams[1];
+    const [selectedTeam, setSelectedTeam] = React.useState<Team>(currentMode)
     if (config.showSwitcher === false || config.sidebar === 'compact') return null
 
 
     return (
-        <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
             <Popover open={open} onOpenChange={setOpen}>
 
                 <PopoverTrigger asChild>
@@ -146,10 +129,12 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                                     <AvatarFallback>{session?.user?.name?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 text-start w-[100px]">
-
-                                    <div className=" text-sm  font-semibold text-default-900">Akselera Tech</div>
-                                    <div className=" text-xs font-normal text-default-500 dark:text-default-700 truncate ">{selectedTeam.label}</div>
-
+                                    <div className=" text-sm  font-semibold text-default-900">
+                                        {selectedTeam.icon} {selectedTeam.label}
+                                    </div>
+                                    <div className=" text-xs font-normal text-default-500 dark:text-default-700 truncate ">
+                                        {(selectedTeam as any).description}
+                                    </div>
                                 </div>
                                 <div className="">
                                     <ChevronsUpDown className="ml-auto h-5 w-5 shrink-0  text-default-500 dark:text-default-700" />
@@ -164,7 +149,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                         <CommandList>
                             <CommandInput placeholder="Search team..." className=" placeholder:text-xs" />
                             <CommandEmpty>No team found.</CommandEmpty>
-                            {groups.map((group) => (
+                            {modes.map((group) => (
                                 <CommandGroup key={group.label} heading={group.label}>
                                     {group.teams.map((team) => (
                                         <CommandItem
@@ -172,10 +157,18 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                                             onSelect={() => {
                                                 setSelectedTeam(team)
                                                 setOpen(false)
+                                                
+                                                // Navigate to the selected mode
+                                                const baseUrl = (team as any).baseUrl;
+                                                if (baseUrl === '/dashcode') {
+                                                    router.push('/en/dashcode/dashboard/analytics');
+                                                } else if (baseUrl === '/eduprima') {
+                                                    router.push('/en/eduprima/main');
+                                                }
                                             }}
                                             className="text-sm font-normal"
                                         >
-
+                                            <span className="mr-2">{(team as any).icon}</span>
                                             {team.label}
                                             <Check
                                                 className={cn(
@@ -190,69 +183,9 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                                 </CommandGroup>
                             ))}
                         </CommandList>
-                        <CommandSeparator />
-                        <CommandList>
-                            <CommandGroup>
-                                <DialogTrigger asChild>
-                                    <CommandItem
-                                        onSelect={() => {
-                                            setOpen(false)
-                                            setShowNewTeamDialog(true)
-                                        }}
-                                    >
-                                        <CirclePlus className="mr-2 h-5 w-5" />
-                                        Create Team
-                                    </CommandItem>
-                                </DialogTrigger>
-                            </CommandGroup>
-                        </CommandList>
+
                     </Command>
                 </PopoverContent>
             </Popover>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create team</DialogTitle>
-                    <DialogDescription>
-                        Add a new team to manage products and customers.
-                    </DialogDescription>
-                </DialogHeader>
-                <div>
-                    <div className="space-y-4 py-2 pb-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Team name</Label>
-                            <Input id="name" placeholder="Acme Inc." />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="plan">Subscription plan</Label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a plan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="free">
-                                        <span className="font-medium">Free</span> -{" "}
-                                        <span className="text-muted-foreground">
-                                            Trial for two weeks
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="pro">
-                                        <span className="font-medium">Pro</span> -{" "}
-                                        <span className="text-muted-foreground">
-                                            $9/month per user
-                                        </span>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
-                        Cancel
-                    </Button>
-                    <Button type="submit">Continue</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     )
 }

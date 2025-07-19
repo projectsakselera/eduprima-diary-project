@@ -40,7 +40,7 @@ const LoginForm = () => {
     resolver: zodResolver(schema),
     mode: "all",
     defaultValues: {
-      email: "admin@codeshaper.net",
+      email: "adm@eduprima.id",
       password: "password",
     },
   });
@@ -56,7 +56,7 @@ const LoginForm = () => {
 
           })
         } else {
-          router.push('/dashboard/analytics');
+          router.push('/dashcode/dashboard/analytics');
           toast.success("Successfully logged in");
         }
       } catch (err: any) {

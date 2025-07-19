@@ -15,7 +15,7 @@ const config: DocsThemeConfig = {
   banner: {
     key: "1.0-release",
     text: (
-      <a href="/dashboard" target="_blank">
+              <a href="/dashcode/dashboard" target="_blank">
         🌍 Building Tomorrow's Civilization through Education
       </a>
     ),

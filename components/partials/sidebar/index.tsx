@@ -1,15 +1,8 @@
 
-import React from 'react'
-import SidebarContent from './sidebar-content'
-import { Menu } from './menu'
+import DynamicSidebar from './dynamic-sidebar'
 
-
-const EduPrimaSidebar = () => {
-    return (
-        <SidebarContent>
-            <Menu />
-        </SidebarContent>
-    )
+const Sidebar = () => {
+    return <DynamicSidebar />
 }
 
-export default EduPrimaSidebar
+export default Sidebar
