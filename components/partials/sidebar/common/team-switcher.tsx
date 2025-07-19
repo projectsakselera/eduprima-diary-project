@@ -31,7 +31,7 @@ import { useConfig } from "@/hooks/use-config";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { motion } from "framer-motion";
 import { useMenuHoverConfig } from "@/hooks/use-menu-hover";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 
 const modes = [
     {
@@ -68,6 +68,8 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const pathname = usePathname();
+    const params = useParams();
+    const locale = params?.locale as string || 'en';
     const [open, setOpen] = React.useState(false)
     
     // Determine current mode based on pathname
@@ -161,9 +163,9 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                                                 // Navigate to the selected mode
                                                 const baseUrl = (team as any).baseUrl;
                                                 if (baseUrl === '/dashcode') {
-                                                    router.push('/en/dashcode/dashboard/analytics');
+                                                    router.push(`/${locale}/dashcode/dashboard/analytics`);
                                                 } else if (baseUrl === '/eduprima') {
-                                                    router.push('/en/eduprima/main');
+                                                    router.push(`/${locale}/eduprima/main`);
                                                 }
                                             }}
                                             className="text-sm font-normal"

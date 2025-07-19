@@ -7,7 +7,7 @@ import Messages from "./messages"
 import { Cart } from './cart'
 import ThemeSwitcher from './theme-switcher'
 import { SidebarToggle } from '@/components/partials/sidebar/sidebar-toggle'
-import { SheetMenu } from '@/components/partials/sidebar/menu/sheet-menu'
+import { DynamicSheetMenu } from '@/components/partials/sidebar/menu/dynamic-sheet-menu'
 import HorizontalMenu from "./horizontal-menu"
 import LocalSwitcher from './locale-switcher'
 import HeaderLogo from "./header-logo"
@@ -29,7 +29,7 @@ const EduPrimaHeader = async () => {
                     <Messages />
                     <Notifications />
                     <ProfileInfo />
-                    <SheetMenu />
+                    <DynamicSheetMenu />
                 </div>
             </HeaderContent>
             <HorizontalMenu />

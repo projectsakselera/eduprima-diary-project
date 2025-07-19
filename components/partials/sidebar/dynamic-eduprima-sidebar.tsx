@@ -28,6 +28,7 @@ import { useMenuHoverConfig } from '@/hooks/use-menu-hover';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { SidebarBackButton } from "@/components/ui/sidebar-back-button";
 
 export function DynamicEduprimaSidebar() {
     // translate
@@ -86,6 +87,15 @@ export function DynamicEduprimaSidebar() {
 
                 <nav className="mt-8 h-full w-full">
                     <ul className=" h-full flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1 px-4">
+                        
+                        {/* Back Button - Show only when not at root level */}
+                        <li className="w-full mb-4">
+                            <SidebarBackButton 
+                                collapsed={collapsed}
+                                className="w-full"
+                            />
+                        </li>
+
                         <li className="w-full">
 
 

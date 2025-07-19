@@ -17,7 +17,7 @@ const OverviewPage = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">System Overview</h2>
         <p className="text-gray-600">
           This is the overview page for Eduprima Learning Management System. 
-          Here you can see a comprehensive view of your educational institution's performance.
+          Here you can see a comprehensive view of your educational institution&apos;s performance.
         </p>
       </div>
     </div>

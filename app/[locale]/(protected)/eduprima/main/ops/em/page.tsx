@@ -1,8 +1,12 @@
 'use client'
 import { Metadata } from "next";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export default function EMMainPage() {
+  const params = useParams();
+  const locale = params?.locale as string || 'en';
+
   const divisions = [
     {
       id: 1,
@@ -13,7 +17,7 @@ export default function EMMainPage() {
       pendingTasks: 44,
       successRate: 94,
       icon: "🔗",
-      href: "/eduprima/main/ops/em/matchmaking",
+      href: `/${locale}/eduprima/main/ops/em/matchmaking`,
     },
     {
       id: 2,
@@ -24,7 +28,7 @@ export default function EMMainPage() {
       activeClasses: 38,
       attendanceRate: 92,
       icon: "🎓",
-      href: "/eduprima/main/ops/em/cms",
+      href: `/${locale}/eduprima/main/ops/em/cms`,
     },
     {
       id: 3,
@@ -35,7 +39,7 @@ export default function EMMainPage() {
       activeRecruitments: 8,
       satisfactionRate: 92,
       icon: "❤️",
-      href: "/eduprima/main/ops/em/engagement",
+      href: `/${locale}/eduprima/main/ops/em/engagement`,
     },
   ]
 

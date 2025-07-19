@@ -1,110 +1,93 @@
-// 📁 lib/dynamic-menu-factory.ts
-
-export type DynamicMenuItem = {
+export interface DynamicMenuItem {
   href: string;
   label: string;
   active: boolean;
   icon: string;
   children?: DynamicMenuItem[];
   external?: boolean;
-};
+}
 
-export type DynamicMenuGroup = {
+export interface DynamicMenuGroup {
   groupLabel: string;
   currentPage: string;
   menus: DynamicMenuItem[];
   staticMenus?: DynamicMenuItem[];
-};
+}
+
+// Helper function to add locale prefix to internal URLs
+function addLocalePrefix(href: string, locale: string): string {
+  if (href.startsWith('http') || href.startsWith('https')) {
+    return href; // External links don't need locale prefix
+  }
+  // Don't add locale prefix since next-intl Link component handles it automatically
+  return href;
+}
 
 export function getDynamicMenuByPath(pathname: string, t: any): DynamicMenuGroup {
   const pathSegments = pathname.split('/').filter(segment => segment !== '');
   
-  // Jika di halaman eduprima
-  if (pathSegments[0] === 'eduprima') {
-    return generateEduprimaMenu(pathSegments, pathname, t);
+  // Get locale from pathname
+  const locale = pathSegments[0] || 'en';
+  
+  // Remove locale from path segments
+  const segments = pathSegments.filter(segment => !['en', 'id', 'ar'].includes(segment));
+  
+  // Debug: log the path segments
+  console.log('🔍 Dynamic Menu Debug:');
+  console.log('  Pathname:', pathname);
+  console.log('  Path segments:', segments);
+  console.log('  Locale:', locale);
+  
+  // If we're in eduprima
+  if (segments[0] === 'eduprima') {
+    return generateEduprimaMenu(segments, pathname, t, locale);
   }
-
-  // Jika di halaman dashboard
-  if (pathSegments[0] === 'dashboard') {
-    return {
-      groupLabel: t("dashboard"),
-      currentPage: "Dashboard",
-      menus: [
-        {
-          href: "/eduprima/dashboard",
-          label: "Dashboard",
-          active: pathname === "/eduprima/dashboard",
-          icon: "heroicons:chart-bar",
-          children: [
-            {
-              href: "/eduprima/dashboard/overview",
-              label: t("overview"),
-              active: pathname === "/eduprima/dashboard/overview",
-              icon: "heroicons:chart-bar",
-            },
-            {
-              href: "/eduprima/dashboard/academic",
-              label: t("academic"),
-              active: pathname === "/eduprima/dashboard/academic",
-              icon: "heroicons:academic-cap",
-            },
-            {
-              href: "/eduprima/dashboard/financial",
-              label: t("financial"),
-              active: pathname === "/eduprima/dashboard/financial",
-              icon: "heroicons:currency-dollar",
-            },
-          ]
-        }
-      ],
-      staticMenus: getStaticMenus(pathname, t)
-    };
-  }
-
+  
   // Default fallback
   return {
-    groupLabel: t("eduprima"),
+    groupLabel: "Eduprima",
     currentPage: "Eduprima",
     menus: [
       {
-        href: "/eduprima/main",
+        href: addLocalePrefix("/eduprima/main", locale),
         label: "Eduprima Main",
-        active: pathname === "/eduprima/main",
+        active: pathname === addLocalePrefix("/eduprima/main", locale),
         icon: "heroicons:home",
       }
-    ]
+    ],
+    staticMenus: getStaticMenus(pathname, t, locale)
   };
 }
 
-function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any): DynamicMenuGroup {
-  // Jika di halaman main
+function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any, locale: string): DynamicMenuGroup {
+  // If we're in main section
   if (pathSegments[1] === 'main') {
-    // Jika di halaman main root
+    // If we're in main root
     if (pathSegments.length === 2) {
       return {
         groupLabel: "Eduprima",
         currentPage: "Eduprima Main",
         menus: [
           {
-            href: "/eduprima/main",
+            href: addLocalePrefix("/eduprima/main", locale),
             label: "Eduprima Main",
             active: true,
             icon: "heroicons:home",
             children: [
               {
-                href: "/eduprima/main/ops",
+                href: addLocalePrefix("/eduprima/main/ops", locale),
                 label: "Operasional (Ops)",
                 active: false,
                 icon: "heroicons:cog-6-tooth",
               },
               {
-                href: "/eduprima/main/program",
+                href: addLocalePrefix("/eduprima/main/program", locale),
                 label: "Program",
                 active: false,
                 icon: "heroicons:academic-cap",
               },
               {
-                href: "/eduprima/main/ba",
+                href: addLocalePrefix("/eduprima/main/ba", locale),
                 label: "Business Affair",
                 active: false,
                 icon: "heroicons:building-office",
@@ -112,135 +95,135 @@ function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any):
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops
+    // If we're in ops section
     if (pathSegments[2] === 'ops') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Operasional",
         menus: [
           {
-            href: "/eduprima/main/ops",
+            href: addLocalePrefix("/eduprima/main/ops", locale),
             label: "Operasional",
             active: true,
             icon: "heroicons:cog-6-tooth",
             children: [
               {
-                href: "/eduprima/main/ops/em",
+                href: addLocalePrefix("/eduprima/main/ops/em", locale),
                 label: "Education Management (EM)",
-                active: pathname.includes("/eduprima/main/ops/em"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em", locale)),
                 icon: "heroicons:user-group",
               },
               {
-                href: "/eduprima/main/ops/ec",
+                href: addLocalePrefix("/eduprima/main/ops/ec", locale),
                 label: "Education Consulting",
-                active: pathname.includes("/eduprima/main/ops/ec"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/ec", locale)),
                 icon: "heroicons:academic-cap",
               },
               {
-                href: "/eduprima/main/ops/adm",
+                href: addLocalePrefix("/eduprima/main/ops/adm", locale),
                 label: "Admin",
-                active: pathname.includes("/eduprima/main/ops/adm"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/adm", locale)),
                 icon: "heroicons:shield-check",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman program
+    // If we're in program section
     if (pathSegments[2] === 'program') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Program",
         menus: [
           {
-            href: "/eduprima/main/program",
+            href: addLocalePrefix("/eduprima/main/program", locale),
             label: "Program",
             active: true,
             icon: "heroicons:academic-cap",
             children: [
               {
-                href: "/eduprima/main/program/courses",
+                href: addLocalePrefix("/eduprima/main/program/courses", locale),
                 label: "Courses",
-                active: pathname.includes("/eduprima/main/program/courses"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/program/courses", locale)),
                 icon: "heroicons:book-open",
               },
               {
-                href: "/eduprima/main/program/curriculum",
+                href: addLocalePrefix("/eduprima/main/program/curriculum", locale),
                 label: "Curriculum",
-                active: pathname.includes("/eduprima/main/program/curriculum"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/program/curriculum", locale)),
                 icon: "heroicons:document-text",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman business affair
+    // If we're in business affair section
     if (pathSegments[2] === 'ba') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Business Affair",
         menus: [
           {
-            href: "/eduprima/main/ba",
+            href: addLocalePrefix("/eduprima/main/ba", locale),
             label: "Business Affair",
             active: true,
             icon: "heroicons:building-office",
             children: [
               {
-                href: "/eduprima/main/ba/partnership",
+                href: addLocalePrefix("/eduprima/main/ba/partnership", locale),
                 label: "Partnership",
-                active: pathname.includes("/eduprima/main/ba/partnership"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ba/partnership", locale)),
                 icon: "heroicons:handshake",
               },
               {
-                href: "/eduprima/main/ba/marketing",
+                href: addLocalePrefix("/eduprima/main/ba/marketing", locale),
                 label: "Marketing",
-                active: pathname.includes("/eduprima/main/ba/marketing"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ba/marketing", locale)),
                 icon: "heroicons:megaphone",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/em (root EM page)
+    // If we're in ops/em (root EM page)
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments.length === 4) {
       return {
         groupLabel: "Eduprima",
         currentPage: "Education Management",
         menus: [
           {
-            href: "/eduprima/main/ops/em",
+            href: addLocalePrefix("/eduprima/main/ops/em", locale),
             label: "Education Management (EM)",
             active: true,
             icon: "heroicons:user-group",
             children: [
               {
-                href: "/eduprima/main/ops/em/matchmaking",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking", locale),
                 label: "EM Matchmaking",
                 active: false,
                 icon: "heroicons:user-plus",
               },
               {
-                href: "/eduprima/main/ops/em/cms",
+                href: addLocalePrefix("/eduprima/main/ops/em/cms", locale),
                 label: "EM Class Management (CMS)",
                 active: false,
                 icon: "heroicons:academic-cap",
               },
               {
-                href: "/eduprima/main/ops/em/engagement",
+                href: addLocalePrefix("/eduprima/main/ops/em/engagement", locale),
                 label: "EM Engagement",
                 active: false,
                 icon: "heroicons:heart",
@@ -248,245 +231,307 @@ function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any):
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/em/matchmaking
+    // If we're in ops/em/matchmaking
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'matchmaking') {
       return {
         groupLabel: "Eduprima",
         currentPage: "EM Matchmaking",
         menus: [
           {
-            href: "/eduprima/main/ops/em/matchmaking",
+            href: addLocalePrefix("/eduprima/main/ops/em/matchmaking", locale),
             label: "EM Matchmaking",
             active: true,
             icon: "heroicons:user-plus",
             children: [
               {
-                href: "/eduprima/main/ops/em/matchmaking/data-followup",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/data-followup", locale),
                 label: "Unit Penyiapan Data & Follow Up GT",
-                active: pathname.includes("/eduprima/main/ops/em/matchmaking/data-followup"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/data-followup", locale)),
                 icon: "heroicons:clipboard-document-list",
               },
               {
-                href: "/eduprima/main/ops/em/matchmaking/offering",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/offering", locale),
                 label: "Unit Offering",
-                active: pathname.includes("/eduprima/main/ops/em/matchmaking/offering"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/offering", locale)),
                 icon: "heroicons:presentation-chart-line",
               },
               {
-                href: "/eduprima/main/ops/em/matchmaking/tutor-case",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/tutor-case", locale),
                 label: "Unit Ganti Tutor & Case Solving",
-                active: pathname.includes("/eduprima/main/ops/em/matchmaking/tutor-case"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/tutor-case", locale)),
                 icon: "heroicons:user-group",
               },
               {
-                href: "/eduprima/main/ops/em/matchmaking/komunikasi",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/komunikasi", locale),
                 label: "EM Komunikasi",
-                active: pathname.includes("/eduprima/main/ops/em/matchmaking/komunikasi"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/komunikasi", locale)),
                 icon: "heroicons:chat-bubble-left-right",
               },
               {
-                href: "/eduprima/main/ops/em/matchmaking/plp",
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/plp", locale),
                 label: "Unit Penyiapan PLP",
-                active: pathname.includes("/eduprima/main/ops/em/matchmaking/plp"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/plp", locale)),
                 icon: "heroicons:document-text",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale),
+                label: "Database Tutor",
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale)),
+                icon: "heroicons:server-stack",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/em/cms
+    // If we're in ops/em/matchmaking/database-tutor
+    if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'matchmaking' && pathSegments[5] === 'database-tutor') {
+      return {
+        groupLabel: "Eduprima",
+        currentPage: "Database Tutor",
+        menus: [
+          {
+            href: addLocalePrefix("/eduprima/main/ops/em/matchmaking", locale),
+            label: "EM Matchmaking",
+            active: false,
+            icon: "heroicons:user-plus",
+            children: [
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/data-followup", locale),
+                label: "Unit Penyiapan Data & Follow Up GT",
+                active: false,
+                icon: "heroicons:clipboard-document-list",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/offering", locale),
+                label: "Unit Offering",
+                active: false,
+                icon: "heroicons:presentation-chart-line",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/tutor-case", locale),
+                label: "Unit Ganti Tutor & Case Solving",
+                active: false,
+                icon: "heroicons:user-group",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/komunikasi", locale),
+                label: "EM Komunikasi",
+                active: false,
+                icon: "heroicons:chat-bubble-left-right",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/plp", locale),
+                label: "Unit Penyiapan PLP",
+                active: false,
+                icon: "heroicons:document-text",
+              },
+              {
+                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale),
+                label: "Database Tutor",
+                active: true,
+                icon: "heroicons:server-stack",
+              },
+            ]
+          }
+        ],
+        staticMenus: getStaticMenus(pathname, t, locale)
+      };
+    }
+    
+    // If we're in ops/em/cms
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'cms') {
       return {
         groupLabel: "Eduprima",
         currentPage: "EM Class Management (CMS)",
         menus: [
           {
-            href: "/eduprima/main/ops/em/cms",
+            href: addLocalePrefix("/eduprima/main/ops/em/cms", locale),
             label: "EM Class Management (CMS)",
             active: true,
             icon: "heroicons:academic-cap",
             children: [
               {
-                href: "/eduprima/main/ops/em/cms/monitoring-kelas",
+                href: addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-kelas", locale),
                 label: "Monitoring Kelas & Presensi Tutor",
-                active: pathname.includes("/eduprima/main/ops/em/cms/monitoring-kelas"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-kelas", locale)),
                 icon: "heroicons:eye",
               },
               {
-                href: "/eduprima/main/ops/em/cms/monitoring-ruang",
+                href: addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-ruang", locale),
                 label: "Monitoring Ruang Kelas Edufio x ILC",
-                active: pathname.includes("/eduprima/main/ops/em/cms/monitoring-ruang"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-ruang", locale)),
                 icon: "heroicons:building-office",
               },
               {
-                href: "/eduprima/main/ops/em/cms/monitoring-pembayaran",
+                href: addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-pembayaran", locale),
                 label: "Monitoring Pembayaran/Tagihan",
-                active: pathname.includes("/eduprima/main/ops/em/cms/monitoring-pembayaran"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/cms/monitoring-pembayaran", locale)),
                 icon: "heroicons:currency-dollar",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/em/engagement
+    // If we're in ops/em/engagement
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'engagement') {
       return {
         groupLabel: "Eduprima",
         currentPage: "EM Engagement",
         menus: [
           {
-            href: "/eduprima/main/ops/em/engagement",
+            href: addLocalePrefix("/eduprima/main/ops/em/engagement", locale),
             label: "EM Engagement",
             active: true,
             icon: "heroicons:heart",
             children: [
               {
-                href: "/eduprima/main/ops/em/engagement/recruitment",
+                href: addLocalePrefix("/eduprima/main/ops/em/engagement/recruitment", locale),
                 label: "Recruitment Unit",
-                active: pathname.includes("/eduprima/main/ops/em/engagement/recruitment"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/engagement/recruitment", locale)),
                 icon: "heroicons:user-plus",
               },
               {
-                href: "/eduprima/main/ops/em/engagement/development",
+                href: addLocalePrefix("/eduprima/main/ops/em/engagement/development", locale),
                 label: "Development Unit",
-                active: pathname.includes("/eduprima/main/ops/em/engagement/development"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/engagement/development", locale)),
                 icon: "heroicons:academic-cap",
               },
               {
-                href: "/eduprima/main/ops/em/engagement/relations",
+                href: addLocalePrefix("/eduprima/main/ops/em/engagement/relations", locale),
                 label: "Relations Unit",
-                active: pathname.includes("/eduprima/main/ops/em/engagement/relations"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/engagement/relations", locale)),
                 icon: "heroicons:handshake",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/ec
+    // If we're in ops/ec
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'ec') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Education Consulting",
         menus: [
           {
-            href: "/eduprima/main/ops/ec",
+            href: addLocalePrefix("/eduprima/main/ops/ec", locale),
             label: "Education Consulting",
             active: true,
             icon: "heroicons:academic-cap",
             children: [
               {
-                href: "/eduprima/main/ops/ec/consultation",
+                href: addLocalePrefix("/eduprima/main/ops/ec/consultation", locale),
                 label: "Consultation",
-                active: pathname.includes("/eduprima/main/ops/ec/consultation"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/ec/consultation", locale)),
                 icon: "heroicons:chat-bubble-left-right",
               },
               {
-                href: "/eduprima/main/ops/ec/training",
+                href: addLocalePrefix("/eduprima/main/ops/ec/training", locale),
                 label: "Training",
-                active: pathname.includes("/eduprima/main/ops/ec/training"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/ec/training", locale)),
                 icon: "heroicons:academic-cap",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
     
-    // Jika di halaman ops/adm
+    // If we're in ops/adm
     if (pathSegments[2] === 'ops' && pathSegments[3] === 'adm') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Admin",
         menus: [
           {
-            href: "/eduprima/main/ops/adm",
+            href: addLocalePrefix("/eduprima/main/ops/adm", locale),
             label: "Admin",
             active: true,
             icon: "heroicons:shield-check",
             children: [
               {
-                href: "/eduprima/main/ops/adm/users",
+                href: addLocalePrefix("/eduprima/main/ops/adm/users", locale),
                 label: "Users",
-                active: pathname.includes("/eduprima/main/ops/adm/users"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/adm/users", locale)),
                 icon: "heroicons:users",
               },
               {
-                href: "/eduprima/main/ops/adm/permissions",
+                href: addLocalePrefix("/eduprima/main/ops/adm/permissions", locale),
                 label: "Permissions",
-                active: pathname.includes("/eduprima/main/ops/adm/permissions"),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/adm/permissions", locale)),
                 icon: "heroicons:key",
               },
             ]
           }
         ],
-        staticMenus: getStaticMenus(pathname, t)
+        staticMenus: getStaticMenus(pathname, t, locale)
       };
     }
   }
-
-  // Default fallback untuk eduprima
+  
+  // Default fallback for eduprima
   return {
-    groupLabel: t("eduprima"),
+    groupLabel: "Eduprima",
     currentPage: "Eduprima",
     menus: [
       {
-        href: "/eduprima/main",
+        href: addLocalePrefix("/eduprima/main", locale),
         label: "Eduprima Main",
-        active: pathname === "/eduprima/main",
+        active: pathname === addLocalePrefix("/eduprima/main", locale),
         icon: "heroicons:home",
       }
-    ]
+    ],
+    staticMenus: getStaticMenus(pathname, t, locale)
   };
 }
 
-function getStaticMenus(pathname: string, t: any): DynamicMenuItem[] {
+function getStaticMenus(pathname: string, t: any, locale: string): DynamicMenuItem[] {
   return [
     {
       href: "https://chat.google.com",
-      label: t("chat"),
+      label: "Chat",
       active: false,
       icon: "heroicons-outline:chat",
       external: true,
     },
     {
       href: "https://trello.com/b/Cq8xUPCg/tutoring-operations",
-      label: t("kanban"),
+      label: "Kanban",
       active: false,
       icon: "heroicons-outline:view-boards",
       external: true,
     },
     {
       href: "https://chat.qontak.com",
-      label: t("crm"),
+      label: "CRM",
       active: false,
       icon: "heroicons-outline:share",
       external: true,
     },
     {
       href: "https://drive.google.com",
-      label: t("googleDrive"),
+      label: "Google Drive",
       active: false,
       icon: "heroicons-outline:cloud",
       external: true,
     },
     {
-      href: "/eduprima/settings",
-      label: t("systemSettings"),
-      active: pathname.includes("/eduprima/settings"),
+      href: addLocalePrefix("/eduprima/settings", locale),
+      label: "System Settings",
+      active: pathname.includes(addLocalePrefix("/eduprima/settings", locale)),
       icon: "heroicons-outline:cog-6-tooth",
     },
   ];
