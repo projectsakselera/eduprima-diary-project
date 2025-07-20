@@ -9,10 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon"
-import { signOut, auth } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import Image from "next/image";
 import { Link } from '@/i18n/routing';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import LogoutButton from "./logout-button";
 
 const ProfileInfo = async () => {
   const session = await auth();
@@ -113,20 +114,9 @@ const ProfileInfo = async () => {
 
           <DropdownMenuSeparator className="mb-0 dark:bg-background" />
           
+          {/* Client-side logout */}
           <DropdownMenuItem className="flex items-center gap-2 text-sm font-medium text-default-600 capitalize my-1 px-3 cursor-pointer">
-            <div>
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut();
-                }}
-              >
-                <button type="submit" className=" w-full  flex  items-center gap-2" >
-                  <Icon icon="heroicons:power" className="w-4 h-4" />
-                  Log out
-                </button>
-              </form>
-            </div>
+            <LogoutButton />
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -1,7 +1,7 @@
 {
-  "name": "EduPrima - Admin Dashboard",
-  "short_name": "EduPrima",
-  "description": "Professional admin dashboard with Next.js, TypeScript, and modern UI components",
+  "name": "Eduprima Space",
+  "short_name": "Eduprima Space",
+  "description": "Professional Education Management Dashboard - Eduprima Space",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,7 +9,7 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["business", "productivity"],
+  "categories": ["business", "productivity", "education"],
   "screenshots": [
     {
       "src": "/images/screenshot-wide.png",
