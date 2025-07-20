@@ -4,7 +4,6 @@ import HeaderSearch from './header-search'
 import ProfileInfo from './profile-info'
 import Notifications from './notifications'
 import Messages from "./messages"
-import { Cart } from './cart'
 import ThemeSwitcher from './theme-switcher'
 import { SidebarToggle } from '@/components/partials/sidebar/sidebar-toggle'
 import { DynamicSheetMenu } from '@/components/partials/sidebar/menu/dynamic-sheet-menu'
@@ -25,7 +24,6 @@ const EduPrimaHeader = async () => {
                 <div className="nav-tools flex items-center  md:gap-4 gap-3">
                     <LocalSwitcher />
                     <ThemeSwitcher />
-                    <Cart />
                     <Messages />
                     <Notifications />
                     <ProfileInfo />

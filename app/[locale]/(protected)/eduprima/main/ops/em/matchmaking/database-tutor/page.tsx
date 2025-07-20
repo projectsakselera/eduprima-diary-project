@@ -43,7 +43,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Upload
+  Upload,
+  UserPlus
 } from "lucide-react";
 import { useRouter } from "@/components/navigation";
 
@@ -63,71 +64,8 @@ interface Tutor {
 export default function DatabaseTutorPage() {
   const router = useRouter();
   
-  // Mock data
-  const mockTutors: Tutor[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@example.com',
-      phone: '+62 812-3456-7890',
-      subjects: ['Mathematics', 'Physics'],
-      skills: ['Problem Solving', 'Communication'],
-      hourlyRate: '150000',
-      status: 'active',
-      availability: ['Monday Morning', 'Tuesday Afternoon'],
-      joinDate: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Ahmad Rahman',
-      email: 'ahmad.rahman@example.com',
-      phone: '+62 813-4567-8901',
-      subjects: ['English', 'Indonesian'],
-      skills: ['Public Speaking', 'Leadership'],
-      hourlyRate: '120000',
-      status: 'active',
-      availability: ['Wednesday Evening', 'Thursday Morning'],
-      joinDate: '2024-02-20'
-    },
-    {
-      id: '3',
-      name: 'Maria Garcia',
-      email: 'maria.garcia@example.com',
-      phone: '+62 814-5678-9012',
-      subjects: ['Chemistry', 'Biology'],
-      skills: ['Critical Thinking', 'Analytical Skills'],
-      hourlyRate: '180000',
-      status: 'pending',
-      availability: ['Friday Afternoon', 'Saturday Morning'],
-      joinDate: '2024-03-10'
-    },
-    {
-      id: '4',
-      name: 'David Chen',
-      email: 'david.chen@example.com',
-      phone: '+62 815-6789-0123',
-      subjects: ['Computer Science', 'Mathematics'],
-      skills: ['Problem Solving', 'Creativity'],
-      hourlyRate: '200000',
-      status: 'inactive',
-      availability: ['Sunday Morning', 'Sunday Afternoon'],
-      joinDate: '2024-01-05'
-    },
-    {
-      id: '5',
-      name: 'Lisa Wong',
-      email: 'lisa.wong@example.com',
-      phone: '+62 816-7890-1234',
-      subjects: ['Economics', 'Accounting'],
-      skills: ['Analytical Skills', 'Time Management'],
-      hourlyRate: '160000',
-      status: 'active',
-      availability: ['Monday Evening', 'Tuesday Morning'],
-      joinDate: '2024-02-28'
-    }
-  ];
-
-  const [tutors, setTutors] = useState<Tutor[]>(mockTutors);
+  // Empty array - in the future this would come from API/database
+  const [tutors, setTutors] = useState<Tutor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
@@ -204,92 +142,106 @@ export default function DatabaseTutorPage() {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'destructive';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
+  const handleViewAll = () => {
+    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/view-all');
   };
 
-  const allSubjects = Array.from(new Set(tutors.flatMap(tutor => tutor.subjects)));
+  const handleAddTutor = () => {
+    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add');
+  };
+
+  const handleImportExport = () => {
+    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/import-export');
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Database Tutor</h1>
           <p className="text-muted-foreground">
-            Manage and view all tutors in the database
+            Manage tutor database for matchmaking process
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => router.push('/eduprima/main/ops/em/matchmaking/database-tutor/import-export')}>
-            <Upload className="mr-2 h-4 w-4" />
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleAddTutor} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Tutor
+          </Button>
+          <Button variant="outline" onClick={handleImportExport} className="gap-2">
+            <Upload className="h-4 w-4" />
             Import/Export
           </Button>
-          <Button onClick={() => router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Tutor
+          <Button variant="outline" onClick={handleViewAll} className="gap-2">
+            <Eye className="h-4 w-4" />
+            View All
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Tutors</p>
-                <p className="text-2xl font-bold">{tutors.length}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tutors</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{tutors.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Registered tutors in database
+            </p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{tutors.filter(t => t.status === 'active').length}</p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Tutors</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tutors.filter(t => t.status === 'active').length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Currently active and available
+            </p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">{tutors.filter(t => t.status === 'pending').length}</p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tutors.filter(t => t.status === 'pending').length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting approval
+            </p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <XCircle className="h-4 w-4 text-red-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Inactive</p>
-                <p className="text-2xl font-bold">{tutors.filter(t => t.status === 'inactive').length}</p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inactive Tutors</CardTitle>
+            <XCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tutors.filter(t => t.status === 'inactive').length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Currently not available
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Search */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -297,20 +249,21 @@ export default function DatabaseTutorPage() {
             Filters & Search
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tutors..."
+                placeholder="Search tutors by name, email, or phone..."
+                className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
               />
             </div>
+            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -319,22 +272,21 @@ export default function DatabaseTutorPage() {
                 <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
+            
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by subject" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Subject" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Subjects</SelectItem>
-                {allSubjects.map(subject => (
-                  <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-                ))}
+                <SelectItem value="Mathematics">Mathematics</SelectItem>
+                <SelectItem value="Physics">Physics</SelectItem>
+                <SelectItem value="Chemistry">Chemistry</SelectItem>
+                <SelectItem value="Biology">Biology</SelectItem>
+                <SelectItem value="English">English</SelectItem>
+                <SelectItem value="Indonesian">Indonesian</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex items-center justify-end">
-              <p className="text-sm text-muted-foreground">
-                {filteredAndSortedTutors.length} of {tutors.length} tutors
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -342,164 +294,139 @@ export default function DatabaseTutorPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Tutors List</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Tutor Database ({filteredAndSortedTutors.length} tutors)
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('name')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Name
-                      {sortField === 'name' ? (
-                        sortDirection === 'asc' ? (
-                          <ArrowUp className="ml-1 h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="ml-1 h-4 w-4" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="ml-1 h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Subjects</TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('hourlyRate')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Rate
-                      {sortField === 'hourlyRate' ? (
-                        sortDirection === 'asc' ? (
-                          <ArrowUp className="ml-1 h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="ml-1 h-4 w-4" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="ml-1 h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('status')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Status
-                      {sortField === 'status' ? (
-                        sortDirection === 'asc' ? (
-                          <ArrowUp className="ml-1 h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="ml-1 h-4 w-4" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="ml-1 h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('joinDate')}
-                      className="h-auto p-0 font-semibold"
-                    >
-                      Join Date
-                      {sortField === 'joinDate' ? (
-                        sortDirection === 'asc' ? (
-                          <ArrowUp className="ml-1 h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="ml-1 h-4 w-4" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="ml-1 h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[50px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedTutors.map((tutor) => (
-                  <TableRow key={tutor.id}>
-                    <TableCell className="font-medium">{tutor.name}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="text-sm">{tutor.email}</p>
-                        <p className="text-xs text-muted-foreground">{tutor.phone}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                                                 {tutor.subjects.slice(0, 2).map((subject) => (
-                           <Badge key={subject} className="text-xs bg-secondary text-secondary-foreground">
-                             {subject}
-                           </Badge>
-                         ))}
-                         {tutor.subjects.length > 2 && (
-                           <Badge className="text-xs bg-secondary text-secondary-foreground">
-                             +{tutor.subjects.length - 2} more
-                           </Badge>
-                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">
-                        IDR {parseInt(tutor.hourlyRate).toLocaleString()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(tutor.status)}
-                        <Badge color={getStatusBadgeColor(tutor.status)}>
-                          {getStatusText(tutor.status)}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(tutor.joinDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${tutor.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutor.id}`)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(tutor.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          {filteredAndSortedTutors.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <UserPlus className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <div className="text-lg font-medium text-muted-foreground mb-2">
+                No tutors found
+              </div>
+              <div className="text-sm text-muted-foreground text-center mb-6 max-w-md">
+                {tutors.length === 0 
+                  ? "Get started by adding your first tutor to the database."
+                  : "No tutors match your current filters. Try adjusting your search criteria."
+                }
+              </div>
+              {tutors.length === 0 && (
+                <Button onClick={handleAddTutor} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add First Tutor
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('name')} className="h-8 p-0">
+                        Name
+                        {sortField === 'name' && (
+                          sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+                        )}
+                        {sortField !== 'name' && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Subjects</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('joinDate')} className="h-8 p-0">
+                        Join Date
+                        {sortField === 'joinDate' && (
+                          sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+                        )}
+                        {sortField !== 'joinDate' && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedTutors.map((tutor) => (
+                    <TableRow key={tutor.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span>{tutor.name}</span>
+                          <span className="text-sm text-muted-foreground">{tutor.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{tutor.phone}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                                                 <div className="flex flex-wrap gap-1">
+                           {tutor.subjects.slice(0, 2).map((subject) => (
+                             <Badge key={subject} className="text-xs">
+                               {subject}
+                             </Badge>
+                           ))}
+                           {tutor.subjects.length > 2 && (
+                             <Badge className="text-xs">
+                               +{tutor.subjects.length - 2}
+                             </Badge>
+                           )}
+                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">
+                          Rp {parseInt(tutor.hourlyRate).toLocaleString('id-ID')}/hr
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(tutor.status)}
+                          <span className="capitalize">{getStatusText(tutor.status)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {new Date(tutor.joinDate).toLocaleDateString('id-ID')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${tutor.id}`)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutor.id}`)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(tutor.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

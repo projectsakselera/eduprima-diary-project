@@ -6,6 +6,7 @@ import ConditionalCustomizer from '@/components/partials/customizer/conditional-
 import DashCodeHeader from '@/components/partials/header'
 import { auth } from "@/lib/auth";
 import { redirect } from "@/components/navigation";
+import { AuthProvider } from "@/lib/auth-context";
 
 const layout = async ({ children }: { children: React.ReactNode }) => {
     const session = await auth();
@@ -14,15 +15,17 @@ const layout = async ({ children }: { children: React.ReactNode }) => {
         redirect({ href: '/', locale: 'en' })
     }
     return (
-        <LayoutProvider >
-            <ConditionalCustomizer />
-            <DashCodeHeader />
-            <DashCodeSidebar />
-            <LayoutContentProvider>
-                {children}
-            </LayoutContentProvider>
-            <DashCodeFooter />
-        </LayoutProvider>
+        <AuthProvider>
+            <LayoutProvider >
+                <ConditionalCustomizer />
+                <DashCodeHeader />
+                <DashCodeSidebar />
+                <LayoutContentProvider>
+                    {children}
+                </LayoutContentProvider>
+                <DashCodeFooter />
+            </LayoutProvider>
+        </AuthProvider>
     )
 };
 

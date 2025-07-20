@@ -11,9 +11,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from "zod";
 import { cn } from "@/lib/utils"
 import { Loader2 } from 'lucide-react';
-import { loginUser } from '@/action/auth-action';
 import { toast } from "sonner"
 import { useRouter } from '@/components/navigation';
+import { TestCredentials } from './test-credentials';
 
 const schema = z.object({
   email: z.string().email({ message: "Your email is invalid." }),
@@ -35,32 +35,47 @@ const LoginForm = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
     mode: "all",
     defaultValues: {
-      email: "adm@eduprima.id",
-      password: "password",
+      email: "amhar.idn@gmail.com",
+      password: "password123",
     },
   });
+
+  const handleCredentialSelect = (email: string, password: string) => {
+    setValue('email', email);
+    setValue('password', password);
+  };
 
   const onSubmit = (data: z.infer<typeof schema>) => {
     startTransition(async () => {
       try {
-        const response = await loginUser(data);
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
 
-        if (!!response.error) {
-          toast("Event has been created", {
-            description: "Sunday, December 03, 2023 at 9:00 AM",
+        const result = await response.json();
 
-          })
+        if (result.status === 'success') {
+          // Store user data in localStorage for session
+          localStorage.setItem('user', JSON.stringify(result.user));
+          
+          // Role-based redirect
+          router.push(result.redirect_url);
+          toast.success(result.message);
         } else {
-          router.push('/dashcode/dashboard/analytics');
-          toast.success("Successfully logged in");
+          toast.error(result.message);
         }
       } catch (err: any) {
-        toast.error(err.message);
+        toast.error('Login failed. Please try again.');
       }
     });
   };
@@ -138,6 +153,8 @@ const LoginForm = () => {
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isPending ? "Loading..." : "Sign In"}
       </Button>
+      
+      <TestCredentials onSelectCredentials={handleCredentialSelect} />
     </form>
   );
 };
