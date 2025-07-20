@@ -1,31 +1,16 @@
 {
-  "name": "Eduprima Space",
-  "short_name": "Eduprima Space",
-  "description": "Professional Education Management Dashboard - Eduprima Space",
+  "name": "Eduprima Diary",
+  "short_name": "Eduprima Diary",
+  "description": "A Journey of Building Civilization Together - Where every step in education becomes a meaningful story",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#1e293b",
   "orientation": "portrait-primary",
+  "categories": ["education", "diary", "civilization", "management", "journey"],
+  "lang": "en-US",
+  "dir": "ltr",
   "scope": "/",
-  "lang": "en",
-  "categories": ["business", "productivity", "education"],
-  "screenshots": [
-    {
-      "src": "/images/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard Overview"
-    },
-    {
-      "src": "/images/screenshot-narrow.png", 
-      "sizes": "720x1280",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile Dashboard"
-    }
-  ],
   "icons": [
     {
       "src": "/images/icon/icon-72x72.png",

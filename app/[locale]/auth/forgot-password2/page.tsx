@@ -56,7 +56,7 @@ const ForgotPass2 = () => {
               <Link href="/" className="flex gap-3 items-center text-white">
                 <Icon icon="ph:graduation-cap" className="h-16 w-16" />
                 <h1 className="text-3xl font-semibold">
-                  Eduprima Space
+                  Eduprima Diary
                 </h1>
               </Link>
             </div>
@@ -66,8 +66,8 @@ const ForgotPass2 = () => {
 
  max-w-[525px] mx-auto pb-20 text-center"
               >
-                🌍 Your Work Transforms
-                <span className="text-white font-bold ms-1">Human Future</span>
+                ⭐ Your Mission Continues
+                <span className="text-white font-bold ms-1">Elevating Humanity</span>
               </div>
             </div>
           </div>

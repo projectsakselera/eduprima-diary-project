@@ -24,7 +24,7 @@
   },
   "BankingDashboard": {
     "widget_title": "Selamat malam",
-    "widget_desc": "🚀 Siap untuk memajukan peradaban hari ini?",
+    "widget_desc": "🎯 Siap melanjutkan misi mulia hari ini?",
     "current_balance": "Saldo saat ini",
     "credit": "Kredit",
     "debit": "Debit",
@@ -43,7 +43,7 @@
   },
   "EcommerceDashboard": {
     "widget_title": "Selamat malam",
-    "widget_desc": "🌟 Membangun pemimpin masa depan bersama",
+    "widget_desc": "⭐ Membentuk warisan masa depan bersama",
     "revenue_chart_title": "Total Pendapatan",
     "revenue_report": "Laporan Pendapatan",
     "sold_chart_title": "Produk terjual",
@@ -123,7 +123,7 @@
     "add_to_cart": "Tambah ke Keranjang"
   },
   "Menu": {
-    "dashboard": "Dasbor",
+    "dashboard": "Peta Misi",
     "analytics": "Analitik",
     "banking": "Perbankan",
     "crm": "CRM",
@@ -157,7 +157,7 @@
     "faq": "FAQ",
     "invoice": "Faktur",
     "pricing": "Harga",
-    "profile": "Profil",
+    "profile": "Kronik",
     "settings": "Pengaturan",
     "elements": "Elemen",
     "components": "Komponen",
@@ -305,12 +305,12 @@
     "roleManagement": "Manajemen Peran",
     "backupRestore": "Backup & Restore",
     "sendFeedback": "Kirim Umpan Balik",
-    "feedbackDescription": "Mari tingkatkan Eduprima untuk pendidikan yang lebih baik",
+    "feedbackDescription": "Mari tingkatkan Eduprima Diary untuk misi mulia kita",
     "contactUs": "Hubungi Kami",
-    "welcomeMessage": "Selamat Datang di Eduprima",
-    "educationExcellence": "Keunggulan dalam Manajemen Pendidikan",
-    "empoweringTeachers": "Memberdayakan Guru, Menginspirasi Siswa",
-    "modernLearning": "Sistem Manajemen Pembelajaran Modern"
+    "welcomeMessage": "Selamat Datang di Eduprima Diary",
+    "educationExcellence": "Perjalanan Membangun Peradaban Bersama",
+    "empoweringTeachers": "Menginspirasi Pendidik, Meninggikan Martabat Manusia",
+    "modernLearning": "Di Mana Setiap Langkah Menjadi Kisah Bermakna"
   },
   "Changelog": {
     "version": "Versi",

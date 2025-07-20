@@ -19,11 +19,11 @@ import { useAuth } from '@/lib/auth-context';
 
 const tutorManagerMenus = [
   {
-    groupLabel: "Dashboard",
+    groupLabel: "Mission Control",
     menus: [
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor",
-        label: "Dashboard Overview",
+        label: "Mission Overview",
         active: false,
         icon: "heroicons:chart-bar",
       }

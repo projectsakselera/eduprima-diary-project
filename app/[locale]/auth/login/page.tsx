@@ -17,9 +17,9 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
                 <Logo />
               </Link>
               <h4>
-                🌍 Your Work Transforms
+                ⭐ Your Mission Continues
                 <span className="text-default-800 font-bold ms-2">
-                  Human Future
+                  Elevating Humanity
                 </span>
               </h4>
             </div>
@@ -43,9 +43,9 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
                   </Link>
                 </div>
                                   <div className="text-center 2xl:mb-10 mb-4">
-                    <h4 className="font-medium">Sign in</h4>
+                    <h4 className="font-medium">Continue Your Journey</h4>
                     <div className="text-default-500 text-base">
-                      🎯 Access your education dashboard
+                      ⚡ Resume your meaningful mission
                     </div>
                   </div>
                 <LoginForm />

@@ -28,14 +28,14 @@ const LockScreen3 = () => {
               <Link href="/" className="flex gap-2 items-center">
                 <Icon icon="ph:graduation-cap" className="text-primary h-12 w-12" />
                 <h1 className="text-2xl font-semibold text-default-900">
-                  Eduprima Space
+                  Eduprima Diary
                 </h1>
               </Link>
             </div>
                           <div className="text-center mb-10">
                 <h4 className="font-medium mb-4">Lock Screen</h4>
                 <div className="text-default-500 text-base">
-                  🔒 Secure your civilization-building workspace
+                  🛡️ Protect your noble mission workspace
                 </div>
               </div>
             <div className="author-bio text-center mt-10 mb-8">
@@ -66,8 +66,8 @@ const LockScreen3 = () => {
           </div>
         </div>
         <div className="absolute bottom-0 lg:block hidden text-white py-5 px-5 text-xl w-full">
-                          🌍 Your Work Transforms{" "}
-                <span className="text-white font-bold ms-1">Human Future</span>
+                          ⭐ Your Mission Continues{" "}
+                <span className="text-white font-bold ms-1">Elevating Humanity</span>
         </div>
       </div>
     </div>

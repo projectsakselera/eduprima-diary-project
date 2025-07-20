@@ -12,10 +12,10 @@ const EduPrimaFooter = async () => {
             <FooterContent>
                 <div className=' md:flex  justify-between text-default-600 hidden'>
                     <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
-                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Space, All rights Reserved
+                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Diary, All rights Reserved
                     </div>
                     <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
-                        🌱 Every process, every decision contributes to building a more enlightened and educated human civilization.
+                        ⚡ Every choice, every step forward in our quest to elevate humanity through wisdom and dedication.
                     </div>
                 </div>
                 <div className='flex md:hidden justify-around items-center'>
@@ -77,10 +77,10 @@ const EduPrimaFooter = async () => {
             <FooterContent>
                 <div className=' md:flex  justify-between text-default-600 hidden'>
                     <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
-                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Space, All rights Reserved
+                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Diary, All rights Reserved
                     </div>
                     <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
-                        🌱 Every process, every decision contributes to building a more enlightened and educated human civilization.
+                        ⚡ Every choice, every step forward in our quest to elevate humanity through wisdom and dedication.
                     </div>
                 </div>
             </FooterContent>

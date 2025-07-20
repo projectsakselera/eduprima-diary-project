@@ -17,9 +17,9 @@ const Register = () => {
               </Link>
 
               <h4>
-                🌍 Your Work Transforms
+                ⭐ Your Mission Continues
                 <span className="text-default-800  font-bold ms-2">
-                  Human Future
+                  Elevating Humanity
                 </span>
               </h4>
             </div>
@@ -43,9 +43,9 @@ const Register = () => {
                   </Link>
                 </div>
                                   <div className="text-center 2xl:mb-10 mb-5">
-                    <h4 className="font-medium">Sign up</h4>
+                    <h4 className="font-medium">Begin Your Quest</h4>
                     <div className="text-default-500  text-base">
-                      🌟 Join the mission to elevate humanity
+                      ⚡ Join the mission to elevate humanity
                     </div>
                   </div>
                 <RegForm />

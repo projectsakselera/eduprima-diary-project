@@ -14,9 +14,9 @@ import DirectionProvider from "@/providers/direction-provider";
 import AuthProvider from "@/providers/auth.provider";
 
 export const metadata: Metadata = {
-  title: "Eduprima Space - Professional Education Management Dashboard",
-  description: "Modern education management dashboard built with Next.js, TypeScript, and Tailwind CSS. Features analytics, student management, course management and more.",
-  keywords: ["education dashboard", "react", "next.js", "typescript", "tailwind css", "analytics", "student management", "course management"],
+  title: "Eduprima Diary - A Journey of Building Civilization Together",
+  description: "Where every step in education becomes a meaningful story. Chronicle your mission to elevate humanity through wisdom, dedication, and noble purpose.",
+  keywords: ["education diary", "civilization building", "education journey", "mission chronicle", "wisdom sharing", "noble purpose", "staff development", "meaningful education"],
   authors: [{ name: "Eduprima Team" }],
   creator: "Eduprima",
   publisher: "Eduprima",
@@ -27,31 +27,31 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://dashcode-app.vercel.app'),
   openGraph: {
-    title: "Eduprima Space - Professional Education Management Dashboard",
-    description: "Modern education management dashboard built with Next.js, TypeScript, and Tailwind CSS",
+    title: "Eduprima Diary - A Journey of Building Civilization Together",
+    description: "Where every step in education becomes a meaningful story. Chronicle your mission to elevate humanity.",
     type: "website",
     locale: "en_US",
-    siteName: "Eduprima Space",
+    siteName: "Eduprima Diary",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Eduprima Space - Professional Education Management Dashboard",
-    description: "Modern education management dashboard built with Next.js, TypeScript, and Tailwind CSS",
+    title: "Eduprima Diary - A Journey of Building Civilization Together",
+    description: "Where every step in education becomes a meaningful story. Chronicle your mission to elevate humanity.",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Eduprima Space",
+    title: "Eduprima Diary",
   },
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "Eduprima Space",
-    "msapplication-TileColor": "#000000",
+    "apple-mobile-web-app-title": "Eduprima Diary",
+    "msapplication-TileColor": "#1e293b",
     "msapplication-config": "/browserconfig.xml",
-    "theme-color": "#000000",
+    "theme-color": "#1e293b",
   },
 };
 

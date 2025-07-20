@@ -16,7 +16,7 @@ const config: DocsThemeConfig = {
     key: "1.0-release",
     text: (
               <a href="/dashcode/dashboard" target="_blank">
-        🌍 Building Tomorrow's Civilization through Education
+        ⚡ Forging Wisdom and Shaping Tomorrow's Legacy
       </a>
     ),
   },

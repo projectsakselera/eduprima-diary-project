@@ -24,7 +24,7 @@
   },
   "BankingDashboard": {
     "widget_title": "Good evening",
-    "widget_desc": "🚀 Ready to advance civilization today?",
+    "widget_desc": "🎯 Ready to continue the mission today?",
     "current_balance": "Current balance",
     "credit": "Credit",
     "debit": "Debit",
@@ -43,7 +43,7 @@
   },
   "EcommerceDashboard": {
     "widget_title": "Good evening",
-    "widget_desc": "🌟 Building tomorrow's leaders together",
+    "widget_desc": "⭐ Shaping tomorrow's legacy together",
     "revenue_chart_title": "Total Revenue",
     "revenue_report": "Revenue Report",
     "sold_chart_title": "Products sold",
@@ -124,7 +124,7 @@
     
   },
   "Menu": {
-    "dashboard": "Dashboard",
+    "dashboard": "Mission Map",
     "analytics": "Analytics",
     "banking": "Banking",
     "crm": "Crm",
@@ -158,7 +158,7 @@
     "faq": "Faq",
     "invoice": "Invoice",
     "pricing": "Pricing",
-    "profile": "Profile",
+    "profile": "Chronicle",
     "settings": "Settings",
     "elements": "Elements",
     "components": "Components",
@@ -306,12 +306,12 @@
     "roleManagement": "Role Management",
     "backupRestore": "Backup & Restore",
     "sendFeedback": "Send Feedback",
-    "feedbackDescription": "Let's improve Eduprima for better education",
+    "feedbackDescription": "Let's elevate Eduprima Diary for our noble mission",
     "contactUs": "Contact Us",
-    "welcomeMessage": "Welcome to Eduprima",
-    "educationExcellence": "Excellence in Education Management",
-    "empoweringTeachers": "Empowering Teachers, Inspiring Students",
-    "modernLearning": "Modern Learning Management System"
+    "welcomeMessage": "Welcome to Eduprima Diary",
+    "educationExcellence": "A Journey of Building Civilization Together",
+    "empoweringTeachers": "Inspiring Educators, Elevating Humanity",
+    "modernLearning": "Where Every Step Becomes a Meaningful Story"
   },
   "Changelog": {
     "version": "Version's",

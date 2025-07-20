@@ -98,7 +98,7 @@ const WidgetPage = () => {
                   <span className="block">Mr. Dianne Russell</span>
                 </div>
                 <p className="text-sm text-default-900 dark:text-default-100 font-normal">
-                  🚀 Ready to advance civilization today?
+                  🎯 Ready to continue the mission today?
                 </p>
               </div>
             </div>
