@@ -1,6 +1,7 @@
 {
-  "name": "dashcode-next2.0-typescript",
+  "name": "eduprima-space",
   "version": "0.1.0",
+  "description": "Eduprima Space - Professional Education Management Dashboard",
   "private": true,
   "scripts": {
     "dev": "next dev",
