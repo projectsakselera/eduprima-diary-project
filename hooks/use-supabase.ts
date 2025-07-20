@@ -8,9 +8,16 @@ export function useSupabase() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const client = supabase // Create a local reference to ensure TypeScript knows it's not null
+
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await client.auth.getSession()
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -19,7 +26,7 @@ export function useSupabase() {
     getInitialSession()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
@@ -56,6 +63,13 @@ export function useSupabaseQuery<T>(
     const fetchData = async () => {
       try {
         setLoading(true)
+        
+        if (!supabase) {
+          setError('Supabase client not configured')
+          setLoading(false)
+          return
+        }
+
         let queryBuilder = supabase.from(table).select(query?.select || '*')
 
         // Apply filters

@@ -28,6 +28,11 @@ export function SupabaseExample() {
   })
 
   const handleSignUp = async () => {
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -46,6 +51,11 @@ export function SupabaseExample() {
   }
 
   const handleSignIn = async () => {
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -59,6 +69,11 @@ export function SupabaseExample() {
   }
 
   const handleSignOut = async () => {
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return
+    }
+
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error('Error signing out:', error.message)

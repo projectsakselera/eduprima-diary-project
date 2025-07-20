@@ -29,6 +29,12 @@ export function SupabaseDataViewer() {
       setLoading(true)
       setError(null)
       
+      if (!supabase) {
+        setError('Supabase client not configured')
+        setLoading(false)
+        return false
+      }
+      
       const { data, error } = await supabase
         .from(tableName)
         .select('*')

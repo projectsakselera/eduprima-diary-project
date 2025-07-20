@@ -106,7 +106,7 @@ export default function ViewTutorPage() {
             Tutor not found
           </div>
           <div className="text-sm text-muted-foreground text-center mb-8 max-w-md">
-            The tutor you're looking for doesn't exist or may have been removed from the database.
+            The tutor you&apos;re looking for doesn&apos;t exist or may have been removed from the database.
           </div>
           <div className="flex gap-2">
             <Button onClick={handleBack} variant="outline">

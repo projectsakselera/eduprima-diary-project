@@ -54,7 +54,7 @@ const Notifications = () => {
                                     No notifications
                                 </div>
                                 <div className="text-xs text-default-400 text-center mt-1">
-                                    You're all caught up
+                                    You&apos;re all caught up
                                 </div>
                             </div>
                         ) : (

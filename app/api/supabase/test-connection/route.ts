@@ -1,33 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Test koneksi dengan query sederhana
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .limit(1)
-    
-    if (error) {
-      return NextResponse.json({ 
-        status: 'error',
-        message: error.message,
-        code: error.code,
-        details: error.details
-      })
+    if (!supabase) {
+      return NextResponse.json({
+        connected: false,
+        error: 'Supabase client not configured'
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ 
-      status: 'success',
-      message: 'Supabase connection successful',
-      data: data
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .limit(1)
+    
+    return NextResponse.json({
+      connected: true,
+      message: 'Successfully connected to Supabase',
+      hasData: data && data.length > 0
     })
-  } catch (error) {
-    return NextResponse.json({ 
-      status: 'error',
-      message: 'Failed to connect to Supabase',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    })
+  } catch (error: any) {
+    return NextResponse.json({
+      connected: false,
+      error: error.message
+    }, { status: 500 })
   }
 } 

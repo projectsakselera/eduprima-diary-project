@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from "sonner"
 import { useRouter } from '@/components/navigation';
 import { TestCredentials } from './test-credentials';
+import { signIn } from "next-auth/react"
 
 const schema = z.object({
   email: z.string().email({ message: "Your email is invalid." }),
@@ -54,25 +55,34 @@ const LoginForm = () => {
   const onSubmit = (data: z.infer<typeof schema>) => {
     startTransition(async () => {
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
+        // Use NextAuth signIn instead of custom API
+        const result = await signIn('credentials', {
+          email: data.email,
+          password: data.password,
+          redirect: false,
         });
 
-        const result = await response.json();
+        if (result?.ok && !result?.error) {
+          // Check user role for redirect
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
 
-        if (result.status === 'success') {
-          // Store user data in localStorage for session
-          localStorage.setItem('user', JSON.stringify(result.user));
+          const loginResult = await response.json();
           
-          // Role-based redirect
-          router.push(result.redirect_url);
-          toast.success(result.message);
+          if (loginResult.status === 'success') {
+            // Redirect based on role
+            router.push(loginResult.redirect_url);
+            toast.success('Login successful!');
+          } else {
+            toast.error(loginResult.message);
+          }
         } else {
-          toast.error(result.message);
+          toast.error(result?.error || 'Login failed. Please try again.');
         }
       } catch (err: any) {
         toast.error('Login failed. Please try again.');

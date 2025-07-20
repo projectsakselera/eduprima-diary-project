@@ -5,15 +5,12 @@ const admin = new SupabaseAdmin()
 
 export async function GET() {
   try {
-    const { data: users, error } = await admin.supabase
-      .from('t_310_01_01_users_universal')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const users = await admin.getAllUsers()
     
     return NextResponse.json({
       status: 'success',
       data: users,
-      count: users.length
+      count: users?.length || 0
     })
   } catch (error: any) {
     return NextResponse.json({

@@ -123,7 +123,7 @@ export default function EditTutorPage() {
             Tutor not found
           </div>
           <div className="text-sm text-muted-foreground text-center mb-8 max-w-md">
-            The tutor you're trying to edit doesn't exist or may have been removed from the database.
+            The tutor you&apos;re trying to edit doesn&apos;t exist or may have been removed from the database.
           </div>
           <div className="flex gap-2">
             <Button onClick={handleBack} variant="outline">

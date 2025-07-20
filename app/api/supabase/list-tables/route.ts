@@ -3,6 +3,13 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase client not configured' },
+        { status: 500 }
+      )
+    }
+
     // Coba ambil data dari beberapa tabel yang umum
     const commonTables = ['users', 'profiles', 'posts', 'products', 'orders', 'customers']
     const tableData: any = {}
