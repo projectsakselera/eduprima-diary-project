@@ -55,7 +55,7 @@ export function DynamicSheetMenu() {
                             className="text-primary h-8 w-8" 
                         />
                         <h1 className="text-xl font-semibold text-default-900">
-                            {isEduprima ? "Eduprima LMS" : "Eduprima Space"}
+                            Eduprima Diary
                         </h1>
                     </Link>
                 </SheetHeader>

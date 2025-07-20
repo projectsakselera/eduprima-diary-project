@@ -27,7 +27,7 @@ const Logo = () => {
             <Icon icon="ph:graduation-cap" className="text-primary h-8 w-8" />
             {(!config?.collapsed || hovered) && (
                 <h1 className="text-xl font-semibold text-default-900 ">
-                    Eduprima Space
+                    Eduprima Diary
                 </h1>
             )}
         </Link>

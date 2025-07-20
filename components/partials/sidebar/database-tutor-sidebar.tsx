@@ -96,7 +96,7 @@ export function DatabaseTutorSidebar() {
                         {!collapsed && (
                             <div>
                                 <h1 className="text-lg font-bold text-default-900">
-                                    Eduprima Space
+                                    Eduprima Diary
                                 </h1>
                                 <p className="text-xs text-default-500">
                                     Tutor Database Management

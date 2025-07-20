@@ -1,7 +1,7 @@
 {
   "name": "eduprima-space",
   "version": "0.1.0",
-  "description": "Eduprima Space - Professional Education Management Dashboard",
+  "description": "Eduprima Diary - A Journey of Building Civilization Together",
   "private": true,
   "scripts": {
     "dev": "next dev",
