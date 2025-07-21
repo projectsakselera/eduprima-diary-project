@@ -53,6 +53,18 @@ const tutorManagerMenus = [
     ]
   },
   {
+    groupLabel: "AI & Machine Learning",
+    menus: [
+      {
+        href: "/eduprima/main/ops/em/matchmaking/subject-recommendation",
+        label: "Subject Recommendation",
+        active: false,
+        icon: "ph:brain",
+        badge: "AI"
+      }
+    ]
+  },
+  {
     groupLabel: "Reports & Analytics",
     menus: [
       {

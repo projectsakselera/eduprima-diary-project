@@ -41,6 +41,11 @@ const ProfileInfo = async () => {
       name: "Change Password",
       icon: "heroicons:lock-closed", 
       href: "/eduprima/main/change-password"
+    },
+    {
+      name: "Break Time",
+      icon: "heroicons:clock", 
+      href: "/eduprima/break-time"
     }
   ];
 

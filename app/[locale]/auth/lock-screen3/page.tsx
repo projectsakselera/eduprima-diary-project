@@ -17,7 +17,7 @@ const LockScreen3 = () => {
             <Link href="/" className="flex gap-3 items-center text-white">
               <Icon icon="ph:graduation-cap" className="h-16 w-16" />
               <h1 className="text-3xl font-semibold">
-                Eduprima Space
+                Eduprima Diary
               </h1>
             </Link>
           </div>
