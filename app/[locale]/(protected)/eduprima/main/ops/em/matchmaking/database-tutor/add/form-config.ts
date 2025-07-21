@@ -1,3 +1,30 @@
+// Helper function to generate year options
+const generateYearOptions = (startYear: number, endYear: number) => {
+  const options = [];
+  for (let year = endYear; year >= startYear; year--) {
+    options.push({ value: year.toString(), label: year.toString() });
+  }
+  return options;
+};
+
+// Helper function to generate month-year options
+const generateMonthYearOptions = (startYear: number, endYear: number) => {
+  const options = [];
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  
+  for (let year = endYear; year >= startYear; year--) {
+    for (let month = 11; month >= 0; month--) {
+      const value = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const label = `${months[month]} ${year}`;
+      options.push({ value, label });
+    }
+  }
+  return options;
+};
+
 export interface FormField {
   name: string;
   label: string;
@@ -12,6 +39,7 @@ export interface FormField {
   multiple?: boolean; // for select/checkbox
   min?: number;
   max?: number;
+  step?: number; // for number inputs
   rows?: number; // for textarea
   size?: 'sm' | 'default' | 'md' | 'lg';
   color?: 'default' | 'primary' | 'secondary' | 'info' | 'warning' | 'success' | 'destructive';
@@ -58,13 +86,29 @@ export interface TutorFormData {
   noHp1: string;
   noHp2?: string;
   
-  // Address Information
-  alamat: string;
-  kelurahan: string;
-  kecamatan: string;
-  kotaKabupaten: string;
-  provinsi: string;
-  kodePos?: string;
+  // New Profile Identity Fields
+  headline?: string;
+  deskripsiDiri?: string;
+  socialMedia1?: string;
+  socialMedia2?: string;
+  bahasaYangDikuasai: string[];
+  
+  // Address Information - Domisili
+  alamatDomisili: string;
+  kelurahanDomisili: string;
+  kecamatanDomisili: string;
+  kotaKabupatenDomisili: string;
+  provinsiDomisili: string;
+  kodePosDomisili?: string;
+  
+  // Address Information - KTP/KK
+  alamatSamaDenganKTP?: boolean;
+  alamatKTP?: string;
+  kelurahanKTP?: string;
+  kecamatanKTP?: string;
+  kotaKabupatenKTP?: string;
+  provinsiKTP?: string;
+  kodePosKTP?: string;
   
   // Banking Information
   namaNasabah: string;
@@ -72,22 +116,53 @@ export interface TutorFormData {
   namaBank: string;
   cabangBank?: string;
   
-  // Professional Information
-  pendidikanTerakhir: string;
-  universitas?: string;
+  // Professional Information - Updated Education Fields
+  statusAkademik?: string;
+  namaUniversitasS1?: string;
+  fakultasS1?: string;
+  jurusanS1?: string;
+  namaUniversitas?: string;
+  fakultas?: string;
   jurusan?: string;
+  akreditasiJurusan?: string;
   ipk?: number;
-  pengalamanMengajar: number;
+  tahunMasuk?: string;
+  tahunLulus?: string;
+  transkripNilai?: File | string | null;
+  namaSMA?: string;
+  jurusanSMA?: string;
+  jurusanSMKDetail?: string;
+  tahunLulusSMA?: string;
+  ijazahSMA?: File | string | null;
+  
+  // Alternative Learning Background (for "Lainnya")
+  namaInstitusi?: string;
+  bidangKeahlian?: string;
+  pengalamanBelajar?: string;
+  sertifikatKeahlian?: File | string | null;
+  
+  // Professional Profile & Experience
+  motivasiMenjadiTutor?: string;
+  keahlianSpesialisasi?: string;
+  keahlianLainnya?: string;
+  
+  // Teaching Experience - Simplified
+  pengalamanMengajar?: string;
+  pengalamanLainRelevan?: string;
+  
+  // Achievements & Credentials - Simplified
+  prestasiAkademik?: string;
+  prestasiNonAkademik?: string;
+  sertifikasiPelatihan?: string;
+  
+  // Teaching Configuration (legacy)
   sertifikasi?: string;
   tariffPerJam: number;
   metodePengajaran: string[];
   jadwalTersedia: string[];
   
-  // Profile Information
+  // Profile Information (legacy - kept for compatibility)
   motivasi: string;
-  pengalamanLain?: string;
-  prestasiAkademik?: string;
-  bahasaYangDikuasai: string[];
   
   // Subject Information - Mata Pelajaran per Kategori
   mataPelajaran_SD_Kelas_1_6_: string[];
@@ -107,6 +182,11 @@ export interface TutorFormData {
   wilayahKecamatan?: string[];
   radiusMengajar?: number;
   catatan_lokasi?: string;
+  
+  // Location Coordinates
+  titikLokasiLat?: number;
+  titikLokasiLng?: number;
+  alamatTitikLokasi?: string;
   
   // Documents
   dokumenIdentitas?: File | string | null;
@@ -160,6 +240,16 @@ const validationRules = {
     if (value < 50000) return 'Tarif minimal Rp 50.000';
     if (value > 1000000) return 'Tarif maksimal Rp 1.000.000';
     return null;
+  },
+  headline: (value: string) => {
+    if (!value) return null;
+    if (value.length > 100) return 'Headline maksimal 100 karakter';
+    return null;
+  },
+  socialMedia: (value: string) => {
+    if (!value) return null;
+    const urlRegex = /^https?:\/\/(www\.)?(instagram|linkedin|youtube|tiktok|facebook|twitter)\.com\/.+$/i;
+    return !urlRegex.test(value) ? 'URL media sosial tidak valid. Gunakan link Instagram, LinkedIn, YouTube, TikTok, Facebook, atau Twitter' : null;
   }
 };
 
@@ -183,23 +273,157 @@ export const dynamicOptions = {
   ],
   
   namaBank: [
-    { value: 'BCA', label: 'Bank Central Asia (BCA)' },
-    { value: 'BRI', label: 'Bank Rakyat Indonesia (BRI)' },
-    { value: 'BNI', label: 'Bank Negara Indonesia (BNI)' },
-    { value: 'Mandiri', label: 'Bank Mandiri' },
+    // 4 Bank Utama (Gratis Transfer Antar Bank)
+    { value: 'BCA', label: 'Bank Central Asia (BCA) - Gratis Transfer' },
+    { value: 'BRI', label: 'Bank Rakyat Indonesia (BRI) - Gratis Transfer' },
+    { value: 'BNI', label: 'Bank Negara Indonesia (BNI) - Gratis Transfer' },
+    { value: 'Mandiri', label: 'Bank Mandiri - Gratis Transfer' },
+    
+    // Bank Umum Nasional
     { value: 'CIMB', label: 'CIMB Niaga' },
     { value: 'Danamon', label: 'Bank Danamon' },
     { value: 'Permata', label: 'Bank Permata' },
-    { value: 'BSI', label: 'Bank Syariah Indonesia (BSI)' }
+    { value: 'BSI', label: 'Bank Syariah Indonesia (BSI)' },
+    { value: 'Panin', label: 'Bank Panin' },
+    { value: 'OCBC', label: 'Bank OCBC NISP' },
+    { value: 'UOB', label: 'Bank UOB Indonesia' },
+    { value: 'Citibank', label: 'Citibank Indonesia' },
+    { value: 'HSBC', label: 'HSBC Indonesia' },
+    { value: 'Standard Chartered', label: 'Standard Chartered Bank' },
+    { value: 'DBS', label: 'Bank DBS Indonesia' },
+    { value: 'Maybank', label: 'Bank Maybank Indonesia' },
+    { value: 'BTPN', label: 'Bank BTPN' },
+    { value: 'BTPN Syariah', label: 'Bank BTPN Syariah' },
+    { value: 'Bank Mega', label: 'Bank Mega' },
+    { value: 'Bank Sinarmas', label: 'Bank Sinarmas' },
+    { value: 'Bank Mestika', label: 'Bank Mestika Dharma' },
+    { value: 'Bank Victoria', label: 'Bank Victoria International' },
+    { value: 'Bank Jatim', label: 'Bank Jatim' },
+    { value: 'Bank DKI', label: 'Bank DKI' },
+    { value: 'Bank Jabar', label: 'Bank Jabar Banten' },
+    { value: 'Bank Sumut', label: 'Bank Sumut' },
+    { value: 'Bank Kalsel', label: 'Bank Kalsel' },
+    { value: 'Bank Kaltim', label: 'Bank Kaltim' },
+    { value: 'Bank Sulselbar', label: 'Bank Sulselbar' },
+    { value: 'Bank Sultra', label: 'Bank Sultra' },
+    { value: 'Bank Maluku', label: 'Bank Maluku' },
+    { value: 'Bank Papua', label: 'Bank Papua' },
+    { value: 'Bank Aceh', label: 'Bank Aceh' },
+    { value: 'Bank Nagari', label: 'Bank Nagari' },
+    { value: 'Bank Riau', label: 'Bank Riau Kepri' },
+    { value: 'Bank Jambi', label: 'Bank Jambi' },
+    { value: 'Bank Sumsel', label: 'Bank Sumsel Babel' },
+    { value: 'Bank Bengkulu', label: 'Bank Bengkulu' },
+    { value: 'Bank Lampung', label: 'Bank Lampung' },
+    { value: 'Bank Banten', label: 'Bank Banten' },
+    { value: 'Bank NTB', label: 'Bank NTB Syariah' },
+    { value: 'Bank NTT', label: 'Bank NTT' },
+    { value: 'Bank Kalbar', label: 'Bank Kalbar' },
+    { value: 'Bank Kalteng', label: 'Bank Kalteng' },
+    { value: 'Bank Kaltara', label: 'Bank Kaltara' },
+    { value: 'Bank Sulut', label: 'Bank Sulut' },
+    { value: 'Bank Sulteng', label: 'Bank Sulteng' },
+    { value: 'Bank Gorontalo', label: 'Bank Gorontalo' },
+    { value: 'Bank Malut', label: 'Bank Malut' },
+    { value: 'Bank Maluku', label: 'Bank Maluku' },
+    { value: 'Bank Papua', label: 'Bank Papua' },
+    
+    // Bank Syariah
+    { value: 'Bank Muamalat', label: 'Bank Muamalat Indonesia' },
+    { value: 'Bank Mega Syariah', label: 'Bank Mega Syariah' },
+    { value: 'Bank Victoria Syariah', label: 'Bank Victoria Syariah' },
+    { value: 'Bank Jabar Syariah', label: 'Bank Jabar Banten Syariah' },
+    { value: 'Bank Sumut Syariah', label: 'Bank Sumut Syariah' },
+    { value: 'Bank Kalsel Syariah', label: 'Bank Kalsel Syariah' },
+    { value: 'Bank Sulselbar Syariah', label: 'Bank Sulselbar Syariah' },
+    { value: 'Bank Aceh Syariah', label: 'Bank Aceh Syariah' },
+    { value: 'Bank Nagari Syariah', label: 'Bank Nagari Syariah' },
+    { value: 'Bank Riau Syariah', label: 'Bank Riau Kepri Syariah' },
+    { value: 'Bank Jambi Syariah', label: 'Bank Jambi Syariah' },
+    { value: 'Bank Sumsel Syariah', label: 'Bank Sumsel Babel Syariah' },
+    { value: 'Bank Bengkulu Syariah', label: 'Bank Bengkulu Syariah' },
+    { value: 'Bank Lampung Syariah', label: 'Bank Lampung Syariah' },
+    { value: 'Bank Banten Syariah', label: 'Bank Banten Syariah' },
+    { value: 'Bank NTB Syariah', label: 'Bank NTB Syariah' },
+    { value: 'Bank NTT Syariah', label: 'Bank NTT Syariah' },
+    { value: 'Bank Kalbar Syariah', label: 'Bank Kalbar Syariah' },
+    { value: 'Bank Kalteng Syariah', label: 'Bank Kalteng Syariah' },
+    { value: 'Bank Kaltara Syariah', label: 'Bank Kaltara Syariah' },
+    { value: 'Bank Sulut Syariah', label: 'Bank Sulut Syariah' },
+    { value: 'Bank Sulteng Syariah', label: 'Bank Sulteng Syariah' },
+    { value: 'Bank Gorontalo Syariah', label: 'Bank Gorontalo Syariah' },
+    { value: 'Bank Malut Syariah', label: 'Bank Malut Syariah' },
+    { value: 'Bank Maluku Syariah', label: 'Bank Maluku Syariah' },
+    { value: 'Bank Papua Syariah', label: 'Bank Papua Syariah' },
+    
+    // Bank Digital/Neo Bank
+    { value: 'Bank Jago', label: 'Bank Jago' },
+    { value: 'Bank Aladin', label: 'Bank Aladin Syariah' },
+    { value: 'Bank Seabank', label: 'Bank Seabank Indonesia' },
+    { value: 'Bank Line', label: 'Bank Line by Hana Bank' },
+    { value: 'Bank Nobu', label: 'Bank Nobu Indonesia' },
+    { value: 'Bank Sahabat Sampoerna', label: 'Bank Sahabat Sampoerna' },
+    { value: 'Bank Ina Perdana', label: 'Bank Ina Perdana' },
+    { value: 'Bank Maspion', label: 'Bank Maspion Indonesia' },
+    { value: 'Bank Ganesha', label: 'Bank Ganesha' },
+    { value: 'Bank ICB Bumiputera', label: 'Bank ICB Bumiputera' },
+    { value: 'Bank Yudha Bhakti', label: 'Bank Yudha Bhakti' },
+    { value: 'Bank Mitraniaga', label: 'Bank Mitraniaga' },
+    { value: 'Bank Multi Arta Sentosa', label: 'Bank Multi Arta Sentosa' },
+    { value: 'Bank Central Asia Tbk', label: 'Bank Central Asia Tbk' },
+    { value: 'Bank Rakyat Indonesia Tbk', label: 'Bank Rakyat Indonesia Tbk' },
+    { value: 'Bank Negara Indonesia Tbk', label: 'Bank Negara Indonesia Tbk' },
+    { value: 'Bank Mandiri Tbk', label: 'Bank Mandiri Tbk' },
+    { value: 'Bank CIMB Niaga Tbk', label: 'Bank CIMB Niaga Tbk' },
+    { value: 'Bank Danamon Indonesia Tbk', label: 'Bank Danamon Indonesia Tbk' },
+    { value: 'Bank Permata Tbk', label: 'Bank Permata Tbk' },
+    { value: 'Bank Syariah Indonesia Tbk', label: 'Bank Syariah Indonesia Tbk' },
+    { value: 'Bank Panin Tbk', label: 'Bank Panin Tbk' },
+    { value: 'Bank OCBC NISP Tbk', label: 'Bank OCBC NISP Tbk' },
+    { value: 'Bank UOB Indonesia Tbk', label: 'Bank UOB Indonesia Tbk' },
+    { value: 'Bank Citibank Indonesia Tbk', label: 'Bank Citibank Indonesia Tbk' },
+    { value: 'Bank HSBC Indonesia Tbk', label: 'Bank HSBC Indonesia Tbk' },
+    { value: 'Bank Standard Chartered Indonesia Tbk', label: 'Bank Standard Chartered Indonesia Tbk' },
+    { value: 'Bank DBS Indonesia Tbk', label: 'Bank DBS Indonesia Tbk' },
+    { value: 'Bank Maybank Indonesia Tbk', label: 'Bank Maybank Indonesia Tbk' },
+    { value: 'Bank BTPN Tbk', label: 'Bank BTPN Tbk' },
+    { value: 'Bank BTPN Syariah Tbk', label: 'Bank BTPN Syariah Tbk' },
+    { value: 'Bank Mega Tbk', label: 'Bank Mega Tbk' },
+    { value: 'Bank Sinarmas Tbk', label: 'Bank Sinarmas Tbk' },
+    { value: 'Bank Mestika Dharma Tbk', label: 'Bank Mestika Dharma Tbk' },
+    { value: 'Bank Victoria International Tbk', label: 'Bank Victoria International Tbk' },
+    { value: 'Bank Jatim Tbk', label: 'Bank Jatim Tbk' },
+    { value: 'Bank DKI Tbk', label: 'Bank DKI Tbk' },
+    { value: 'Bank Jabar Banten Tbk', label: 'Bank Jabar Banten Tbk' },
+    { value: 'Bank Sumut Tbk', label: 'Bank Sumut Tbk' },
+    { value: 'Bank Kalsel Tbk', label: 'Bank Kalsel Tbk' },
+    { value: 'Bank Kaltim Tbk', label: 'Bank Kaltim Tbk' },
+    { value: 'Bank Sulselbar Tbk', label: 'Bank Sulselbar Tbk' },
+    { value: 'Bank Sultra Tbk', label: 'Bank Sultra Tbk' },
+    { value: 'Bank Maluku Tbk', label: 'Bank Maluku Tbk' },
+    { value: 'Bank Papua Tbk', label: 'Bank Papua Tbk' },
+    { value: 'Bank Aceh Tbk', label: 'Bank Aceh Tbk' },
+    { value: 'Bank Nagari Tbk', label: 'Bank Nagari Tbk' },
+    { value: 'Bank Riau Kepri Tbk', label: 'Bank Riau Kepri Tbk' },
+    { value: 'Bank Jambi Tbk', label: 'Bank Jambi Tbk' },
+    { value: 'Bank Sumsel Babel Tbk', label: 'Bank Sumsel Babel Tbk' },
+    { value: 'Bank Bengkulu Tbk', label: 'Bank Bengkulu Tbk' },
+    { value: 'Bank Lampung Tbk', label: 'Bank Lampung Tbk' },
+    { value: 'Bank Banten Tbk', label: 'Bank Banten Tbk' },
+    { value: 'Bank NTB Syariah Tbk', label: 'Bank NTB Syariah Tbk' },
+    { value: 'Bank NTT Tbk', label: 'Bank NTT Tbk' },
+    { value: 'Bank Kalbar Tbk', label: 'Bank Kalbar Tbk' },
+    { value: 'Bank Kalteng Tbk', label: 'Bank Kalteng Tbk' },
+    { value: 'Bank Kaltara Tbk', label: 'Bank Kaltara Tbk' },
+    { value: 'Bank Sulut Tbk', label: 'Bank Sulut Tbk' },
+    { value: 'Bank Sulteng Tbk', label: 'Bank Sulteng Tbk' },
+    { value: 'Bank Gorontalo Tbk', label: 'Bank Gorontalo Tbk' },
+    { value: 'Bank Malut Tbk', label: 'Bank Malut Tbk' },
+    { value: 'Bank Maluku Tbk', label: 'Bank Maluku Tbk' },
+    { value: 'Bank Papua Tbk', label: 'Bank Papua Tbk' }
   ],
   
-  pendidikanTerakhir: [
-    { value: 'SMA/SMK', label: 'SMA/SMK' },
-    { value: 'D3', label: 'Diploma 3 (D3)' },
-    { value: 'S1', label: 'Sarjana (S1)' },
-    { value: 'S2', label: 'Magister (S2)' },
-    { value: 'S3', label: 'Doktor (S3)' }
-  ],
+
   
   // Mata Pelajaran berdasarkan kategori/tingkatan
   mataPelajaranKategori: {
@@ -434,7 +658,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:gear-six'
         },
         {
           name: 'status_tutor',
@@ -485,7 +710,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:user-circle'
         },
         {
           name: 'fotoProfil',
@@ -533,8 +759,8 @@ export const tutorFormConfig: FormConfig = {
           name: 'email',
           label: 'Email Aktif',
           type: 'email',
-          placeholder: 'contoh@eduprima.id',
-          helperText: 'Email untuk login sistem dan komunikasi.',
+          placeholder: 'nama@gmail.com',
+          helperText: '(Wajib Gmail / Google)',
           icon: 'ph:envelope',
           size: 'lg'
         },
@@ -557,65 +783,216 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
 
-        // === INFORMASI ALAMAT ===
+        // === PROFIL & VALUE PROPOSITION ===
         {
-          name: 'section_alamat',
-          label: 'INFORMASI ALAMAT',
+          name: 'section_profil_value',
+          label: 'PROFIL & VALUE PROPOSITION',
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:star'
         },
         {
-          name: 'alamat',
-          label: 'Alamat Lengkap',
+          name: 'headline',
+          label: 'Headline/Tagline Tutor',
+          type: 'text',
+          placeholder: 'Guru Matematika Berpengalaman | Spesialis UTBK & OSN | Metode Fun Learning',
+          helperText: 'Value proposition singkat yang menarik perhatian siswa dan orang tua. Maksimal 100 karakter.',
+          icon: 'ph:megaphone',
+          size: 'lg'
+        },
+        {
+          name: 'deskripsiDiri',
+          label: 'Deskripsi Diri/Bio Tutor',
+          type: 'textarea',
+          placeholder: 'Saya lulusan Matematika UI dengan pengalaman 5 tahun mengajar. Sudah membimbing 200+ siswa masuk PTN favorit. Menggunakan metode visual dan games untuk membuat matematika jadi menyenangkan. Siswa saya rata-rata naik 30 poin dalam 3 bulan.',
+          rows: 4,
+          helperText: 'Ceritakan pengalaman, metode unik, atau pencapaian yang membuat Anda berbeda dari tutor lain.',
+          icon: 'ph:user-circle-plus',
+          size: 'lg'
+        },
+        {
+          name: 'motivasiMenjadiTutor',
+          label: 'Motivasi Menjadi Tutor',
+          type: 'textarea',
+          required: true,
+          rows: 6,
+          placeholder: 'Ceritakan mengapa Anda tertarik mengajar serta visi Anda sebagai seorang pendidik...',
+          helperText: 'Ceritakan mengapa Anda tertarik mengajar serta visi Anda sebagai seorang pendidik. Jawaban Anda akan menjadi bagian penting di halaman profil publik Anda untuk menunjukkan passion Anda. (Disarankan 300-1500 karakter).',
+          icon: 'ph:heart',
+          size: 'lg'
+        },
+        {
+          name: 'socialMedia1',
+          label: 'Link Media Sosial 1 (Opsional)',
+          type: 'text',
+          placeholder: 'https://www.instagram.com/username atau https://www.linkedin.com/in/username',
+          helperText: 'Link Instagram, LinkedIn, atau media sosial profesional lainnya untuk menambah kredibilitas.',
+          icon: 'ph:link',
+          size: 'lg'
+        },
+        {
+          name: 'socialMedia2',
+          label: 'Link Media Sosial 2 (Opsional)',
+          type: 'text',
+          placeholder: 'https://www.youtube.com/channel/xxx atau https://www.tiktok.com/@username',
+          helperText: 'Link media sosial kedua (YouTube, TikTok, Facebook, dll) untuk menunjukkan aktivitas mengajar online.',
+          icon: 'ph:link',
+          size: 'lg'
+        },
+        {
+          name: 'bahasaYangDikuasai',
+          label: 'Bahasa yang Dikuasai',
+          type: 'checkbox',
+          options: dynamicOptions.bahasaYangDikuasai,
+          multiple: true,
+          helperText: 'Centang bahasa yang Anda kuasai untuk mengajar.',
+          icon: 'ph:translate'
+        },
+
+        // === ALAMAT DOMISILI SAAT INI ===
+        {
+          name: 'section_alamat_domisili',
+          label: 'ALAMAT DOMISILI (TEMPAT TINGGAL SAAT INI)',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:house'
+        },
+        {
+          name: 'alamatDomisili',
+          label: 'Alamat Lengkap Domisili',
           type: 'textarea',
           placeholder: 'Masukkan alamat lengkap (Jalan, RT/RW, Komplek, dll)',
           rows: 3,
           icon: 'ph:house',
-          size: 'lg'
+          size: 'lg',
+          required: true
         },
         {
-          name: 'kelurahan',
+          name: 'kelurahanDomisili',
           label: 'Kelurahan/Desa',
           type: 'text',
           placeholder: 'Nama kelurahan atau desa',
           icon: 'ph:buildings',
-          size: 'lg'
+          size: 'lg',
+          required: true
         },
         {
-          name: 'kecamatan',
+          name: 'kecamatanDomisili',
           label: 'Kecamatan',
           type: 'text',
           placeholder: 'Nama kecamatan',
           icon: 'ph:buildings',
-          size: 'lg'
+          size: 'lg',
+          required: true
         },
         {
-          name: 'kotaKabupaten',
+          name: 'kotaKabupatenDomisili',
           label: 'Kota/Kabupaten',
           type: 'text',
           placeholder: 'Nama kota atau kabupaten',
           icon: 'ph:city',
-          size: 'lg'
+          size: 'lg',
+          required: true
         },
         {
-          name: 'provinsi',
+          name: 'provinsiDomisili',
           label: 'Provinsi',
           type: 'select',
           placeholder: 'Pilih provinsi...',
           options: dynamicOptions.provinsi,
           icon: 'ph:map-trifold',
-          size: 'lg'
+          size: 'lg',
+          required: true
         },
         {
-          name: 'kodePos',
+          name: 'kodePosDomisili',
           label: 'Kode Pos (Opsional)',
           type: 'text',
           placeholder: '12345',
           helperText: 'Kode pos wilayah tempat tinggal.',
           icon: 'ph:envelope',
           size: 'lg'
+        },
+        
+        // === CHECKBOX ALAMAT SAMA ===
+        {
+          name: 'alamatSamaDenganKTP',
+          label: 'Alamat domisili saya sama dengan alamat di KTP/KK',
+          type: 'checkbox',
+          helperText: 'Centang jika alamat domisili sama dengan alamat di KTP/KK untuk mengisi otomatis.',
+          icon: 'ph:check-square'
+        },
+        
+        // === ALAMAT SESUAI KTP/KK ===
+        {
+          name: 'section_alamat_ktp',
+          label: 'ALAMAT SESUAI KTP/KK (OPSIONAL)',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:identification-card'
+        },
+        {
+          name: 'alamatKTP',
+          label: 'Alamat Lengkap KTP/KK',
+          type: 'textarea',
+          placeholder: 'Masukkan alamat lengkap sesuai KTP/KK (Jalan, RT/RW, Komplek, dll)',
+          rows: 3,
+          icon: 'ph:identification-card',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
+        },
+        {
+          name: 'kelurahanKTP',
+          label: 'Kelurahan/Desa KTP/KK',
+          type: 'text',
+          placeholder: 'Nama kelurahan atau desa sesuai KTP/KK',
+          icon: 'ph:buildings',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
+        },
+        {
+          name: 'kecamatanKTP',
+          label: 'Kecamatan KTP/KK',
+          type: 'text',
+          placeholder: 'Nama kecamatan sesuai KTP/KK',
+          icon: 'ph:buildings',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
+        },
+        {
+          name: 'kotaKabupatenKTP',
+          label: 'Kota/Kabupaten KTP/KK',
+          type: 'text',
+          placeholder: 'Nama kota atau kabupaten sesuai KTP/KK',
+          icon: 'ph:city',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
+        },
+        {
+          name: 'provinsiKTP',
+          label: 'Provinsi KTP/KK',
+          type: 'select',
+          placeholder: 'Pilih provinsi...',
+          options: dynamicOptions.provinsi,
+          icon: 'ph:map-trifold',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
+        },
+        {
+          name: 'kodePosKTP',
+          label: 'Kode Pos KTP/KK (Opsional)',
+          type: 'text',
+          placeholder: '12345',
+          helperText: 'Kode pos wilayah sesuai KTP/KK.',
+          icon: 'ph:envelope',
+          size: 'lg',
+          conditional: (data) => !data.alamatSamaDenganKTP
         },
 
         // === INFORMASI BANK ===
@@ -625,7 +1002,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:bank'
         },
         {
           name: 'namaNasabah',
@@ -673,164 +1051,431 @@ export const tutorFormConfig: FormConfig = {
       icon: 'ph:graduation-cap',
       color: 'warning',
       fields: [
-        // === LATAR BELAKANG PENDIDIKAN ===
+        // === RIWAYAT PENDIDIKAN ===
         {
           name: 'section_pendidikan',
-          label: 'LATAR BELAKANG PENDIDIKAN',
+          label: 'A. RIWAYAT PENDIDIKAN',
           type: 'text',
           disabled: true,
-          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          helperText: 'Informasi ini akan kami verifikasi dengan dokumen yang Anda unggah.',
+          className: 'section-divider',
+          icon: 'ph:graduation-cap'
         },
         {
-          name: 'pendidikanTerakhir',
-          label: 'Pendidikan Terakhir',
+          name: 'statusAkademik',
+          label: 'Status Akademik Saat Ini',
           type: 'select',
-          placeholder: 'Pilih pendidikan terakhir...',
-          options: dynamicOptions.pendidikanTerakhir,
-          icon: 'ph:certificate',
+          required: true,
+          placeholder: 'Pilih status Anda yang paling sesuai saat ini...',
+          options: [
+            { value: 'mahasiswa_s1', label: 'Mahasiswa Aktif S1/D4' },
+            { value: 'mahasiswa_s2', label: 'Mahasiswa Aktif S2/S3' },
+            { value: 'lulusan_s1', label: 'Lulusan S1/D4' },
+            { value: 'lulusan_s2', label: 'Lulusan S2/S3' },
+            { value: 'lulusan_d3', label: 'Lulusan D3' },
+            { value: 'lulusan_sma', label: 'Lulusan SMA/Sederajat' },
+            { value: 'lainnya', label: 'Lainnya' }
+          ],
+          helperText: 'Pilih status Anda yang paling sesuai saat ini.',
+          icon: 'ph:user-circle',
           size: 'lg'
         },
         {
-          name: 'universitas',
-          label: 'Nama Universitas/Institusi',
+          name: 'section_pendidikan_tinggi',
+          label: 'PENDIDIKAN TINGGI',
           type: 'text',
-          placeholder: 'Nama universitas atau institusi pendidikan',
-          helperText: 'Tempat menempuh pendidikan terakhir.',
-          conditional: (data) => ['S1', 'S2', 'S3', 'D3'].includes(data.pendidikanTerakhir),
+          disabled: true,
+          helperText: '(Bagian di bawah ini akan muncul jika status yang dipilih adalah Mahasiswa atau Lulusan Perguruan Tinggi)',
+          className: 'section-divider',
+          icon: 'ph:building',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik)
+        },
+        {
+          name: 'namaUniversitasS1',
+          label: 'Nama Universitas / Institusi S1',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Universitas Gadjah Mada',
+          helperText: 'Nama lengkap universitas atau institusi S1 sebelumnya.',
+          conditional: (data) => ['mahasiswa_s2', 'lulusan_s2'].includes(data.statusAkademik),
           icon: 'ph:building',
           size: 'lg'
         },
         {
-          name: 'jurusan',
-          label: 'Program Studi/Jurusan',
+          name: 'fakultasS1',
+          label: 'Fakultas S1',
           type: 'text',
-          placeholder: 'Nama program studi atau jurusan',
-          conditional: (data) => ['S1', 'S2', 'S3', 'D3'].includes(data.pendidikanTerakhir),
+          placeholder: 'Contoh: Fakultas Teknik',
+          helperText: 'Nama fakultas S1 (opsional).',
+          conditional: (data) => ['mahasiswa_s2', 'lulusan_s2'].includes(data.statusAkademik),
+          icon: 'ph:buildings',
+          size: 'lg'
+        },
+        {
+          name: 'jurusanS1',
+          label: 'Jurusan / Program Studi S1',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Teknik Informatika',
+          helperText: 'Nama jurusan atau program studi S1.',
+          conditional: (data) => ['mahasiswa_s2', 'lulusan_s2'].includes(data.statusAkademik),
           icon: 'ph:books',
           size: 'lg'
         },
         {
+          name: 'namaUniversitas',
+          label: 'Nama Universitas / Institusi',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Universitas Gadjah Mada',
+          helperText: 'Nama lengkap universitas atau institusi pendidikan tinggi terakhir.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:building',
+          size: 'lg'
+        },
+        {
+          name: 'fakultas',
+          label: 'Fakultas',
+          type: 'text',
+          placeholder: 'Contoh: Fakultas Teknik',
+          helperText: 'Nama fakultas (opsional).',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:buildings',
+          size: 'lg'
+        },
+        {
+          name: 'jurusan',
+          label: 'Jurusan / Program Studi',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Teknik Informatika',
+          helperText: 'Nama jurusan atau program studi yang diambil.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:books',
+          size: 'lg'
+        },
+        {
+          name: 'akreditasiJurusan',
+          label: 'Akreditasi Jurusan (Saat Lulus/Saat Ini)',
+          type: 'select',
+          placeholder: 'Pilih akreditasi jurusan...',
+          options: [
+            { value: 'A', label: 'Unggul / A' },
+            { value: 'B', label: 'Baik Sekali / B' },
+            { value: 'C', label: 'Baik / C' },
+            { value: 'belum', label: 'Belum Terakreditasi' }
+          ],
+          helperText: 'Pilih akreditasi jurusan saat ini atau saat lulus.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:star',
+          size: 'lg'
+        },
+        {
           name: 'ipk',
-          label: 'IPK/Rata-rata Nilai',
+          label: 'IPK Terakhir',
           type: 'number',
-          placeholder: '3.50',
-          min: 2.0,
+          required: true,
+          placeholder: '3.75',
+          min: 0.0,
           max: 4.0,
-          helperText: 'IPK dalam skala 4.0 atau rata-rata nilai.',
-          conditional: (data) => ['S1', 'S2', 'S3', 'D3'].includes(data.pendidikanTerakhir),
+          step: 0.01,
+          helperText: 'Gunakan format desimal dengan titik, contoh: 3.75. Hanya isi dengan angka.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
           icon: 'ph:trophy',
           size: 'lg'
         },
-
-        // === PENGALAMAN & KEAHLIAN ===
         {
-          name: 'section_keahlian',
-          label: 'PENGALAMAN & KEAHLIAN',
+          name: 'section_periode_studi',
+          label: 'PERIODE STUDI',
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:calendar',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik)
         },
         {
-          name: 'pengalamanMengajar',
-          label: 'Pengalaman Mengajar (Tahun)',
-          type: 'number',
-          placeholder: '2',
-          min: 0,
-          max: 50,
-          helperText: 'Total pengalaman mengajar dalam tahun (0 jika baru).',
-          icon: 'ph:clock',
+          name: 'tahunMasuk',
+          label: 'Tahun Masuk',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih tahun masuk...',
+          options: generateYearOptions(1990, new Date().getFullYear()),
+          helperText: 'Tahun mulai kuliah.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:calendar',
           size: 'lg'
         },
         {
-          name: 'sertifikasi',
-          label: 'Sertifikasi/Kualifikasi Khusus',
+          name: 'tahunLulus',
+          label: 'Tahun Lulus',
+          type: 'select',
+          placeholder: 'Pilih tahun lulus...',
+          options: generateYearOptions(1990, new Date().getFullYear() + 5),
+          helperText: 'Kosongkan jika Anda masih mahasiswa aktif.',
+          conditional: (data) => ['lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:calendar-check',
+          size: 'lg'
+        },
+        {
+          name: 'transkripNilai',
+          label: 'Transkrip Nilai Terakhir',
+          type: 'file',
+          required: true,
+          accept: 'image/*,.pdf',
+          helperText: 'Unggah transkrip nilai terakhir Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
+          icon: 'ph:file-text',
+          size: 'lg'
+        },
+        {
+          name: 'section_pendidikan_menengah',
+          label: 'PENDIDIKAN MENENGAH ATAS',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:school',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya'
+        },
+        {
+          name: 'namaSMA',
+          label: 'Nama SMA / SMK / Sederajat',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: SMAN 8 Yogyakarta',
+          helperText: 'Nama lengkap sekolah menengah atas.',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya',
+          icon: 'ph:school',
+          size: 'lg'
+        },
+        {
+          name: 'jurusanSMA',
+          label: 'Jurusan',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih jurusan yang diambil...',
+          options: [
+            { value: 'IPA', label: 'IPA' },
+            { value: 'IPS', label: 'IPS' },
+            { value: 'Bahasa', label: 'Bahasa' },
+            { value: 'SMK', label: 'SMK, sebutkan jurusan' }
+          ],
+          helperText: 'Pilih jurusan yang diambil.',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya',
+          icon: 'ph:book-open',
+          size: 'lg'
+        },
+        {
+          name: 'jurusanSMKDetail',
+          label: 'Jurusan SMK',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Teknik Komputer dan Jaringan',
+          helperText: 'Sebutkan jurusan SMK yang diambil.',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya' && data.jurusanSMA === 'SMK',
+          icon: 'ph:gear',
+          size: 'lg'
+        },
+        {
+          name: 'tahunLulusSMA',
+          label: 'Tahun Lulus',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih tahun lulus...',
+          options: generateYearOptions(1990, new Date().getFullYear()),
+          helperText: 'Tahun lulus dari SMA/SMK.',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya',
+          icon: 'ph:calendar-check',
+          size: 'lg'
+        },
+        {
+          name: 'ijazahSMA',
+          label: 'Ijazah SMA / Sederajat',
+          type: 'file',
+          required: true,
+          accept: 'image/*,.pdf',
+          helperText: 'Unggah ijazah atau Surat Keterangan Lulus (SKL) Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya',
+          icon: 'ph:file-text',
+          size: 'lg'
+        },
+
+        // === LATAR BELAKANG LAINNYA ===
+        {
+          name: 'section_latar_belakang_lainnya',
+          label: 'LATAR BELAKANG PEMBELAJARAN',
+          type: 'text',
+          disabled: true,
+          helperText: 'Kami menghargai semua bentuk pembelajaran, baik formal maupun non-formal.',
+          className: 'section-divider',
+          icon: 'ph:lightbulb',
+          conditional: (data) => data.statusAkademik === 'lainnya'
+        },
+        {
+          name: 'namaInstitusi',
+          label: 'Nama Lembaga / Institusi',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Kursus Online, Bootcamp, Self-Learning, dll.',
+          helperText: 'Tuliskan nama institusi terakhir Anda belajar atau sumber pembelajaran utama.',
+          conditional: (data) => data.statusAkademik === 'lainnya',
+          icon: 'ph:graduation-cap',
+          size: 'lg'
+        },
+        {
+          name: 'bidangKeahlian',
+          label: 'Bidang Keahlian / Spesialisasi',
+          type: 'text',
+          required: true,
+          placeholder: 'Contoh: Web Development, Data Science, Digital Marketing, dll.',
+          helperText: 'Bidang utama yang Anda kuasai dan akan diajarkan.',
+          conditional: (data) => data.statusAkademik === 'lainnya',
+          icon: 'ph:target',
+          size: 'lg'
+        },
+        {
+          name: 'pengalamanBelajar',
+          label: 'Pengalaman Pembelajaran',
           type: 'textarea',
-          placeholder: 'Sebutkan sertifikat, pelatihan, atau kualifikasi khusus yang dimiliki',
-          rows: 3,
-          helperText: 'Opsional: Sertifikat pendidik, kursus, atau kualifikasi lainnya.',
+          required: true,
+          rows: 4,
+          placeholder: 'Ceritakan perjalanan pembelajaran Anda, sertifikat yang dimiliki, proyek yang pernah dikerjakan, atau pengalaman relevan lainnya...',
+          helperText: 'Jelaskan bagaimana Anda memperoleh keahlian dan pengalaman di bidang yang akan Anda ajarkan.',
+          conditional: (data) => data.statusAkademik === 'lainnya',
+          icon: 'ph:book-open',
+          size: 'lg'
+        },
+        {
+          name: 'sertifikatKeahlian',
+          label: 'Sertifikat / Portofolio Keahlian',
+          type: 'file',
+          accept: 'image/*,.pdf',
+          helperText: 'Unggah sertifikat, portofolio, atau dokumen yang menunjukkan keahlian Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          conditional: (data) => data.statusAkademik === 'lainnya',
+          icon: 'ph:certificate',
+          size: 'lg'
+        },
+
+        // === PROFIL PROFESIONAL & PENGALAMAN ===
+        {
+          name: 'section_profil_profesional',
+          label: 'PROFIL PROFESIONAL & PENGALAMAN',
+          type: 'text',
+          disabled: true,
+          helperText: 'Bagian ini adalah inti dari profil Anda. Isilah dengan lengkap dan jujur untuk membangun kepercayaan calon siswa dan orang tua.',
+          className: 'section-divider',
+          icon: 'ph:briefcase'
+        },
+        
+        // === A. KEAHLIAN ===
+        {
+          name: 'section_keahlian',
+          label: 'A. KEAHLIAN',
+          type: 'text',
+          disabled: true,
+          helperText: 'Tuliskan keahlian dan spesialisasi Anda secara detail.',
+          className: 'section-divider',
+          icon: 'ph:star'
+        },
+        {
+          name: 'keahlianSpesialisasi',
+          label: 'Keahlian & Spesialisasi',
+          type: 'textarea',
+          required: true,
+          rows: 5,
+          placeholder: 'Contoh:\n• Spesialis Persiapan UTBK/SNBT - Matematika & Fisika\n• Kurikulum Internasional (Cambridge A-Level)\n• Metode Mengajar Interaktif (Fun Learning)\n• Persiapan Tes Bahasa (TOEFL/IELTS)\n• Coding & Pemrograman (Python, JavaScript)',
+          helperText: 'Tuliskan semua keahlian yang Anda kuasai (minimal 3). Gunakan bullet points (•) atau numbering. Ini akan menjadi filter utama bagi siswa untuk menemukan Anda.',
+          icon: 'ph:star',
+          size: 'lg'
+        },
+        {
+          name: 'keahlianLainnya',
+          label: 'Keahlian Lainnya (jika ada)',
+          type: 'text',
+          placeholder: 'Public Speaking, Penulisan Kreatif, Desain Grafis',
+          helperText: 'Gunakan koma untuk memisahkan keahlian lain, contoh: Public Speaking, Penulisan Kreatif.',
+          icon: 'ph:plus-circle',
+          size: 'lg'
+        },
+
+        // === B. PENGALAMAN ===
+        {
+          name: 'section_pengalaman',
+          label: 'B. PENGALAMAN',
+          type: 'text',
+          disabled: true,
+          helperText: 'Jelaskan pengalaman Anda secara terstruktur dengan detail yang lengkap.',
+          className: 'section-divider',
+          icon: 'ph:briefcase'
+        },
+
+        {
+          name: 'pengalamanMengajar',
+          label: 'Pengalaman Mengajar',
+          type: 'textarea',
+          required: true,
+          rows: 8,
+          placeholder: 'Contoh:\n\n1. Guru Privat Matematika & Fisika (2020 - Sekarang)\n   • Ruangguru & Privat Mandiri\n   • Mengajar siswa SMA kelas 10-12 persiapan UTBK\n   • Berhasil meningkatkan rata-rata skor matematika siswa 40 poin\n   • 50+ siswa berhasil masuk PTN favorit\n\n2. Asisten Dosen Fisika Dasar (2019-2021)\n   • Laboratorium Fisika ITB\n   • Membimbing praktikum mahasiswa S1 Teknik\n   • Menyusun modul praktikum dan soal ujian\n\n3. Tentor Online Kimia (2018-2020)\n   • Platform Zenius & Quipper\n   • Membuat video pembelajaran untuk siswa SMA\n   • Total 100+ video dengan 500K+ views',
+          helperText: 'Tuliskan semua pengalaman mengajar Anda secara kronologis. Sertakan nama institusi, periode, jenjang siswa, mata pelajaran, dan pencapaian spesifik.',
+          icon: 'ph:chalkboard-teacher',
+          size: 'lg'
+        },
+        {
+          name: 'pengalamanLainRelevan',
+          label: 'Pengalaman Lain yang Relevan',
+          type: 'textarea',
+          rows: 6,
+          placeholder: 'Contoh:\n\n1. Ketua Himpunan Mahasiswa Matematika (2019-2020)\n   • Mengorganisir seminar dan workshop untuk 500+ mahasiswa\n   • Melatih kemampuan public speaking dan leadership\n   • Mengelola tim 30 orang\n\n2. Penulis Artikel Edukasi (2018-Sekarang)\n   • Blog "BelajarMatematika.id" dengan 50K+ pembaca bulanan\n   • Menulis 200+ artikel tentang tips belajar matematika\n   • Meningkatkan kemampuan komunikasi tertulis\n\n3. Volunteer Pengajar Daerah 3T (2019)\n   • Program Indonesia Mengajar di Kalimantan\n   • Mengajar matematika & fisika di daerah terpencil\n   • Mengembangkan empati dan adaptabilitas dalam mengajar',
+          helperText: 'Opsional: Pengalaman kerja, organisasi, atau aktivitas lain yang menunjang kemampuan mengajar dan komunikasi Anda.',
+          icon: 'ph:lightbulb',
+          size: 'lg'
+        },
+
+        // === C. PRESTASI & SERTIFIKASI ===
+        {
+          name: 'section_prestasi_sertifikasi',
+          label: 'C. PRESTASI & SERTIFIKASI',
+          type: 'text',
+          disabled: true,
+          helperText: 'Tunjukkan pencapaian dan sertifikasi untuk membangun kredibilitas.',
+          className: 'section-divider',
+          icon: 'ph:trophy'
+        },
+
+        {
+          name: 'prestasiAkademik',
+          label: 'Prestasi Akademik',
+          type: 'textarea',
+          rows: 5,
+          placeholder: 'Contoh:\n\n• Juara 1 Olimpiade Sains Nasional (OSN) Matematika 2024 - Tingkat Nasional\n• Mahasiswa Berprestasi Tingkat Fakultas MIPA UGM 2023\n• Summa Cum Laude dengan IPK 3.95/4.00 dari Program Studi Matematika\n• Best Paper Award pada Seminar Nasional Matematika dan Aplikasinya 2023\n• Penerima Beasiswa Unggulan Kemendikbud 2020-2024',
+          helperText: 'Opsional: Prestasi akademik seperti olimpiade, penghargaan kampus, beasiswa, atau pencapaian akademis lainnya.',
+          icon: 'ph:trophy',
+          size: 'lg'
+        },
+        {
+          name: 'prestasiNonAkademik',
+          label: 'Prestasi Non-Akademik',
+          type: 'textarea',
+          rows: 5,
+          placeholder: 'Contoh:\n\n• Juara 2 Kompetisi Debat Nasional "Indonesia Berkiprah" 2023\n• Best Speaker pada Model United Nations Jakarta 2022\n• Finalis Lomba Karya Tulis Ilmiah Nasional 2023\n• Ketua Terpilih Organisasi Kemahasiswaan dengan 2000+ anggota\n• Koordinator Program Pengabdian Masyarakat yang melayani 500+ peserta',
+          helperText: 'Opsional: Prestasi non-akademik seperti lomba debat, karya tulis, kepemimpinan, atau pencapaian lainnya yang menunjang kemampuan komunikasi dan mengajar.',
           icon: 'ph:medal',
           size: 'lg'
         },
         {
-          name: 'tariffPerJam',
-          label: 'Tarif per Jam (IDR)',
-          type: 'number',
-          placeholder: '150000',
-          min: 50000,
-          max: 1000000,
-          helperText: 'Tarif mengajar per jam dalam Rupiah (Rp 50.000 - Rp 1.000.000).',
-          icon: 'ph:money',
+          name: 'sertifikasiPelatihan',
+          label: 'Sertifikasi & Pelatihan',
+          type: 'textarea',
+          rows: 6,
+          placeholder: 'Contoh:\n\n• TOEFL iBT Score 110/120 - ETS (Valid until 2026)\n• Microsoft Certified: Azure Fundamentals - Microsoft (2023)\n• Google Analytics Individual Qualification (IQ) - Google (2024)\n• Sertifikat Pendidik Profesional - Kemendikbud Ristek (2023)\n• Advanced Python Programming - Coursera Stanford University (2022)\n• Digital Marketing Specialist - HubSpot Academy (2023)\n• Public Speaking & Presentation Skills - Dale Carnegie (2024)',
+          helperText: 'Opsional: Sertifikat profesional, pelatihan, kursus online, atau kredensial lain yang mendukung kemampuan mengajar dan keahlian Anda.',
+          icon: 'ph:certificate',
           size: 'lg'
-        },
-        {
-          name: 'metodePengajaran',
-          label: 'Metode Pengajaran',
-          type: 'checkbox',
-          options: dynamicOptions.metodePengajaran,
-          multiple: true,
-          helperText: 'Pilih metode pengajaran yang dikuasai tutor.',
-          icon: 'ph:chalkboard-teacher'
-        },
-        {
-          name: 'jadwalTersedia',
-          label: 'Jadwal Tersedia',
-          type: 'checkbox',
-          options: dynamicOptions.jadwalTersedia,
-          multiple: true,
-          helperText: 'Pilih waktu-waktu tutor tersedia untuk mengajar.',
-          icon: 'ph:calendar-check'
         },
 
-        // === PROFIL & MOTIVASI ===
-        {
-          name: 'section_profil',
-          label: 'PROFIL & MOTIVASI',
-          type: 'text',
-          disabled: true,
-          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
-        },
-        {
-          name: 'motivasi',
-          label: 'Motivasi Menjadi Tutor',
-          type: 'textarea',
-          placeholder: 'Motivasi dan visi tutor sebagai educator...',
-          rows: 4,
-          helperText: 'Motivasi dan visi sebagai educator.',
-          icon: 'ph:heart',
-          size: 'lg'
-        },
-        {
-          name: 'pengalamanLain',
-          label: 'Pengalaman Lain yang Relevan',
-          type: 'textarea',
-          placeholder: 'Pengalaman kerja, organisasi, atau aktivitas lain yang mendukung profesi sebagai tutor...',
-          rows: 3,
-          helperText: 'Opsional: Pengalaman yang menunjang kemampuan mengajar.',
-          icon: 'ph:briefcase',
-          size: 'lg'
-        },
-        {
-          name: 'prestasiAkademik',
-          label: 'Prestasi Akademik/Non-Akademik',
-          type: 'textarea',
-          placeholder: 'Prestasi, penghargaan, atau pencapaian yang pernah diraih...',
-          rows: 3,
-          helperText: 'Opsional: Prestasi yang dapat menunjang kredibilitas sebagai tutor.',
-          icon: 'ph:trophy',
-          size: 'lg'
-        },
-        {
-          name: 'bahasaYangDikuasai',
-          label: 'Bahasa yang Dikuasai',
-          type: 'checkbox',
-          options: dynamicOptions.bahasaYangDikuasai,
-          multiple: true,
-          helperText: 'Pilih bahasa yang bisa digunakan tutor dalam mengajar.',
-          icon: 'ph:translate'
-        }
+
+
       ]
     },
 
@@ -848,7 +1493,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:book-open'
         },
         // SD (Kelas 1-6)
         {
@@ -968,7 +1614,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:map-pin'
         },
         {
           name: 'wilayahKota',
@@ -1001,6 +1648,19 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:circle',
           size: 'lg'
         },
+
+        {
+          name: 'alamatTitikLokasi',
+          label: 'Titik Lokasi Acuan Pencarian Siswa',
+          type: 'textarea', // Changed to textarea to make it full width like other textarea fields
+          placeholder: 'Contoh: Mall Senayan City Jakarta atau Jl. Sudirman Jakarta...',
+          helperText: 'Titik acuan approximate untuk dispatch siswa. Boleh gunakan landmark terdekat atau area yang mudah dijangkau.',
+          icon: 'ph:house-line',
+          size: 'lg',
+          rows: 2,
+          className: 'map-picker-field'
+        },
+
         {
           name: 'catatan_lokasi',
           label: 'Catatan Lokasi Khusus',
@@ -1027,7 +1687,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:file-text'
         },
         {
           name: 'dokumenIdentitas',
@@ -1063,7 +1724,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:shield-check'
         },
         {
           name: 'status_verifikasi_identitas',
@@ -1111,7 +1773,8 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider'
+          className: 'section-divider',
+          icon: 'ph:gear'
         },
         {
           name: 'generate_password',
@@ -1163,29 +1826,72 @@ export const defaultFormData: Partial<TutorFormData> = {
   email: '',
   noHp1: '',
   noHp2: '',
-  alamat: '',
-  kelurahan: '',
-  kecamatan: '',
-  kotaKabupaten: '',
-  provinsi: '',
-  kodePos: '',
+  
+  // New Profile Identity Fields
+  headline: undefined,
+  deskripsiDiri: undefined,
+  socialMedia1: undefined,
+  socialMedia2: undefined,
+  bahasaYangDikuasai: [],
+  alamatDomisili: '',
+  kelurahanDomisili: '',
+  kecamatanDomisili: '',
+  kotaKabupatenDomisili: '',
+  provinsiDomisili: '',
+  kodePosDomisili: '',
+  alamatSamaDenganKTP: false,
+  alamatKTP: '',
+  kelurahanKTP: '',
+  kecamatanKTP: '',
+  kotaKabupatenKTP: '',
+  provinsiKTP: '',
+  kodePosKTP: '',
   namaNasabah: '',
   nomorRekening: '',
   namaBank: '',
   cabangBank: '',
-  pendidikanTerakhir: '',
-  universitas: '',
+  statusAkademik: '',
+  namaUniversitasS1: '',
+  fakultasS1: '',
+  jurusanS1: '',
+  namaUniversitas: '',
+  fakultas: '',
   jurusan: '',
+  akreditasiJurusan: '',
   ipk: undefined,
-  pengalamanMengajar: 0,
-  sertifikasi: '',
+  tahunMasuk: '',
+  tahunLulus: '',
+  transkripNilai: null,
+  namaSMA: '',
+  jurusanSMA: '',
+  jurusanSMKDetail: '',
+  tahunLulusSMA: '',
+  ijazahSMA: null,
+  
+  // Alternative Learning Background
+  namaInstitusi: '',
+  bidangKeahlian: '',
+  pengalamanBelajar: '',
+  sertifikatKeahlian: null,
+  
+  // Professional Profile & Experience
+  motivasiMenjadiTutor: '',
+  keahlianSpesialisasi: '',
+  keahlianLainnya: '',
+  
+  // Teaching Experience - Simplified
+  pengalamanMengajar: '',
+  pengalamanLainRelevan: '',
+  
+  // Achievements & Credentials - Simplified
+  prestasiAkademik: '',
+  prestasiNonAkademik: '',
+  sertifikasiPelatihan: '',
+  sertifikasi: undefined,
   tariffPerJam: 0,
   metodePengajaran: [],
   jadwalTersedia: [],
   motivasi: '',
-  pengalamanLain: '',
-  prestasiAkademik: '',
-  bahasaYangDikuasai: [],
   
   // Subject Information - Mata Pelajaran per Kategori
   mataPelajaran_SD_Kelas_1_6_: [],
@@ -1204,7 +1910,12 @@ export const defaultFormData: Partial<TutorFormData> = {
   wilayahKota: '',
   wilayahKecamatan: [],
   radiusMengajar: undefined,
-  catatan_lokasi: '',
+  catatan_lokasi: undefined,
+  
+  // Location Coordinates
+  titikLokasiLat: undefined,
+  titikLokasiLng: undefined,
+  alamatTitikLokasi: '',
   fotoProfil: null,
   dokumenIdentitas: null,
   dokumenPendidikan: null,

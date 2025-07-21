@@ -40,7 +40,7 @@ export interface TextareaProps
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, color,  defaultValue, ...props }, ref) => {
+  ({ className, color, ...props }, ref) => {
     return (
       <div className="flex-1 w-full">
         <textarea
@@ -50,9 +50,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           ref={ref}
           {...props}
-        >
-          {defaultValue}
-        </textarea>
+        />
       </div>
     );
   }

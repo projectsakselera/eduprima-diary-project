@@ -10,9 +10,9 @@ const LockScreen = () => {
         <div
           className="lg:block hidden flex-1 overflow-hidden text-[40px] leading-[48px] text-default-600 relative z-1 bg-default-50">
           <div className="max-w-[520px] pt-20 ps-20">
-            <Link href="/" className="mb-6 inline-block">
+            <div className="mb-6 inline-block">
               <Logo />
-            </Link>
+            </div>
             <h4>
               🌍 Your Work Transforms{" "}
               <span className="text-default-800 font-bold ms-2">
@@ -35,9 +35,7 @@ const LockScreen = () => {
           <div className=" h-full flex flex-col ">
             <div className="max-w-[524px] mx-auto  w-full  md:px-[42px] md:py-[44px] p-7 text-2xl text-default-900  mb-3 flex flex-col justify-center h-full">
               <div className="flex justify-center items-center text-center mb-6 lg:hidden ">
-                <Link href="/">
-                  <Logo />
-                </Link>
+                <Logo />
               </div>
               <div className="text-center mb-10">
                 <h4 className="font-medium mb-4">Lock Screen</h4>

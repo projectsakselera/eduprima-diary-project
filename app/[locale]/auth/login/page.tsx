@@ -13,9 +13,9 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
           <div
             className="lg:block hidden flex-1 overflow-hidden text-[40px] leading-[48px] text-default-600 relative z-1 bg-default-50">
             <div className="max-w-[520px] pt-20 ps-20 ">
-              <Link href="/" className="mb-6 inline-block">
+              <div className="mb-6 inline-block">
                 <Logo />
-              </Link>
+              </div>
               <h4>
                 ⭐ Your Mission Continues
                 <span className="text-default-800 font-bold ms-2">
@@ -38,9 +38,7 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
             <div className=" h-full flex flex-col  dark:bg-default-100 bg-white">
               <div className="max-w-[524px] md:px-[42px] md:py-[44px] p-7  mx-auto w-full text-2xl text-default-900  mb-3 h-full flex flex-col justify-center">
                 <div className="flex justify-center items-center text-center mb-6 lg:hidden ">
-                  <Link href="/">
-                    <Logo />
-                  </Link>
+                  <Logo />
                 </div>
                                   <div className="text-center 2xl:mb-10 mb-4">
                     <h4 className="font-medium">Continue Your Journey</h4>
@@ -58,7 +56,7 @@ const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
                   <Social locale={locale} />
                 </div>
                 <div className="md:max-w-[345px] mx-auto font-normal text-default-500 mt-12 uppercase text-sm">
-                  Don’t have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link
                     href="/auth/register"
                     className="text-default-900  font-medium hover:underline"

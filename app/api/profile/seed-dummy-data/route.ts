@@ -19,7 +19,7 @@ export async function POST() {
       );
     }
 
-    const existingEmails = existingUsers?.map(u => u.email) || [];
+    const existingEmails = existingUsers?.map((u: any) => u.email) || [];
 
     // Sample users to create
     const sampleUsers = [
@@ -92,7 +92,7 @@ export async function POST() {
       message: `Successfully created ${newUsers.length} sample users`,
       usersCreated: newUsers.length,
       existingUsers: existingEmails,
-      newUsers: insertedUsers?.map(u => ({ email: u.email, name: u.name, role: u.role })) || [],
+      newUsers: insertedUsers?.map((u: any) => ({ email: u.email, name: u.name, role: u.role })) || [],
     });
 
   } catch (error) {

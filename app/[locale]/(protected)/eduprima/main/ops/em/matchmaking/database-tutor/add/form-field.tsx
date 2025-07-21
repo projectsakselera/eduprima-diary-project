@@ -11,7 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { FormField as FormFieldConfig } from './form-config';
+import { FormField as FormFieldConfig, TutorFormData } from './form-config';
+import { AddressSearchPicker } from '@/components/ui/address-search-picker';
+import { SimpleAddressSearch } from '@/components/ui/simple-address-search';
+import { Icon as IconifyIcon } from '@iconify/react';
 
 interface DynamicFormFieldProps {
   field: FormFieldConfig;
@@ -20,6 +23,7 @@ interface DynamicFormFieldProps {
   error?: string;
   disabled?: boolean;
   className?: string;
+  formData?: Partial<TutorFormData>; // Added for conditional visibility
 }
 
 const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
@@ -28,7 +32,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   onChange,
   error,
   disabled = false,
-  className
+  className,
+  formData
 }) => {
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
@@ -83,6 +88,73 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
       );
     }
 
+    // Handle info text fields
+    if (field.disabled && field.className === 'info-text') {
+      return (
+        <div className="p-4 bg-info/10 border border-info/30 rounded-lg mb-4">
+          <div className="flex items-start space-x-3">
+            <Icon icon="ph:info" className="h-5 w-5 text-info mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-info">{field.label}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{field.helperText}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+  // Handle conditional visibility
+  if (field.conditional && !field.conditional(formData || {})) {
+    return null;
+  }
+
+  // Handle map-picker-field
+  if (field.className === 'map-picker-field') {
+    return (
+      <div className="space-y-2">
+        {/* Label sudah ada di dalam SimpleAddressSearch component */}
+        
+        {/* Primary: Simple Address Search (Active) */}
+        <SimpleAddressSearch
+          onLocationSelect={(lat: number, lng: number, address: string) => {
+            onChange('titikLokasiLat', lat);
+            onChange('titikLokasiLng', lng);
+            onChange('alamatTitikLokasi', address);
+          }}
+          defaultAddress={formData?.alamatTitikLokasi}
+          radius={formData?.radiusMengajar || 10}
+          disabled={field.disabled}
+          className="w-full"
+          label={field.label}
+          icon={field.icon || 'ph:magnifying-glass'}
+        />
+        
+        {/* Advanced: Address Search Picker (uncomment after API setup) */}
+        {/*
+        <AddressSearchPicker
+          onLocationSelect={(lat: number, lng: number, address: string) => {
+            onChange('titikLokasiLat', lat);
+            onChange('titikLokasiLng', lng);
+            onChange('alamatTitikLokasi', address);
+          }}
+          defaultAddress={formData?.alamatTitikLokasi}
+          defaultLat={formData?.titikLokasiLat}
+          defaultLng={formData?.titikLokasiLng}
+          radius={formData?.radiusMengajar || 10}
+          disabled={field.disabled}
+          placeholder="Cari alamat lokasi mengajar (contoh: Jl. Sudirman Jakarta)"
+          className="w-full"
+        />
+        */}
+        
+        {/* Helper text sudah ada di dalam SimpleAddressSearch component */}
+        {error && (
+          <p className="text-xs text-destructive">{error}</p>
+        )}
+      </div>
+    );
+  }
+
     switch (field.type) {
       case 'text':
       case 'email':
@@ -95,13 +167,14 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
             name={field.name}
             type={field.type}
             placeholder={field.placeholder}
-            value={value || ''}
+            value={value ?? ''}
             onChange={(e) => handleChange(field.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
             disabled={disabled}
             size={field.size || 'default'}
             color={error ? 'destructive' : field.color || 'default'}
             min={field.min}
             max={field.max}
+            step={field.step}
             className={cn("transition-all duration-200", {
               "ring-2 ring-destructive/20": error,
               "ring-2 ring-primary/20 border-primary": !error && value
@@ -151,6 +224,57 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               ))}
             </SelectContent>
           </Select>
+        );
+
+      case 'radio':
+        return (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 p-4 bg-muted/20 rounded-lg border">
+              {field.options?.map((option) => {
+                const isSelected = value === option.value;
+                return (
+                  <div key={option.value} className="flex items-center space-x-3">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        id={`${field.name}-${option.value}`}
+                        name={field.name}
+                        value={String(option.value)}
+                        checked={isSelected}
+                        onChange={() => handleChange(option.value)}
+                        disabled={disabled || option.disabled}
+                        className="peer sr-only"
+                      />
+                      <div className={cn(
+                        "w-4 h-4 border-2 rounded-full cursor-pointer transition-all duration-200",
+                        "peer-checked:border-primary peer-checked:bg-primary",
+                        "peer-focus:ring-2 peer-focus:ring-primary/20",
+                        "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+                        {
+                          "border-primary bg-primary": isSelected,
+                          "border-muted-foreground hover:border-primary": !isSelected && !disabled,
+                          "border-destructive": error
+                        }
+                      )}>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                        )}
+                      </div>
+                    </div>
+                    <Label 
+                      htmlFor={`${field.name}-${option.value}`}
+                      className={cn("text-sm cursor-pointer leading-relaxed", {
+                        "text-muted-foreground": option.disabled,
+                        "text-primary font-medium": isSelected
+                      })}
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         );
 
       case 'checkbox':
@@ -232,7 +356,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
       case 'file':
         return (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="relative">
               <Input
                 id={field.name}
@@ -241,7 +365,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
                 accept={field.accept}
                 onChange={handleFileChange}
                 disabled={disabled}
-                className={cn("file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90", {
+                size={field.size || 'default'}
+                className={cn("", {
                   "ring-2 ring-destructive/20": error
                 })}
               />
@@ -298,9 +423,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Field Label */}
-      {field.type !== 'checkbox' && !(field.disabled && field.className === 'section-divider') && (
+      {!(field.disabled && field.className === 'section-divider') && !(field.disabled && field.className === 'info-text') && (
         <div className="flex items-center space-x-2">
           {field.icon && (
             <Icon 
@@ -332,14 +457,14 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
       </div>
 
       {/* Helper Text */}
-      {field.helperText && field.type !== 'checkbox' && !error && (
-        <p className="text-xs text-muted-foreground leading-relaxed">
+      {field.helperText && field.type !== 'checkbox' && !error && !(field.disabled && field.className === 'info-text') && (
+        <p className="text-xs text-muted-foreground leading-relaxed mt-3">
           {field.helperText}
         </p>
       )}
 
       {/* Error Message */}
-      {error && (
+      {error && !(field.disabled && field.className === 'info-text') && (
         <Alert variant="outline" className="border-destructive/20 bg-destructive/5">
           <Icon icon="ph:warning-circle" className="h-4 w-4 text-destructive" />
           <AlertDescription className="text-destructive font-medium">
@@ -349,7 +474,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
       )}
 
       {/* Field Status Indicator */}
-      {!error && value && field.type !== 'checkbox' && (
+      {!error && value && field.type !== 'checkbox' && !(field.disabled && field.className === 'info-text') && (
         <div className="flex items-center space-x-1 text-xs text-success">
           <Icon icon="ph:check-circle" className="h-3 w-3" />
           <span>Valid</span>

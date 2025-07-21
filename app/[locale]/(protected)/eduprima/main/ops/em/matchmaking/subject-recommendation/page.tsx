@@ -522,7 +522,7 @@ export default function SubjectRecommendationPage() {
               <Icon icon="ph:robot" className="w-3 h-3 mr-1" />
               Machine Learning Enabled
             </Badge>
-            <Badge variant="outline" className="border-success/30 text-success bg-success/10">
+            <Badge className="border-success/30 text-success bg-success/10">
               <Icon icon="ph:check-circle" className="w-3 h-3 mr-1" />
               87.3% Accuracy
             </Badge>
@@ -737,7 +737,7 @@ export default function SubjectRecommendationPage() {
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {rec.mlInsights.challenges.map((challenge, i) => (
-                                <Badge key={i} variant="outline" className="text-xs border-warning/30 text-warning bg-warning/5">
+                                <Badge key={i} className="text-xs border-warning/30 text-warning bg-warning/5">
                                   {challenge}
                                 </Badge>
                               ))}
