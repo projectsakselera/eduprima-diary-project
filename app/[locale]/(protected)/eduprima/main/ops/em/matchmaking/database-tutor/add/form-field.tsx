@@ -419,6 +419,11 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
         );
 
       case 'ai-recommendations':
+        console.log('Rendering AIRecommendationsField:', { 
+          fieldName: field.name, 
+          coreExpertise: formData?.coreExpertise,
+          formData: formData 
+        });
         return (
           <AIRecommendationsField
             field={field}
@@ -541,6 +546,7 @@ const AICoreSelectorField: React.FC<AICoreSelectorFieldProps> = ({
       newValue.push(subjectValue);
     }
 
+    console.log('AICoreSelectorField onChange:', { from: value, to: newValue });
     onChange(newValue);
   };
 
@@ -583,7 +589,7 @@ const AICoreSelectorField: React.FC<AICoreSelectorFieldProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {subjects.map((subject) => {
                   const isSelected = value.includes(subject.value);
                   const isDisabled = disabled || (!isSelected && value.length >= maxSelections);
@@ -681,10 +687,15 @@ const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
 
   // Generate recommendations when core expertise changes
   useEffect(() => {
+    console.log('AIRecommendationsField useEffect triggered:', { coreExpertise, length: coreExpertise?.length });
+    
     if (coreExpertise && coreExpertise.length > 0) {
+      console.log('Generating recommendations for:', coreExpertise);
       const newRecommendations = aiRecommendationEngine.generateRecommendations(coreExpertise);
+      console.log('Generated recommendations:', newRecommendations);
       setRecommendations(newRecommendations);
     } else {
+      console.log('No core expertise, clearing recommendations');
       setRecommendations([]);
     }
   }, [coreExpertise]);
