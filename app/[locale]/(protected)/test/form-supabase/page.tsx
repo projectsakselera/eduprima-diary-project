@@ -18,9 +18,14 @@ import {
 } from './form-config';
 
 // Supabase Configuration
-const supabaseUrl = 'https://btnsfqhgrjdyxwjiomrj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0bnNmcWhncmpkeXh3amlvbXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzODAwOTEsImV4cCI6MjA2Nzk1NjA5MX0.AzC7DZEmzIs9paMsrPJKYdCH4J2pLKMcaPF_emVZH6Q';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+}
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 interface ConnectionStatus {
   isConnected: boolean;
@@ -48,6 +53,16 @@ export default function EducatorTestFormPage() {
     setIsTestingConnection(true);
     setConnectionStatus(null);
     
+    if (!supabase) {
+      setConnectionStatus({
+        isConnected: false,
+        tablesAccessible: [],
+        errorMessage: 'Supabase client not initialized. Missing environment variables.'
+      });
+      setIsTestingConnection(false);
+      return;
+    }
+
     try {
       const tablesAccessible: string[] = [];
       
@@ -139,6 +154,15 @@ export default function EducatorTestFormPage() {
     setIsSubmitting(true);
     setSubmissionResult(null);
     
+    if (!supabase) {
+      setSubmissionResult({
+        success: false,
+        errorMessage: 'Supabase client not initialized. Missing environment variables.'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Step 1: Insert to users_universal table
       const userData = {

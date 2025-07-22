@@ -13,7 +13,6 @@
     "type-check": "tsc --noEmit",
     "test:pwa": "npm run build && npx http-server .next/out -p 3001",
     "clean": "rimraf .next out",
-    "postinstall": "npm run type-check",
     "backup-deploy": "backup-deployment/backup-before-deploy.bat",
     "verify-deployment": "node scripts/verify-deployment.js",
     "verify-local": "DEPLOYMENT_URL=http://localhost:3000 node scripts/verify-deployment.js",

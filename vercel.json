@@ -1,14 +1,8 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install --legacy-peer-deps",
-  "framework": "nextjs",
-  "regions": ["sin1"],
+  "installCommand": "npm install --legacy-peer-deps --no-fund --no-audit",
   "functions": {
-    "app/**/*.ts": {
-      "maxDuration": 30
-    },
-    "app/**/*.tsx": {
+    "app/api/**/*.ts": {
       "maxDuration": 30
     }
   },

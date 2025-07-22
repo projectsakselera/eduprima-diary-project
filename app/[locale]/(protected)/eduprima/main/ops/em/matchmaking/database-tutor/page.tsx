@@ -35,9 +35,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 
 // Supabase Configuration
-const supabaseUrl = 'https://btnsfqhgrjdyxwjiomrj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0bnNmcWhncmpkeXh3amlvbXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzODAwOTEsImV4cCI6MjA2Nzk1NjA5MX0.AzC7DZEmzIs9paMsrPJKYdCH4J2pLKMcaPF_emVZH6Q';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+}
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 interface TutorData {
   id: string;
@@ -152,7 +157,12 @@ export default function DatabaseTutorPage() {
     try {
       console.log('Testing Supabase connection...');
       console.log('Supabase URL:', supabaseUrl);
-      console.log('Supabase Key (first 20 chars):', supabaseKey.substring(0, 20) + '...');
+      console.log('Supabase Key (first 20 chars):', supabaseKey ? supabaseKey.substring(0, 20) + '...' : 'Not configured');
+      
+      if (!supabase) {
+        console.error('Supabase client not initialized');
+        return false;
+      }
       
       // First try with debug API route
       try {
@@ -300,7 +310,7 @@ export default function DatabaseTutorPage() {
         console.log('📋 Using existing users table as tutor data source');
         
         try {
-          const { data: userData, error } = await supabase
+          const { data: userData, error } = await supabase!
             .from('t_310_01_01_users_universal')
             .select(`
               id,
@@ -356,7 +366,7 @@ export default function DatabaseTutorPage() {
       
       try {
         console.log('Trying dedicated tutor table:', tutorTableName);
-        const result = await supabase
+        const result = await supabase!
           .from(tutorTableName)
           .select('*')
           .limit(10);
@@ -374,7 +384,7 @@ export default function DatabaseTutorPage() {
         // If simple query works, try the full query
         if (data && data.length > 0) {
           console.log('Attempting full query with specific columns...');
-          const fullResult = await supabase
+          const fullResult = await supabase!
             .from(tutorTableName)
             .select(`
               id,
