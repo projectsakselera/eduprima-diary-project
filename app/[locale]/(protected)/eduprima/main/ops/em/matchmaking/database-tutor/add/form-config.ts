@@ -1953,19 +1953,20 @@ export const tutorFormConfig: FormConfig = {
         {
           name: 'subjectSelectionMode',
           label: 'Mode Seleksi Mata Pelajaran',
-          type: 'radio',
+          type: 'select',
           required: true,
+          placeholder: 'Pilih mode seleksi...',
           options: [
             { 
               value: 'ai-assisted', 
-              label: '🚀 AI SMART RECOMMENDATION (Rekomendasi)',
+              label: '🚀 AI Smart Recommendation - Pilih keahlian inti, AI rekomendasikan yang terkait'
             },
             { 
               value: 'manual', 
-              label: '📋 MANUAL SELECTION (Tradisional)',
+              label: '📋 Manual Selection - Pilih sendiri dari semua kategori'
             }
           ],
-          helperText: '💡 AI Smart: Pilih 1-3 keahlian inti → AI rekomendasikan mata pelajaran terkait. Manual: Pilih sendiri dari semua kategori.',
+          helperText: '💡 Mode AI Smart akan membantu Anda menemukan mata pelajaran terkait berdasarkan keahlian inti yang dipilih. Mode Manual memberikan kontrol penuh untuk memilih dari semua kategori.',
           icon: 'ph:robot',
           size: 'lg'
         },

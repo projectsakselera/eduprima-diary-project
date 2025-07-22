@@ -583,7 +583,7 @@ const AICoreSelectorField: React.FC<AICoreSelectorFieldProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-3">
                 {subjects.map((subject) => {
                   const isSelected = value.includes(subject.value);
                   const isDisabled = disabled || (!isSelected && value.length >= maxSelections);
@@ -592,7 +592,7 @@ const AICoreSelectorField: React.FC<AICoreSelectorFieldProps> = ({
                     <div
                       key={subject.value}
                       className={cn(
-                        "relative p-3 border-2 rounded-lg cursor-pointer transition-all duration-200",
+                        "relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 w-full",
                         "hover:shadow-md hover:border-primary/50",
                         {
                           "border-primary bg-primary/5 shadow-md": isSelected,
@@ -807,7 +807,7 @@ const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
                     )}
                     onClick={() => handleSubjectToggle(subject.subject)}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                       {/* Subject Info */}
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2">
