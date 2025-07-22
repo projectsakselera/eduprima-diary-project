@@ -28,7 +28,7 @@ const generateMonthYearOptions = (startYear: number, endYear: number) => {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch';
+  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch' | 'ai-core-select' | 'ai-recommendations';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -47,6 +47,10 @@ export interface FormField {
   dependsOn?: string; // field dependency
   conditional?: (formData: any) => boolean; // conditional visibility
   className?: string; // for custom styling
+  // New AI-related properties
+  maxCoreSelections?: number; // for ai-core-select
+  aiCorrelationMap?: string; // reference to correlation matrix
+  confidenceThreshold?: number; // minimum confidence for recommendations
 }
 
 export interface FormStep {
@@ -67,6 +71,41 @@ export interface FormConfig {
   cancelText?: string;
   backText?: string;
   nextText?: string;
+}
+
+// ===== AI RECOMMENDATION SYSTEM INTERFACES =====
+
+export interface SubjectCorrelation {
+  subject: string;
+  correlation: number;
+  reason: string;
+  category: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  preparationTime: string;
+  marketDemand?: 'high' | 'medium' | 'low';
+}
+
+export interface AIRecommendationTier {
+  tier: 1 | 2 | 3;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  subjects: SubjectCorrelation[];
+}
+
+export interface CoreSubjectProfile {
+  value: string;
+  label: string;
+  category: string;
+  level: string;
+  relatedSubjects: SubjectCorrelation[];
+}
+
+export interface AIRecommendationEngine {
+  generateRecommendations: (coreSubjects: string[], tutorProfile?: Partial<TutorFormData>) => AIRecommendationTier[];
+  getSubjectCorrelations: (subject: string) => SubjectCorrelation[];
+  calculateConfidence: (coreSubjects: string[], targetSubject: string) => number;
 }
 
 // Dynamic form data structure
@@ -235,6 +274,18 @@ export interface TutorFormData {
   send_welcome_email?: boolean;
   send_whatsapp_notification?: boolean;
   tanggal_bergabung?: string;
+
+  // AI Recommendation System Fields
+  subjectSelectionMode?: 'manual' | 'ai-assisted';
+  coreExpertise?: string[]; // 1-3 core subjects selected by tutor
+  aiRecommendedSubjects?: string[]; // AI recommended subjects accepted by tutor
+  aiRecommendationData?: {
+    tier1Accepted?: string[];
+    tier2Accepted?: string[];
+    tier3Accepted?: string[];
+    rejectedRecommendations?: string[];
+    confidenceScores?: Record<string, number>;
+  };
 }
 
 // Validation rules
@@ -664,6 +715,377 @@ export const dynamicOptions = {
     { value: 'Sunda', label: 'Bahasa Sunda' },
     { value: 'Bali', label: 'Bahasa Bali' }
   ]
+};
+
+// ===== AI RECOMMENDATION SYSTEM DATA =====
+
+// Core Subject Profiles - Curated list for initial selection
+export const coreSubjectProfiles: CoreSubjectProfile[] = [
+  // MATEMATIKA & SAINS
+  {
+    value: 'Matematika SMA',
+    label: '🔢 Matematika SMA',
+    category: 'Matematika & Sains',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Fisika',
+    label: '⚡ Fisika',
+    category: 'Matematika & Sains',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Kimia',
+    label: '⚗️ Kimia',
+    category: 'Matematika & Sains',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Biologi',
+    label: '🧬 Biologi',
+    category: 'Matematika & Sains',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+
+  // BAHASA
+  {
+    value: 'Bahasa Inggris SMA',
+    label: '🇬🇧 Bahasa Inggris',
+    category: 'Bahasa',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Bahasa Indonesia SMA',
+    label: '🇮🇩 Bahasa Indonesia',
+    category: 'Bahasa',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+
+  // SOSIAL
+  {
+    value: 'Ekonomi',
+    label: '💰 Ekonomi',
+    category: 'Ilmu Sosial',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Sejarah SMA',
+    label: '📚 Sejarah',
+    category: 'Ilmu Sosial',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+  {
+    value: 'Geografi SMA',
+    label: '🗺️ Geografi',
+    category: 'Ilmu Sosial',
+    level: 'SMA',
+    relatedSubjects: []
+  },
+
+  // TEKNIK & TEKNOLOGI
+  {
+    value: 'Teknik Informatika',
+    label: '💻 Teknik Informatika',
+    category: 'Teknik & Teknologi',
+    level: 'SMK',
+    relatedSubjects: []
+  },
+  {
+    value: 'Pemrograman',
+    label: '👨‍💻 Pemrograman',
+    category: 'Teknik & Teknologi',
+    level: 'Universitas',
+    relatedSubjects: []
+  },
+
+  // KETERAMPILAN
+  {
+    value: 'Music Guitar',
+    label: '🎸 Gitar',
+    category: 'Keterampilan Kreatif',
+    level: 'Skill',
+    relatedSubjects: []
+  },
+  {
+    value: 'Music Piano',
+    label: '🎹 Piano',
+    category: 'Keterampilan Kreatif',
+    level: 'Skill',
+    relatedSubjects: []
+  },
+  {
+    value: 'Graphic Design',
+    label: '🎨 Desain Grafis',
+    category: 'Keterampilan Kreatif',
+    level: 'Skill',
+    relatedSubjects: []
+  },
+
+  // BISNIS & AKUNTANSI
+  {
+    value: 'Akuntansi',
+    label: '📊 Akuntansi',
+    category: 'Bisnis & Ekonomi',
+    level: 'SMK',
+    relatedSubjects: []
+  },
+  {
+    value: 'Manajemen',
+    label: '📈 Manajemen',
+    category: 'Bisnis & Ekonomi',
+    level: 'Universitas',
+    relatedSubjects: []
+  }
+];
+
+// Subject Correlation Matrix - AI Brain
+export const subjectCorrelationMatrix: Record<string, SubjectCorrelation[]> = {
+  // MATEMATIKA CORRELATIONS
+  'Matematika SMA': [
+    {
+      subject: 'Fisika',
+      correlation: 0.92,
+      reason: 'Heavy mathematical foundation required',
+      category: 'SMA/SMK IPA',
+      difficulty: 'medium',
+      preparationTime: '1-2 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Matematika SMP',
+      correlation: 0.95,
+      reason: 'Progressive curriculum, same core concepts',
+      category: 'SMP (Kelas 7-9)',
+      difficulty: 'easy',
+      preparationTime: '3-5 hari',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Kalkulus',
+      correlation: 0.88,
+      reason: 'Advanced mathematics progression',
+      category: 'Universitas & Perguruan Tinggi',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'medium'
+    },
+    {
+      subject: 'Kimia',
+      correlation: 0.75,
+      reason: 'Calculation and formula-based problems',
+      category: 'SMA/SMK IPA',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'high'
+    }
+  ],
+
+  // FISIKA CORRELATIONS
+  'Fisika': [
+    {
+      subject: 'Matematika SMA',
+      correlation: 0.92,
+      reason: 'Physics requires strong math foundation',
+      category: 'SMA/SMK IPA',
+      difficulty: 'easy',
+      preparationTime: '1 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Kimia',
+      correlation: 0.80,
+      reason: 'Shared scientific methodology and calculations',
+      category: 'SMA/SMK IPA',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Teknik Elektro',
+      correlation: 0.85,
+      reason: 'Applied physics principles',
+      category: 'SMK Teknik & Teknologi',
+      difficulty: 'medium',
+      preparationTime: '3-4 minggu',
+      marketDemand: 'medium'
+    }
+  ],
+
+  // GITAR CORRELATIONS
+  'Music Guitar': [
+    {
+      subject: 'Music Piano',
+      correlation: 0.90,
+      reason: 'Music theory and chord progressions overlap',
+      category: 'Keterampilan Khusus',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Vocal',
+      correlation: 0.75,
+      reason: 'Musical accompaniment and performance skills',
+      category: 'Keterampilan Khusus',
+      difficulty: 'easy',
+      preparationTime: '1-2 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Music Violin',
+      correlation: 0.70,
+      reason: 'String instrument techniques and music theory',
+      category: 'Keterampilan Khusus',
+      difficulty: 'hard',
+      preparationTime: '2-3 bulan',
+      marketDemand: 'low'
+    }
+  ],
+
+  // BAHASA INGGRIS CORRELATIONS
+  'Bahasa Inggris SMA': [
+    {
+      subject: 'Bahasa Inggris SMP',
+      correlation: 0.95,
+      reason: 'Same language, progressive difficulty',
+      category: 'SMP (Kelas 7-9)',
+      difficulty: 'easy',
+      preparationTime: '3-5 hari',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Bahasa Inggris SD',
+      correlation: 0.90,
+      reason: 'Basic English foundation teaching',
+      category: 'SD (Kelas 1-6)',
+      difficulty: 'easy',
+      preparationTime: '1 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Public Speaking',
+      correlation: 0.80,
+      reason: 'Communication and presentation skills',
+      category: 'Keterampilan Khusus',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'medium'
+    }
+  ],
+
+  // PROGRAMMING CORRELATIONS
+  'Pemrograman': [
+    {
+      subject: 'Teknik Informatika',
+      correlation: 0.95,
+      reason: 'Programming is core part of computer science',
+      category: 'SMK Teknik & Teknologi',
+      difficulty: 'easy',
+      preparationTime: '1 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Web Design',
+      correlation: 0.85,
+      reason: 'Frontend development overlap',
+      category: 'Keterampilan Khusus',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'high'
+    },
+    {
+      subject: 'Basis Data',
+      correlation: 0.90,
+      reason: 'Database programming and management',
+      category: 'Universitas & Perguruan Tinggi',
+      difficulty: 'medium',
+      preparationTime: '2-3 minggu',
+      marketDemand: 'high'
+    }
+  ]
+};
+
+// AI Recommendation Engine
+export const aiRecommendationEngine: AIRecommendationEngine = {
+  generateRecommendations: (coreSubjects: string[], tutorProfile?: Partial<TutorFormData>): AIRecommendationTier[] => {
+    const allRecommendations: SubjectCorrelation[] = [];
+    
+    // Generate recommendations from each core subject
+    coreSubjects.forEach(coreSubject => {
+      const correlations = subjectCorrelationMatrix[coreSubject] || [];
+      allRecommendations.push(...correlations);
+    });
+
+    // Remove duplicates and sort by correlation
+    const uniqueRecommendations = allRecommendations.reduce((acc, current) => {
+      const existing = acc.find(item => item.subject === current.subject);
+      if (!existing || existing.correlation < current.correlation) {
+        return acc.filter(item => item.subject !== current.subject).concat(current);
+      }
+      return acc;
+    }, [] as SubjectCorrelation[]);
+
+    // Sort by correlation score
+    uniqueRecommendations.sort((a, b) => b.correlation - a.correlation);
+
+    // Group into tiers
+    const tier1 = uniqueRecommendations.filter(r => r.correlation >= 0.85);
+    const tier2 = uniqueRecommendations.filter(r => r.correlation >= 0.70 && r.correlation < 0.85);
+    const tier3 = uniqueRecommendations.filter(r => r.correlation >= 0.50 && r.correlation < 0.70);
+
+    return [
+      {
+        tier: 1,
+        title: '🥇 MULAI HARI INI',
+        description: 'Anda sudah siap mengajar mata pelajaran ini',
+        icon: 'ph:rocket',
+        color: 'success',
+        subjects: tier1.slice(0, 6)
+      },
+      {
+        tier: 2,
+        title: '🥈 PERSIAPAN 1-3 MINGGU',
+        description: 'Dengan sedikit persiapan, Anda bisa menguasai ini',
+        icon: 'ph:clock',
+        color: 'warning',
+        subjects: tier2.slice(0, 8)
+      },
+      {
+        tier: 3,
+        title: '🥉 EKSPANSI STRATEGIS',
+        description: 'Target jangka menengah untuk diversifikasi',
+        icon: 'ph:target',
+        color: 'info',
+        subjects: tier3.slice(0, 10)
+      }
+    ];
+  },
+
+  getSubjectCorrelations: (subject: string): SubjectCorrelation[] => {
+    return subjectCorrelationMatrix[subject] || [];
+  },
+
+  calculateConfidence: (coreSubjects: string[], targetSubject: string): number => {
+    let maxConfidence = 0;
+    
+    coreSubjects.forEach(coreSubject => {
+      const correlations = subjectCorrelationMatrix[coreSubject] || [];
+      const targetCorrelation = correlations.find(c => c.subject === targetSubject);
+      if (targetCorrelation && targetCorrelation.correlation > maxConfidence) {
+        maxConfidence = targetCorrelation.correlation;
+      }
+    });
+    
+    return maxConfidence;
+  }
 };
 
 // Form Configuration
@@ -1514,129 +1936,221 @@ export const tutorFormConfig: FormConfig = {
     {
       id: 'subjects-areas',
       title: 'Mata Pelajaran',
-      description: 'Pilihan mata pelajaran yang dapat diajarkan',
+      description: 'Pilihan mata pelajaran yang dapat diajarkan - Manual atau AI Assisted',
       icon: 'ph:book-open',
       color: 'info',
       fields: [
-        // === MATA PELAJARAN ===
+        // === PILIHAN MODE SELEKSI ===
         {
-          name: 'section_mapel',
-          label: 'MATA PELAJARAN YANG DIAJARKAN',
+          name: 'section_mode_selection',
+          label: '🎯 PILIHAN MODE SELEKSI MATA PELAJARAN',
+          type: 'text',
+          disabled: true,
+          helperText: 'Pilih cara yang paling nyaman untuk Anda menentukan mata pelajaran yang akan diajarkan',
+          className: 'section-divider',
+          icon: 'ph:lightbulb'
+        },
+        {
+          name: 'subjectSelectionMode',
+          label: 'Mode Seleksi Mata Pelajaran',
+          type: 'radio',
+          required: true,
+          options: [
+            { 
+              value: 'ai-assisted', 
+              label: '🚀 AI SMART RECOMMENDATION (Rekomendasi)',
+            },
+            { 
+              value: 'manual', 
+              label: '📋 MANUAL SELECTION (Tradisional)',
+            }
+          ],
+          helperText: '💡 AI Smart: Pilih 1-3 keahlian inti → AI rekomendasikan mata pelajaran terkait. Manual: Pilih sendiri dari semua kategori.',
+          icon: 'ph:robot',
+          size: 'lg'
+        },
+
+        // === AI-ASSISTED MODE ===
+        {
+          name: 'section_ai_mode',
+          label: '🤖 AI SMART RECOMMENDATION MODE',
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           className: 'section-divider',
-          icon: 'ph:book-open'
+          icon: 'ph:sparkle',
+          conditional: (data) => data.subjectSelectionMode === 'ai-assisted'
+        },
+        {
+          name: 'coreExpertise',
+          label: '🎯 Pilih 1-3 Keahlian Inti Anda',
+          type: 'ai-core-select',
+          required: true,
+          maxCoreSelections: 3,
+          options: coreSubjectProfiles.map(profile => ({
+            value: profile.value,
+            label: profile.label,
+            category: profile.category,
+            level: profile.level
+          })),
+          multiple: true,
+          helperText: '🌟 Pilih mata pelajaran yang PALING Anda kuasai. AI akan merekomendasikan mata pelajaran terkait berdasarkan korelasi dan tingkat kemudahan.',
+          icon: 'ph:target',
+          size: 'lg',
+          conditional: (data) => data.subjectSelectionMode === 'ai-assisted'
+        },
+        {
+          name: 'aiRecommendedSubjects',
+          label: '💡 Rekomendasi AI untuk Anda',
+          type: 'ai-recommendations',
+          helperText: '🤖 Berdasarkan keahlian inti Anda, berikut adalah mata pelajaran yang direkomendasikan AI. Pilih yang sesuai dengan minat dan kemampuan Anda.',
+          icon: 'ph:magic-wand',
+          size: 'lg',
+          dependsOn: 'coreExpertise',
+          conditional: (data) => data.subjectSelectionMode === 'ai-assisted' && data.coreExpertise?.length > 0
+        },
+
+        // === MANUAL MODE ===
+        {
+          name: 'section_manual_mode',
+          label: '📋 MANUAL SELECTION MODE',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:list',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
+        },
+        {
+          name: 'section_mapel_manual',
+          label: 'MATA PELAJARAN YANG DIAJARKAN (MANUAL)',
+          type: 'text',
+          disabled: true,
+          helperText: 'Pilih mata pelajaran dari semua kategori yang tersedia. Mode ini memberikan kontrol penuh kepada Anda.',
+          className: 'section-divider',
+          icon: 'ph:book-open',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SD (Kelas 1-6)
         {
           name: 'mataPelajaran_SD_Kelas_1_6_',
-          label: 'SD (Kelas 1-6)',
+          label: '📚 SD (Kelas 1-6)',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SD (Kelas 1-6)'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SD (Kelas 1-6) yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMP (Kelas 7-9)
         {
           name: 'mataPelajaran_SMP_Kelas_7_9_',
-          label: 'SMP (Kelas 7-9)',
+          label: '📖 SMP (Kelas 7-9)',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMP (Kelas 7-9)'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMP (Kelas 7-9) yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMA/SMK IPA
         {
           name: 'mataPelajaran_SMA_SMK_IPA',
-          label: 'SMA/SMK IPA',
+          label: '🧪 SMA/SMK IPA',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMA/SMK IPA'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMA/SMK IPA yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMA/SMK IPS
         {
           name: 'mataPelajaran_SMA_SMK_IPS',
-          label: 'SMA/SMK IPS',
+          label: '📊 SMA/SMK IPS',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMA/SMK IPS'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMA/SMK IPS yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMK Teknik & Teknologi
         {
           name: 'mataPelajaran_SMK_Teknik_Teknologi',
-          label: 'SMK Teknik & Teknologi',
+          label: '💻 SMK Teknik & Teknologi',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMK Teknik & Teknologi'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMK Teknik & Teknologi yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMK Bisnis & Manajemen
         {
           name: 'mataPelajaran_SMK_Bisnis_Manajemen',
-          label: 'SMK Bisnis & Manajemen',
+          label: '💼 SMK Bisnis & Manajemen',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMK Bisnis & Manajemen'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMK Bisnis & Manajemen yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMK Pariwisata & Perhotelan
         {
           name: 'mataPelajaran_SMK_Pariwisata_Perhotelan',
-          label: 'SMK Pariwisata & Perhotelan',
+          label: '🏨 SMK Pariwisata & Perhotelan',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMK Pariwisata & Perhotelan'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMK Pariwisata & Perhotelan yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // SMK Kesehatan
         {
           name: 'mataPelajaran_SMK_Kesehatan',
-          label: 'SMK Kesehatan',
+          label: '🏥 SMK Kesehatan',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['SMK Kesehatan'],
           multiple: true,
           helperText: 'Pilih mata pelajaran SMK Kesehatan yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // Bahasa Asing
         {
           name: 'mataPelajaran_Bahasa_Asing',
-          label: 'Bahasa Asing',
+          label: '🌍 Bahasa Asing',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['Bahasa Asing'],
           multiple: true,
           helperText: 'Pilih mata pelajaran Bahasa Asing yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // Universitas & Perguruan Tinggi
         {
           name: 'mataPelajaran_Universitas_Perguruan_Tinggi',
-          label: 'Universitas & Perguruan Tinggi',
+          label: '🎓 Universitas & Perguruan Tinggi',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['Universitas & Perguruan Tinggi'],
           multiple: true,
           helperText: 'Pilih mata pelajaran Universitas & Perguruan Tinggi yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         },
         // Keterampilan Khusus
         {
           name: 'mataPelajaran_Keterampilan_Khusus',
-          label: 'Keterampilan Khusus',
+          label: '🎨 Keterampilan Khusus',
           type: 'checkbox',
           options: dynamicOptions.mataPelajaranKategori['Keterampilan Khusus'],
           multiple: true,
           helperText: 'Pilih mata pelajaran Keterampilan Khusus yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap'
+          icon: 'ph:graduation-cap',
+          conditional: (data) => data.subjectSelectionMode === 'manual'
         }
       ]
     },
@@ -2410,6 +2924,18 @@ export const defaultFormData: Partial<TutorFormData> = {
   mataPelajaran_Universitas_Perguruan_Tinggi: [],
   mataPelajaran_Keterampilan_Khusus: [],
   
+  // AI Recommendation System Defaults
+  subjectSelectionMode: 'manual' as 'manual' | 'ai-assisted',
+  coreExpertise: [],
+  aiRecommendedSubjects: [],
+  aiRecommendationData: {
+    tier1Accepted: [],
+    tier2Accepted: [],
+    tier3Accepted: [],
+    rejectedRecommendations: [],
+    confidenceScores: {}
+  },
+  
   // Teaching Area Information
 
   radiusMengajar: undefined,
@@ -2459,4 +2985,4 @@ export const getStepProgress = (currentStep: number, totalSteps: number): number
 export const isFieldVisible = (field: FormField, formData: Partial<TutorFormData>): boolean => {
   if (!field.conditional) return true;
   return field.conditional(formData);
-}; 
+};
