@@ -12,6 +12,32 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  callbacks: {
+    async jwt({ token, user }: { token: any; user: any }) {
+      // Include role information in JWT token
+      if (user) {
+        token.role = (user as any).role;
+        token.userCode = (user as any).userCode;
+        token.primaryRole = (user as any).primaryRole;
+        token.accountType = (user as any).accountType;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: any; token: any }) {
+      // Include role information in session
+      if (token) {
+        (session.user as any).role = token.role;
+        (session.user as any).userCode = token.userCode;
+        (session.user as any).primaryRole = token.primaryRole;
+        (session.user as any).accountType = token.accountType;
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Custom redirect logic based on URL or could be enhanced with user role
+      return url.startsWith(baseUrl) ? url : baseUrl;
+    },
+  },
   providers: [
     Google,
     GitHub,
@@ -113,39 +139,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
-      // Persist user data in JWT token
-      if (user) {
-        (token as any).userCode = (user as any).userCode;
-        (token as any).role = (user as any).role;
-        (token as any).primaryRole = (user as any).primaryRole;
-        (token as any).accountType = (user as any).accountType;
-      }
-      return token;
-    },
-    async session({ session, token }: { session: any; token: any }) {
-      // Send user data to client
-      if (token && session.user) {
-        (session.user as any).userCode = (token as any).userCode;
-        (session.user as any).role = (token as any).role;
-        (session.user as any).primaryRole = (token as any).primaryRole;
-        (session.user as any).accountType = (token as any).accountType;
-      }
-      return session;
-    },
-    async signIn({ user, account, profile }: any) {
-      // Allow sign in
-      return true;
-    },
-    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
-      // Always redirect to dashboard after successful login
-      if (url.startsWith(baseUrl)) {
-        return '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
-      }
-      return baseUrl + '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
-    },
-  },
   pages: {
     signIn: '/auth/login',
     error: '/auth/login', // Redirect errors back to login page

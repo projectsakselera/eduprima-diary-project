@@ -9,7 +9,7 @@ const SidebarHoverToggle = () => {
   const [hoverConfig, setHoverConfig] = useMenuHoverConfig();
   const [config, setConfig] = useConfig();
 
-  const isDesktop = useMediaQuery("(min-width: 1280px)");
+      const isDesktop = useMediaQuery("(min-width: 1024px)");
   if (config.sidebar !== "classic" || !isDesktop) {
     return null;
   }

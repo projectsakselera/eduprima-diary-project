@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 export function SidebarToggle() {
     const [config, setConfig] = useConfig()
     const collapsed = config.collapsed
-    const isDesktop = useMediaQuery('(min-width: 1280px)')
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     if (!isDesktop) return null
     if (config.sidebar === 'two-column' && !config.hasSubMenu || config.menuHidden || config.layout === "horizontal" || config.sidebar === 'classic') {
         return null

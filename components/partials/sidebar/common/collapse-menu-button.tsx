@@ -74,7 +74,7 @@ export function CollapseMenuButton({
     const [config] = useConfig();
     const [hoverConfig] = useMenuHoverConfig();
     const { hovered } = hoverConfig;
-    const isDesktop = useMediaQuery("(min-width: 1280px)");
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { transform, transition, setNodeRef, isDragging, attributes, listeners } = useSortable({
         id: id,
 

@@ -55,18 +55,39 @@ const LoginForm = () => {
   const onSubmit = (data: z.infer<typeof schema>) => {
     startTransition(async () => {
       try {
-        // Use NextAuth signIn with proper callback URL for v5
+        // Use NextAuth signIn 
         const result = await signIn('credentials', {
           email: data.email,
           password: data.password,
           redirect: false,
-          callbackUrl: '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all'
         });
 
         if (result?.ok && !result.error) {
           toast.success('Login successful!');
-          // Direct redirect to tutor database
-          window.location.href = '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
+          
+          // Get session to determine redirect based on role
+          const response = await fetch('/api/auth/session');
+          const session = await response.json();
+          
+          console.log('Session after login:', session);
+          
+          if (session?.user?.role) {
+            const role = session.user.role;
+            let redirectUrl = '/en/eduprima/main'; // default
+            
+            // Role-based redirect logic
+            if (role === 'super_admin') {
+              redirectUrl = '/en/eduprima/main';
+            } else if (role === 'database_tutor_manager') {
+              redirectUrl = '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
+            }
+            
+            console.log('Redirecting to:', redirectUrl);
+            window.location.href = redirectUrl;
+          } else {
+            // Fallback redirect if no role info
+            window.location.href = '/en/eduprima/main';
+          }
         } else {
           toast.error('Invalid credentials. Please check email and password.');
         }

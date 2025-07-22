@@ -16,6 +16,7 @@ interface MenuItemProps {
   icon: string;
   active: boolean;
   collapsed: boolean;
+  comingSoon?: boolean;
 }
 import { CSS } from "@dnd-kit/utilities";
 import { useConfig } from "@/hooks/use-config";
@@ -29,11 +30,12 @@ const MenuItem = ({
   active,
   id,
   collapsed,
+  comingSoon = false,
 }: MenuItemProps) => {
   const [config] = useConfig();
   const [hoverConfig] = useMenuHoverConfig();
   const { hovered } = hoverConfig;
-  const isDesktop = useMediaQuery("(min-width: 1280px)");
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [mobileMenuConfig, setMobileMenuConfig] = useMobileMenuConfig();
   const {
     transform,
@@ -61,13 +63,14 @@ const MenuItem = ({
         variant={active ? "default" : "ghost"}
         color={active ? "default" : "secondary"}
         fullWidth
-                     className={cn(
-                                          "hover:ring-transparent hover:ring-offset-0 justify-start text-sm font-medium capitalize group md:hover:px-8 h-auto py-3 md:px-3 px-3",
-                                          {
-                                            "bg-secondary text-default hover:bg-secondary":
-                                              active && config.sidebarColor !== "light",
-                                          }
-                                        )}
+                             className={cn(
+          "hover:ring-transparent hover:ring-offset-0 justify-start text-sm font-medium capitalize group md:hover:px-8 h-auto py-3 md:px-3 px-3",
+          {
+            "bg-secondary text-default hover:bg-secondary":
+              active && config.sidebarColor !== "light",
+            "text-muted-foreground opacity-50 cursor-not-allowed": comingSoon,
+          }
+        )}
         asChild
         size={collapsed ? "icon" : "default"}
       >
@@ -91,10 +94,13 @@ const MenuItem = ({
             icon={icon}
             className={cn("h-5 w-5 ", {
               "me-2": !collapsed,
+              "text-muted-foreground": comingSoon,
             })}
           />
           {!collapsed && (
-            <p className={cn("max-w-[200px] truncate")}>{label}</p>
+            <p className={cn("max-w-[200px] truncate", {
+              "text-muted-foreground": comingSoon,
+            })}>{label}</p>
           )}
         </Link>
       </Button>
@@ -112,14 +118,19 @@ const MenuItem = ({
           {
             "bg-secondary text-default hover:bg-secondary":
               active && config.sidebarColor !== "light",
+            "text-muted-foreground opacity-50 cursor-not-allowed": comingSoon,
           }
         )}
         asChild
       >
         <Link href={href}>
-          <Icon icon={icon} className={cn("h-6 w-6 mb-1 ")} />
+          <Icon icon={icon} className={cn("h-6 w-6 mb-1 ", {
+            "text-muted-foreground": comingSoon,
+          })} />
 
-          <p className={cn("max-w-[200px]  text-[11px] truncate ")}>{label}</p>
+          <p className={cn("max-w-[200px]  text-[11px] truncate ", {
+            "text-muted-foreground": comingSoon,
+          })}>{label}</p>
         </Link>
       </Button>
     );
@@ -137,6 +148,7 @@ const MenuItem = ({
           !collapsed || hovered,
         "bg-secondary text-default hover:bg-secondary":
           active && config.sidebarColor !== "light",
+        "text-muted-foreground opacity-50 cursor-not-allowed": comingSoon,
       })}
       asChild
       size={collapsed && !hovered ? "icon" : "default"}
@@ -146,10 +158,13 @@ const MenuItem = ({
           icon={icon}
           className={cn("h-5 w-5 ", {
             "me-2": !collapsed || hovered,
+            "text-muted-foreground": comingSoon,
           })}
         />
         {(!collapsed || hovered) && (
-          <p className={cn("max-w-[200px] truncate")}>{label}</p>
+          <p className={cn("max-w-[200px] truncate", {
+            "text-muted-foreground": comingSoon,
+          })}>{label}</p>
         )}
       </Link>
     </Button>

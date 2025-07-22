@@ -24,7 +24,7 @@ export function DynamicSheetMenu() {
     const locale = params?.locale as string || 'en';
     const { isOpen } = mobileMenuConfig;
 
-    const isDesktop = useMediaQuery("(min-width: 1280px)");
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
     if (isDesktop) return null;
 
     // Detect if we're on Eduprima pages
@@ -32,7 +32,7 @@ export function DynamicSheetMenu() {
 
     return (
         <Sheet open={isOpen} onOpenChange={() => setMobileMenuConfig({ isOpen: !isOpen })}>
-            <SheetTrigger className="xl:hidden" asChild>
+            <SheetTrigger className="lg:hidden" asChild>
                 <Button 
                     className="h-8" 
                     variant="ghost" 

@@ -34,7 +34,7 @@ export function DashcodeSidebar() {
     const params = useParams<{ locale: string; }>();
     const direction = getLangDir(params?.locale ?? '');
 
-    const isDesktop = useMediaQuery('(min-width: 1280px)')
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
 
     const menuList = getMenuList(pathname, t);
     const [config, setConfig] = useConfig()

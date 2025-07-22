@@ -37,7 +37,7 @@ export function DynamicEduprimaSidebar() {
     const params = useParams<{ locale: string; }>();
     const direction = getLangDir(params?.locale ?? '');
 
-    const isDesktop = useMediaQuery('(min-width: 1280px)')
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
 
     // Get dynamic menu based on current path
     const dynamicMenu = getDynamicMenuByPath(pathname, t);
