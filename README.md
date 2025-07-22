@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## 🎓 EduPrima Database Management System
+
+**Latest Features (January 2025):**
+- 🔍 **Smart Multi-Panel Search System** - AI-powered tutor matching
+- 🎨 **Enhanced Sidebar Interface** - Professional visual states  
+- 🔐 **Authentication Fixes** - Improved login flow
+- 📐 **UI/UX Improvements** - Better navigation and interactions
+
+📋 **[View Detailed Documentation](./DATABASE-TUTOR-RECENT-UPDATES.md)**
+
+---
+
 ## Getting Started
 
 First, run the development server:
