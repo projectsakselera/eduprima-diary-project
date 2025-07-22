@@ -93,69 +93,152 @@ export default function DatabaseTutorPage() {
   const [sortField, setSortField] = useState<string>('nama_lengkap');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [tutorTableName, setTutorTableName] = useState<string>('tutors');
+  const [isUsingMockData, setIsUsingMockData] = useState<boolean>(false);
 
   // Check database connection and available tables
   const checkDatabaseConnection = async () => {
     try {
       console.log('Testing Supabase connection...');
+      console.log('Supabase URL:', supabaseUrl);
+      console.log('Supabase Key (first 20 chars):', supabaseKey.substring(0, 20) + '...');
       
-      // First try with API route
+      // First try with debug API route
       try {
-        const apiResponse = await fetch('/api/supabase/check-tables');
+        console.log('Trying debug API route...');
+        const apiResponse = await fetch('/api/tutor-test');
         if (apiResponse.ok) {
           const apiData = await apiResponse.json();
-          console.log('Available tables (via API):', apiData.tables);
+          console.log('Debug API response:', apiData);
           
-          // Check if any tutor-related table exists
-          const tutorTables = apiData.tables?.filter((table: string) => 
-            table.toLowerCase().includes('tutor') || 
-            table.toLowerCase().includes('teacher') ||
-            table.toLowerCase().includes('user')
-          );
-          console.log('Tutor-related tables found:', tutorTables);
-          
-          if (tutorTables && tutorTables.length > 0) {
-            // Try the most likely candidate
-            setTutorTableName(tutorTables[0]);
-            console.log('Using table:', tutorTables[0]);
+          if (apiData.results?.recommendedTable) {
+            setTutorTableName(apiData.results.recommendedTable);
+            console.log('Using recommended table:', apiData.results.recommendedTable);
+            return true;
           }
           
+          // Check if any test succeeded
+          const successfulTests = apiData.results?.tests?.filter((test: any) => test.success && test.rowCount > 0);
+          if (successfulTests && successfulTests.length > 0) {
+            const tableName = successfulTests[0].test.replace('Query ', '');
+            setTutorTableName(tableName);
+            console.log('Using first successful table:', tableName);
+            return true;
+          }
+        } else {
+          const errorText = await apiResponse.text();
+          console.error('Debug API failed:', apiResponse.status, errorText);
+        }
+      } catch (apiError: any) {
+        console.error('Debug API error:', {
+          message: apiError.message,
+          stack: apiError.stack,
+          error: apiError
+        });
+      }
+      
+      // Fallback: Try the simplest possible query
+      console.log('Trying simplest connection test...');
+      try {
+        const { data, error, status, statusText } = await supabase
+          .from('t_310_01_01_users_universal')
+          .select('id')
+          .limit(1);
+
+        console.log('Simple connection test result:', {
+          success: !error,
+          status,
+          statusText,
+          error: error ? {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          } : null,
+          dataCount: data?.length || 0
+        });
+
+        if (!error) {
+          console.log('✅ Connection successful! Using users table as fallback.');
+          setTutorTableName('t_310_01_01_users_universal');
           return true;
         }
-      } catch (apiError) {
-        console.warn('API route failed, trying direct connection');
+      } catch (simpleError: any) {
+        console.error('Simple connection test failed:', {
+          message: simpleError.message,
+          name: simpleError.name,
+          stack: simpleError.stack,
+          error: simpleError
+        });
       }
       
-      // Fallback: Test basic connection directly
-      const { data, error } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public');
-
-      if (error) {
-        console.error('Connection test failed:', error);
-        return false;
-      }
-
-      console.log('Available tables:', data?.map(t => t.table_name));
+      // Last resort: mock data mode
+      console.warn('⚠️ All connection tests failed. Switching to mock data mode.');
+      return false;
       
-      // Look for tutor-related tables
-      const tutorTables = data?.filter(t => 
-        t.table_name.toLowerCase().includes('tutor') || 
-        t.table_name.toLowerCase().includes('teacher') ||
-        t.table_name.toLowerCase().includes('user')
-      );
-      
-      if (tutorTables && tutorTables.length > 0) {
-        setTutorTableName(tutorTables[0].table_name);
-        console.log('Using table:', tutorTables[0].table_name);
-      }
-      
-      return true;
-    } catch (err) {
-      console.error('Database connection error:', err);
+    } catch (err: any) {
+      console.error('Database connection error (outer catch):', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+        error: err,
+        errorString: JSON.stringify(err, Object.getOwnPropertyNames(err))
+      });
       return false;
     }
+  };
+
+  // Mock data for fallback
+  const getMockTutorData = (): TutorData[] => {
+    return [
+      {
+        id: '1',
+        trn: 'TUT001',
+        nama_lengkap: 'Budi Santoso',
+        email: 'budi.santoso@example.com',
+        no_hp_1: '081234567890',
+        status_tutor: 'active',
+        mata_pelajaran_sma_ipa: ['Matematika', 'Fisika'],
+        mata_pelajaran_smp: ['Matematika SMP'],
+        tarif_per_jam: 75000,
+        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+      },
+      {
+        id: '2',
+        trn: 'TUT002',
+        nama_lengkap: 'Siti Nurhaliza',
+        email: 'siti.nurhaliza@example.com',
+        no_hp_1: '081234567891',
+        status_tutor: 'pending',
+        mata_pelajaran_bahasa_asing: ['English', 'IELTS'],
+        mata_pelajaran_universitas: ['English Literature'],
+        tarif_per_jam: 85000,
+        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+      },
+      {
+        id: '3',
+        trn: 'TUT003',
+        nama_lengkap: 'Ahmad Rizki',
+        email: 'ahmad.rizki@example.com',
+        no_hp_1: '081234567892',
+        status_tutor: 'active',
+        mata_pelajaran_smk_teknik: ['Programming', 'Database'],
+        mata_pelajaran_keterampilan: ['Web Development'],
+        tarif_per_jam: 100000,
+        created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+      },
+      {
+        id: '4',
+        trn: 'TUT004',
+        nama_lengkap: 'Dewi Kartika',
+        email: 'dewi.kartika@example.com',
+        no_hp_1: '081234567893',
+        status_tutor: 'inactive',
+        mata_pelajaran_sd: ['Bahasa Indonesia', 'Matematika Dasar'],
+        mata_pelajaran_smp: ['Bahasa Indonesia SMP'],
+        tarif_per_jam: 60000,
+        created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
+      }
+    ];
   };
 
   // Load tutors data from Supabase
@@ -167,8 +250,16 @@ export default function DatabaseTutorPage() {
       // First check database connection
       const isConnected = await checkDatabaseConnection();
       if (!isConnected) {
-        throw new Error('Failed to connect to database');
+        console.warn('🔄 Database connection failed, using mock data for demo');
+        const mockData = getMockTutorData();
+        setTutors(mockData);
+        calculateStats(mockData);
+        setIsUsingMockData(true);
+        return;
       }
+
+      // Reset mock data flag if connection successful
+      setIsUsingMockData(false);
 
       console.log('Attempting to query tutors table...');
       
@@ -397,10 +488,21 @@ export default function DatabaseTutorPage() {
     );
   }
 
-  return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      return (
+      <div className="space-y-6 p-6">
+        {/* Mock Data Warning Banner */}
+        {isUsingMockData && (
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <Icon icon="ph:warning" className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              <strong>Demo Mode:</strong> Database connection failed. Showing mock data for demonstration. 
+              Check console for debugging details or visit <code>/api/tutor-test</code> for database diagnostics.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Database Tutor Management</h1>
           <p className="text-muted-foreground">
