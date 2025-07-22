@@ -92,6 +92,71 @@ export default function DatabaseTutorPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('nama_lengkap');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [tutorTableName, setTutorTableName] = useState<string>('tutors');
+
+  // Check database connection and available tables
+  const checkDatabaseConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      
+      // First try with API route
+      try {
+        const apiResponse = await fetch('/api/supabase/check-tables');
+        if (apiResponse.ok) {
+          const apiData = await apiResponse.json();
+          console.log('Available tables (via API):', apiData.tables);
+          
+          // Check if any tutor-related table exists
+          const tutorTables = apiData.tables?.filter((table: string) => 
+            table.toLowerCase().includes('tutor') || 
+            table.toLowerCase().includes('teacher') ||
+            table.toLowerCase().includes('user')
+          );
+          console.log('Tutor-related tables found:', tutorTables);
+          
+          if (tutorTables && tutorTables.length > 0) {
+            // Try the most likely candidate
+            setTutorTableName(tutorTables[0]);
+            console.log('Using table:', tutorTables[0]);
+          }
+          
+          return true;
+        }
+      } catch (apiError) {
+        console.warn('API route failed, trying direct connection');
+      }
+      
+      // Fallback: Test basic connection directly
+      const { data, error } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_schema', 'public');
+
+      if (error) {
+        console.error('Connection test failed:', error);
+        return false;
+      }
+
+      console.log('Available tables:', data?.map(t => t.table_name));
+      
+      // Look for tutor-related tables
+      const tutorTables = data?.filter(t => 
+        t.table_name.toLowerCase().includes('tutor') || 
+        t.table_name.toLowerCase().includes('teacher') ||
+        t.table_name.toLowerCase().includes('user')
+      );
+      
+      if (tutorTables && tutorTables.length > 0) {
+        setTutorTableName(tutorTables[0].table_name);
+        console.log('Using table:', tutorTables[0].table_name);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Database connection error:', err);
+      return false;
+    }
+  };
 
   // Load tutors data from Supabase
   const loadTutors = async () => {
@@ -99,32 +164,77 @@ export default function DatabaseTutorPage() {
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('tutors')
-        .select(`
-          id,
-          trn,
-          nama_lengkap,
-          email,
-          no_hp_1,
-          status_tutor,
-          mata_pelajaran_sd,
-          mata_pelajaran_smp,
-          mata_pelajaran_sma_ipa,
-          mata_pelajaran_sma_ips,
-          mata_pelajaran_smk_teknik,
-          mata_pelajaran_smk_bisnis,
-          mata_pelajaran_smk_pariwisata,
-          mata_pelajaran_smk_kesehatan,
-          mata_pelajaran_bahasa_asing,
-          mata_pelajaran_universitas,
-          mata_pelajaran_keterampilan,
-          tarif_per_jam,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100); // Limit for performance
+      // First check database connection
+      const isConnected = await checkDatabaseConnection();
+      if (!isConnected) {
+        throw new Error('Failed to connect to database');
+      }
+
+      console.log('Attempting to query tutors table...');
+      
+      // Try simple query first
+      let data, error;
+      
+      try {
+        console.log('Trying table:', tutorTableName);
+        const result = await supabase
+          .from(tutorTableName)
+          .select('*')
+          .limit(10);
+        
+        data = result.data;
+        error = result.error;
+        
+        if (error) {
+          console.error('Simple query failed:', error);
+          throw error;
+        }
+        
+        console.log('Simple query successful, sample data:', data?.[0]);
+        
+        // If simple query works, try the full query
+        if (data && data.length > 0) {
+          console.log('Attempting full query with specific columns...');
+          const fullResult = await supabase
+            .from(tutorTableName)
+            .select(`
+              id,
+              trn,
+              nama_lengkap,
+              email,
+              no_hp_1,
+              status_tutor,
+              mata_pelajaran_sd,
+              mata_pelajaran_smp,
+              mata_pelajaran_sma_ipa,
+              mata_pelajaran_sma_ips,
+              mata_pelajaran_smk_teknik,
+              mata_pelajaran_smk_bisnis,
+              mata_pelajaran_smk_pariwisata,
+              mata_pelajaran_smk_kesehatan,
+              mata_pelajaran_bahasa_asing,
+              mata_pelajaran_universitas,
+              mata_pelajaran_keterampilan,
+              tarif_per_jam,
+              created_at,
+              updated_at
+            `)
+            .order('created_at', { ascending: false })
+            .limit(100);
+          
+          if (fullResult.error) {
+            console.warn('Full query failed, using simple query data:', fullResult.error);
+            // Keep using the simple query data
+          } else {
+            data = fullResult.data;
+            console.log('Full query successful');
+          }
+        }
+        
+      } catch (queryError) {
+        console.error('Query failed:', queryError);
+        throw queryError;
+      }
 
       if (error) throw error;
 
@@ -133,7 +243,20 @@ export default function DatabaseTutorPage() {
       
     } catch (err) {
       console.error('Error loading tutors:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tutor data');
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        error: err,
+        errorString: JSON.stringify(err, null, 2)
+      });
+      
+      let errorMessage = 'Failed to load tutor data';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        errorMessage = JSON.stringify(err);
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
