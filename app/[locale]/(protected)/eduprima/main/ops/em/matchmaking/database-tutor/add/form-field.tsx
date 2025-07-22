@@ -807,9 +807,9 @@ const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
                     )}
                     onClick={() => handleSubjectToggle(subject.subject)}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
-                      {/* Subject Info */}
-                      <div className="flex-1 space-y-2">
+                    <div className="space-y-3">
+                      {/* Subject Header with Confidence */}
+                      <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="font-medium text-foreground">
                             {subject.subject}
@@ -818,7 +818,18 @@ const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
                             <Icon icon="ph:check-circle-fill" className="h-4 w-4 text-primary" />
                           )}
                         </div>
-                        
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-xl font-bold text-primary">
+                            {Math.round(subject.correlation * 100)}%
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            confidence
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Subject Details */}
+                      <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">
                           {subject.reason}
                         </div>
@@ -833,16 +844,6 @@ const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
                           <Badge className="bg-secondary text-secondary-foreground">
                             {subject.preparationTime}
                           </Badge>
-                        </div>
-                      </div>
-                      
-                      {/* Confidence Score */}
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-primary">
-                          {Math.round(subject.correlation * 100)}%
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          confidence
                         </div>
                       </div>
                     </div>
