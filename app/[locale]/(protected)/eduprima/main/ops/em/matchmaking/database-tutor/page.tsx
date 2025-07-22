@@ -75,6 +75,58 @@ interface DashboardStats {
 export default function DatabaseTutorPage() {
   const router = useRouter();
   
+  // Utility function to safely serialize errors
+  const serializeError = (error: any) => {
+    if (!error) return null;
+    
+    // If it's a string, return as is
+    if (typeof error === 'string') return error;
+    
+    // Extract common error properties
+    const errorInfo: any = {};
+    
+    // Standard Error properties
+    if (error.message) errorInfo.message = error.message;
+    if (error.name) errorInfo.name = error.name;
+    if (error.code) errorInfo.code = error.code;
+    if (error.stack) errorInfo.stack = error.stack;
+    
+    // Supabase-specific properties
+    if (error.details) errorInfo.details = error.details;
+    if (error.hint) errorInfo.hint = error.hint;
+    if (error.status) errorInfo.status = error.status;
+    if (error.statusCode) errorInfo.statusCode = error.statusCode;
+    if (error.statusText) errorInfo.statusText = error.statusText;
+    
+    // PostgreSQL error properties
+    if (error.code) errorInfo.pgCode = error.code;
+    if (error.severity) errorInfo.severity = error.severity;
+    if (error.position) errorInfo.position = error.position;
+    
+    // If we got some properties, return them
+    if (Object.keys(errorInfo).length > 0) {
+      return errorInfo;
+    }
+    
+    // Last resort: try to get all enumerable properties
+    try {
+      const allProps: any = {};
+      for (const key in error) {
+        if (error.hasOwnProperty(key)) {
+          allProps[key] = error[key];
+        }
+      }
+      if (Object.keys(allProps).length > 0) {
+        return allProps;
+      }
+    } catch (e) {
+      // Ignore
+    }
+    
+    // Very last resort: convert to string
+    return error.toString();
+  };
+  
   // State management
   const [tutors, setTutors] = useState<TutorData[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -128,13 +180,9 @@ export default function DatabaseTutorPage() {
           const errorText = await apiResponse.text();
           console.error('Debug API failed:', apiResponse.status, errorText);
         }
-      } catch (apiError: any) {
-        console.error('Debug API error:', {
-          message: apiError.message,
-          stack: apiError.stack,
-          error: apiError
-        });
-      }
+             } catch (apiError: any) {
+         console.error('Debug API error:', serializeError(apiError));
+       }
       
       // Fallback: Try the simplest possible query
       console.log('Trying simplest connection test...');
@@ -144,47 +192,31 @@ export default function DatabaseTutorPage() {
           .select('id')
           .limit(1);
 
-        console.log('Simple connection test result:', {
-          success: !error,
-          status,
-          statusText,
-          error: error ? {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-          } : null,
-          dataCount: data?.length || 0
-        });
+                 console.log('Simple connection test result:', {
+           success: !error,
+           status,
+           statusText,
+           error: error ? serializeError(error) : null,
+           dataCount: data?.length || 0
+         });
 
         if (!error) {
           console.log('✅ Connection successful! Using users table as fallback.');
           setTutorTableName('t_310_01_01_users_universal');
           return true;
         }
-      } catch (simpleError: any) {
-        console.error('Simple connection test failed:', {
-          message: simpleError.message,
-          name: simpleError.name,
-          stack: simpleError.stack,
-          error: simpleError
-        });
-      }
+             } catch (simpleError: any) {
+         console.error('Simple connection test failed:', serializeError(simpleError));
+       }
       
       // Last resort: mock data mode
       console.warn('⚠️ All connection tests failed. Switching to mock data mode.');
       return false;
       
-    } catch (err: any) {
-      console.error('Database connection error (outer catch):', {
-        message: err.message,
-        name: err.name,
-        stack: err.stack,
-        error: err,
-        errorString: JSON.stringify(err, Object.getOwnPropertyNames(err))
-      });
-      return false;
-    }
+         } catch (err: any) {
+       console.error('Database connection error (outer catch):', serializeError(err));
+       return false;
+     }
   };
 
   // Mock data for fallback
@@ -277,7 +309,7 @@ export default function DatabaseTutorPage() {
         error = result.error;
         
         if (error) {
-          console.error('Simple query failed:', error);
+          console.error('Simple query failed:', serializeError(error));
           throw error;
         }
         
@@ -323,7 +355,7 @@ export default function DatabaseTutorPage() {
         }
         
       } catch (queryError) {
-        console.error('Query failed:', queryError);
+        console.error('Query failed:', serializeError(queryError));
         throw queryError;
       }
 
@@ -333,18 +365,14 @@ export default function DatabaseTutorPage() {
       calculateStats(data || []);
       
     } catch (err) {
-      console.error('Error loading tutors:', err);
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        error: err,
-        errorString: JSON.stringify(err, null, 2)
-      });
+      console.error('Error loading tutors:', serializeError(err));
       
       let errorMessage = 'Failed to load tutor data';
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'object' && err !== null) {
-        errorMessage = JSON.stringify(err);
+      const serializedError = serializeError(err);
+      if (serializedError && typeof serializedError === 'object' && serializedError.message) {
+        errorMessage = serializedError.message;
+      } else if (typeof serializedError === 'string') {
+        errorMessage = serializedError;
       }
       
       setError(errorMessage);
