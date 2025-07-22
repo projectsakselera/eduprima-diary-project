@@ -201,9 +201,9 @@ export default function DatabaseTutorPage() {
          });
 
         if (!error) {
-          console.log('✅ Connection successful! Using users table as fallback.');
-          setTutorTableName('t_310_01_01_users_universal');
-          return true;
+                  console.log('✅ Connection successful! Using existing users table as tutor data source.');
+        setTutorTableName('t_310_01_01_users_universal');
+        return true;
         }
              } catch (simpleError: any) {
          console.error('Simple connection test failed:', serializeError(simpleError));
@@ -295,11 +295,67 @@ export default function DatabaseTutorPage() {
 
       console.log('Attempting to query tutors table...');
       
-      // Try simple query first
+      // Check if we're using the users table (no dedicated tutor table exists)
+      if (tutorTableName === 't_310_01_01_users_universal') {
+        console.log('📋 Using existing users table as tutor data source');
+        
+        try {
+          const { data: userData, error } = await supabase
+            .from('t_310_01_01_users_universal')
+            .select(`
+              id,
+              user_code,
+              name,
+              email,
+              phone,
+              role,
+              primary_role,
+              user_status,
+              created_at,
+              updated_at
+            `)
+            .eq('user_status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (error) {
+            console.error('Users query failed:', serializeError(error));
+            throw error;
+          }
+
+          console.log('✅ Successfully fetched users data:', userData?.length, 'records');
+
+          // Transform user data to tutor format
+          const transformedData: TutorData[] = (userData || []).map(user => ({
+            id: user.id,
+            trn: user.user_code,
+            nama_lengkap: user.name,
+            email: user.email,
+            no_hp_1: user.phone,
+            status_tutor: user.user_status === 'active' ? 'active' : 'inactive',
+            mata_pelajaran_sd: user.role === 'database_tutor_manager' ? ['Management'] : [],
+            mata_pelajaran_smp: user.primary_role ? [user.primary_role] : [],
+            tarif_per_jam: user.role === 'super_admin' ? 100000 : 75000, // Mock rates based on role
+            created_at: user.created_at,
+            updated_at: user.updated_at
+          }));
+
+          setTutors(transformedData);
+          calculateStats(transformedData);
+          console.log('✅ Data transformation complete');
+          return;
+
+        } catch (err) {
+          console.error('Error querying users table:', serializeError(err));
+          throw err;
+        }
+      }
+
+      // If we have a dedicated tutor table, try to query it
       let data, error;
       
       try {
-        console.log('Trying table:', tutorTableName);
+        console.log('Trying dedicated tutor table:', tutorTableName);
         const result = await supabase
           .from(tutorTableName)
           .select('*')
@@ -309,11 +365,11 @@ export default function DatabaseTutorPage() {
         error = result.error;
         
         if (error) {
-          console.error('Simple query failed:', serializeError(error));
+          console.error('Tutor table query failed:', serializeError(error));
           throw error;
         }
         
-        console.log('Simple query successful, sample data:', data?.[0]);
+        console.log('Tutor table query successful, sample data:', data?.[0]);
         
         // If simple query works, try the full query
         if (data && data.length > 0) {
@@ -346,7 +402,7 @@ export default function DatabaseTutorPage() {
             .limit(100);
           
           if (fullResult.error) {
-            console.warn('Full query failed, using simple query data:', fullResult.error);
+            console.warn('Full query failed, using simple query data:', serializeError(fullResult.error));
             // Keep using the simple query data
           } else {
             data = fullResult.data;

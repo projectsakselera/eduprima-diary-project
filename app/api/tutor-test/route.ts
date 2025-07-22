@@ -34,17 +34,12 @@ export async function GET() {
       });
     }
 
-    // Test 2: Try different possible tutor table names
+    // Test 2: Try different possible table names (focus on existing ones)
     const possibleTableNames = [
-      'tutors',
-      'tutor',
-      't_tutors',
-      't_tutor',
-      'teacher',
-      'teachers',
-      'database_tutor',
-      'database_tutors',
-      't_310_01_01_users_universal'
+      't_310_01_01_users_universal', // Known existing table
+      'users',
+      'profiles',
+      // Only try these if they exist in the database
     ];
 
     for (const tableName of possibleTableNames) {
