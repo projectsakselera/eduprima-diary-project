@@ -53,6 +53,35 @@ const tutorManagerMenus = [
     ]
   },
   {
+    groupLabel: "Migration Tools",
+    menus: [
+      {
+        href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/dashboard",
+        label: "Migration Dashboard",
+        active: false,
+        icon: "heroicons:cog-6-tooth",
+      },
+      {
+        href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/column-mapping",
+        label: "Column Mapping",
+        active: false,
+        icon: "heroicons:link",
+      },
+      {
+        href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/schema-validation",
+        label: "Schema Validation",
+        active: false,
+        icon: "heroicons:shield-check",
+      },
+      {
+        href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/progress-tracking",
+        label: "Progress Tracking",
+        active: false,
+        icon: "heroicons:chart-bar",
+      }
+    ]
+  },
+  {
     groupLabel: "AI & Machine Learning",
     menus: [
       {

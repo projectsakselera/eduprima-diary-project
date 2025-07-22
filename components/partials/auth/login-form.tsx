@@ -42,8 +42,8 @@ const LoginForm = () => {
     resolver: zodResolver(schema),
     mode: "all",
     defaultValues: {
-      email: "amhar.idn@gmail.com",
-      password: "password123",
+      email: "",
+      password: "",
     },
   });
 

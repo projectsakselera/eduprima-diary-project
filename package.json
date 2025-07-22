@@ -21,7 +21,7 @@
     "deploy-vercel": "vercel --prod",
     "switch-env": "node scripts/switch-env.js",
     "env:dev": "node scripts/switch-env.js dev",
-    "env:staging": "node scripts/switch-env.js staging", 
+    "env:staging": "node scripts/switch-env.js staging",
     "env:prod": "node scripts/switch-env.js prod",
     "env:clean": "node scripts/switch-env.js clean"
   },
@@ -76,6 +76,7 @@
     "@tanstack/react-table": "^8.19.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cleave.js": "^1.4.12",
+    "@types/papaparse": "^5.3.16",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vercel/analytics": "^1.3.1",
     "apexcharts": "^4.4.0",
@@ -105,6 +106,7 @@
     "next-themes": "^0.4.4",
     "nextra": "^2.13.4",
     "nextra-theme-docs": "^2.13.4",
+    "papaparse": "^5.5.3",
     "quill": "^2.0.2",
     "react": "^18",
     "react-apexcharts": "^1.4.1",
@@ -128,6 +130,7 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.1",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
