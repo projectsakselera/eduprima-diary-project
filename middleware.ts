@@ -1,32 +1,88 @@
 import createMiddleware from 'next-intl/middleware';
 import {NextRequest, NextResponse} from 'next/server';
 import {locales} from '@/config';
+import { auth } from "@/lib/auth";
 
 export default async function middleware(request: NextRequest) {
+  // Step 1: Check protected routes
+  const pathname = request.nextUrl.pathname;
   
- 
+  // Skip middleware for API routes, static files, and auth pages
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/auth/') ||
+    pathname.includes('.') ||
+    pathname.startsWith('/en/auth/') ||
+    pathname.startsWith('/id/auth/') ||
+    pathname.startsWith('/ar/auth/')
+  ) {
+    return NextResponse.next();
+  }
 
+  // Step 2: Role-based access control for protected paths
+  if (pathname.includes('/eduprima/')) {
+    const session = await auth();
+    
+    if (!session) {
+      return NextResponse.redirect(new URL('/en/auth/login', request.url));
+    }
 
-  // Step 1: Use the incoming request (example)
+    const userRole = (session.user as any)?.role;
+    
+    // Super admin has access to everything
+    if (userRole === 'super_admin') {
+      // Continue to i18n middleware
+    } 
+    // Database tutor manager restricted to database-tutor paths only
+    else if (userRole === 'database_tutor_manager') {
+      if (!pathname.includes('/database-tutor') && !pathname.includes('/profile')) {
+        return NextResponse.redirect(new URL('/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all', request.url));
+      }
+    } 
+    // Other roles - redirect to unauthorized
+    else {
+      return NextResponse.redirect(new URL('/en/auth/login?error=unauthorized', request.url));
+    }
+  }
+
+  // Step 3: Use the incoming request for i18n
   const defaultLocale = request.headers.get('dashcode-locale') || 'en';
  
-  // Step 2: Create and call the next-intl middleware (example)
+  // Step 4: Create and call the next-intl middleware
   const handleI18nRouting = createMiddleware({
     locales,
-    defaultLocale
-    
+    defaultLocale,
+    localePrefix: 'always'
   });
+  
   const response = handleI18nRouting(request);
  
-  // Step 3: Alter the response (example)
-  response.headers.set('dashcode-locale', defaultLocale);
-
-
- 
+  // Step 5: Alter the response
+  if (response) {
+    response.headers.set('dashcode-locale', defaultLocale);
+    return response;
+  }
+  
   return response;
 }
  
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(ar|en)/:path*']
+  // Match only internationalized pathnames, exclude API routes and static files
+  matcher: [
+    // Enable a redirect to a matching locale at the root
+    '/',
+    
+    // Set a cookie to remember the previous locale for
+    // all requests that have a locale prefix
+    '/(ar|en|id)/:path*',
+    
+    // Enable redirects that add missing locales but exclude:
+    // - API routes (/api/*)
+    // - Static files (files with extensions)
+    // - NextJS internal files (_next/*)
+    // - Vercel files (_vercel/*)
+    // - NextAuth routes
+    '/((?!api/|_next/|_vercel/|favicon.ico|.*\\..*).*)'
+  ]
 };

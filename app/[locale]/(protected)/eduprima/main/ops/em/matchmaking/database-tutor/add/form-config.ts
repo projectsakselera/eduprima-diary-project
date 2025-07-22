@@ -161,6 +161,40 @@ export interface TutorFormData {
   metodePengajaran: string[];
   jadwalTersedia: string[];
   
+  // New Availability Configuration
+  statusMenerimaSiswa?: string;
+  maksimalSiswaBaru?: number;
+  maksimalTotalSiswa?: number;
+  usiaTargetSiswa?: string[];
+  catatanAvailability?: string;
+
+  // Teaching Details
+  teachingMethods?: string[];
+  studentLevelPreferences?: string[];
+  specialNeedsCapable?: string;
+  groupClassWilling?: string;
+
+  // Technology Capability
+  onlineTeachingCapable?: string;
+  techSavviness?: string;
+  gmeetExperience?: string;
+  presensiUpdateCapability?: string;
+
+  // Personality & Character
+  tutorPersonalityType?: string;
+  communicationStyle?: string;
+  teachingPatienceLevel?: string;
+  studentMotivationAbility?: string;
+  scheduleFlexibilityLevel?: string;
+
+  // Emergency Contact & Communication
+  whatsappNumber?: string;
+  emergencyContactName?: string;
+  emergencyContactRelationship?: string;
+  emergencyContactPhone?: string;
+  preferredCommunicationTime?: string;
+  communicationLanguagePreference?: string[];
+  
   // Profile Information (legacy - kept for compatibility)
   motivasi: string;
   
@@ -178,8 +212,6 @@ export interface TutorFormData {
   mataPelajaran_Keterampilan_Khusus: string[];
   
   // Teaching Area Information
-  wilayahKota?: string;
-  wilayahKecamatan?: string[];
   radiusMengajar?: number;
   catatan_lokasi?: string;
   
@@ -1481,8 +1513,8 @@ export const tutorFormConfig: FormConfig = {
 
     {
       id: 'subjects-areas',
-      title: 'Mata Pelajaran & Wilayah',
-      description: 'Pilihan mata pelajaran dan jangkauan wilayah mengajar',
+      title: 'Mata Pelajaran',
+      description: 'Pilihan mata pelajaran yang dapat diajarkan',
       icon: 'ph:book-open',
       color: 'info',
       fields: [
@@ -1605,71 +1637,509 @@ export const tutorFormConfig: FormConfig = {
           multiple: true,
           helperText: 'Pilih mata pelajaran Keterampilan Khusus yang dapat diajarkan tutor.',
           icon: 'ph:graduation-cap'
-        },
-
+        }
+      ]
+    },
+    
+    {
+      id: 'availability-location',
+      title: 'Availability & Wilayah',
+      description: 'Ketersediaan waktu dan jangkauan wilayah mengajar',
+      icon: 'ph:calendar-clock',
+      color: 'success',
+      fields: [
         // === JANGKAUAN WILAYAH ===
         {
           name: 'section_wilayah',
-          label: 'JANGKAUAN WILAYAH MENGAJAR',
+          label: 'TARGET AREA MENGAJAR & JANGKAUAN',
           type: 'text',
           disabled: true,
           helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           className: 'section-divider',
-          icon: 'ph:map-pin'
+          icon: 'ph:target'
         },
-        {
-          name: 'wilayahKota',
-          label: 'Kota/Kabupaten Mengajar',
-          type: 'select',
-          placeholder: 'Pilih kota/kabupaten tempat mengajar...',
-          options: dynamicOptions.provinsi, // TODO: akan diganti dengan data kota dari Supabase
-          helperText: 'Pilih kota atau kabupaten tempat tutor bersedia mengajar.',
-          icon: 'ph:map-pin',
-          size: 'lg'
-        },
-        {
-          name: 'wilayahKecamatan',
-          label: 'Kecamatan Mengajar',
-          type: 'checkbox',
-          options: [], // TODO: akan diisi dinamis berdasarkan pilihan kota dari Supabase
-          multiple: true,
-          helperText: 'Pilih kecamatan-kecamatan tempat tutor bersedia mengajar.',
-          icon: 'ph:buildings',
-          conditional: (data) => !!data.wilayahKota
-        },
+
         {
           name: 'radiusMengajar',
-          label: 'Radius Mengajar (KM)',
+          label: 'Radius Area Mengajar (KM)',
           type: 'number',
-          placeholder: '10',
+          placeholder: '25',
           min: 1,
           max: 100,
-          helperText: 'Jarak maksimal yang bersedia ditempuh tutor untuk mengajar (dalam kilometer).',
+          helperText: '📏 Jarak maksimal dari titik pusat di atas yang Anda bersedia jangkau untuk mengajar. Contoh: "Monas Jakarta Pusat" + 25km = cover seluruh Jakarta. "Jl. Kaliurang Sleman" + 15km = cover area Sleman-Yogya Utara.',
           icon: 'ph:circle',
           size: 'lg'
         },
-
         {
           name: 'alamatTitikLokasi',
-          label: 'Titik Lokasi Acuan Pencarian Siswa',
-          type: 'textarea', // Changed to textarea to make it full width like other textarea fields
-          placeholder: 'Contoh: Mall Senayan City Jakarta atau Jl. Sudirman Jakarta...',
-          helperText: 'Titik acuan approximate untuk dispatch siswa. Boleh gunakan landmark terdekat atau area yang mudah dijangkau.',
-          icon: 'ph:house-line',
+          label: 'Titik Pusat Area Target Mengajar',
+          type: 'textarea',
+          placeholder: 'Contoh: "Monas Jakarta Pusat" atau "Jl. Kaliurang KM 5 Sleman" atau "Alun-alun Surabaya"...',
+          helperText: '🎯 PENTING: Ini BUKAN alamat rumah Anda, tapi titik pusat area dimana Anda mau ngajar siswa. Contoh: tinggal di Tangerang tapi mau ngajar seluruh Jakarta → tulis "Monas Jakarta Pusat" + radius 25km. Atau tinggal di Bantul tapi fokus area Sleman → tulis "Jl. Kaliurang Sleman" + radius 15km.',
+          icon: 'ph:map-pin-line',
           size: 'lg',
-          rows: 2,
+          rows: 3,
           className: 'map-picker-field'
+        },
+        {
+          name: 'catatan_lokasi',
+          label: 'Preferensi Area Mengajar (Opsional)',
+          type: 'textarea',
+          placeholder: 'Contoh: "Prefer Jakarta Pusat-Selatan, hindari Utara karena macet" atau "Area Sleman-Yogya OK, Bantul Selatan susah akses" atau "Surabaya Barat-Timur prefer, Utara jauh dari rumah"',
+          rows: 3,
+          helperText: '💬 Opsional: Jelaskan preferensi area khusus, area yang dihindari, atau pertimbangan akses jalan/transportasi untuk membantu EM dalam matching siswa.',
+          icon: 'ph:note',
+          size: 'lg'
+        },
+
+        // === KETERSEDIAAN WAKTU & METODE ===
+        {
+          name: 'section_availability',
+          label: 'KETERSEDIAAN WAKTU & METODE MENGAJAR',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:calendar-clock'
+        },
+        {
+          name: 'statusMenerimaSiswa',
+          label: 'Status Availability',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih status ketersediaan...',
+          options: [
+            { value: 'aktif', label: '🟢 AKTIF - Menerima siswa baru' },
+            { value: 'terbatas', label: '🟡 TERBATAS - Hanya menerima 1-2 siswa baru' },
+            { value: 'tidak_aktif', label: '🔴 TIDAK AKTIF - Tidak menerima siswa baru sementara' }
+          ],
+          helperText: 'Status ini akan menentukan apakah tutor bisa menerima siswa baru atau tidak.',
+          icon: 'ph:toggle-left',
+          size: 'lg'
+        },
+        {
+          name: 'jadwalTersedia',
+          label: 'Jadwal Mingguan Tersedia',
+          type: 'checkbox',
+          required: true,
+          options: dynamicOptions.jadwalTersedia,
+          multiple: true,
+          helperText: 'Pilih hari dan jam ketika tutor tersedia untuk mengajar siswa baru.',
+          icon: 'ph:calendar'
+        },
+        {
+          name: 'metodePengajaran',
+          label: 'Metode Pengajaran',
+          type: 'checkbox',
+          required: true,
+          options: [
+            { value: 'offline_datang_ke_siswa', label: '🏠 Offline - Datang ke rumah siswa' },
+            { value: 'offline_di_tempat_tutor', label: '🏢 Offline - Di tempat tutor' },
+            { value: 'online_zoom_gmeet', label: '💻 Online - Zoom/Google Meet' },
+            { value: 'hybrid', label: '🔄 Hybrid - Kombinasi online & offline' }
+          ],
+          multiple: true,
+          helperText: 'Pilih metode pengajaran yang bisa dilakukan tutor.',
+          icon: 'ph:chalkboard-teacher'
+        },
+        {
+          name: 'tariffPerJam',
+          label: 'Tarif per Jam (Rupiah)',
+          type: 'number',
+          required: true,
+          placeholder: '75000',
+          min: 25000,
+          max: 1000000,
+          step: 5000,
+          helperText: 'Tarif mengajar per jam dalam Rupiah. Minimal Rp 25.000, maksimal Rp 1.000.000.',
+          icon: 'ph:money',
+          size: 'lg'
+        },
+        {
+          name: 'maksimalSiswaBaru',
+          label: 'Maksimal Siswa Baru per Minggu',
+          type: 'number',
+          placeholder: '3',
+          min: 1,
+          max: 20,
+          helperText: 'Berapa siswa baru maksimal yang bisa diterima per minggu? Kosongkan jika tidak ada batasan.',
+          icon: 'ph:users',
+          size: 'lg'
+        },
+        {
+          name: 'maksimalTotalSiswa',
+          label: 'Maksimal Total Siswa',
+          type: 'number',
+          placeholder: '15',
+          min: 1,
+          max: 50,
+          helperText: 'Total maksimal siswa yang bisa diajar (termasuk yang sudah aktif). Kosongkan jika tidak ada batasan.',
+          icon: 'ph:user-list',
+          size: 'lg'
+        },
+        {
+          name: 'usiaTargetSiswa',
+          label: 'Usia Target Siswa',
+          type: 'checkbox',
+          options: [
+            { value: '2-5', label: '👶 2-5 tahun (Balita/PAUD)' },
+            { value: '6-12', label: '🧒 6-12 tahun (SD)' },
+            { value: '13-15', label: '👦 13-15 tahun (SMP)' },
+            { value: '16-18', label: '👨‍🎓 16-18 tahun (SMA/SMK)' },
+            { value: '19-25', label: '👨‍🎓 19-25 tahun (Kuliah)' },
+            { value: '26-40', label: '👨‍💼 26-40 tahun (Profesional Muda)' },
+            { value: '40+', label: '👨‍🦳 40+ tahun (Dewasa/Senior)' }
+          ],
+          multiple: true,
+          helperText: 'Range usia siswa yang lebih nyaman untuk diajar. Kosongkan jika bersedia mengajar semua usia.',
+          icon: 'ph:users-three'
+        },
+        {
+          name: 'catatanAvailability',
+          label: 'Catatan Availability',
+          type: 'textarea',
+          placeholder: 'Contoh: "Lebih suka mengajar sore hari karena pagi kuliah. Bisa fleksibel untuk weekend..."',
+          rows: 3,
+          helperText: 'Opsional: Informasi tambahan tentang availability dan preferensi waktu mengajar.',
+          icon: 'ph:note',
+          size: 'lg'
+        },
+
+        // === DETAIL METODE MENGAJAR ===
+        {
+          name: 'section_teaching_details',
+          label: 'DETAIL METODE & PREFERENSI MENGAJAR',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:chalkboard-teacher'
+        },
+        {
+          name: 'teachingMethods',
+          label: 'Gaya Pembelajaran yang Dikuasai',
+          type: 'checkbox',
+          options: [
+            { value: 'visual', label: '👁️ Visual - Menggunakan gambar, diagram, mind map' },
+            { value: 'auditory', label: '🎵 Auditori - Menjelaskan dengan suara, diskusi' },
+            { value: 'kinesthetic', label: '✋ Kinestetik - Praktik langsung, hands-on' },
+            { value: 'reading_writing', label: '📝 Baca-Tulis - Catatan, rangkuman, latihan tulis' }
+          ],
+          multiple: true,
+          helperText: 'Pilih gaya pembelajaran yang bisa diterapkan tutor.',
+          icon: 'ph:brain'
+        },
+        {
+          name: 'studentLevelPreferences',
+          label: 'Preferensi Level Kemampuan Siswa',
+          type: 'checkbox',
+          options: [
+            { value: 'beginner', label: '🌱 Pemula - Siswa yang baru mulai belajar' },
+            { value: 'intermediate', label: '🌿 Menengah - Siswa dengan dasar yang cukup' },
+            { value: 'advanced', label: '🌳 Mahir - Siswa dengan kemampuan tinggi' },
+            { value: 'remedial', label: '🔧 Remedial - Siswa yang perlu bantuan khusus' }
+          ],
+          multiple: true,
+          helperText: 'Level kemampuan siswa yang lebih nyaman diajar.',
+          icon: 'ph:trending-up'
         },
 
         {
-          name: 'catatan_lokasi',
-          label: 'Catatan Lokasi Khusus',
-          type: 'textarea',
-          placeholder: 'Misalnya: "Bersedia mengajar di area Jakarta Selatan dan sekitarnya, khususnya daerah Kebayoran..."',
-          rows: 3,
-          helperText: 'Opsional: Informasi tambahan mengenai preferensi lokasi mengajar.',
-          icon: 'ph:note',
+          name: 'specialNeedsCapable',
+          label: 'Mampu Mengajar Siswa Berkebutuhan Khusus',
+          type: 'select',
+          placeholder: 'Pilih kemampuan...',
+          options: [
+            { value: 'tidak', label: '❌ Tidak Mampu' },
+            { value: 'basic', label: '🟡 Mampu Level Dasar' },
+            { value: 'experienced', label: '✅ Berpengalaman' },
+            { value: 'certified', label: '🏆 Memiliki Sertifikasi Khusus' }
+          ],
+          helperText: 'Kemampuan mengajar siswa dengan kebutuhan khusus (ABK).',
+          icon: 'ph:heart',
           size: 'lg'
+        },
+        {
+          name: 'groupClassWilling',
+          label: 'Bersedia Mengajar Kelas Grup',
+          type: 'select',
+          placeholder: 'Pilih kesediaan...',
+          options: [
+            { value: 'tidak', label: '❌ Tidak Bersedia' },
+            { value: 'ya_small', label: '✅ Ya - Grup Kecil (2-4 siswa)' },
+            { value: 'ya_medium', label: '✅ Ya - Grup Menengah (5-8 siswa)' },
+            { value: 'ya_large', label: '✅ Ya - Grup Besar (9+ siswa)' }
+          ],
+          helperText: 'Kesediaan mengajar dalam bentuk grup/kelompok.',
+          icon: 'ph:users-three',
+          size: 'lg'
+        },
+
+        // === KEMAMPUAN TEKNOLOGI ===
+        {
+          name: 'section_tech_capability',
+          label: 'KEMAMPUAN TEKNOLOGI & ONLINE TEACHING',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:laptop'
+        },
+        {
+          name: 'onlineTeachingCapable',
+          label: 'Kemampuan Mengajar Online',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih kemampuan...',
+          options: [
+            { value: 'tidak_bisa', label: '❌ Tidak Bisa Mengajar Online' },
+            { value: 'basic', label: '🟡 Bisa Dasar - Zoom/GMeet saja' },
+            { value: 'intermediate', label: '✅ Mahir - Dengan tools tambahan' },
+            { value: 'advanced', label: '🏆 Expert - Interactive tools, whiteboard, dll' }
+          ],
+          helperText: 'Level kemampuan mengajar secara online.',
+          icon: 'ph:video-camera',
+          size: 'lg'
+        },
+        {
+          name: 'techSavviness',
+          label: 'Tingkat Melek Teknologi',
+          type: 'select',
+          placeholder: 'Pilih level...',
+          options: [
+            { value: 'low', label: '🔴 Rendah - Hanya aplikasi dasar' },
+            { value: 'medium', label: '🟡 Menengah - Bisa belajar tools baru' },
+            { value: 'high', label: '🟢 Tinggi - Mahir berbagai aplikasi' },
+            { value: 'expert', label: '🏆 Expert - Bisa troubleshoot sendiri' }
+          ],
+          helperText: 'Seberapa familiar dengan teknologi dan aplikasi digital.',
+          icon: 'ph:devices',
+          size: 'lg'
+        },
+        {
+          name: 'gmeetExperience',
+          label: 'Pengalaman Google Meet/Zoom',
+          type: 'select',
+          placeholder: 'Pilih pengalaman...',
+          options: [
+            { value: 'belum_pernah', label: '❌ Belum Pernah Menggunakan' },
+            { value: 'pemula', label: '🔰 Pemula - Bisa join meeting saja' },
+            { value: 'menengah', label: '🟢 Menengah - Bisa host dan share screen' },
+            { value: 'mahir', label: '🏆 Mahir - Advanced features (breakout, whiteboard)' }
+          ],
+          helperText: 'Level pengalaman menggunakan platform video meeting.',
+          icon: 'ph:video',
+          size: 'lg'
+        },
+        {
+          name: 'presensiUpdateCapability',
+          label: 'Kemampuan Update Presensi Online',
+          type: 'select',
+          placeholder: 'Pilih kemampuan...',
+          options: [
+            { value: 'tidak_bisa', label: '❌ Tidak Bisa - Perlu dibantu' },
+            { value: 'bisa_dilatih', label: '🟡 Bisa Dilatih' },
+            { value: 'bisa', label: '✅ Bisa - Mandiri' },
+            { value: 'mahir', label: '🏆 Mahir - Bisa real-time update' }
+          ],
+          helperText: 'Kemampuan mengupdate presensi dan laporan online.',
+          icon: 'ph:check-circle',
+          size: 'lg'
+        },
+
+        // === KARAKTER & KEPRIBADIAN ===
+        {
+          name: 'section_personality',
+          label: 'KARAKTER & KEPRIBADIAN TUTOR',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:smiley'
+        },
+        {
+          name: 'tutorPersonalityType',
+          label: 'Tipe Kepribadian Tutor',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih tipe kepribadian...',
+          options: [
+            { value: 'sabar_lembut', label: '🤗 Sabar & Lembut - Pendekatan halus, tidak terburu-buru' },
+            { value: 'energik_motivator', label: '⚡ Energik & Motivator - Semangat tinggi, inspiring' },
+            { value: 'serius_disiplin', label: '🎯 Serius & Disiplin - Tegas, target-oriented' },
+            { value: 'santai_friendly', label: '😊 Santai & Friendly - Rileks, seperti teman' },
+            { value: 'kreatif_fun', label: '🎨 Kreatif & Fun - Inovatif, pembelajaran menyenangkan' },
+            { value: 'analitis_detail', label: '🔍 Analitis & Detail - Teliti, sistematis' },
+            { value: 'adaptif_fleksibel', label: '🔄 Adaptif & Fleksibel - Menyesuaikan dengan siswa' },
+            { value: 'caring_empathetic', label: '💝 Caring & Empathetic - Perhatian, memahami perasaan' }
+          ],
+          helperText: 'Pilih tipe kepribadian yang paling menggambarkan diri Anda sebagai tutor.',
+          icon: 'ph:user-circle',
+          size: 'lg'
+        },
+        {
+          name: 'communicationStyle',
+          label: 'Gaya Komunikasi',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih gaya komunikasi...',
+          options: [
+            { value: 'formal_sopan', label: '🎩 Formal & Sopan - Bahasa baku, hormat' },
+            { value: 'kasual_santai', label: '😎 Kasual & Santai - Bahasa sehari-hari' },
+            { value: 'antusiaslik_ekspresif', label: '🎭 Antusias & Ekspresif - Gestur banyak, dramatis' },
+            { value: 'tenang_clear', label: '🧘 Tenang & Jelas - Pelan, artikulasi bagus' },
+            { value: 'interaktif_tanya_jawab', label: '💬 Interaktif & Tanya Jawab - Dialog aktif' },
+            { value: 'storytelling', label: '📚 Storytelling - Suka bercerita, analogi' }
+          ],
+          helperText: 'Gaya komunikasi yang biasa digunakan saat mengajar.',
+          icon: 'ph:chat-circle',
+          size: 'lg'
+        },
+        {
+          name: 'teachingPatienceLevel',
+          label: 'Level Kesabaran Mengajar (1-10)',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih level kesabaran...',
+          options: [
+            { value: '5', label: '5 - Cukup Sabar' },
+            { value: '6', label: '6 - Sabar' },
+            { value: '7', label: '7 - Sabar Sekali' },
+            { value: '8', label: '8 - Sangat Sabar' },
+            { value: '9', label: '9 - Extremely Sabar' },
+            { value: '10', label: '10 - Saint-Level Patience 😇' }
+          ],
+          helperText: 'Seberapa sabar Anda menghadapi siswa yang lambat memahami? (Scale 1-10)',
+          icon: 'ph:clock-clockwise',
+          size: 'lg'
+        },
+        {
+          name: 'studentMotivationAbility',
+          label: 'Kemampuan Memotivasi Siswa (1-10)',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih kemampuan motivasi...',
+          options: [
+            { value: '5', label: '5 - Cukup Mampu Memotivasi' },
+            { value: '6', label: '6 - Mampu Memotivasi' },
+            { value: '7', label: '7 - Baik Memotivasi' },
+            { value: '8', label: '8 - Sangat Baik Memotivasi' },
+            { value: '9', label: '9 - Expert Motivator' },
+            { value: '10', label: '10 - Inspirational Teacher 🔥' }
+          ],
+          helperText: 'Seberapa baik Anda memotivasi siswa yang malas atau putus asa? (Scale 1-10)',
+          icon: 'ph:trending-up',
+          size: 'lg'
+        },
+        {
+          name: 'scheduleFlexibilityLevel',
+          label: 'Level Fleksibilitas Jadwal (1-10)',
+          type: 'select',
+          placeholder: 'Pilih level fleksibilitas...',
+          options: [
+            { value: '3', label: '3 - Kaku - Jadwal harus fixed' },
+            { value: '4', label: '4 - Agak Kaku' },
+            { value: '5', label: '5 - Normal' },
+            { value: '6', label: '6 - Cukup Fleksibel' },
+            { value: '7', label: '7 - Fleksibel' },
+            { value: '8', label: '8 - Sangat Fleksibel' },
+            { value: '9', label: '9 - Extremely Fleksibel' },
+            { value: '10', label: '10 - Super Adaptable 🦎' }
+          ],
+          helperText: 'Seberapa fleksibel dengan perubahan jadwal mendadak? (Scale 1-10)',
+          icon: 'ph:calendar-x',
+          size: 'lg'
+        },
+
+        // === KONTAK DARURAT ===
+        {
+          name: 'section_emergency_contact',
+          label: 'KONTAK DARURAT & KOMUNIKASI',
+          type: 'text',
+          disabled: true,
+          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          className: 'section-divider',
+          icon: 'ph:phone-call'
+        },
+        {
+          name: 'whatsappNumber',
+          label: 'Nomor WhatsApp Utama',
+          type: 'tel',
+          required: true,
+          placeholder: '+62 812-3456-7890',
+          helperText: 'Nomor WhatsApp yang aktif untuk koordinasi dengan EM dan siswa.',
+          icon: 'ph:whatsapp-logo',
+          size: 'lg'
+        },
+        {
+          name: 'emergencyContactName',
+          label: 'Nama Kontak Darurat',
+          type: 'text',
+          required: true,
+          placeholder: 'Nama orang terdekat...',
+          helperText: 'Nama orang yang bisa dihubungi jika tutor tidak bisa dihubungi.',
+          icon: 'ph:user',
+          size: 'lg'
+        },
+        {
+          name: 'emergencyContactRelationship',
+          label: 'Hubungan dengan Kontak Darurat',
+          type: 'select',
+          required: true,
+          placeholder: 'Pilih hubungan...',
+          options: [
+            { value: 'orang_tua', label: '👨‍👩‍👧‍👦 Orang Tua' },
+            { value: 'saudara', label: '👫 Saudara Kandung' },
+            { value: 'pasangan', label: '💑 Pasangan/Suami/Istri' },
+            { value: 'sahabat', label: '👬 Sahabat Dekat' },
+            { value: 'kerabat', label: '👪 Kerabat Dekat' },
+            { value: 'lainnya', label: '🤝 Lainnya' }
+          ],
+          helperText: 'Hubungan Anda dengan kontak darurat.',
+          icon: 'ph:users',
+          size: 'lg'
+        },
+        {
+          name: 'emergencyContactPhone',
+          label: 'Nomor HP Kontak Darurat',
+          type: 'tel',
+          required: true,
+          placeholder: '+62 812-9876-5432',
+          helperText: 'Nomor HP yang bisa dihubungi untuk kontak darurat.',
+          icon: 'ph:phone',
+          size: 'lg'
+        },
+        {
+          name: 'preferredCommunicationTime',
+          label: 'Waktu Komunikasi yang Disukai',
+          type: 'select',
+          placeholder: 'Pilih waktu komunikasi...',
+          options: [
+            { value: 'pagi', label: '🌅 Pagi (06:00-10:00)' },
+            { value: 'siang', label: '☀️ Siang (10:00-15:00)' },
+            { value: 'sore', label: '🌇 Sore (15:00-18:00)' },
+            { value: 'malam', label: '🌙 Malam (18:00-22:00)' },
+            { value: 'kapan_saja', label: '⏰ Kapan Saja' }
+          ],
+          helperText: 'Waktu yang disukai untuk dihubungi EM atau koordinasi.',
+          icon: 'ph:clock',
+          size: 'lg'
+        },
+        {
+          name: 'communicationLanguagePreference',
+          label: 'Bahasa Komunikasi yang Disukai',
+          type: 'checkbox',
+          options: [
+            { value: 'indonesia', label: '🇮🇩 Bahasa Indonesia' },
+            { value: 'jawa', label: '🏛️ Bahasa Jawa' },
+            { value: 'sunda', label: '🏔️ Bahasa Sunda' },
+            { value: 'inggris', label: '🇺🇸 Bahasa Inggris' },
+            { value: 'arab', label: '🕌 Bahasa Arab' },
+            { value: 'mandarin', label: '🇨🇳 Bahasa Mandarin' }
+          ],
+          multiple: true,
+          helperText: 'Bahasa yang nyaman digunakan untuk komunikasi.',
+          icon: 'ph:translate'
         }
       ]
     },
@@ -1765,7 +2235,7 @@ export const tutorFormConfig: FormConfig = {
       title: 'Sistem',
       description: 'Pengaturan akses dan sistem',
       icon: 'ph:gear',
-      color: 'success',
+      color: 'destructive',
       fields: [
         {
           name: 'section_sistem',
@@ -1893,6 +2363,40 @@ export const defaultFormData: Partial<TutorFormData> = {
   jadwalTersedia: [],
   motivasi: '',
   
+  // New Availability Configuration
+  statusMenerimaSiswa: '',
+  maksimalSiswaBaru: undefined,
+  maksimalTotalSiswa: undefined,  
+  usiaTargetSiswa: [],
+  catatanAvailability: '',
+
+  // Teaching Details
+  teachingMethods: [],
+  studentLevelPreferences: [],
+  specialNeedsCapable: '',
+  groupClassWilling: '',
+
+  // Technology Capability
+  onlineTeachingCapable: '',
+  techSavviness: '',
+  gmeetExperience: '',
+  presensiUpdateCapability: '',
+
+  // Personality & Character
+  tutorPersonalityType: '',
+  communicationStyle: '',
+  teachingPatienceLevel: '',
+  studentMotivationAbility: '',
+  scheduleFlexibilityLevel: '',
+
+  // Emergency Contact & Communication
+  whatsappNumber: '',
+  emergencyContactName: '',
+  emergencyContactRelationship: '',
+  emergencyContactPhone: '',
+  preferredCommunicationTime: '',
+  communicationLanguagePreference: [],
+  
   // Subject Information - Mata Pelajaran per Kategori
   mataPelajaran_SD_Kelas_1_6_: [],
   mataPelajaran_SMP_Kelas_7_9_: [],
@@ -1907,8 +2411,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   mataPelajaran_Keterampilan_Khusus: [],
   
   // Teaching Area Information
-  wilayahKota: '',
-  wilayahKecamatan: [],
+
   radiusMengajar: undefined,
   catatan_lokasi: undefined,
   

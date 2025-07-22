@@ -55,37 +55,25 @@ const LoginForm = () => {
   const onSubmit = (data: z.infer<typeof schema>) => {
     startTransition(async () => {
       try {
-        // Use NextAuth signIn instead of custom API
+        // Use NextAuth signIn with proper callback URL for v5
         const result = await signIn('credentials', {
           email: data.email,
           password: data.password,
           redirect: false,
+          callbackUrl: '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all'
         });
 
-        if (result?.ok && !result?.error) {
-          // Check user role for redirect
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-
-          const loginResult = await response.json();
-          
-          if (loginResult.status === 'success') {
-            // Redirect based on role
-            router.push(loginResult.redirect_url);
-            toast.success('Login successful!');
-          } else {
-            toast.error(loginResult.message);
-          }
+        if (result?.ok && !result.error) {
+          toast.success('Login successful!');
+          // Direct redirect to tutor database
+          window.location.href = '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
         } else {
-          toast.error(result?.error || 'Login failed. Please try again.');
+          toast.error('Invalid credentials. Please check email and password.');
         }
       } catch (err: any) {
-        toast.error('Login failed. Please try again.');
+        console.error('Login error:', err);
+        console.error('Error details:', err.message, err.stack);
+        toast.error(`Login failed: ${err.message || 'Please try again.'}`);
       }
     });
   };

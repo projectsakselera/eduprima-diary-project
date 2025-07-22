@@ -2,12 +2,15 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from 'bcryptjs';
 import { createAdminSupabaseClient } from './supabase-admin';
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "f8d9a8b7c6e5d4c3b2a1f0e9d8c7b6a5e4d3c2b1a0f9e8d7c6b5a4e3d2c1b0",
+  trustHost: true, // Allow different ports
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
     Google,
@@ -34,9 +37,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             .eq('user_status', 'active')
             .single();
 
-          if (!userError && user) {
-            // Simple password check - in production use proper password hashing
-            if (credentials.password === 'password123') {
+          if (!userError && user && user.password_hash && typeof user.password_hash === 'string' && typeof credentials.password === 'string') {
+            // Proper password verification using bcrypt
+            const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
+            
+            if (isPasswordValid) {
               return {
                 id: user.id,
                 email: user.email,
@@ -129,8 +134,20 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       return session;
     },
+    async signIn({ user, account, profile }: { user: any; account: any; profile: any }) {
+      // Allow sign in
+      return true;
+    },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Always redirect to dashboard after successful login
+      if (url.startsWith(baseUrl)) {
+        return '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
+      }
+      return baseUrl + '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
+    },
   },
   pages: {
     signIn: '/auth/login',
+    error: '/auth/login', // Redirect errors back to login page
   },
 });
