@@ -134,7 +134,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    async signIn({ user, account, profile }: { user: any; account: any; profile: any }) {
+    async signIn({ user, account, profile }: any) {
       // Allow sign in
       return true;
     },
