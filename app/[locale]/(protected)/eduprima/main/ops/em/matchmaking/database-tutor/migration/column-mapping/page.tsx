@@ -73,11 +73,21 @@ export default function ColumnMapping() {
   const fetchDatabaseSchema = async (): Promise<DatabaseField[]> => {
     try {
       // Try to get sample data to infer schema
-      const { data: sampleData, error: sampleError } = await supabase
-        ?.from('t_310_01_01_users_universal')
-        .select('*')
-        .limit(1)
-        .single();
+      let sampleData = null;
+      let sampleError = null;
+      
+      if (!supabase) {
+        console.log('Supabase client not available, using known schema...');
+      } else {
+        const result = await supabase
+          .from('t_310_01_01_users_universal')
+          .select('*')
+          .limit(1)
+          .single();
+        
+        sampleData = result.data;
+        sampleError = result.error;
+      }
 
       if (sampleError && sampleError.code !== 'PGRST116') {
         console.log('Sample data not available, using known schema...');

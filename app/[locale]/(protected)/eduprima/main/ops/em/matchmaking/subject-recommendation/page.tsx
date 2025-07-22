@@ -284,6 +284,11 @@ export default function SubjectRecommendationPage() {
   const loadTutorData = async () => {
     try {
       setIsLoading(true);
+      
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       const { data, error } = await supabase
         .from('tutors')
         .select(`

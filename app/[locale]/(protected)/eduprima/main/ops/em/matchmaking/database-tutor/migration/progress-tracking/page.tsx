@@ -256,7 +256,7 @@ export default function ProgressTracking() {
                   <span className="text-xs text-muted-foreground">10:35 AM</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Email format invalid: 'john.doe@invalid-domain'. Skipped record.
+                  Email format invalid: &apos;john.doe@invalid-domain&apos;. Skipped record.
                 </p>
               </div>
             </div>
@@ -269,7 +269,7 @@ export default function ProgressTracking() {
                   <span className="text-xs text-muted-foreground">10:33 AM</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Email 'jane@example.com' already exists in database. Skipped record.
+                  Email &apos;jane@example.com&apos; already exists in database. Skipped record.
                 </p>
               </div>
             </div>

@@ -280,6 +280,10 @@ export default function ImportExportPage() {
           trn: record.mappedData.trn || `TUT${Date.now()}${Math.random().toString(36).substr(2, 5)}`.toUpperCase()
         };
 
+        if (!supabase) {
+          throw new Error('Supabase client not initialized');
+        }
+
         const { error } = await supabase
           .from('t_310_01_01_users_universal')
           .insert(recordData);
@@ -319,6 +323,10 @@ export default function ImportExportPage() {
     setExportProgress(0);
 
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       setExportProgress(25);
       
       const { data, error } = await supabase
