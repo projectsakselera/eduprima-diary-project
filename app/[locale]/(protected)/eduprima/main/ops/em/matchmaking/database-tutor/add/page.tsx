@@ -626,7 +626,7 @@ export default function AddTutorPage() {
                                 key={field.name} 
                                 className={cn(
                                   "transition-all duration-200",
-                                  field.type === 'textarea' || field.type === 'checkbox' || field.type === 'ai-core-select' || field.type === 'ai-recommendations' || (field.disabled && field.className === 'info-text') ? 'lg:col-span-2 xl:col-span-3' : ''
+                                  field.type === 'textarea' || field.type === 'checkbox' || field.type === 'ai-core-select' || field.type === 'ai-recommendations' || field.type === 'category-program-selector' || (field.disabled && field.className === 'info-text') ? 'lg:col-span-2 xl:col-span-3' : ''
                                 )}
                               >
                                 <DynamicFormField

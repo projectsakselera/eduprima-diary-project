@@ -28,7 +28,7 @@ const generateMonthYearOptions = (startYear: number, endYear: number) => {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch' | 'ai-core-select' | 'ai-recommendations';
+  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch' | 'category-program-selector';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -275,17 +275,8 @@ export interface TutorFormData {
   send_whatsapp_notification?: boolean;
   tanggal_bergabung?: string;
 
-  // AI Recommendation System Fields
-  subjectSelectionMode?: 'manual' | 'ai-assisted';
-  coreExpertise?: string[]; // 1-3 core subjects selected by tutor
-  aiRecommendedSubjects?: string[]; // AI recommended subjects accepted by tutor
-  aiRecommendationData?: {
-    tier1Accepted?: string[];
-    tier2Accepted?: string[];
-    tier3Accepted?: string[];
-    rejectedRecommendations?: string[];
-    confidenceScores?: Record<string, number>;
-  };
+  // Program Selection from Database
+  selectedPrograms?: string[]; // Array of selected program IDs from Supabase
 }
 
 // Validation rules
@@ -1951,207 +1942,13 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:lightbulb'
         },
         {
-          name: 'subjectSelectionMode',
-          label: 'Mode Seleksi Mata Pelajaran',
-          type: 'select',
+          name: 'selectedPrograms',
+          label: '📚 Pilih Program/Mata Pelajaran yang Diajarkan',
+          type: 'category-program-selector',
           required: true,
-          placeholder: 'Pilih mode seleksi...',
-          options: [
-            { 
-              value: 'ai-assisted', 
-              label: '🚀 AI Smart Recommendation - Pilih keahlian inti, AI rekomendasikan yang terkait'
-            },
-            { 
-              value: 'manual', 
-              label: '📋 Manual Selection - Pilih sendiri dari semua kategori'
-            }
-          ],
-          helperText: '💡 Mode AI Smart akan membantu Anda menemukan mata pelajaran terkait berdasarkan keahlian inti yang dipilih. Mode Manual memberikan kontrol penuh untuk memilih dari semua kategori.',
-          icon: 'ph:robot',
+          helperText: 'Klik kategori untuk melihat semua program yang tersedia. Pilih program yang sesuai dengan keahlian Anda.',
+          icon: 'ph:books',
           size: 'lg'
-        },
-
-        // === AI-ASSISTED MODE ===
-        {
-          name: 'section_ai_mode',
-          label: '🤖 AI SMART RECOMMENDATION MODE',
-          type: 'text',
-          disabled: true,
-          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider',
-          icon: 'ph:sparkle',
-          conditional: (data) => data.subjectSelectionMode === 'ai-assisted'
-        },
-        {
-          name: 'coreExpertise',
-          label: '🎯 Pilih 1-3 Keahlian Inti Anda',
-          type: 'ai-core-select',
-          required: true,
-          maxCoreSelections: 3,
-          options: coreSubjectProfiles.map(profile => ({
-            value: profile.value,
-            label: profile.label,
-            category: profile.category,
-            level: profile.level
-          })),
-          multiple: true,
-          helperText: '🌟 Pilih mata pelajaran yang PALING Anda kuasai. AI akan merekomendasikan mata pelajaran terkait berdasarkan korelasi dan tingkat kemudahan.',
-          icon: 'ph:target',
-          size: 'lg',
-          conditional: (data) => data.subjectSelectionMode === 'ai-assisted'
-        },
-        {
-          name: 'aiRecommendedSubjects',
-          label: '💡 Rekomendasi AI untuk Anda',
-          type: 'ai-recommendations',
-          helperText: '🤖 Berdasarkan keahlian inti Anda, berikut adalah mata pelajaran yang direkomendasikan AI. Pilih yang sesuai dengan minat dan kemampuan Anda.',
-          icon: 'ph:magic-wand',
-          size: 'lg',
-          dependsOn: 'coreExpertise',
-          conditional: (data) => data.subjectSelectionMode === 'ai-assisted' && data.coreExpertise?.length > 0
-        },
-
-        // === MANUAL MODE ===
-        {
-          name: 'section_manual_mode',
-          label: '📋 MANUAL SELECTION MODE',
-          type: 'text',
-          disabled: true,
-          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider',
-          icon: 'ph:list',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        {
-          name: 'section_mapel_manual',
-          label: 'MATA PELAJARAN YANG DIAJARKAN (MANUAL)',
-          type: 'text',
-          disabled: true,
-          helperText: 'Pilih mata pelajaran dari semua kategori yang tersedia. Mode ini memberikan kontrol penuh kepada Anda.',
-          className: 'section-divider',
-          icon: 'ph:book-open',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SD (Kelas 1-6)
-        {
-          name: 'mataPelajaran_SD_Kelas_1_6_',
-          label: '📚 SD (Kelas 1-6)',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SD (Kelas 1-6)'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SD (Kelas 1-6) yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMP (Kelas 7-9)
-        {
-          name: 'mataPelajaran_SMP_Kelas_7_9_',
-          label: '📖 SMP (Kelas 7-9)',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMP (Kelas 7-9)'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMP (Kelas 7-9) yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMA/SMK IPA
-        {
-          name: 'mataPelajaran_SMA_SMK_IPA',
-          label: '🧪 SMA/SMK IPA',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMA/SMK IPA'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMA/SMK IPA yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMA/SMK IPS
-        {
-          name: 'mataPelajaran_SMA_SMK_IPS',
-          label: '📊 SMA/SMK IPS',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMA/SMK IPS'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMA/SMK IPS yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMK Teknik & Teknologi
-        {
-          name: 'mataPelajaran_SMK_Teknik_Teknologi',
-          label: '💻 SMK Teknik & Teknologi',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMK Teknik & Teknologi'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMK Teknik & Teknologi yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMK Bisnis & Manajemen
-        {
-          name: 'mataPelajaran_SMK_Bisnis_Manajemen',
-          label: '💼 SMK Bisnis & Manajemen',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMK Bisnis & Manajemen'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMK Bisnis & Manajemen yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMK Pariwisata & Perhotelan
-        {
-          name: 'mataPelajaran_SMK_Pariwisata_Perhotelan',
-          label: '🏨 SMK Pariwisata & Perhotelan',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMK Pariwisata & Perhotelan'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMK Pariwisata & Perhotelan yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // SMK Kesehatan
-        {
-          name: 'mataPelajaran_SMK_Kesehatan',
-          label: '🏥 SMK Kesehatan',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['SMK Kesehatan'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran SMK Kesehatan yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // Bahasa Asing
-        {
-          name: 'mataPelajaran_Bahasa_Asing',
-          label: '🌍 Bahasa Asing',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['Bahasa Asing'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran Bahasa Asing yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // Universitas & Perguruan Tinggi
-        {
-          name: 'mataPelajaran_Universitas_Perguruan_Tinggi',
-          label: '🎓 Universitas & Perguruan Tinggi',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['Universitas & Perguruan Tinggi'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran Universitas & Perguruan Tinggi yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
-        },
-        // Keterampilan Khusus
-        {
-          name: 'mataPelajaran_Keterampilan_Khusus',
-          label: '🎨 Keterampilan Khusus',
-          type: 'checkbox',
-          options: dynamicOptions.mataPelajaranKategori['Keterampilan Khusus'],
-          multiple: true,
-          helperText: 'Pilih mata pelajaran Keterampilan Khusus yang dapat diajarkan tutor.',
-          icon: 'ph:graduation-cap',
-          conditional: (data) => data.subjectSelectionMode === 'manual'
         }
       ]
     },
@@ -2925,17 +2722,8 @@ export const defaultFormData: Partial<TutorFormData> = {
   mataPelajaran_Universitas_Perguruan_Tinggi: [],
   mataPelajaran_Keterampilan_Khusus: [],
   
-  // AI Recommendation System Defaults
-  subjectSelectionMode: 'manual' as 'manual' | 'ai-assisted',
-  coreExpertise: [],
-  aiRecommendedSubjects: [],
-  aiRecommendationData: {
-    tier1Accepted: [],
-    tier2Accepted: [],
-    tier3Accepted: [],
-    rejectedRecommendations: [],
-    confidenceScores: {}
-  },
+  // Program Selection Defaults
+  selectedPrograms: [],
   
   // Teaching Area Information
 

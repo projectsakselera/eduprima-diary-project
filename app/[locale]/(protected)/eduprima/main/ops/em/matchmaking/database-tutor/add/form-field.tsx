@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { FormField as FormFieldConfig, TutorFormData, coreSubjectProfiles, aiRecommendationEngine, AIRecommendationTier } from './form-config';
+import { FormField as FormFieldConfig, TutorFormData } from './form-config';
 import { AddressSearchPicker } from '@/components/ui/address-search-picker';
 import { SimpleAddressSearch } from '@/components/ui/simple-address-search';
 import { Icon as IconifyIcon } from '@iconify/react';
@@ -407,31 +407,14 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
           </div>
         );
 
-      case 'ai-core-select':
+      case 'category-program-selector':
         return (
-          <AICoreSelectorField
+          <CategoryProgramSelector
             field={field}
             value={value}
             onChange={handleChange}
             disabled={disabled}
             error={error}
-          />
-        );
-
-      case 'ai-recommendations':
-        console.log('Rendering AIRecommendationsField:', { 
-          fieldName: field.name, 
-          coreExpertise: formData?.coreExpertise,
-          formData: formData 
-        });
-        return (
-          <AIRecommendationsField
-            field={field}
-            value={value}
-            onChange={handleChange}
-            disabled={disabled}
-            error={error}
-            coreExpertise={formData?.coreExpertise || []}
           />
         );
 
@@ -453,7 +436,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   };
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-3", className, {
+      "w-full max-w-none": field.type === 'category-program-selector'
+    })}>
       {/* Field Label */}
       {!(field.disabled && field.className === 'section-divider') && !(field.disabled && field.className === 'info-text') && (
         <div className="flex items-center space-x-2">
@@ -482,7 +467,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
       )}
 
       {/* Field Input */}
-      <div className="relative">
+      <div className={cn("relative", {
+        "w-full": field.type === 'category-program-selector'
+      })}>
         {renderFieldInput()}
       </div>
 
@@ -514,8 +501,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   );
 };
 
-// AI Core Selector Component
-interface AICoreSelectorFieldProps {
+// Category Program Selector Component
+interface CategoryProgramSelectorProps {
   field: FormFieldConfig;
   value: string[];
   onChange: (value: string[]) => void;
@@ -523,372 +510,564 @@ interface AICoreSelectorFieldProps {
   error?: string;
 }
 
-const AICoreSelectorField: React.FC<AICoreSelectorFieldProps> = ({
+interface Category {
+  id: string;
+  main_code: string;
+  main_name: string;
+  main_name_local: string;
+  description: string;
+  is_active: boolean;
+}
+
+interface Program {
+  id: string;
+  program_code: string;
+  program_name: string;
+  program_name_local: string;
+  program_name_short: string;
+  subject_focus: string;
+  target_age_min: number;
+  target_age_max: number;
+  grade_level: number | null;
+  ideal_session_duration_minutes: number;
+  ideal_total_sessions: number;
+  ideal_class_size_min: number;
+  ideal_class_size_max: number;
+  description: string | null;
+  prerequisites: string | null;
+  subcategory: {
+    id: string;
+    sub_name: string;
+    sub_name_local: string;
+    main_category: {
+      id: string;
+      main_code: string;
+      main_name: string;
+      main_name_local: string;
+    };
+  };
+  program_type?: {
+    id: string;
+    type_name: string;
+    type_name_local: string;
+  };
+}
+
+const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   field,
   value = [],
   onChange,
   disabled = false,
   error
 }) => {
-  const maxSelections = field.maxCoreSelections || 3;
+  const [allPrograms, setAllPrograms] = useState<Program[]>([]);
+  const [searchResults, setSearchResults] = useState<Program[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalPrograms, setTotalPrograms] = useState(0);
+  
+  const PROGRAMS_PER_PAGE = 30;
 
-  const handleSelectionToggle = (subjectValue: string) => {
-    if (disabled) return;
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesResponse = await fetch('/api/subjects/categories');
+        if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
+        
+        const categoriesData = await categoriesResponse.json();
+        let categories = [];
+        if (categoriesData.categories) {
+          categories = categoriesData.categories;
+        } else if (categoriesData.data) {
+          categories = categoriesData.data.map((item: any) => ({
+            id: item.id,
+            main_code: item.code,
+            main_name: item.name,
+            main_name_local: item.nameLocal,
+            description: item.description,
+            is_active: true
+          }));
+        }
+        setCategories(categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
 
-    const newValue = [...value];
-    const index = newValue.indexOf(subjectValue);
+    fetchCategories();
+  }, []);
 
-    if (index > -1) {
-      // Remove if already selected
-      newValue.splice(index, 1);
-    } else if (newValue.length < maxSelections) {
-      // Add if under limit
-      newValue.push(subjectValue);
+  // Fetch programs with pagination
+  const fetchPrograms = async (page: number = 1, reset: boolean = false) => {
+    try {
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
+      const offset = (page - 1) * PROGRAMS_PER_PAGE;
+      let programsToFetch: Program[] = [];
+      
+      // Fetch from all categories if "all" selected, otherwise specific category
+      if (selectedCategory === 'all') {
+        for (const category of categories) {
+          const response = await fetch(
+            `/api/subjects/programs?category=${category.main_code}&limit=50&offset=0`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            let programs = data.programs || data.data || [];
+            programsToFetch.push(...programs);
+          }
+        }
+      } else {
+        const response = await fetch(
+          `/api/subjects/programs?category=${selectedCategory}&limit=100&offset=0`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          programsToFetch = data.programs || data.data || [];
+        }
+      }
+      
+      // Apply pagination to fetched data
+      const startIndex = offset;
+      const endIndex = startIndex + PROGRAMS_PER_PAGE;
+      const paginatedPrograms = programsToFetch.slice(startIndex, endIndex);
+      
+      setTotalPrograms(programsToFetch.length);
+      setHasMore(endIndex < programsToFetch.length);
+      
+      if (reset || page === 1) {
+        setAllPrograms(paginatedPrograms);
+      } else {
+        setAllPrograms(prev => [...prev, ...paginatedPrograms]);
+      }
+      
+      console.log(`✅ Loaded page ${page}: ${paginatedPrograms.length} programs (${startIndex + 1}-${Math.min(endIndex, programsToFetch.length)} of ${programsToFetch.length} total)`);
+      
+    } catch (error) {
+      console.error('Error fetching programs:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Initial fetch when categories are loaded or category changes
+  useEffect(() => {
+    if (categories.length > 0) {
+      setSearchTerm(''); // Clear search when category changes
+      setSearchResults([]); // Clear search results
+      fetchPrograms(1, true);
+      setCurrentPage(1);
+    }
+  }, [categories, selectedCategory]);
+
+  // Load more programs
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      fetchPrograms(nextPage, false);
+    }
+  };
+
+  // Global search across all programs
+  const searchAllPrograms = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
     }
 
-    console.log('AICoreSelectorField onChange:', { from: value, to: newValue });
+    try {
+      setSearchLoading(true);
+      console.log('🔍 Searching all programs for:', searchTerm);
+      
+      // Fetch from all categories
+      const allProgramsData: Program[] = [];
+      for (const category of categories) {
+        const response = await fetch(
+          `/api/subjects/programs?category=${category.main_code}&limit=200&offset=0`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          let programs = data.programs || data.data || [];
+          allProgramsData.push(...programs);
+        }
+      }
+      
+      // Filter by search term
+      const search = searchTerm.toLowerCase();
+      const filtered = allProgramsData.filter(program =>
+        program.program_name_local?.toLowerCase().includes(search) ||
+        program.program_name?.toLowerCase().includes(search) ||
+        program.program_code?.toLowerCase().includes(search) ||
+        program.subject_focus?.toLowerCase().includes(search)
+      );
+      
+      // Sort: selected first, then alphabetical
+      const sorted = filtered.sort((a, b) => {
+        const aSelected = value.includes(a.id);
+        const bSelected = value.includes(b.id);
+        
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        
+        return (a.program_name_local || a.program_name).localeCompare(
+          b.program_name_local || b.program_name
+        );
+      });
+      
+      setSearchResults(sorted);
+      console.log('✅ Search results:', sorted.length, 'programs found');
+      
+    } catch (error) {
+      console.error('❌ Error searching programs:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchAllPrograms(searchTerm);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, categories, value]);
+
+  // Display programs: search results when searching, otherwise filtered category programs
+  const displayPrograms = React.useMemo(() => {
+    if (searchTerm.trim()) {
+      // Show search results from all categories
+      return searchResults;
+    } else {
+      // Show category-filtered programs with selected first
+      return allPrograms.sort((a, b) => {
+        const aSelected = value.includes(a.id);
+        const bSelected = value.includes(b.id);
+        
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        
+        return (a.program_name_local || a.program_name).localeCompare(
+          b.program_name_local || b.program_name
+        );
+      });
+    }
+  }, [allPrograms, searchResults, searchTerm, value]);
+
+  const handleProgramToggle = (programId: string) => {
+    if (disabled) return;
+    const newValue = [...value];
+    const index = newValue.indexOf(programId);
+    
+    if (index > -1) {
+      newValue.splice(index, 1);
+    } else {
+      newValue.push(programId);
+    }
+    
     onChange(newValue);
   };
 
-  // Group subjects by category for better organization
-  const subjectsByCategory = coreSubjectProfiles.reduce((acc, subject) => {
-    if (!acc[subject.category]) {
-      acc[subject.category] = [];
-    }
-    acc[subject.category].push(subject);
-    return acc;
-  }, {} as Record<string, typeof coreSubjectProfiles>);
+  const selectedPrograms = allPrograms.filter(p => value.includes(p.id));
+
+  if (loading) {
+    return (
+      <div className="w-full flex items-center justify-center p-8">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+          <span className="text-sm text-muted-foreground">Memuat mata pelajaran...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Selection Counter */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Dipilih: {value.length} / {maxSelections}
-        </div>
-        {value.length > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onChange([])}
-            disabled={disabled}
-          >
-            Clear All
-          </Button>
-        )}
-      </div>
-
-      {/* Category-based Selection */}
-      <div className="space-y-4 max-h-96 overflow-y-auto">
-        {Object.entries(subjectsByCategory).map(([category, subjects]) => (
-          <Card key={category} className="overflow-hidden">
-            <CardHeader className="bg-muted/20 py-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {category}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {subjects.map((subject) => {
-                  const isSelected = value.includes(subject.value);
-                  const isDisabled = disabled || (!isSelected && value.length >= maxSelections);
-
-                  return (
-                    <div
-                      key={subject.value}
-                      className={cn(
-                        "relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 w-full",
-                        "hover:shadow-md hover:border-primary/50",
-                        {
-                          "border-primary bg-primary/5 shadow-md": isSelected,
-                          "border-border hover:border-muted-foreground": !isSelected && !isDisabled,
-                          "opacity-50 cursor-not-allowed": isDisabled,
-                          "border-destructive/50": error
-                        }
-                      )}
-                      onClick={() => handleSelectionToggle(subject.value)}
-                    >
-                      {/* Selection Indicator */}
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <Icon icon="ph:check" className="h-3 w-3 text-white" />
-                        </div>
-                      )}
-
-                      {/* Subject Content */}
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-foreground">
-                          {subject.label}
-                        </div>
-                        <Badge className="text-xs bg-secondary text-secondary-foreground">
-                          {subject.level}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Selected Subjects Display */}
+    <div className="w-full space-y-4">
+      {/* Selection Summary */}
       {value.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Keahlian Inti Terpilih:</div>
-          <div className="flex flex-wrap gap-2">
-            {value.map((selectedValue) => {
-              const subject = coreSubjectProfiles.find(s => s.value === selectedValue);
-              return (
-                <Badge
-                  key={selectedValue}
-                  className="flex items-center gap-1 pr-1 bg-primary text-primary-foreground"
-                >
-                  {subject?.label}
-                  <button
-                    type="button"
-                    onClick={() => handleSelectionToggle(selectedValue)}
-                    disabled={disabled}
-                    className="ml-1 hover:bg-black/10 rounded p-0.5"
-                  >
-                    <Icon icon="ph:x" className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            })}
+        <div className="p-3 bg-success/10 border border-success/30 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Icon icon="ph:check-circle" className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-success">
+                {value.length} program dipilih
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onChange([])}
+              disabled={disabled}
+              className="h-7 px-2 text-xs"
+            >
+              Hapus Semua
+            </Button>
           </div>
         </div>
       )}
-    </div>
-  );
-};
 
-// AI Recommendations Component
-interface AIRecommendationsFieldProps {
-  field: FormFieldConfig;
-  value: string[];
-  onChange: (value: string[]) => void;
-  disabled?: boolean;
-  error?: string;
-  coreExpertise: string[];
-}
-
-const AIRecommendationsField: React.FC<AIRecommendationsFieldProps> = ({
-  field,
-  value = [],
-  onChange,
-  disabled = false,
-  error,
-  coreExpertise
-}) => {
-  const [recommendations, setRecommendations] = useState<AIRecommendationTier[]>([]);
-
-  // Generate recommendations when core expertise changes
-  useEffect(() => {
-    console.log('AIRecommendationsField useEffect triggered:', { coreExpertise, length: coreExpertise?.length });
-    
-    if (coreExpertise && coreExpertise.length > 0) {
-      console.log('Generating recommendations for:', coreExpertise);
-      const newRecommendations = aiRecommendationEngine.generateRecommendations(coreExpertise);
-      console.log('Generated recommendations:', newRecommendations);
-      setRecommendations(newRecommendations);
-    } else {
-      console.log('No core expertise, clearing recommendations');
-      setRecommendations([]);
-    }
-  }, [coreExpertise]);
-
-  const handleSubjectToggle = (subjectName: string) => {
-    if (disabled) return;
-
-    const newValue = [...value];
-    const index = newValue.indexOf(subjectName);
-
-    if (index > -1) {
-      newValue.splice(index, 1);
-    } else {
-      newValue.push(subjectName);
-    }
-
-    onChange(newValue);
-  };
-
-  if (coreExpertise.length === 0) {
-    return (
-      <Alert>
-        <Icon icon="ph:info" className="h-4 w-4" />
-        <AlertDescription>
-          Silakan pilih keahlian inti terlebih dahulu untuk mendapatkan rekomendasi AI.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (recommendations.length === 0) {
-    return (
-      <Alert>
-        <Icon icon="ph:robot" className="h-4 w-4" />
-        <AlertDescription>
-          Sedang menganalisis keahlian inti Anda untuk menghasilkan rekomendasi...
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  const getTierColor = (tier: number) => {
-    switch (tier) {
-      case 1: return 'border-success bg-success/5 text-success';
-      case 2: return 'border-warning bg-warning/5 text-warning';
-      case 3: return 'border-info bg-info/5 text-info';
-      default: return 'border-muted bg-muted/5 text-muted-foreground';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-success/10 text-success border-success/20';
-      case 'medium': return 'bg-warning/10 text-warning border-warning/20';
-      case 'hard': return 'bg-destructive/10 text-destructive border-destructive/20';
-      default: return 'bg-muted/10 text-muted-foreground border-muted/20';
-    }
-  };
-
-  const getDemandColor = (demand: string) => {
-    switch (demand) {
-      case 'high': return 'bg-success text-white';
-      case 'medium': return 'bg-warning text-white';
-      case 'low': return 'bg-muted text-muted-foreground';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Summary */}
-      <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
-        <div className="flex items-center space-x-2 mb-2">
-          <Icon icon="ph:robot" className="h-5 w-5 text-primary" />
-          <div className="font-medium text-primary">AI Analysis Complete</div>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Berdasarkan keahlian inti: {coreExpertise.map(expertise => {
-            const subject = coreSubjectProfiles.find(s => s.value === expertise);
-            return subject?.label;
-          }).join(', ')}
-        </div>
-        {value.length > 0 && (
-          <div className="text-sm text-primary font-medium mt-2">
-            ✓ {value.length} rekomendasi telah dipilih
+      {/* Search & Filter */}
+      <div className="w-full space-y-3">
+        <div className="flex gap-3 w-full">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Icon icon="ph:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Cari program mata pelajaran dari semua kategori..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-9 w-full"
+            />
+            {searchLoading && (
+              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              </div>
+            )}
+            {searchTerm && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              >
+                <Icon icon="ph:x" className="h-3 w-3" />
+              </Button>
+            )}
           </div>
-        )}
+          
+          {/* Category Filter */}
+          <Select value={selectedCategory} onValueChange={(value) => {
+            setSelectedCategory(value);
+            setCurrentPage(1);
+            setAllPrograms([]);
+          }}>
+            <SelectTrigger className="w-52 h-9">
+              <SelectValue placeholder="Semua Kategori" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Kategori</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.main_code}>
+                  {cat.main_name_local} ({cat.main_code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Results Info */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span>
+              {searchTerm.trim() ? (
+                <>Hasil pencarian: {displayPrograms.length} program ditemukan untuk "{searchTerm}"</>
+              ) : (
+                <>Menampilkan {displayPrograms.length} dari {allPrograms.length} program - Page {currentPage} • Total: {totalPrograms} program</>
+              )}
+            </span>
+            {searchTerm.trim() && (
+              <span className="text-primary text-xs">
+                Pencarian global dari semua kategori
+              </span>
+            )}
+          </div>
+          {value.length > 0 && (
+            <span className="text-success font-medium">
+              {value.length} dipilih
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Recommendations by Tier */}
-      <div className="space-y-6">
-        {recommendations.map((tier) => (
-          <Card key={tier.tier} className={cn("overflow-hidden", getTierColor(tier.tier))}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Icon icon={tier.icon} className="h-5 w-5" />
-                  <span className="text-lg">{tier.title}</span>
-                </div>
-                <Badge className="text-xs border border-border bg-background">
-                  {tier.subjects.length} subjek
-                </Badge>
-              </CardTitle>
-              <p className="text-sm opacity-80">{tier.description}</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {tier.subjects.map((subject) => {
-                const isSelected = value.includes(subject.subject);
+      {/* Programs List - Simple Grid Layout */}
+      <div className="w-full space-y-3">
+        {displayPrograms.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground bg-muted/20 rounded-lg border">
+            <Icon icon="ph:magnifying-glass" className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">
+              {searchTerm ? `Tidak ada program yang cocok dengan "${searchTerm}"` : 'Tidak ada program tersedia'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-4 bg-muted/20 rounded-lg border">
+              {displayPrograms.map((program: Program) => {
+                const isSelected = value.includes(program.id);
+                const categoryInfo = categories.find(c => c.main_code === program.subcategory?.main_category?.main_code);
                 
                 return (
                   <div
-                    key={subject.subject}
+                    key={program.id}
                     className={cn(
-                      "p-3 bg-white rounded-lg border cursor-pointer transition-all duration-200",
-                      "hover:shadow-md hover:border-primary/30",
+                      "flex items-start space-x-3 p-3 rounded cursor-pointer transition-colors",
+                      "hover:bg-background/50 border",
                       {
-                        "ring-2 ring-primary border-primary bg-primary/5": isSelected,
-                        "hover:border-muted-foreground": !isSelected
+                        "bg-primary/10 border-primary": isSelected,
+                        "bg-background border-muted": !isSelected
                       }
                     )}
-                    onClick={() => handleSubjectToggle(subject.subject)}
+                    onClick={() => handleProgramToggle(program.id)}
                   >
-                    <div className="space-y-3">
-                      {/* Subject Header with Confidence */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="font-medium text-foreground">
-                            {subject.subject}
-                          </div>
-                          {isSelected && (
-                            <Icon icon="ph:check-circle-fill" className="h-4 w-4 text-primary" />
-                          )}
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-xl font-bold text-primary">
-                            {Math.round(subject.correlation * 100)}%
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            confidence
-                          </div>
-                        </div>
+                    {/* Checkbox */}
+                    <Checkbox
+                      id={`program-${program.id}`}
+                      checked={isSelected}
+                      onCheckedChange={() => {}} // Handle by parent click
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5"
+                    />
+                    
+                    {/* Program Info */}
+                    <div className="flex-1 min-w-0">
+                      <Label 
+                        htmlFor={`program-${program.id}`}
+                        className="text-sm cursor-pointer font-medium leading-tight"
+                      >
+                        {program.program_name_local || program.program_name}
+                      </Label>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <span className="font-mono bg-muted px-1.5 py-0.5 rounded">
+                          {program.program_code}
+                        </span>
+                        {program.subject_focus && (
+                          <span>{program.subject_focus}</span>
+                        )}
                       </div>
-                      
-                      {/* Subject Details */}
-                      <div className="space-y-2">
-                        <div className="text-sm text-muted-foreground">
-                          {subject.reason}
+                      {categoryInfo && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {categoryInfo.main_name_local}
                         </div>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className={getDifficultyColor(subject.difficulty)}>
-                            {subject.difficulty}
-                          </Badge>
-                          <Badge className={getDemandColor(subject.marketDemand || 'medium')}>
-                            {subject.marketDemand} demand
-                          </Badge>
-                          <Badge className="bg-secondary text-secondary-foreground">
-                            {subject.preparationTime}
-                          </Badge>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      {/* Selected Summary */}
-      {value.length > 0 && (
-        <Card className="bg-gradient-to-r from-success/5 to-success/10 border-success/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Icon icon="ph:check-circle" className="h-5 w-5 text-success" />
-                <span className="font-medium text-success">
-                  {value.length} mata pelajaran dipilih dari rekomendasi AI
-                </span>
-              </div>
+            </div>
+            
+            {/* Load More Button */}
+            {!searchTerm && hasMore && (
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => onChange([])}
-                disabled={disabled}
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full"
               >
-                Clear All
+                {loadingMore ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                    Memuat program...
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="ph:arrow-down" className="h-4 w-4 mr-2" />
+                    Muat {Math.min(PROGRAMS_PER_PAGE, totalPrograms - allPrograms.length)} program lagi
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({allPrograms.length}/{totalPrograms})
+                    </span>
+                  </>
+                )}
               </Button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Selected Programs Recap */}
+      {Array.isArray(value) && value.length > 0 && (
+        <div className="w-full">
+          <div className="border rounded-lg overflow-hidden">
+            <div className="bg-success/10 border-b border-success/30 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Icon icon="ph:check-circle" className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium text-success">
+                    {value.length} Program Dipilih
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onChange([])}
+                  disabled={disabled}
+                  className="h-7 px-2 text-xs border-success/30 text-success hover:bg-success/20"
+                >
+                  <Icon icon="ph:trash" className="h-3 w-3 mr-1" />
+                  Hapus Semua
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-4 bg-success/5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {(() => {
+                  // Get selected programs from all available data
+                  const allAvailablePrograms = [...allPrograms, ...searchResults];
+                  const selectedProgramsData = value.map(id => 
+                    allAvailablePrograms.find(p => p.id === id)
+                  ).filter(Boolean);
+
+                  return selectedProgramsData.map((program) => {
+                    if (!program) return null;
+                    const categoryInfo = categories.find(c => c.main_code === program.subcategory?.main_category?.main_code);
+                    
+                    return (
+                      <div
+                        key={program.id}
+                        className="flex items-center justify-between p-2 bg-background rounded border border-success/20 hover:border-success/40 transition-colors group"
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <Icon icon="ph:check-circle-fill" className="h-3 w-3 text-success flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-success truncate">
+                              {program.program_name_local || program.program_name}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-mono">{program.program_code}</span>
+                              {categoryInfo && (
+                                <span>• {categoryInfo.main_name_local}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleProgramToggle(program.id)}
+                          disabled={disabled}
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Hapus dari pilihan"
+                        >
+                          <Icon icon="ph:x" className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
