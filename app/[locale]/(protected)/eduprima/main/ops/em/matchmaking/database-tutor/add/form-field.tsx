@@ -37,12 +37,27 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   className,
   formData
 }) => {
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  // Get initial preview from form data if available
+  const previewFieldName = `${field.name}Preview`;
+  const initialPreview = formData?.[previewFieldName as keyof TutorFormData] as string || null;
+  const [filePreview, setFilePreview] = useState<string | null>(initialPreview);
   const [dynamicOptions, setDynamicOptions] = useState<Array<{ value: string; label: string; disabled?: boolean }>>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  // Sync filePreview with form data when it changes (for tab switching)
+  useEffect(() => {
+    const previewFieldName = `${field.name}Preview`;
+    const formPreview = formData?.[previewFieldName as keyof TutorFormData] as string;
+    
+    if (formPreview && formPreview !== filePreview) {
+      setFilePreview(formPreview);
+    } else if (!formPreview && filePreview) {
+      setFilePreview(null);
+    }
+  }, [formData, field.name]);
 
   // Load dynamic options from API
   useEffect(() => {
@@ -329,6 +344,10 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
         const result = e.target?.result as string;
         setFilePreview(result);
         
+        // Persist preview in form data to prevent loss when switching tabs
+        const previewFieldName = `${field.name}Preview`;
+        onChange(previewFieldName, result);
+        
         // Additional dimension validation for images
         const img = new Image();
         img.onload = () => {
@@ -337,6 +356,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
             setFileError(dimensionError);
             setFilePreview(null);
             handleChange(null);
+            // Also clear the preview from form data
+            onChange(previewFieldName, null);
             // Clear the file input
             const fileInput = document.getElementById(field.name) as HTMLInputElement;
             if (fileInput) fileInput.value = '';
@@ -453,7 +474,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
             onChange('alamatTitikLokasi', address);
           }}
           defaultAddress={formData?.alamatTitikLokasi}
-          radius={formData?.radiusMengajar || 10}
+          radius={formData?.teaching_radius_km || 10}
           disabled={field.disabled}
           className="w-full"
           label={field.label}
@@ -471,7 +492,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
           defaultAddress={formData?.alamatTitikLokasi}
           defaultLat={formData?.titikLokasiLat}
           defaultLng={formData?.titikLokasiLng}
-          radius={formData?.radiusMengajar || 10}
+          radius={formData?.teaching_radius_km || 10}
           disabled={field.disabled}
           placeholder="Cari alamat lokasi mengajar (contoh: Jl. Sudirman Jakarta)"
           className="w-full"
@@ -841,6 +862,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
                     setFilePreview(null);
                     setFileError(null);
                     handleChange(null);
+                    // Clear the preview from form data
+                    const previewFieldName = `${field.name}Preview`;
+                    onChange(previewFieldName, null);
                     // Clear the file input
                     const fileInput = document.getElementById(field.name) as HTMLInputElement;
                     if (fileInput) fileInput.value = '';
@@ -1194,9 +1218,9 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       // Check if we need to fetch data
       if (programsByCategory.size === 0 || reset) {
         
-        // Lazy approach: only fetch categories that are actually needed
+        // Fetch all categories when 'all' is selected, or specific category
         const categoriesToFetch = selectedCategory === 'all' 
-          ? categories.slice(0, 3).map(cat => cat.main_code) // Only fetch first 3 categories initially for 'all'
+          ? categories.map(cat => cat.main_code) // Fetch ALL categories when 'all' is selected
           : [selectedCategory];
         
         const programsMap = await fetchMultipleCategories(categoriesToFetch);

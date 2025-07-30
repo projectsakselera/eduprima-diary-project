@@ -267,6 +267,12 @@ export interface TutorFormData {
   dokumenPendidikan?: File | string | null;
   dokumenSertifikat?: File | string | null;
   
+  // Document preview fields (for tab switching persistence)
+  fotoProfilPreview?: string | null;
+  dokumenIdentitasPreview?: string | null;
+  dokumenPendidikanPreview?: string | null;
+  dokumenSertifikatPreview?: string | null;
+  
   // Document Verification (Staff only)
   status_verifikasi_identitas?: string;
   status_verifikasi_pendidikan?: string;
