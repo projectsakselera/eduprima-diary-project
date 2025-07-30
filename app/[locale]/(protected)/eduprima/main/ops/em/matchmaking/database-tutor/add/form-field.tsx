@@ -38,27 +38,356 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
   formData
 }) => {
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [dynamicOptions, setDynamicOptions] = useState<Array<{ value: string; label: string; disabled?: boolean }>>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // Load dynamic options from API
+  useEffect(() => {
+    if (field.apiEndpoint && field.type === 'select') {
+      const loadOptions = async (attempt: number = 0) => {
+        setIsLoadingOptions(true);
+        setLoadingError(null);
+        
+        try {
+          let url = field.apiEndpoint;
+          if (!url) return; // Type guard
+          
+          // Handle dependent fields (e.g., cities depend on province)
+          if (field.dependsOn && formData) {
+            const dependentValue = formData[field.dependsOn as keyof TutorFormData];
+            if (dependentValue) {
+              const paramName = field.dependsOn.includes('provinsi') ? 'province_id' : 
+                               field.dependsOn.includes('kota') ? 'city_id' : 
+                               field.dependsOn.includes('kecamatan') ? 'district_id' : 'parent_id';
+              url += `?${paramName}=${dependentValue}`;
+            } else {
+              // If dependent field is not selected, clear options and disable
+              setDynamicOptions([]);
+              setIsLoadingOptions(false);
+              return;
+            }
+          }
+
+          // Add timeout to fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          
+          // Map API response to options format
+          let options: Array<{ value: string; label: string; disabled?: boolean }> = [];
+          
+                     if (data.provinces) {
+             options = data.provinces.map((item: any) => ({
+               value: item.value,
+               label: item.label,
+               disabled: false
+             }));
+           } else if (data.cities) {
+             options = data.cities.map((item: any) => ({
+               value: item.value,
+               label: item.label,
+               disabled: false
+             }));
+           } else if (data.districts) {
+             options = data.districts.map((item: any) => ({
+               value: item.value,
+               label: item.label,
+               disabled: false
+             }));
+           } else if (data.villages) {
+             options = data.villages.map((item: any) => ({
+               value: item.value,
+               label: item.label,
+               disabled: false
+             }));
+                     } else if (data.banks) {
+            options = data.banks.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.data && Array.isArray(data.data)) {
+            // Handle banks API response format
+            options = data.data.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          }
+
+          setDynamicOptions(options);
+          setRetryCount(0); // Reset retry count on success
+        } catch (error) {
+  
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          setLoadingError(errorMessage);
+          setDynamicOptions([]);
+          
+          // Retry mechanism - max 3 attempts
+          if (attempt < 2) {
+            setTimeout(() => {
+              setRetryCount(attempt + 1);
+              loadOptions(attempt + 1);
+            }, 1000 * (attempt + 1)); // Exponential backoff: 1s, 2s
+          }
+        } finally {
+          setIsLoadingOptions(false);
+        }
+      };
+
+      loadOptions();
+    }
+  }, [field.apiEndpoint, field.dependsOn, formData?.[field.dependsOn as keyof TutorFormData]]);
+
+  // Retry function for manual retry
+  const handleRetry = () => {
+    setRetryCount(0);
+    if (field.apiEndpoint && field.type === 'select') {
+      const loadOptionsRetry = async () => {
+        setIsLoadingOptions(true);
+        setLoadingError(null);
+        
+        try {
+          let url = field.apiEndpoint;
+          if (!url) return;
+          
+          if (field.dependsOn && formData) {
+            const dependentValue = formData[field.dependsOn as keyof TutorFormData];
+            if (dependentValue) {
+              const paramName = field.dependsOn.includes('provinsi') ? 'province_id' : 
+                               field.dependsOn.includes('kota') ? 'city_id' : 
+                               field.dependsOn.includes('kecamatan') ? 'district_id' : 'parent_id';
+              url += `?${paramName}=${dependentValue}`;
+            } else {
+              setDynamicOptions([]);
+              setIsLoadingOptions(false);
+              return;
+            }
+          }
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          
+          let options: Array<{ value: string; label: string; disabled?: boolean }> = [];
+          
+          if (data.provinces) {
+            options = data.provinces.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.cities) {
+            options = data.cities.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.districts) {
+            options = data.districts.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.villages) {
+            options = data.villages.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.banks) {
+            options = data.banks.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          } else if (data.data && Array.isArray(data.data)) {
+            options = data.data.map((item: any) => ({
+              value: item.value,
+              label: item.label,
+              disabled: false
+            }));
+          }
+
+          setDynamicOptions(options);
+          setRetryCount(0);
+        } catch (error) {
+
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          setLoadingError(errorMessage);
+          setDynamicOptions([]);
+        } finally {
+          setIsLoadingOptions(false);
+        }
+      };
+      
+      loadOptionsRetry();
+    }
+  };
 
   const handleChange = (newValue: any) => {
-    onChange(field.name, newValue);
+    // Apply formatting based on field type
+    let formattedValue = newValue;
+    
+    if (field.type === 'tel' && newValue) {
+      // Format phone numbers with +62 prefix
+      formattedValue = formatPhoneNumber(newValue);
+    } else if ((field.name === 'nomorRekening' || field.name.includes('rekening')) && newValue) {
+      // Sanitize account numbers (remove spaces, dashes)
+      formattedValue = sanitizeInput(newValue);
+    }
+    
+    onChange(field.name, formattedValue);
+  };
+
+  // Phone number formatting function
+  const formatPhoneNumber = (phone: string): string => {
+    if (!phone) return '';
+    
+    // Remove all spaces, dashes, and other non-digit characters
+    let cleaned = phone.replace(/[\s\-\(\)\.\+]/g, '');
+    
+    // Handle different input formats - always return clean number without + or dashes
+    if (cleaned.startsWith('0')) {
+      // Replace leading 0 with 62 (e.g., 081234567890 → 6281234567890)
+      cleaned = '62' + cleaned.slice(1);
+    } else if (cleaned.startsWith('8')) {
+      // Add 62 prefix if starts with 8 (e.g., 81234567890 → 6281234567890)
+      cleaned = '62' + cleaned;
+    } else if (!cleaned.startsWith('62')) {
+      // Add 62 prefix if doesn't have it
+      cleaned = '62' + cleaned;
+    }
+    
+    return cleaned;
+  };
+
+  // Input sanitization function  
+  const sanitizeInput = (input: string): string => {
+    if (!input) return '';
+    // Remove all spaces, dashes, and non-digit characters for account numbers
+    return input.replace(/[\s\-\(\)\.\+]/g, '');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      handleChange(file);
-      
-      // Create preview for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setFilePreview(e.target?.result as string);
+    setFileError(null);
+    
+    if (!file) {
+      setFilePreview(null);
+      handleChange(null);
+      return;
+    }
+
+    // File validation
+    const validationError = validateFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      e.target.value = ''; // Clear the input
+      return;
+    }
+
+    handleChange(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setFilePreview(result);
+        
+        // Additional dimension validation for images
+        const img = new Image();
+        img.onload = () => {
+          const dimensionError = validateImageDimensions(img.width, img.height);
+          if (dimensionError) {
+            setFileError(dimensionError);
+            setFilePreview(null);
+            handleChange(null);
+            // Clear the file input
+            const fileInput = document.getElementById(field.name) as HTMLInputElement;
+            if (fileInput) fileInput.value = '';
+          }
         };
-        reader.readAsDataURL(file);
-      } else {
-        setFilePreview(null);
+        img.src = result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  // File validation function
+  const validateFile = (file: File): string | null => {
+    // File size validation (2MB limit)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+      return `File size too large. Maximum size is 2MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
+    }
+
+    // File format validation for images
+    if (field.accept === 'image/*' || field.name === 'fotoProfil') {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        return `Invalid file format. Only JPG and PNG files are allowed. Current format: ${file.type}`;
       }
     }
+
+    return null;
+  };
+
+  // Image dimension validation
+  const validateImageDimensions = (width: number, height: number): string | null => {
+    // Minimum dimensions
+    const minWidth = 200;
+    const minHeight = 200;
+    
+    if (width < minWidth || height < minHeight) {
+      return `Image dimensions too small. Minimum size: ${minWidth}x${minHeight}px. Current: ${width}x${height}px`;
+    }
+
+    // Maximum dimensions
+    const maxWidth = 2000;
+    const maxHeight = 2000;
+    
+    if (width > maxWidth || height > maxHeight) {
+      return `Image dimensions too large. Maximum size: ${maxWidth}x${maxHeight}px. Current: ${width}x${height}px`;
+    }
+
+    return null;
   };
 
   const handleCheckboxGroupChange = (optionValue: string | number, checked: boolean) => {
@@ -160,7 +489,6 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
     switch (field.type) {
       case 'text':
       case 'email':
-      case 'tel':
       case 'date':
       case 'number':
         return (
@@ -177,6 +505,37 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
             min={field.min}
             max={field.max}
             step={field.step}
+            className={cn("transition-all duration-200", {
+              "ring-2 ring-destructive/20": error,
+              "ring-2 ring-primary/20 border-primary": !error && value
+            })}
+          />
+        );
+
+      case 'tel':
+        return (
+          <Input
+            id={field.name}
+            name={field.name}
+            type="tel"
+            placeholder={field.placeholder}
+            value={value ?? ''}
+            onChange={(e) => {
+              // Format phone number: remove spaces, dashes, and format to Indonesian standard
+              let cleaned = e.target.value.replace(/[\s\-\(\)\.\+]/g, '');
+              
+              // Auto-format to Indonesian format
+              if (cleaned.startsWith('0')) {
+                cleaned = '62' + cleaned.slice(1);
+              } else if (cleaned.startsWith('8') && !cleaned.startsWith('62')) {
+                cleaned = '62' + cleaned;
+              }
+              
+              handleChange(cleaned);
+            }}
+            disabled={disabled}
+            size={field.size || 'default'}
+            color={error ? 'destructive' : field.color || 'default'}
             className={cn("transition-all duration-200", {
               "ring-2 ring-destructive/20": error,
               "ring-2 ring-primary/20 border-primary": !error && value
@@ -203,29 +562,102 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
         );
 
       case 'select':
-        return (
-          <Select value={value || ''} onValueChange={handleChange} disabled={disabled}>
-            <SelectTrigger 
-              className={cn("transition-all duration-200", field.size === 'lg' ? 'h-12' : 'h-10', {
-                "ring-2 ring-destructive/20 border-destructive": error,
-                "ring-2 ring-primary/20 border-primary": !error && value
-              })}
-              color={error ? 'destructive' : field.color || 'default'}
-            >
-              <SelectValue placeholder={field.placeholder || `Pilih ${field.label}...`} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem 
-                  key={option.value} 
-                  value={String(option.value)}
-                  disabled={option.disabled}
+        // Use dynamic options if available, otherwise use static options
+        const optionsToUse = field.apiEndpoint ? dynamicOptions : (field.options || []);
+        const isDisabled = Boolean(disabled) || (Boolean(field.apiEndpoint) && isLoadingOptions);
+        
+        // Show skeleton loader for API-driven selects when first loading
+        if (field.apiEndpoint && isLoadingOptions && optionsToUse.length === 0 && retryCount === 0) {
+          return (
+            <div className="space-y-2">
+              <div className={cn("animate-pulse bg-muted rounded-md border", field.size === 'lg' ? 'h-12' : 'h-10')} />
+              <div className="text-xs text-muted-foreground">Loading options...</div>
+            </div>
+          );
+        }
+
+        // Show error state with retry option
+        if (field.apiEndpoint && loadingError && optionsToUse.length === 0 && !isLoadingOptions) {
+          return (
+            <div className="space-y-2">
+              <div className={cn("border-2 border-destructive/20 bg-destructive/5 rounded-md flex items-center justify-between px-3", field.size === 'lg' ? 'h-12' : 'h-10')}>
+                <div className="flex items-center">
+                  {field.icon && (
+                    <Icon icon={field.icon} className="h-4 w-4 mr-2 text-destructive" />
+                  )}
+                  <span className="text-sm text-destructive">Failed to load</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleRetry}
+                  className="h-6 text-xs hover:bg-destructive/10"
                 >
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  <Icon icon="ph:arrow-clockwise" className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </div>
+              <div className="text-xs text-destructive">{loadingError}</div>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="space-y-2">
+            <Select value={value || ''} onValueChange={handleChange} disabled={isDisabled}>
+              <SelectTrigger 
+                className={cn("transition-all duration-200", field.size === 'lg' ? 'h-12' : 'h-10', {
+                  "ring-2 ring-destructive/20 border-destructive": error,
+                  "ring-2 ring-primary/20 border-primary": !error && value,
+                  "opacity-60": isDisabled
+                })}
+                color={error ? 'destructive' : field.color || 'default'}
+              >
+                {field.icon && (
+                  <Icon icon={field.icon} className="h-4 w-4 mr-2 text-muted-foreground" />
+                )}
+                <SelectValue placeholder={
+                  isLoadingOptions ? 'Loading...' : 
+                  field.placeholder || `Pilih ${field.label}...`
+                } />
+                {isLoadingOptions && (
+                  <Icon icon="ph:spinner" className="h-4 w-4 ml-auto animate-spin text-muted-foreground" />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingOptions ? (
+                  <SelectItem value="loading-state" disabled={true}>
+                    <div className="flex items-center gap-2">
+                      <Icon icon="ph:spinner" className="h-4 w-4 animate-spin" />
+                      {retryCount > 0 ? `Loading... (attempt ${retryCount + 1}/3)` : 'Loading...'}
+                    </div>
+                  </SelectItem>
+                ) : optionsToUse.length === 0 ? (
+                  <SelectItem value="no-options" disabled>
+                    No options available
+                  </SelectItem>
+                ) : (
+                  optionsToUse.map((option) => (
+                    <SelectItem 
+                      key={option.value} 
+                      value={String(option.value)}
+                      disabled={Boolean(option.disabled)}
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            
+            {/* Dependency message */}
+            {field.dependsOn && !formData?.[field.dependsOn as keyof TutorFormData] && (
+              <div className="text-xs text-muted-foreground flex items-center">
+                <Icon icon="ph:info" className="h-3 w-3 mr-1" />
+                Please select {field.dependsOn.replace(/([A-Z])/g, ' $1').toLowerCase()} first
+              </div>
+            )}
+          </div>
         );
 
       case 'radio':
@@ -369,31 +801,58 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
                 disabled={disabled}
                 size={field.size || 'default'}
                 className={cn("", {
-                  "ring-2 ring-destructive/20": error
+                  "ring-2 ring-destructive/20": error || fileError
                 })}
               />
+              
+              {/* File upload guidelines */}
+              <div className="mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center space-x-4">
+                  <span>📁 Max 2MB</span>
+                  <span>🖼️ JPG, PNG only</span>
+                  <span>📐 Min: 200x200px</span>
+                </div>
+              </div>
             </div>
             
+            {/* File validation error */}
+            {fileError && (
+              <div className="flex items-start space-x-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                <Icon icon="ph:warning" className="h-4 w-4 text-destructive mt-0.5" />
+                <div className="text-sm text-destructive">{fileError}</div>
+              </div>
+            )}
+            
             {/* File Preview */}
-            {filePreview && (
-              <div className="relative w-32 h-32 bg-muted rounded-lg overflow-hidden border">
+            {filePreview && !fileError && (
+              <div className="relative w-32 h-32 bg-muted rounded-lg overflow-hidden border-2 border-success/20">
                 <img 
                   src={filePreview} 
                   alt="Preview" 
                   className="w-full h-full object-cover"
                 />
+                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 bg-white/90 hover:bg-white"
                   onClick={() => {
                     setFilePreview(null);
+                    setFileError(null);
                     handleChange(null);
+                    // Clear the file input
+                    const fileInput = document.getElementById(field.name) as HTMLInputElement;
+                    if (fileInput) fileInput.value = '';
                   }}
                 >
                   <Icon icon="ph:x" className="h-3 w-3" />
                 </Button>
+                
+                {/* Success indicator */}
+                <div className="absolute bottom-1 left-1 bg-success text-success-foreground rounded px-1.5 py-0.5">
+                  <Icon icon="ph:check" className="h-3 w-3" />
+                </div>
               </div>
             )}
             
@@ -516,6 +975,8 @@ interface Category {
   main_name: string;
   main_name_local: string;
   description: string;
+  icon?: string;
+  color_hex?: string;
   is_active: boolean;
 }
 
@@ -535,6 +996,7 @@ interface Program {
   ideal_class_size_max: number;
   description: string | null;
   prerequisites: string | null;
+  popularity?: string;
   subcategory: {
     id: string;
     sub_name: string;
@@ -553,6 +1015,51 @@ interface Program {
   };
 }
 
+// Helper function to get popularity badge variant
+const getPopularityVariant = (popularity: string | undefined) => {
+  switch (popularity?.toUpperCase()) {
+    case 'CORE/POPULAR':
+    case 'POPULAR':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'TRENDING':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'EXPLORATIVE':
+      return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'PROMISING':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'UNPOPULAR':
+      return 'bg-gray-100 text-gray-500 border-gray-200';
+    case 'ORDINARY':
+    default:
+      return 'bg-gray-100 text-gray-600 border-gray-200';
+  }
+};
+
+// Helper function to get popularity sort order
+const getPopularityOrder = (popularity: string | undefined) => {
+  switch (popularity?.toUpperCase()) {
+    case 'CORE/POPULAR':
+    case 'POPULAR':
+      return 1;
+    case 'TRENDING':
+      return 2;
+    case 'PROMISING':
+      return 3;
+    case 'ORDINARY':
+      return 4;
+    case 'EXPLORATIVE':
+      return 5;
+    case 'UNPOPULAR':
+      return 6;
+    default:
+      return 7;
+  }
+};
+
+// Session-based cache for development safety
+const sessionCache = new Map<string, { data: Program[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for development
+
 const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   field,
   value = [],
@@ -561,6 +1068,8 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   error
 }) => {
   const [allPrograms, setAllPrograms] = useState<Program[]>([]);
+  const [allProgramsRaw, setAllProgramsRaw] = useState<Program[]>([]); // Store all programs
+  const [programsByCategory, setProgramsByCategory] = useState<Map<string, Program[]>>(new Map());
   const [searchResults, setSearchResults] = useState<Program[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -568,43 +1077,110 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPopularity, setSelectedPopularity] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalPrograms, setTotalPrograms] = useState(0);
   
-  const PROGRAMS_PER_PAGE = 30;
+  const PROGRAMS_PER_PAGE = 100;
 
-  // Fetch categories
+  // Helper function to check cache validity
+  const isCacheValid = (cacheKey: string): boolean => {
+    const cached = sessionCache.get(cacheKey);
+    if (!cached) return false;
+    return Date.now() - cached.timestamp < CACHE_DURATION;
+  };
+
+  // Helper function to get cached data
+  const getCachedData = (cacheKey: string): Program[] | null => {
+    if (!isCacheValid(cacheKey)) return null;
+    return sessionCache.get(cacheKey)?.data || null;
+  };
+
+  // Helper function to set cache data
+  const setCacheData = (cacheKey: string, data: Program[]): void => {
+    sessionCache.set(cacheKey, { data, timestamp: Date.now() });
+  };
+
+  // Lazy fetch function for specific category (performance optimized)
+  const fetchCategoryPrograms = async (categoryCode: string): Promise<Program[]> => {
+    const cacheKey = `programs_${categoryCode}`;
+    
+    // Check cache first
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/subjects/programs?simple_category=${categoryCode}&limit=1000&offset=0`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const programs = data.programs || data.data || [];
+        
+        // Cache the result
+        setCacheData(cacheKey, programs);
+        return programs;
+      }
+      
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  // Batch fetch for multiple categories (only when needed)
+  const fetchMultipleCategories = async (categoryCodes: string[]): Promise<Map<string, Program[]>> => {
+    const programsMap = new Map<string, Program[]>();
+    
+    // Use Promise.all for truly needed categories only
+    const fetchPromises = categoryCodes.map(async (categoryCode) => {
+      const programs = await fetchCategoryPrograms(categoryCode);
+      return { categoryCode, programs };
+    });
+    
+    const results = await Promise.all(fetchPromises);
+    results.forEach(({ categoryCode, programs }) => {
+      programsMap.set(categoryCode, programs);
+    });
+    
+    return programsMap;
+  };
+
+  // Fetch simple categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesResponse = await fetch('/api/subjects/categories');
-        if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
+        const categoriesResponse = await fetch('/api/subjects/simple-categories');
+        if (!categoriesResponse.ok) throw new Error('Failed to fetch simple categories');
         
         const categoriesData = await categoriesResponse.json();
         let categories = [];
         if (categoriesData.categories) {
-          categories = categoriesData.categories;
-        } else if (categoriesData.data) {
-          categories = categoriesData.data.map((item: any) => ({
+          categories = categoriesData.categories.map((item: any) => ({
             id: item.id,
             main_code: item.code,
-            main_name: item.name,
-            main_name_local: item.nameLocal,
+            main_name: item.label,
+            main_name_local: item.label,
             description: item.description,
-            is_active: true
+            icon: item.icon,
+            color_hex: item.color_hex,
+            is_active: item.is_active
           }));
         }
         setCategories(categories);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching simple categories:', error);
       }
     };
 
     fetchCategories();
   }, []);
 
-  // Fetch programs with pagination
+  // Optimized fetch with parallel loading and smart caching
   const fetchPrograms = async (page: number = 1, reset: boolean = false) => {
     try {
       if (page === 1) {
@@ -613,37 +1189,83 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
         setLoadingMore(true);
       }
       
-      const offset = (page - 1) * PROGRAMS_PER_PAGE;
       let programsToFetch: Program[] = [];
       
-      // Fetch from all categories if "all" selected, otherwise specific category
-      if (selectedCategory === 'all') {
-        for (const category of categories) {
-          const response = await fetch(
-            `/api/subjects/programs?category=${category.main_code}&limit=50&offset=0`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            let programs = data.programs || data.data || [];
-            programsToFetch.push(...programs);
-          }
+      // Check if we need to fetch data
+      if (programsByCategory.size === 0 || reset) {
+        
+        // Lazy approach: only fetch categories that are actually needed
+        const categoriesToFetch = selectedCategory === 'all' 
+          ? categories.slice(0, 3).map(cat => cat.main_code) // Only fetch first 3 categories initially for 'all'
+          : [selectedCategory];
+        
+        const programsMap = await fetchMultipleCategories(categoriesToFetch);
+        setProgramsByCategory(programsMap);
+        
+        // Combine programs based on selected category
+        if (selectedCategory === 'all') {
+          // Combine all programs from all categories
+          programsToFetch = Array.from(programsMap.values()).flat();
+        } else {
+          // Get programs from specific category
+          programsToFetch = programsMap.get(selectedCategory) || [];
         }
+        
+        // Sort all programs by popularity FIRST
+        const sortedPrograms = programsToFetch.sort((a, b) => {
+          const aPopularityOrder = getPopularityOrder(a.popularity);
+          const bPopularityOrder = getPopularityOrder(b.popularity);
+          
+          if (aPopularityOrder !== bPopularityOrder) {
+            return aPopularityOrder - bPopularityOrder;
+          }
+          
+          // Then alphabetically
+          return (a.program_name_local || a.program_name).localeCompare(
+            b.program_name_local || b.program_name
+          );
+        });
+        
+        // Cache the sorted programs
+        setAllProgramsRaw(sortedPrograms);
+        setTotalPrograms(sortedPrograms.length);
+        
+        console.log(`✅ Sorted ${sortedPrograms.length} programs by popularity`);
+        
+        // Use sorted programs for pagination
+        programsToFetch = sortedPrograms;
       } else {
-        const response = await fetch(
-          `/api/subjects/programs?category=${selectedCategory}&limit=100&offset=0`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          programsToFetch = data.programs || data.data || [];
+        // Use cached data - instant category switching!
+        console.log('⚡ Using cached data for instant switching...');
+        
+        if (selectedCategory === 'all') {
+          // Use all cached programs
+          programsToFetch = allProgramsRaw;
+        } else {
+          // Get programs from specific category and sort
+          const categoryPrograms = programsByCategory.get(selectedCategory) || [];
+          programsToFetch = categoryPrograms.sort((a, b) => {
+            const aPopularityOrder = getPopularityOrder(a.popularity);
+            const bPopularityOrder = getPopularityOrder(b.popularity);
+            
+            if (aPopularityOrder !== bPopularityOrder) {
+              return aPopularityOrder - bPopularityOrder;
+            }
+            
+            return (a.program_name_local || a.program_name).localeCompare(
+              b.program_name_local || b.program_name
+            );
+          });
+          
+          setTotalPrograms(programsToFetch.length);
         }
       }
       
-      // Apply pagination to fetched data
-      const startIndex = offset;
-      const endIndex = startIndex + PROGRAMS_PER_PAGE;
-      const paginatedPrograms = programsToFetch.slice(startIndex, endIndex);
+      // Apply pagination to SORTED data
+      const offset = (page - 1) * PROGRAMS_PER_PAGE;
+      const endIndex = offset + PROGRAMS_PER_PAGE;
+      const paginatedPrograms = programsToFetch.slice(offset, endIndex);
       
-      setTotalPrograms(programsToFetch.length);
       setHasMore(endIndex < programsToFetch.length);
       
       if (reset || page === 1) {
@@ -652,7 +1274,7 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
         setAllPrograms(prev => [...prev, ...paginatedPrograms]);
       }
       
-      console.log(`✅ Loaded page ${page}: ${paginatedPrograms.length} programs (${startIndex + 1}-${Math.min(endIndex, programsToFetch.length)} of ${programsToFetch.length} total)`);
+      console.log(`✅ Page ${page}: ${paginatedPrograms.length} programs (${offset + 1}-${Math.min(endIndex, programsToFetch.length)} of ${programsToFetch.length} total)`);
       
     } catch (error) {
       console.error('Error fetching programs:', error);
@@ -667,7 +1289,10 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
     if (categories.length > 0) {
       setSearchTerm(''); // Clear search when category changes
       setSearchResults([]); // Clear search results
-      fetchPrograms(1, true);
+      
+      // Only reset if categories changed (not category selection)
+      const shouldReset = programsByCategory.size === 0;
+      fetchPrograms(1, shouldReset);
       setCurrentPage(1);
     }
   }, [categories, selectedCategory]);
@@ -681,7 +1306,7 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
     }
   };
 
-  // Global search across all programs
+  // Optimized search using cached data
   const searchAllPrograms = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
@@ -690,37 +1315,66 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
 
     try {
       setSearchLoading(true);
-      console.log('🔍 Searching all programs for:', searchTerm);
       
-      // Fetch from all categories
-      const allProgramsData: Program[] = [];
-      for (const category of categories) {
-        const response = await fetch(
-          `/api/subjects/programs?category=${category.main_code}&limit=200&offset=0`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          let programs = data.programs || data.data || [];
-          allProgramsData.push(...programs);
-        }
+      
+      // Use cached data for instant search
+      let allProgramsData: Program[] = [];
+      
+      if (programsByCategory.size > 0) {
+        // Use cached programs from all categories
+        allProgramsData = Array.from(programsByCategory.values()).flat();
+
+      } else if (allProgramsRaw.length > 0) {
+        // Fallback to allProgramsRaw
+        allProgramsData = allProgramsRaw;
+
+      } else {
+        // Last resort: fetch specific category for search
+        const programsMap = await fetchMultipleCategories([selectedCategory]);
+        allProgramsData = Array.from(programsMap.values()).flat();
       }
       
-      // Filter by search term
+      // Filter by search term - Enhanced search across multiple fields
       const search = searchTerm.toLowerCase();
-      const filtered = allProgramsData.filter(program =>
-        program.program_name_local?.toLowerCase().includes(search) ||
-        program.program_name?.toLowerCase().includes(search) ||
-        program.program_code?.toLowerCase().includes(search) ||
-        program.subject_focus?.toLowerCase().includes(search)
-      );
-      
-      // Sort: selected first, then alphabetical
-      const sorted = filtered.sort((a, b) => {
-        const aSelected = value.includes(a.id);
-        const bSelected = value.includes(b.id);
+      const filtered = allProgramsData.filter(program => {
+        // Search in program names
+        const nameMatch = program.program_name_local?.toLowerCase().includes(search) ||
+                         program.program_name?.toLowerCase().includes(search);
         
-        if (aSelected && !bSelected) return -1;
-        if (!aSelected && bSelected) return 1;
+        // Search in program code
+        const codeMatch = program.program_code?.toLowerCase().includes(search);
+        
+        // Search in subject focus
+        const subjectMatch = program.subject_focus?.toLowerCase().includes(search);
+        
+        // Search in popularity
+        const popularityMatch = program.popularity?.toLowerCase().includes(search);
+        
+        // Search in program type
+        const typeMatch = program.program_type?.type_name?.toLowerCase().includes(search) ||
+                         program.program_type?.type_name_local?.toLowerCase().includes(search);
+        
+        // Search in category names
+        const categoryMatch = program.subcategory?.main_category?.main_name?.toLowerCase().includes(search) ||
+                             program.subcategory?.main_category?.main_name_local?.toLowerCase().includes(search) ||
+                             program.subcategory?.sub_name?.toLowerCase().includes(search) ||
+                             program.subcategory?.sub_name_local?.toLowerCase().includes(search);
+        
+        // Search in description
+        const descriptionMatch = program.description?.toLowerCase().includes(search);
+        
+        return nameMatch || codeMatch || subjectMatch || popularityMatch || 
+               typeMatch || categoryMatch || descriptionMatch;
+      });
+      
+      // Sort search results by popularity
+      const sorted = filtered.sort((a, b) => {
+        const aPopularityOrder = getPopularityOrder(a.popularity);
+        const bPopularityOrder = getPopularityOrder(b.popularity);
+        
+        if (aPopularityOrder !== bPopularityOrder) {
+          return aPopularityOrder - bPopularityOrder;
+        }
         
         return (a.program_name_local || a.program_name).localeCompare(
           b.program_name_local || b.program_name
@@ -728,16 +1382,16 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       });
       
       setSearchResults(sorted);
-      console.log('✅ Search results:', sorted.length, 'programs found');
+      
       
     } catch (error) {
-      console.error('❌ Error searching programs:', error);
+      
     } finally {
       setSearchLoading(false);
     }
   };
 
-  // Debounced search
+  // Optimized debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchTerm.trim()) {
@@ -745,31 +1399,26 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       } else {
         setSearchResults([]);
       }
-    }, 300);
+    }, 200); // Reduced debounce for snappier feel
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, categories, value]);
+  }, [searchTerm]);
 
   // Display programs: search results when searching, otherwise filtered category programs
   const displayPrograms = React.useMemo(() => {
+    const filterByPopularity = (programs: Program[]) => {
+      if (selectedPopularity === 'all') return programs;
+      return programs.filter(program => program.popularity === selectedPopularity);
+    };
+
     if (searchTerm.trim()) {
-      // Show search results from all categories
-      return searchResults;
+      // Show search results (already sorted by popularity)
+      return filterByPopularity([...searchResults]);
     } else {
-      // Show category-filtered programs with selected first
-      return allPrograms.sort((a, b) => {
-        const aSelected = value.includes(a.id);
-        const bSelected = value.includes(b.id);
-        
-        if (aSelected && !bSelected) return -1;
-        if (!aSelected && bSelected) return 1;
-        
-        return (a.program_name_local || a.program_name).localeCompare(
-          b.program_name_local || b.program_name
-        );
-      });
+      // Show category-filtered programs (already sorted by popularity)
+      return filterByPopularity([...allPrograms]);
     }
-  }, [allPrograms, searchResults, searchTerm, value]);
+  }, [allPrograms, searchResults, searchTerm, value, selectedPopularity]);
 
   const handleProgramToggle = (programId: string) => {
     if (disabled) return;
@@ -832,7 +1481,7 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
             <Icon icon="ph:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Cari program mata pelajaran dari semua kategori..."
+              placeholder="Cari nama program, popularity, tipe program, kategori..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-9 w-full"
@@ -868,9 +1517,27 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
               <SelectItem value="all">Semua Kategori</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.main_code}>
-                  {cat.main_name_local} ({cat.main_code})
+                  {cat.icon} {cat.main_name_local}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          {/* Popularity Filter */}
+          <Select value={selectedPopularity} onValueChange={(value) => {
+            setSelectedPopularity(value);
+          }}>
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="Semua Popularity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Popularity</SelectItem>
+              <SelectItem value="CORE/POPULAR">🟢 Core/Popular</SelectItem>
+              <SelectItem value="TRENDING">🔵 Trending</SelectItem>
+              <SelectItem value="PROMISING">🟡 Promising</SelectItem>
+              <SelectItem value="ORDINARY">⚪ Ordinary</SelectItem>
+              <SelectItem value="EXPLORATIVE">🟣 Explorative</SelectItem>
+              <SelectItem value="UNPOPULAR">⚫ Unpopular</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -887,7 +1554,7 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
             </span>
             {searchTerm.trim() && (
               <span className="text-primary text-xs">
-                Pencarian global dari semua kategori
+                Pencarian global: nama, popularity, tipe program, kategori
               </span>
             )}
           </div>
@@ -913,13 +1580,12 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-4 bg-muted/20 rounded-lg border">
               {displayPrograms.map((program: Program) => {
                 const isSelected = value.includes(program.id);
-                const categoryInfo = categories.find(c => c.main_code === program.subcategory?.main_category?.main_code);
                 
                 return (
                   <div
                     key={program.id}
                     className={cn(
-                      "flex items-start space-x-3 p-3 rounded cursor-pointer transition-colors",
+                      "flex items-center space-x-3 p-3 rounded cursor-pointer transition-colors",
                       "hover:bg-background/50 border",
                       {
                         "bg-primary/10 border-primary": isSelected,
@@ -933,10 +1599,10 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
                       id={`program-${program.id}`}
                       checked={isSelected}
                       onCheckedChange={() => {}} // Handle by parent click
-                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5"
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     
-                    {/* Program Info */}
+                    {/* Program Info - Simplified */}
                     <div className="flex-1 min-w-0">
                       <Label 
                         htmlFor={`program-${program.id}`}
@@ -944,19 +1610,23 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
                       >
                         {program.program_name_local || program.program_name}
                       </Label>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span className="font-mono bg-muted px-1.5 py-0.5 rounded">
-                          {program.program_code}
-                        </span>
-                        {program.subject_focus && (
-                          <span>{program.subject_focus}</span>
+                      
+                      {/* Popularity Badge & Program Type */}
+                      <div className="mt-1 flex items-center gap-2">
+                        {program.popularity && (
+                          <span className={cn(
+                            "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border",
+                            getPopularityVariant(program.popularity)
+                          )}>
+                            {program.popularity}
+                          </span>
+                        )}
+                        {program.program_type?.type_name_local && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs text-muted-foreground bg-muted border">
+                            {program.program_type.type_name_local}
+                          </span>
                         )}
                       </div>
-                      {categoryInfo && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {categoryInfo.main_name_local}
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -1041,10 +1711,19 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
                             <div className="text-sm font-medium text-success truncate">
                               {program.program_name_local || program.program_name}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="font-mono">{program.program_code}</span>
-                              {categoryInfo && (
-                                <span>• {categoryInfo.main_name_local}</span>
+                            <div className="mt-1 flex items-center gap-2">
+                              {program.popularity && (
+                                <span className={cn(
+                                  "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border",
+                                  getPopularityVariant(program.popularity)
+                                )}>
+                                  {program.popularity}
+                                </span>
+                              )}
+                              {program.program_type?.type_name_local && (
+                                <span className="inline-flex items-center px-1 py-0.5 rounded text-xs text-muted-foreground bg-muted border">
+                                  {program.program_type.type_name_local}
+                                </span>
                               )}
                             </div>
                           </div>

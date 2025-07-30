@@ -35,6 +35,7 @@ export interface FormField {
   helperText?: string;
   validation?: (value: any) => string | null;
   options?: Array<{ value: string | number; label: string; disabled?: boolean }>;
+  apiEndpoint?: string; // for dynamic options from API
   accept?: string; // for file inputs
   multiple?: boolean; // for select/checkbox
   min?: number;
@@ -114,46 +115,48 @@ export interface TutorFormData {
   status_tutor?: string;
   approval_level?: string;
   staff_notes?: string;
+  additionalScreening?: string[]; // Checklist for additional screening
 
   // Personal Information
   fotoProfil?: File | string | null;
   trn: string;
-  namaLengkap: string;
+  namaLengkap: string; // Will be mapped to nama_lengkap in DB
+  namaPanggilan?: string; // New field for nickname
   tanggalLahir: string;
   jenisKelamin: string;
+  agama?: string; // Religion field for user demographics
   email: string;
   noHp1: string;
   noHp2?: string;
   
-  // New Profile Identity Fields
-  headline?: string;
-  deskripsiDiri?: string;
-  socialMedia1?: string;
-  socialMedia2?: string;
-  bahasaYangDikuasai: string[];
+  // PROFIL & VALUE PROPOSITION
+  headline?: string; // Headline/Tagline Tutor (max 100 chars)
+  deskripsiDiri?: string; // Deskripsi Diri/Bio Tutor
+  socialMedia1?: string; // Link Media Sosial 1 (Instagram/LinkedIn)
+  socialMedia2?: string; // Link Media Sosial 2 (YouTube/TikTok)
+  bahasaYangDikuasai?: string[]; // Languages mastered (checkbox multiple)
   
-  // Address Information - Domisili
-  alamatDomisili: string;
-  kelurahanDomisili: string;
-  kecamatanDomisili: string;
-  kotaKabupatenDomisili: string;
-  provinsiDomisili: string;
+  // Address Information - Domisili (New Structure)
+  provinsiDomisili: string; // UUID from dropdown
+  kotaKabupatenDomisili: string; // UUID from dropdown  
+  kecamatanDomisili: string; // Manual input text
+  kelurahanDomisili: string; // Manual input text
+  alamatLengkapDomisili: string; // Manual input - street address
   kodePosDomisili?: string;
   
-  // Address Information - KTP/KK
+  // Address Information - KTP/KK (New Structure)
   alamatSamaDenganKTP?: boolean;
-  alamatKTP?: string;
-  kelurahanKTP?: string;
-  kecamatanKTP?: string;
-  kotaKabupatenKTP?: string;
-  provinsiKTP?: string;
+  provinsiKTP?: string; // UUID from dropdown
+  kotaKabupatenKTP?: string; // UUID from dropdown
+  kecamatanKTP?: string; // Manual input text
+  kelurahanKTP?: string; // Manual input text
+  alamatLengkapKTP?: string; // Manual input - street address
   kodePosKTP?: string;
   
-  // Banking Information
-  namaNasabah: string;
-  nomorRekening: string;
-  namaBank: string;
-  cabangBank?: string;
+  // Banking Information (Enhanced)
+  namaNasabah: string; // Account holder name
+  nomorRekening: string; // Account number
+  namaBank: string; // Bank ID (UUID from dropdown)
   
   // Professional Information - Updated Education Fields
   statusAkademik?: string;
@@ -172,7 +175,7 @@ export interface TutorFormData {
   jurusanSMA?: string;
   jurusanSMKDetail?: string;
   tahunLulusSMA?: string;
-  ijazahSMA?: File | string | null;
+
   
   // Alternative Learning Background (for "Lainnya")
   namaInstitusi?: string;
@@ -196,9 +199,9 @@ export interface TutorFormData {
   
   // Teaching Configuration (legacy)
   sertifikasi?: string;
-  tariffPerJam: number;
-  metodePengajaran: string[];
-  jadwalTersedia: string[];
+  hourly_rate: number;
+  teaching_methods: string[];
+  available_schedule: string[];
   
   // New Availability Configuration
   statusMenerimaSiswa?: string;
@@ -251,8 +254,8 @@ export interface TutorFormData {
   mataPelajaran_Keterampilan_Khusus: string[];
   
   // Teaching Area Information
-  radiusMengajar?: number;
-  catatan_lokasi?: string;
+  teaching_radius_km?: number;
+  location_notes?: string;
   
   // Location Coordinates
   titikLokasiLat?: number;
@@ -268,15 +271,11 @@ export interface TutorFormData {
   status_verifikasi_identitas?: string;
   status_verifikasi_pendidikan?: string;
   
-  // System Settings (Staff only)
-  generate_password?: boolean;
-  password_manual?: string;
-  send_welcome_email?: boolean;
-  send_whatsapp_notification?: boolean;
-  tanggal_bergabung?: string;
+
 
   // Program Selection from Database
   selectedPrograms?: string[]; // Array of selected program IDs from Supabase
+  mataPelajaranLainnya?: string; // Textarea for additional subjects not found in the selector
 }
 
 // Validation rules
@@ -332,6 +331,29 @@ export const dynamicOptions = {
   jenisKelamin: [
     { value: 'Laki-laki', label: 'Laki-laki' },
     { value: 'Perempuan', label: 'Perempuan' }
+  ],
+
+  agama: [
+    { value: 'islam', label: 'Islam' },
+    { value: 'kristen_protestan', label: 'Kristen Protestan' },
+    { value: 'kristen_katolik', label: 'Kristen Katolik' },
+    { value: 'hindu', label: 'Hindu' },
+    { value: 'buddha', label: 'Buddha' },
+    { value: 'konghucu', label: 'Konghucu' },
+    { value: 'kepercayaan_lain', label: 'Kepercayaan Lain' },
+    { value: 'lebih_tidak_menyebutkan', label: 'Lebih Tidak Menyebutkan' }
+  ],
+  
+  bahasaYangDikuasai: [
+    { value: 'bahasa_indonesia', label: 'Bahasa Indonesia' },
+    { value: 'bahasa_inggris', label: 'Bahasa Inggris' },
+    { value: 'bahasa_arab', label: 'Bahasa Arab' },
+    { value: 'bahasa_mandarin', label: 'Bahasa Mandarin' },
+    { value: 'bahasa_jepang', label: 'Bahasa Jepang' },
+    { value: 'bahasa_korea', label: 'Bahasa Korea' },
+    { value: 'bahasa_jawa', label: 'Bahasa Jawa' },
+    { value: 'bahasa_sunda', label: 'Bahasa Sunda' },
+    { value: 'bahasa_bali', label: 'Bahasa Bali' }
   ],
   
   provinsi: [
@@ -693,18 +715,6 @@ export const dynamicOptions = {
     { value: 'Minggu Pagi', label: 'Minggu Pagi (08:00-12:00)' },
     { value: 'Minggu Siang', label: 'Minggu Siang (13:00-17:00)' },
     { value: 'Minggu Malam', label: 'Minggu Malam (18:00-21:00)' }
-  ],
-  
-  bahasaYangDikuasai: [
-    { value: 'Indonesia', label: 'Bahasa Indonesia' },
-    { value: 'Inggris', label: 'Bahasa Inggris' },
-    { value: 'Arab', label: 'Bahasa Arab' },
-    { value: 'Mandarin', label: 'Bahasa Mandarin' },
-    { value: 'Jepang', label: 'Bahasa Jepang' },
-    { value: 'Korea', label: 'Bahasa Korea' },
-    { value: 'Jawa', label: 'Bahasa Jawa' },
-    { value: 'Sunda', label: 'Bahasa Sunda' },
-    { value: 'Bali', label: 'Bahasa Bali' }
   ]
 };
 
@@ -1112,11 +1122,25 @@ export const tutorFormConfig: FormConfig = {
           type: 'select',
           placeholder: 'Pilih status...',
           options: [
-            { value: 'active', label: 'Aktif' },
-            { value: 'inactive', label: 'Tidak Aktif' },
-            { value: 'pending', label: 'Menunggu Verifikasi' },
-            { value: 'suspended', label: 'Ditangguhkan' },
-            { value: 'blacklisted', label: 'Blacklist' }
+            // Recruitment Flow Stages
+            { value: 'registration', label: '📝 Registrasi - Upload berkas & data' },
+            { value: 'learning_materials', label: '📚 Belajar Materi & SOP' },
+            { value: 'examination', label: '📋 Ujian Tutor Online' },
+            { value: 'exam_verification', label: '🔍 Verifikasi Hasil Ujian' },
+            { value: 'data_completion', label: '📄 Melengkapi Data Tutor' },
+            { value: 'waiting_students', label: '⏳ Menunggu Siswa Pertama' },
+            
+            // Active Status
+            { value: 'active', label: '✅ Aktif - Mengajar' },
+            
+            // Management Status  
+            { value: 'inactive', label: '⏸️ Tidak Aktif' },
+            { value: 'suspended', label: '🚫 Ditangguhkan' },
+            { value: 'blacklisted', label: '❌ Blacklist' },
+            
+            // Special Status
+            { value: 'on_trial', label: '🧪 Masa Percobaan' },
+            { value: 'additional_screening', label: '🔬 Additional Screening' }
           ],
           helperText: 'Status tutor dalam sistem.',
           icon: 'ph:shield-check',
@@ -1145,6 +1169,23 @@ export const tutorFormConfig: FormConfig = {
           rows: 2,
           helperText: 'Catatan internal staff (tidak terlihat oleh tutor).',
           icon: 'ph:note',
+          size: 'lg'
+        },
+        {
+          name: 'additionalScreening',
+          label: 'Additional Screening Checklist',
+          type: 'checkbox',
+          multiple: true,
+          options: [
+            { value: 'psikotes', label: '🧠 Tes Psikotes' },
+            { value: 'sharing_session', label: '💬 Sharing Session dengan Staff' },
+            { value: 'background_check', label: '🔍 Background Check' },
+            { value: 'teaching_demo', label: '🎭 Teaching Demo/Mock Session' },
+            { value: 'reference_check', label: '📞 Reference Check' },
+            { value: 'continuous_assessment', label: '📊 Continuous Assessment' }
+          ],
+          helperText: 'Checklist tambahan untuk memperkuat profil tutor.',
+          icon: 'ph:checklist',
           size: 'lg'
         },
 
@@ -1185,6 +1226,15 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
+          name: 'namaPanggilan',
+          label: 'Nama Panggilan',
+          type: 'text',
+          placeholder: 'Nama panggilan atau nama yang biasa digunakan',
+          icon: 'ph:smiley',
+          size: 'lg',
+          helperText: 'Nama yang akan ditampilkan kepada siswa dan orang tua.'
+        },
+        {
           name: 'tanggalLahir',
           label: 'Tanggal Lahir',
           type: 'date',
@@ -1201,6 +1251,16 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
+          name: 'agama',
+          label: 'Agama',
+          type: 'select',
+          placeholder: 'Pilih agama...',
+          options: dynamicOptions.agama,
+          icon: 'ph:mosque',
+          size: 'lg',
+          helperText: 'Pilihan agama untuk keperluan demografi pengguna.'
+        },
+        {
           name: 'email',
           label: 'Email Aktif',
           type: 'email',
@@ -1213,8 +1273,8 @@ export const tutorFormConfig: FormConfig = {
           name: 'noHp1',
           label: 'No. HP (WhatsApp)',
           type: 'tel',
-          placeholder: '+62 812-3456-7890',
-          helperText: 'Nomor WhatsApp aktif untuk komunikasi.',
+          placeholder: '6281234567890',
+          helperText: 'Nomor WhatsApp aktif untuk komunikasi. JANGAN pakai spasi/strip! Format: 6281234567890 atau 081234567890 (diutamakan pakai 62).',
           icon: 'ph:phone',
           size: 'lg'
         },
@@ -1222,8 +1282,8 @@ export const tutorFormConfig: FormConfig = {
           name: 'noHp2',
           label: 'No. HP Alternatif (Opsional)',
           type: 'tel',
-          placeholder: '+62 812-3456-7890',
-          helperText: 'Nomor alternatif untuk kontak darurat.',
+          placeholder: '6281234567890',
+          helperText: 'Nomor alternatif untuk kontak darurat. JANGAN pakai spasi/strip! Format: 6281234567890 atau 081234567890 (diutamakan pakai 62).',
           icon: 'ph:phone-plus',
           size: 'lg'
         },
@@ -1307,23 +1367,27 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:house'
         },
         {
-          name: 'alamatDomisili',
-          label: 'Alamat Lengkap Domisili',
-          type: 'textarea',
-          placeholder: 'Masukkan alamat lengkap (Jalan, RT/RW, Komplek, dll)',
-          rows: 3,
-          icon: 'ph:house',
+          name: 'provinsiDomisili',
+          label: 'Provinsi',
+          type: 'select',
+          placeholder: 'Pilih provinsi...',
+          apiEndpoint: '/api/locations/provinces',
+          icon: 'ph:map-trifold',
           size: 'lg',
-          required: true
+          required: true,
+          helperText: 'Pilih provinsi terlebih dahulu untuk memuat daftar kota.'
         },
         {
-          name: 'kelurahanDomisili',
-          label: 'Kelurahan/Desa',
-          type: 'text',
-          placeholder: 'Nama kelurahan atau desa',
-          icon: 'ph:buildings',
+          name: 'kotaKabupatenDomisili',
+          label: 'Kota/Kabupaten',
+          type: 'select',
+          placeholder: 'Pilih kota/kabupaten...',
+          apiEndpoint: '/api/locations/cities',
+          dependsOn: 'provinsiDomisili',
+          icon: 'ph:city',
           size: 'lg',
-          required: true
+          required: true,
+          helperText: 'Pilih kota/kabupaten setelah memilih provinsi.'
         },
         {
           name: 'kecamatanDomisili',
@@ -1332,26 +1396,29 @@ export const tutorFormConfig: FormConfig = {
           placeholder: 'Nama kecamatan',
           icon: 'ph:buildings',
           size: 'lg',
-          required: true
+          required: true,
+          helperText: 'Masukkan nama kecamatan secara manual.'
         },
         {
-          name: 'kotaKabupatenDomisili',
-          label: 'Kota/Kabupaten',
+          name: 'kelurahanDomisili',
+          label: 'Kelurahan/Desa',
           type: 'text',
-          placeholder: 'Nama kota atau kabupaten',
-          icon: 'ph:city',
+          placeholder: 'Nama kelurahan atau desa',
+          icon: 'ph:buildings',
           size: 'lg',
-          required: true
+          required: true,
+          helperText: 'Masukkan nama kelurahan atau desa secara manual.'
         },
         {
-          name: 'provinsiDomisili',
-          label: 'Provinsi',
-          type: 'select',
-          placeholder: 'Pilih provinsi...',
-          options: dynamicOptions.provinsi,
-          icon: 'ph:map-trifold',
+          name: 'alamatLengkapDomisili',
+          label: 'Alamat Lengkap/Nama Jalan',
+          type: 'textarea',
+          placeholder: 'Masukkan alamat lengkap (Jalan, RT/RW, Komplek, Nomor Rumah, dll)',
+          rows: 3,
+          icon: 'ph:house',
           size: 'lg',
-          required: true
+          required: true,
+          helperText: 'Alamat detail termasuk nama jalan, RT/RW, komplek, nomor rumah.'
         },
         {
           name: 'kodePosDomisili',
@@ -1383,23 +1450,27 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:identification-card'
         },
         {
-          name: 'alamatKTP',
-          label: 'Alamat Lengkap KTP/KK',
-          type: 'textarea',
-          placeholder: 'Masukkan alamat lengkap sesuai KTP/KK (Jalan, RT/RW, Komplek, dll)',
-          rows: 3,
-          icon: 'ph:identification-card',
+          name: 'provinsiKTP',
+          label: 'Provinsi KTP/KK',
+          type: 'select',
+          placeholder: 'Pilih provinsi...',
+          apiEndpoint: '/api/locations/provinces',
+          icon: 'ph:map-trifold',
           size: 'lg',
-          conditional: (data) => !data.alamatSamaDenganKTP
+          conditional: (data) => !data.alamatSamaDenganKTP,
+          helperText: 'Pilih provinsi sesuai KTP/KK.'
         },
         {
-          name: 'kelurahanKTP',
-          label: 'Kelurahan/Desa KTP/KK',
-          type: 'text',
-          placeholder: 'Nama kelurahan atau desa sesuai KTP/KK',
-          icon: 'ph:buildings',
+          name: 'kotaKabupatenKTP',
+          label: 'Kota/Kabupaten KTP/KK',
+          type: 'select',
+          placeholder: 'Pilih kota/kabupaten...',
+          apiEndpoint: '/api/locations/cities',
+          dependsOn: 'provinsiKTP',
+          icon: 'ph:city',
           size: 'lg',
-          conditional: (data) => !data.alamatSamaDenganKTP
+          conditional: (data) => !data.alamatSamaDenganKTP,
+          helperText: 'Pilih kota/kabupaten sesuai KTP/KK.'
         },
         {
           name: 'kecamatanKTP',
@@ -1408,26 +1479,29 @@ export const tutorFormConfig: FormConfig = {
           placeholder: 'Nama kecamatan sesuai KTP/KK',
           icon: 'ph:buildings',
           size: 'lg',
-          conditional: (data) => !data.alamatSamaDenganKTP
+          conditional: (data) => !data.alamatSamaDenganKTP,
+          helperText: 'Masukkan nama kecamatan sesuai KTP/KK.'
         },
         {
-          name: 'kotaKabupatenKTP',
-          label: 'Kota/Kabupaten KTP/KK',
+          name: 'kelurahanKTP',
+          label: 'Kelurahan/Desa KTP/KK',
           type: 'text',
-          placeholder: 'Nama kota atau kabupaten sesuai KTP/KK',
-          icon: 'ph:city',
+          placeholder: 'Nama kelurahan atau desa sesuai KTP/KK',
+          icon: 'ph:buildings',
           size: 'lg',
-          conditional: (data) => !data.alamatSamaDenganKTP
+          conditional: (data) => !data.alamatSamaDenganKTP,
+          helperText: 'Masukkan nama kelurahan/desa sesuai KTP/KK.'
         },
         {
-          name: 'provinsiKTP',
-          label: 'Provinsi KTP/KK',
-          type: 'select',
-          placeholder: 'Pilih provinsi...',
-          options: dynamicOptions.provinsi,
-          icon: 'ph:map-trifold',
+          name: 'alamatLengkapKTP',
+          label: 'Alamat Lengkap/Nama Jalan KTP/KK',
+          type: 'textarea',
+          placeholder: 'Masukkan alamat lengkap sesuai KTP/KK (Jalan, RT/RW, Komplek, Nomor, dll)',
+          rows: 3,
+          icon: 'ph:identification-card',
           size: 'lg',
-          conditional: (data) => !data.alamatSamaDenganKTP
+          conditional: (data) => !data.alamatSamaDenganKTP,
+          helperText: 'Alamat detail sesuai KTP/KK termasuk nama jalan, RT/RW, komplek.'
         },
         {
           name: 'kodePosKTP',
@@ -1464,7 +1538,7 @@ export const tutorFormConfig: FormConfig = {
           label: 'Nomor Rekening',
           type: 'text',
           placeholder: '1234567890123',
-          helperText: 'Nomor rekening tabungan aktif.',
+          helperText: 'Nomor rekening tanpa spasi atau strip. Contoh: 1234567890123',
           icon: 'ph:credit-card',
           size: 'lg'
         },
@@ -1473,18 +1547,11 @@ export const tutorFormConfig: FormConfig = {
           label: 'Nama Bank',
           type: 'select',
           placeholder: 'Pilih bank...',
-          options: dynamicOptions.namaBank,
+          apiEndpoint: '/api/banks/indonesia',
           icon: 'ph:bank',
-          size: 'lg'
-        },
-        {
-          name: 'cabangBank',
-          label: 'Cabang Bank (Opsional)',
-          type: 'text',
-          placeholder: 'Nama cabang bank',
-          helperText: 'Cabang bank tempat rekening dibuka.',
-          icon: 'ph:buildings',
-          size: 'lg'
+          size: 'lg',
+          required: true,
+          helperText: 'Selain BNI, BRI, Mandiri, dan BCA dikenakan biaya transfer antar bank.'
         }
       ]
     },
@@ -1734,17 +1801,7 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:calendar-check',
           size: 'lg'
         },
-        {
-          name: 'ijazahSMA',
-          label: 'Ijazah SMA / Sederajat',
-          type: 'file',
-          required: true,
-          accept: 'image/*,.pdf',
-          helperText: 'Unggah ijazah atau Surat Keterangan Lulus (SKL) Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
-          conditional: (data) => data.statusAkademik && data.statusAkademik !== 'lainnya',
-          icon: 'ph:file-text',
-          size: 'lg'
-        },
+
 
         // === LATAR BELAKANG LAINNYA ===
         {
@@ -1949,6 +2006,16 @@ export const tutorFormConfig: FormConfig = {
           helperText: 'Klik kategori untuk melihat semua program yang tersedia. Pilih program yang sesuai dengan keahlian Anda.',
           icon: 'ph:books',
           size: 'lg'
+        },
+        {
+          name: 'mataPelajaranLainnya',
+          label: '📝 Mata Pelajaran Lainnya (Jika Tidak Ditemukan)',
+          type: 'textarea',
+          placeholder: 'Jika Anda tidak menemukan mata pelajaran yang ingin Anda ajarkan di atas, silakan tuliskan di sini. Jelaskan juga kemampuan dan pengalaman Anda dalam mengajar mata pelajaran tersebut. Contoh:\n\n• Mata Pelajaran: Bahasa Korea untuk Pemula\n• Kemampuan: Lulusan S1 Sastra Korea, pengalaman 3 tahun mengajar\n• Metode: Menggunakan lagu, drama, dan percakapan sehari-hari\n• Target: Siswa SMA dan dewasa yang ingin belajar bahasa Korea dari nol\n\n• Mata Pelajaran: Coding Python untuk Anak SD\n• Kemampuan: Sertifikasi Python, pengalaman mengajar coding untuk anak-anak\n• Metode: Game-based learning, project sederhana\n• Target: Anak SD kelas 4-6 yang tertarik teknologi',
+          rows: 8,
+          helperText: 'Jelaskan mata pelajaran yang ingin Anda ajarkan, kemampuan Anda, metode mengajar, dan target siswa. Ini akan membantu kami memahami kebutuhan khusus Anda.',
+          icon: 'ph:note-pencil',
+          size: 'lg'
         }
       ]
     },
@@ -1972,7 +2039,7 @@ export const tutorFormConfig: FormConfig = {
         },
 
         {
-          name: 'radiusMengajar',
+          name: 'teaching_radius_km',
           label: 'Radius Area Mengajar (KM)',
           type: 'number',
           placeholder: '25',
@@ -1994,7 +2061,7 @@ export const tutorFormConfig: FormConfig = {
           className: 'map-picker-field'
         },
         {
-          name: 'catatan_lokasi',
+          name: 'location_notes',
           label: 'Preferensi Area Mengajar (Opsional)',
           type: 'textarea',
           placeholder: 'Contoh: "Prefer Jakarta Pusat-Selatan, hindari Utara karena macet" atau "Area Sleman-Yogya OK, Bantul Selatan susah akses" atau "Surabaya Barat-Timur prefer, Utara jauh dari rumah"',
@@ -2030,7 +2097,7 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
-          name: 'jadwalTersedia',
+          name: 'available_schedule',
           label: 'Jadwal Mingguan Tersedia',
           type: 'checkbox',
           required: true,
@@ -2040,7 +2107,7 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:calendar'
         },
         {
-          name: 'metodePengajaran',
+          name: 'teaching_methods',
           label: 'Metode Pengajaran',
           type: 'checkbox',
           required: true,
@@ -2055,7 +2122,7 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:chalkboard-teacher'
         },
         {
-          name: 'tariffPerJam',
+          name: 'hourly_rate',
           label: 'Tarif per Jam (Rupiah)',
           type: 'number',
           required: true,
@@ -2542,60 +2609,7 @@ export const tutorFormConfig: FormConfig = {
       ]
     },
     
-    {
-      id: 'system',
-      title: 'Sistem',
-      description: 'Pengaturan akses dan sistem',
-      icon: 'ph:gear',
-      color: 'destructive',
-      fields: [
-        {
-          name: 'section_sistem',
-          label: 'PENGATURAN SISTEM',
-          type: 'text',
-          disabled: true,
-          helperText: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-          className: 'section-divider',
-          icon: 'ph:gear'
-        },
-        {
-          name: 'generate_password',
-          label: 'Generate Password Otomatis',
-          type: 'checkbox',
-          helperText: 'Centang untuk generate password otomatis dan kirim ke email tutor.'
-        },
-        {
-          name: 'password_manual',
-          label: 'Password Manual',
-          type: 'text',
-          placeholder: 'Kosongkan jika ingin auto-generate',
-          helperText: 'Password login untuk tutor (minimal 8 karakter).',
-          conditional: (data) => !data.generate_password,
-          icon: 'ph:key',
-          size: 'lg'
-        },
-        {
-          name: 'send_welcome_email',
-          label: 'Kirim Email Welcome',
-          type: 'checkbox',
-          helperText: 'Kirim email selamat datang ke tutor setelah data tersimpan.'
-        },
-        {
-          name: 'send_whatsapp_notification',
-          label: 'Kirim Notifikasi WhatsApp',
-          type: 'checkbox',
-          helperText: 'Kirim notifikasi WhatsApp ke tutor setelah data tersimpan.'
-        },
-        {
-          name: 'tanggal_bergabung',
-          label: 'Tanggal Bergabung',
-          type: 'date',
-          helperText: 'Tanggal tutor bergabung dengan sistem (default: hari ini).',
-          icon: 'ph:calendar-plus',
-          size: 'lg'
-        }
-      ]
-    }
+
   ]
 };
 
@@ -2603,8 +2617,10 @@ export const tutorFormConfig: FormConfig = {
 export const defaultFormData: Partial<TutorFormData> = {
   trn: '',
   namaLengkap: '',
+  namaPanggilan: '',
   tanggalLahir: '',
   jenisKelamin: '',
+  agama: '',
   email: '',
   noHp1: '',
   noHp2: '',
@@ -2615,23 +2631,26 @@ export const defaultFormData: Partial<TutorFormData> = {
   socialMedia1: undefined,
   socialMedia2: undefined,
   bahasaYangDikuasai: [],
-  alamatDomisili: '',
-  kelurahanDomisili: '',
-  kecamatanDomisili: '',
-  kotaKabupatenDomisili: '',
+  // Address Information - Domisili (New Structure)
   provinsiDomisili: '',
+  kotaKabupatenDomisili: '',
+  kecamatanDomisili: '',
+  kelurahanDomisili: '',
+  alamatLengkapDomisili: '',
   kodePosDomisili: '',
+  
+  // Address Information - KTP/KK (New Structure)
   alamatSamaDenganKTP: false,
-  alamatKTP: '',
-  kelurahanKTP: '',
-  kecamatanKTP: '',
-  kotaKabupatenKTP: '',
   provinsiKTP: '',
+  kotaKabupatenKTP: '',
+  kecamatanKTP: '',
+  kelurahanKTP: '',
+  alamatLengkapKTP: '',
   kodePosKTP: '',
+  // Banking Information (Enhanced)
   namaNasabah: '',
   nomorRekening: '',
-  namaBank: '',
-  cabangBank: '',
+  namaBank: '', // Bank UUID
   statusAkademik: '',
   namaUniversitasS1: '',
   fakultasS1: '',
@@ -2648,7 +2667,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   jurusanSMA: '',
   jurusanSMKDetail: '',
   tahunLulusSMA: '',
-  ijazahSMA: null,
+
   
   // Alternative Learning Background
   namaInstitusi: '',
@@ -2670,9 +2689,9 @@ export const defaultFormData: Partial<TutorFormData> = {
   prestasiNonAkademik: '',
   sertifikasiPelatihan: '',
   sertifikasi: undefined,
-  tariffPerJam: 0,
-  metodePengajaran: [],
-  jadwalTersedia: [],
+  hourly_rate: 0,
+  teaching_methods: [],
+  available_schedule: [],
   motivasi: '',
   
   // New Availability Configuration
@@ -2724,11 +2743,12 @@ export const defaultFormData: Partial<TutorFormData> = {
   
   // Program Selection Defaults
   selectedPrograms: [],
+  mataPelajaranLainnya: '',
   
   // Teaching Area Information
 
-  radiusMengajar: undefined,
-  catatan_lokasi: undefined,
+  teaching_radius_km: undefined,
+  location_notes: undefined,
   
   // Location Coordinates
   titikLokasiLat: undefined,
@@ -2743,17 +2763,12 @@ export const defaultFormData: Partial<TutorFormData> = {
   status_tutor: '',
   approval_level: '',
   staff_notes: '',
+  additionalScreening: [],
   
   // Document Verification (Staff only)
   status_verifikasi_identitas: '',
   status_verifikasi_pendidikan: '',
-  
-  // System Settings (Staff only)
-  generate_password: true,
-  password_manual: '',
-  send_welcome_email: true,
-  send_whatsapp_notification: true,
-  tanggal_bergabung: ''
+
 };
 
 // Utility functions

@@ -27,10 +27,38 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
+
 }
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Utility functions for data formatting
+const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return '';
+  
+  // Remove all spaces, dashes, plus signs and other non-digit characters
+  let cleaned = phone.replace(/[\s\-\(\)\.\+]/g, '');
+  
+  // Handle different input formats - always return clean number without + or dashes
+  if (cleaned.startsWith('0')) {
+    // Replace leading 0 with 62 (e.g., 081234567890 → 6281234567890)
+    cleaned = '62' + cleaned.slice(1);
+  } else if (cleaned.startsWith('8')) {
+    // Add 62 prefix if starts with 8 (e.g., 81234567890 → 6281234567890)  
+    cleaned = '62' + cleaned;
+  } else if (!cleaned.startsWith('62')) {
+    // Add 62 prefix if doesn't have it
+    cleaned = '62' + cleaned;
+  }
+  
+  return cleaned;
+};
+
+const sanitizeAccountNumber = (accountNumber: string): string => {
+  if (!accountNumber) return '';
+  // Remove all spaces, dashes, plus signs and non-digit characters
+  return accountNumber.replace(/[\s\-\(\)\.\+]/g, '');
+};
 
 export default function AddTutorPage() {
   const router = useRouter();
@@ -64,12 +92,12 @@ export default function AddTutorPage() {
       
       // Handle address copy functionality
       if (fieldName === 'alamatSamaDenganKTP' && value === true) {
-        // Copy domisili address to KTP address
-        newData.alamatKTP = prev.alamatDomisili || '';
-        newData.kelurahanKTP = prev.kelurahanDomisili || '';
-        newData.kecamatanKTP = prev.kecamatanDomisili || '';
-        newData.kotaKabupatenKTP = prev.kotaKabupatenDomisili || '';
+        // Copy domisili address to KTP address (NEW STRUCTURE)
         newData.provinsiKTP = prev.provinsiDomisili || '';
+        newData.kotaKabupatenKTP = prev.kotaKabupatenDomisili || '';
+        newData.kecamatanKTP = prev.kecamatanDomisili || '';
+        newData.kelurahanKTP = prev.kelurahanDomisili || '';
+        newData.alamatLengkapKTP = prev.alamatLengkapDomisili || '';
         newData.kodePosKTP = prev.kodePosDomisili || '';
       }
       
@@ -118,197 +146,763 @@ export default function AddTutorPage() {
     
     try {
       // Step 1: Test Supabase connection first
-      console.log('Testing Supabase connection...');
+
+      // DEBUGGING: Check table access and structure
+      console.log('🔍 Testing table access...');
+      
+      // Try different possible table names
+      const possibleTableNames = [
+        't_340_01_01_roles',
+        'roles', 
+        'user_roles',
+        'system_roles'
+      ];
+      
+      let rolesTable = null;
+      let allRolesData = null;
+      
+      for (const tableName of possibleTableNames) {
+        console.log(`🔍 Trying table: ${tableName}`);
+        
+        const testResult = await supabase
+          ?.from(tableName)
+          .select('*')
+          .limit(5);
+          
+        console.log(`📋 Result for ${tableName}:`, testResult);
+        
+        if (testResult?.data && testResult.data.length > 0) {
+          rolesTable = tableName;
+          allRolesData = testResult.data;
+          console.log(`✅ Found roles in table: ${tableName}`, testResult.data);
+          break;
+        } else if (testResult?.error) {
+          console.log(`❌ Error accessing ${tableName}:`, testResult.error);
+        }
+      }
+      
+      if (!rolesTable) {
+        throw new Error('No accessible roles table found. Check table names and RLS policies.');
+      }
+
+      // ✅ Search for tutor role using correct field names: role_name, role_code
+      console.log('🔍 Searching for tutor role...');
+      console.log('📋 Sample role data structure:', allRolesData?.[0]);
+      
+      let tutorRole = null;
+      
+      // Try by role_name field first
+      const possibleRoleNames = ['tutor', 'Tutor', 'TUTOR', 'educator', 'Educator', 'EDUCATOR', 'teacher', 'Teacher'];
+      
+      for (const roleName of possibleRoleNames) {
+        const roleResult = await supabase
+          ?.from(rolesTable)
+          .select('*')
+          .eq('role_name', roleName)
+          .single();
+        
+        if (roleResult?.data?.id) {
+          tutorRole = roleResult.data;
+          console.log(`✅ Found role by role_name "${roleName}":`, tutorRole);
+          break;
+        }
+      }
+      
+      // If not found by role_name, try by role_code
+      if (!tutorRole) {
+        const possibleRoleCodes = ['tutor', 'TUTOR', 'educator', 'EDUCATOR', 'teacher', 'TEACHER'];
+        
+        for (const roleCode of possibleRoleCodes) {
+          const roleResult = await supabase
+            ?.from(rolesTable)
+            .select('*')
+            .eq('role_code', roleCode)
+            .single();
+          
+          if (roleResult?.data?.id) {
+            tutorRole = roleResult.data;
+            console.log(`✅ Found role by role_code "${roleCode}":`, tutorRole);
+            break;
+          }
+        }
+      }
+      
+      // If still not found, show all available roles
+      if (!tutorRole) {
+        console.log('🔍 Searching in all roles...');
+        
+        const allRolesResult = await supabase
+          ?.from(rolesTable)
+          .select('*');
+          
+        console.log('📋 All roles in database:', allRolesResult?.data);
+        tutorRole = allRolesResult?.data?.[0]; // Use first role as fallback for testing
+        console.log('⚠️ Using first available role as fallback:', tutorRole);
+      }
+
+      if (!tutorRole) {
+        console.error('❌ No tutor role found in any format');
+        console.error('❌ Table used:', rolesTable);
+        console.error('❌ All available roles:', allRolesData);
+        
+        // MANUAL FALLBACK: If you know the exact role ID, uncomment and use this:
+        // tutorRole = { id: 'your-exact-role-uuid-here' };
+        // console.log('🔧 Using manual role ID:', tutorRole);
+        
+        if (!tutorRole) {
+          throw new Error(`
+            🔍 DEBUGGING INFO:
+            - Table found: ${rolesTable}
+            - Available roles: ${JSON.stringify(allRolesData, null, 2)}
+            
+            💡 SOLUTION:
+            1. Check browser console for role structure
+            2. Find the exact role ID for tutor/educator in Supabase
+            3. Uncomment the manual fallback line above and paste the UUID
+            
+            Or tell me the exact role name/ID you see in Supabase!
+          `);
+        }
+      }
+      
+      // Get the ID field (might be 'id', 'uuid', 'role_id', etc.)
+      const foundRoleId = tutorRole.id || tutorRole.uuid || tutorRole.role_id || Object.values(tutorRole)[0];
+      
+      if (!foundRoleId) {
+        console.error('❌ Could not determine ID field for role:', tutorRole);
+        throw new Error('Could not find ID field in role data');
+      }
+
       const testResult = await supabase
-        ?.from('tutors')
+        ?.from('t_310_01_01_users_universal')
         .select('count', { count: 'exact', head: true });
       const { data: testData, error: testError } = testResult || { data: null, error: null };
       
       if (testError) {
-        console.error('Supabase connection test failed:', testError);
+
         throw new Error(`Database connection failed: ${testError.message}`);
       }
       
-      console.log('Supabase connection successful');
-      
-      // Step 2: Prepare data for submission
-      const submissionData = {
-        // System & Status Information (Staff only)
-        status_tutor: formData.status_tutor || 'pending',
-        approval_level: formData.approval_level || 'junior',
-        staff_notes: formData.staff_notes,
 
-        // Personal Information
-        trn: formData.trn || `EDU${Date.now().toString().slice(-7)}`, // Auto-generate if empty
-        nama_lengkap: formData.namaLengkap,
-        tanggal_lahir: formData.tanggalLahir,
-        jenis_kelamin: formData.jenisKelamin,
+      
+      // Step 2: Prepare data for relational insertion
+      const trn = formData.trn || `EDU${Date.now().toString().slice(-7)}`;
+      
+      console.log('✅ Using tutor role ID:', foundRoleId, 'from role:', tutorRole);
+      
+      // 2a. Prepare users_universal data
+      const usersUniversalData = {
+        user_code: trn,
         email: formData.email,
-        no_hp_1: formData.noHp1,
-        no_hp_2: formData.noHp2,
-        
-        // New Profile Identity Fields
-        headline: formData.headline,
-        deskripsi_diri: formData.deskripsiDiri,
-        social_media_1: formData.socialMedia1,
-        social_media_2: formData.socialMedia2,
-        bahasa_yang_dikuasai: formData.bahasaYangDikuasai || [],
-        
-        // Address Information - Domisili
-        alamat_domisili: formData.alamatDomisili,
-        kelurahan_domisili: formData.kelurahanDomisili,
-        kecamatan_domisili: formData.kecamatanDomisili,
-        kota_kabupaten_domisili: formData.kotaKabupatenDomisili,
-        provinsi_domisili: formData.provinsiDomisili,
-        kode_pos_domisili: formData.kodePosDomisili,
-        
-        // Address Information - KTP/KK
-        alamat_sama_dengan_ktp: formData.alamatSamaDenganKTP,
-        alamat_ktp: formData.alamatKTP,
-        kelurahan_ktp: formData.kelurahanKTP,
-        kecamatan_ktp: formData.kecamatanKTP,
-        kota_kabupaten_ktp: formData.kotaKabupatenKTP,
-        provinsi_ktp: formData.provinsiKTP,
-        kode_pos_ktp: formData.kodePosKTP,
-        
-        // Banking Information
-        nama_nasabah: formData.namaNasabah,
-        nomor_rekening: formData.nomorRekening,
-        nama_bank: formData.namaBank,
-        cabang_bank: formData.cabangBank,
-        
-        // Professional Information - Education History
-        status_akademik: formData.statusAkademik,
-        nama_universitas_s1: formData.namaUniversitasS1,
-        fakultas_s1: formData.fakultasS1,
-        jurusan_s1: formData.jurusanS1,
-        nama_universitas: formData.namaUniversitas,
-        fakultas: formData.fakultas,
-        jurusan: formData.jurusan,
-        akreditasi_jurusan: formData.akreditasiJurusan,
-        ipk: formData.ipk,
-        tahun_masuk: formData.tahunMasuk,
-        tahun_lulus: formData.tahunLulus,
-        transkrip_nilai: formData.transkripNilai,
-        nama_sma: formData.namaSMA,
-        jurusan_sma: formData.jurusanSMA,
-        jurusan_smk_detail: formData.jurusanSMKDetail,
-        tahun_lulus_sma: formData.tahunLulusSMA,
-        ijazah_sma: formData.ijazahSMA,
-        
-        // Alternative Learning Background
-        nama_institusi: formData.namaInstitusi,
-        bidang_keahlian: formData.bidangKeahlian,
-        pengalaman_belajar: formData.pengalamanBelajar,
-        sertifikat_keahlian: formData.sertifikatKeahlian,
-        
-        // Professional Profile & Experience
-        motivasi_menjadi_tutor: formData.motivasiMenjadiTutor,
-        keahlian_spesialisasi: formData.keahlianSpesialisasi,
-        keahlian_lainnya: formData.keahlianLainnya,
-        
-        // Teaching Experience - Simplified
-        pengalaman_mengajar_detail: formData.pengalamanMengajar,
-        pengalaman_lain_relevan: formData.pengalamanLainRelevan,
-        
-        // Achievements & Credentials - Simplified
-        prestasi_akademik: formData.prestasiAkademik,
-        prestasi_non_akademik: formData.prestasiNonAkademik,
-        sertifikasi_pelatihan: formData.sertifikasiPelatihan,
-        
-        // Teaching Configuration
-        sertifikasi: formData.sertifikasi,
-        tarif_per_jam: formData.tariffPerJam || 0,
-        metode_pengajaran: formData.metodePengajaran || [],
-        jadwal_tersedia: formData.jadwalTersedia || [],
-        
-        // Profile Information (legacy)
-        motivasi: formData.motivasi,
-        
-        // Subject Information - Mata Pelajaran per Kategori
-        mata_pelajaran_sd: formData.mataPelajaran_SD_Kelas_1_6_ || [],
-        mata_pelajaran_smp: formData.mataPelajaran_SMP_Kelas_7_9_ || [],
-        mata_pelajaran_sma_ipa: formData.mataPelajaran_SMA_SMK_IPA || [],
-        mata_pelajaran_sma_ips: formData.mataPelajaran_SMA_SMK_IPS || [],
-        mata_pelajaran_smk_teknik: formData.mataPelajaran_SMK_Teknik_Teknologi || [],
-        mata_pelajaran_smk_bisnis: formData.mataPelajaran_SMK_Bisnis_Manajemen || [],
-        mata_pelajaran_smk_pariwisata: formData.mataPelajaran_SMK_Pariwisata_Perhotelan || [],
-        mata_pelajaran_smk_kesehatan: formData.mataPelajaran_SMK_Kesehatan || [],
-        mata_pelajaran_bahasa_asing: formData.mataPelajaran_Bahasa_Asing || [],
-        mata_pelajaran_universitas: formData.mataPelajaran_Universitas_Perguruan_Tinggi || [],
-        mata_pelajaran_keterampilan: formData.mataPelajaran_Keterampilan_Khusus || [],
-        
-        // Teaching Area Information
-        wilayah_kota: (formData as any).wilayahKota,
-        wilayah_kecamatan: (formData as any).wilayahKecamatan || [],
-        radius_mengajar: formData.radiusMengajar,
-        catatan_lokasi: formData.catatan_lokasi,
-        
-        // Location Coordinates (Dispatch Point)
-        titik_lokasi_lat: formData.titikLokasiLat,
-        titik_lokasi_lng: formData.titikLokasiLng,
-        alamat_titik_lokasi: formData.alamatTitikLokasi,
-        
-        // Document Verification (Staff only)
-        status_verifikasi_identitas: formData.status_verifikasi_identitas || 'pending',
-        status_verifikasi_pendidikan: formData.status_verifikasi_pendidikan || 'pending',
-        
-        // System Settings (Staff only)
-        tanggal_bergabung: formData.tanggal_bergabung || new Date().toISOString().split('T')[0],
-        
-        // Timestamps
+        phone: formatPhoneNumber(formData.noHp1 || ''),
+        password_hash: 'temp_hash_' + Date.now(), // Temporary password hash
+        primary_role_id: foundRoleId, // ✅ FIXED: Use primary_role_id with UUID
+        account_type: 'individual',
+        user_status: 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      // Log geocoordinates specifically for debugging
-      console.log('Geocoordinates being submitted:', {
-        titik_lokasi_lat: formData.titikLokasiLat,
-        titik_lokasi_lng: formData.titikLokasiLng,
-        alamat_titik_lokasi: formData.alamatTitikLokasi
-      });
-      
-      console.log('Form data being submitted:', JSON.stringify(submissionData, null, 2));
-      
-      // Step 3: Insert data to Supabase
-      console.log('Attempting database insert...');
-      const insertResult = await supabase
-        ?.from('tutors')
-        .insert([submissionData])
-        .select();
-      const { data, error } = insertResult || { data: null, error: null };
-
-      if (error) {
-        console.error('Supabase insert error:', {
-          message: error.message || 'No error message',
-          details: error.details || 'No error details',
-          hint: error.hint || 'No error hint', 
-          code: error.code || 'No error code',
-          fullError: error
-        });
+      // 2b. Prepare user_profiles data (will need user_id from step 3)
+      const userProfilesData = {
+        full_name: formData.namaLengkap || '', // ✅ full_name untuk nama lengkap
+        nick_name: formData.namaPanggilan || null, // ✅ nick_name untuk nama panggilan
+        date_of_birth: formData.tanggalLahir || null,
+        gender: formData.jenisKelamin || null,
+        nationality: 'IDN', // Default Indonesia
+        national_id: null, // KTP field not available in form
+        country_code: 'ID', // Indonesia
         
-        // Provide specific error messages
-        if (error.code === 'PGRST116') {
-          throw new Error('Tabel tutors tidak ditemukan. Jalankan SQL setup script terlebih dahulu.');
-        } else if (error.code === '42P01') {
-          throw new Error('Tabel tutors belum dibuat. Jalankan supabase-setup-tutors.sql di Supabase SQL Editor.');
-        } else if (error.code === '42501') {
-          throw new Error('Tidak ada permission untuk mengakses tabel. Periksa RLS policies.');
-        } else if (error.message?.includes('duplicate key')) {
-          throw new Error('Data duplikat: TRN atau email sudah terdaftar.');
-        } else {
-          throw new Error(`Database error: ${error.message || 'Unknown error'}`);
+        // Address fields
+        address_line1: formData.alamatLengkapDomisili || null,
+        city: formData.kotaKabupatenDomisili || null,
+        state_province: formData.provinsiDomisili || null,
+        postal_code: formData.kodePosDomisili || null,
+        
+        // Phone numbers with +62 formatting  
+        mobile_phone: formatPhoneNumber(formData.noHp1 || ''),
+        mobile_phone_2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : null,
+        
+        // ✅ Emergency contact - fields exist in user_profiles
+        emergency_contact_name: formData.emergencyContactName || null,
+        emergency_contact_relationship: formData.emergencyContactRelationship || null,
+        emergency_contact_phone: formData.emergencyContactPhone || null,
+        
+        // PROFIL & VALUE PROPOSITION fields
+        headline: formData.headline || null, // ✅ Fix: job_title → headline
+        bio: formData.deskripsiDiri || null, // ✅ bio field exists
+        social_media_1: formData.socialMedia1 || null, // ✅ Fix: gunakan nama kolom yang benar
+        social_media_2: formData.socialMedia2 || null, // ✅ Fix: gunakan nama kolom yang benar
+        whatsapp_number: formData.whatsappNumber || null, // ✅ Add: whatsapp_number field
+        languages_mastered: formData.bahasaYangDikuasai || [], // ✅ Add: languages_mastered JSONB
+        motivation_as_tutor: formData.motivasiMenjadiTutor || null, // ✅ Add: motivation_as_tutor field
+        preferred_language: Array.isArray(formData.bahasaYangDikuasai) && formData.bahasaYangDikuasai.length > 0 
+          ? formData.bahasaYangDikuasai[0] 
+          : 'id',
+        
+        // Education fields  
+        education_level: formData.statusAkademik || null,
+        university: formData.namaUniversitas || null,
+        major: formData.jurusan || null,
+        graduation_year: formData.tahunLulus || null,
+        gpa: formData.ipk || null, // ✅ Add: gpa ada di user_profiles
+        
+        // ✅ REMOVED: availability_schedule - dipindah ke t_315_03_01_tutor_availability_config
+        
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2c. Prepare domicile address data (NEW SEPARATE TABLE)
+      const domicileAddressData = {
+        address_type: 'domicile',
+        address_label: 'Alamat Domisili',
+        province_id: formData.provinsiDomisili || null,
+        city_id: formData.kotaKabupatenDomisili || null,
+        district_name: formData.kecamatanDomisili || null, // Manual input
+        village_name: formData.kelurahanDomisili || null,  // Manual input
+        street_address: formData.alamatLengkapDomisili || '',
+        postal_code: formData.kodePosDomisili || null,
+        is_primary: true, // Domicile is primary address
+        is_verified: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2d. Prepare KTP address data (if different from domicile)
+      const ktpAddressData = formData.alamatSamaDenganKTP ? null : {
+        address_type: 'ktp',
+        address_label: 'Alamat KTP/KK',
+        province_id: formData.provinsiKTP || null,
+        city_id: formData.kotaKabupatenKTP || null,
+        district_name: formData.kecamatanKTP || null, // Manual input
+        village_name: formData.kelurahanKTP || null,  // Manual input
+        street_address: formData.alamatLengkapKTP || '',
+        postal_code: formData.kodePosKTP || null,
+        is_primary: false, // KTP is secondary address
+        is_verified: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2c. Prepare user_demographics data (will need user_id from step 3)
+      const userDemographicsData = {
+        religion: formData.agama || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // 2d. Prepare educator_details data (will need user_id from step 3)  
+      const educatorDetailsData = {
+        // ✅ REMOVED: tarif_per_jam, metode_pengajaran, jadwal_tersedia - dipindah ke t_315_03_01_tutor_availability_config
+        
+        // Professional Information - gunakan nama kolom yang benar
+        academic_status: formData.statusAkademik, // ✅ Fix: status_akademik → academic_status
+        university_s1_name: formData.namaUniversitas, // ✅ Fix: nama_universitas → university_s1_name
+        faculty: formData.fakultas,
+        major_s1: formData.jurusan, // ✅ Fix: major → major_s1
+        // gpa: formData.ipk, // ✅ REMOVED: gpa ada di user_profiles, bukan di sini
+        entry_year: formData.tahunMasuk ? parseInt(formData.tahunMasuk) : null, // ✅ Fix: gunakan entry_year
+        // graduation_year: formData.tahunLulus, // ✅ REMOVED: graduation_year ada di user_profiles
+        
+        // High School Information - gunakan kolom khusus
+        high_school: formData.namaSMA || null, // ✅ Add: high_school column
+        high_school_graduation_year: formData.tahunLulusSMA ? parseInt(formData.tahunLulusSMA) : null, // ✅ Add: high_school_graduation_year
+        
+        // Education History - Store as JSONB
+        education_history: [
+          // University/College Education
+          ...(formData.statusAkademik && ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(formData.statusAkademik) ? [{
+            level: formData.statusAkademik,
+            institution_name: formData.namaUniversitas,
+            faculty: formData.fakultas,
+            major: formData.jurusan,
+            accreditation: formData.akreditasiJurusan,
+            gpa: formData.ipk,
+            entry_year: formData.tahunMasuk ? parseInt(formData.tahunMasuk) : null,
+            graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,
+            status: formData.statusAkademik?.includes('lulusan') ? 'graduated' : 'ongoing'
+          }] : []),
+          // S1 Education for S2/S3 students
+          ...(formData.statusAkademik && ['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik) && formData.namaUniversitasS1 ? [{
+            level: 'university_s1',
+            institution_name: formData.namaUniversitasS1,
+            faculty: formData.fakultasS1,
+            major: formData.jurusanS1,
+            status: 'graduated'
+          }] : []),
+          // High School Education
+          ...(formData.statusAkademik && formData.statusAkademik !== 'lainnya' && formData.namaSMA ? [{
+            level: 'sma',
+            institution_name: formData.namaSMA,
+            major: formData.jurusanSMA === 'SMK' ? formData.jurusanSMKDetail : formData.jurusanSMA,
+            graduation_year: formData.tahunLulusSMA ? parseInt(formData.tahunLulusSMA) : null,
+            status: 'graduated'
+          }] : []),
+          // Alternative Learning Background
+          ...(formData.statusAkademik === 'lainnya' && formData.namaInstitusi ? [{
+            level: 'alternative',
+            institution_name: formData.namaInstitusi,
+            field_of_expertise: formData.bidangKeahlian,
+            learning_experience: formData.pengalamanBelajar,
+            status: 'completed'
+          }] : [])
+        ].filter(Boolean),
+        
+        // Teaching Experience - gunakan nama kolom yang benar
+        teaching_experience: formData.pengalamanMengajar, // ✅ Fix: pengalaman_mengajar → teaching_experience
+        other_experience: formData.pengalamanLainRelevan || null, // ✅ Add: other_experience field
+        other_skills: formData.keahlianLainnya || null, // ✅ Add: other_skills field
+        reason_for_teaching: formData.motivasi || null, // ✅ Add: reason_for_teaching dari legacy motivasi field
+        special_skills: formData.keahlianSpesialisasi, // ✅ Fix: keahlian_spesialisasi → special_skills
+        
+        // ✅ REMOVED: semua field JSONB dipindah ke tabel terpisah
+        // - achievements → masih di sini (sudah ada di database)
+        // - subjects_taught → dipindah ke t_315_06_01_tutor_program_mappings  
+        // - teaching_details → dipindah ke t_315_04_01_tutor_teaching_preferences
+        // - tech_capability → dipindah ke t_315_04_01_tutor_teaching_preferences
+        // - personality_profile → dipindah ke t_315_05_01_tutor_personality_traits
+        // - location & availability → dipindah ke t_315_03_01_tutor_availability_config
+        
+        // Achievements & Credentials (tetap di sini karena ada di database)
+        academic_achievements: formData.prestasiAkademik || null,
+        non_academic_achievements: formData.prestasiNonAkademik || null, 
+        certifications_training: formData.sertifikasiPelatihan || null,
+        
+        // Student acceptance info (tetap di sini) - convert string status to boolean
+        form_agreement_check: formData.statusMenerimaSiswa === 'aktif' || formData.statusMenerimaSiswa === 'terbatas',
+        registration_notes_to_admin: formData.catatanAvailability || null,
+        
+        // ✅ REMOVED: Document Verification status - dipindah ke tutor_management table
+        
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2e. Prepare tutor_availability_config data (NEW TABLE)
+      // Map Indonesian form values to English database values
+      const getAvailabilityStatus = (status: string) => {
+        switch (status) {
+          case 'aktif': return 'active';
+          case 'terbatas': return 'limited';
+          case 'tidak_aktif': return 'inactive';
+          default: return 'active'; // fallback
+        }
+      };
+
+      const availabilityConfigData = {
+        availability_status: getAvailabilityStatus(formData.statusMenerimaSiswa || 'aktif'),
+        max_new_students_per_week: formData.maksimalSiswaBaru || null,
+        max_total_students: formData.maksimalTotalSiswa || null,
+        target_student_ages: formData.usiaTargetSiswa || [],
+        availability_notes: formData.catatanAvailability || null,
+        available_schedule: formData.available_schedule || [],
+        teaching_methods: formData.teaching_methods || [],
+        hourly_rate: formData.hourly_rate || 0,
+        teaching_radius_km: formData.teaching_radius_km || null,
+        teaching_center_location: formData.alamatTitikLokasi || null,
+        teaching_center_lat: formData.titikLokasiLat || null,
+        teaching_center_lng: formData.titikLokasiLng || null,
+        location_notes: formData.location_notes || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2f. Prepare tutor_teaching_preferences data (NEW TABLE)
+      const teachingPreferencesData = {
+        teaching_styles: formData.teachingMethods || [],
+        student_level_preferences: formData.studentLevelPreferences || [],
+        special_needs_capability: formData.specialNeedsCapable || 'tidak',
+        group_class_willingness: formData.groupClassWilling || 'tidak',
+        online_teaching_capability: formData.onlineTeachingCapable || 'tidak_bisa',
+        tech_savviness_level: formData.techSavviness || 'low',
+        gmeet_experience_level: formData.gmeetExperience || 'belum_pernah',
+        attendance_update_capability: formData.presensiUpdateCapability || 'tidak_bisa',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2g. Prepare tutor_personality_traits data (NEW TABLE)
+      const personalityTraitsData = {
+        personality_type: formData.tutorPersonalityType || null,
+        communication_style: formData.communicationStyle || null,
+        teaching_patience_level: parseInt(formData.teachingPatienceLevel || '5'),
+        student_motivation_ability: parseInt(formData.studentMotivationAbility || '5'),
+        schedule_flexibility_level: parseInt(formData.scheduleFlexibilityLevel || '5'),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2h. Prepare tutor_management data (EXISTING TABLE)
+      const tutorManagementData = {
+        status_tutor: formData.status_tutor || 'registration',
+        approval_level: formData.approval_level || 'junior',
+        staff_notes: formData.staff_notes || null,
+        additional_screening: formData.additionalScreening || [],
+        
+        // ✅ Document Verification Status - kolom yang benar di tutor_management
+        identity_verification_status: formData.status_verifikasi_identitas || 'pending',
+        education_verification_status: formData.status_verifikasi_pendidikan || 'pending',
+        
+        // Initialize recruitment tracking
+        recruitment_stage_history: [{
+          stage: formData.status_tutor || 'registration',
+          timestamp: new Date().toISOString(),
+          changed_by: 'system', // Could be staff user ID in future
+          notes: 'Initial registration via staff form'
+        }],
+        last_status_change: new Date().toISOString(),
+        status_changed_by: null, // Will be staff user ID in future
+        
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // 2i. Get bank name from bank ID (REQUIRED FIELD!)
+      let bankName = null;
+      if (formData.namaBank) {
+        try {
+          console.log('🏦 Looking up bank name for ID:', formData.namaBank);
+          const bankResponse = await fetch(`/api/banks/indonesia`);
+          if (bankResponse.ok) {
+            const bankData = await bankResponse.json();
+            console.log('🏦 Banks API response:', bankData);
+            const selectedBank = bankData.data?.find((bank: any) => bank.value === formData.namaBank);
+            console.log('🏦 Found bank:', selectedBank);
+            bankName = selectedBank?.fullName || selectedBank?.label || null;
+            console.log('🏦 Using bank name:', bankName);
+          } else {
+            console.error('❌ Banks API failed:', bankResponse.status, bankResponse.statusText);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching bank name:', error);
         }
       }
 
-      console.log('Tutor data inserted successfully:', data);
+      // Fallback: jika bank name tidak ketemu, coba ambil dari form validation
+      if (!bankName && formData.namaBank) {
+        // Cek apakah namaBank sebenarnya sudah berisi nama bank (bukan UUID)
+        if (typeof formData.namaBank === 'string' && formData.namaBank.length < 50 && !formData.namaBank.includes('-')) {
+          bankName = formData.namaBank; // Kemungkinan ini sudah nama bank
+        } else {
+          bankName = 'Bank Indonesia'; // Generic fallback yang lebih baik dari 'Unknown Bank'
+        }
+      }
+
+      // 2i. Prepare banking data (EDUCATOR BANKING INFO TABLE) - only if bank selected
+      const bankingData = formData.namaBank ? {
+        bank_id: formData.namaBank, // UUID from bank dropdown
+        bank_name: bankName || 'Bank Indonesia', // ✅ REQUIRED FIELD - fallback untuk avoid NULL constraint
+        account_holder_name: formData.namaNasabah || '',
+        account_number: sanitizeAccountNumber(formData.nomorRekening || ''),
+        country_code: 'IDN', // Default to Indonesia
+        is_verified: false,
+        total_payouts: 0,
+        payout_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } : null;
+
+      // 2j. Prepare program mappings data (NEW TABLE)
+      const programMappingsData = (formData.selectedPrograms || []).map(programId => ({
+        program_id: programId,
+        proficiency_level: 'intermediate', // Default value
+        years_of_experience: 1, // Default value  
+        certification_status: 'none', // Default val
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      // 2k. Prepare document storage data (NEW TABLE)
+      const documentStorageData = [
+        // Profile Photo
+        ...(formData.fotoProfil ? [{
+          document_type: 'profile_photo',
+          original_filename: 'profile_photo',
+          stored_filename: 'profile_photo',
+          file_size: 0, // Will be updated after upload
+          file_url: null, // Will be updated after upload
+          mime_type: 'image/jpeg',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : []),
+        // Identity Document
+        ...(formData.dokumenIdentitas ? [{
+          document_type: 'identity_document',
+          original_filename: 'identity_document',
+          stored_filename: 'identity_document',
+          file_size: 0,
+          file_url: null,
+          mime_type: 'application/pdf',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : []),
+        // Education Document
+        ...(formData.dokumenPendidikan ? [{
+          document_type: 'education_document',
+          original_filename: 'education_document',
+          stored_filename: 'education_document',
+          file_size: 0,
+          file_url: null,
+          mime_type: 'application/pdf',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : []),
+        // Certificate Document
+        ...(formData.dokumenSertifikat ? [{
+          document_type: 'certificate_document',
+          original_filename: 'certificate_document',
+          stored_filename: 'certificate_document',
+          file_size: 0,
+          file_url: null,
+          mime_type: 'application/pdf',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : [])
+      ];
+
+      
+      // Step 3: Relational Database Insertion
+
+      const userResult = await supabase
+        ?.from('t_310_01_01_users_universal')
+        .insert([usersUniversalData])
+        .select('id')
+        .single();
+
+      if (userResult?.error) {
+
+        throw new Error(`Failed to create user: ${userResult.error.message}`);
+      }
+
+      const userId = userResult?.data?.id;
+      if (!userId) {
+        throw new Error('Failed to get user ID from users_universal insert');
+      }
+
+
+
+      // Step 3b: Insert to user_profiles
+
+      const profileResult = await supabase
+        ?.from('t_310_01_02_user_profiles')
+        .insert([{ ...userProfilesData, user_id: userId }])
+        .select('id')
+        .single();
+
+      if (profileResult?.error) {
+
+        throw new Error(`Failed to create user profile: ${profileResult.error.message}`);
+      }
+
+
+
+      // Step 3c: Insert to user_demographics (if religion is provided)
+      if (formData.agama) {
+
+        const demographicsResult = await supabase
+          ?.from('t_380_01_01_user_demographics')
+          .insert([{ ...userDemographicsData, user_id: userId }])
+          .select('id')
+          .single();
+
+        if (demographicsResult?.error) {
+
+          throw new Error(`Failed to create user demographics: ${demographicsResult.error.message}`);
+        }
+
+
+      }
+
+      // Step 3d: Insert domicile address
+
+      const domicileResult = await supabase
+        ?.from('t_310_01_03_user_addresses')
+        .insert([{ ...domicileAddressData, user_id: userId }])
+        .select('id')
+        .single();
+
+      if (domicileResult?.error) {
+
+        throw new Error(`Failed to create domicile address: ${domicileResult.error.message}`);
+      }
+
+
+
+      // Step 3e: Insert KTP address (if different from domicile)
+      if (ktpAddressData) {
+
+        const ktpResult = await supabase
+          ?.from('t_310_01_03_user_addresses')
+          .insert([{ ...ktpAddressData, user_id: userId }])
+          .select('id')
+          .single();
+
+        if (ktpResult?.error) {
+
+          throw new Error(`Failed to create KTP address: ${ktpResult.error.message}`);
+        }
+
+
+      }
+
+      // Step 3f: Insert to educator_details
+
+      const educatorResult = await supabase
+        ?.from('t_315_01_01_educator_details')
+        .insert([{ ...educatorDetailsData, user_id: userId }])
+        .select('id')
+        .single();
+
+      if (educatorResult?.error) {
+        console.error('Error inserting to educator_details:', educatorResult.error);
+        throw new Error(`Failed to create educator details: ${educatorResult.error.message}`);
+      }
+
+      console.log('✅ Educator details created with ID:', educatorResult?.data?.id);
+
+      // Step 3g: Insert to tutor_management (NEW TABLE)
+      console.log('Step 3g: Inserting to tutor_management...');
+      const managementResult = await supabase
+        ?.from('t_315_02_01_tutor_management')
+        .insert([{ ...tutorManagementData, user_id: userId }])
+        .select('id')
+        .single();
+
+      if (managementResult?.error) {
+        console.error('Error inserting to tutor_management:', managementResult.error);
+        throw new Error(`Failed to create tutor management record: ${managementResult.error.message}`);
+      }
+
+      console.log('✅ Tutor management created with ID:', managementResult?.data?.id);
+
+      // Step 3h: Insert educator banking information (if provided)
+      console.log('Step 3h: Inserting educator banking information...');
+      
+      // Use the educator ID from the previous educator_details insert
+      const educatorId = educatorResult?.data?.id;
+      if (!educatorId) {
+        throw new Error('Failed to get educator ID from educator_details');
+      }
+
+      console.log('✅ Using educator ID for banking:', educatorId);
+
+      // Insert banking info linked to educator - only if bank was selected
+      let bankingResult = null;
+      if (bankingData) {
+        bankingResult = await supabase
+          ?.from('t_460_02_04_educator_banking_info')
+          .insert([{ ...bankingData, educator_id: educatorId }])
+          .select('id')
+          .single();
+
+        if (bankingResult?.error) {
+          console.error('Error inserting educator banking info:', bankingResult.error);
+          throw new Error(`Failed to create educator banking information: ${bankingResult.error.message}`);
+        }
+
+        console.log('✅ Educator banking information created with ID:', bankingResult?.data?.id);
+      } else {
+        console.log('⏩ Skipping banking info - no bank selected');
+      }
+
+      // Step 3i: Insert to tutor_availability_config (NEW TABLE)
+      console.log('Step 3i: Inserting to tutor_availability_config...');
+      const availabilityResult = await supabase
+        ?.from('t_315_03_01_tutor_availability_config')
+        .insert([{ ...availabilityConfigData, educator_id: educatorId }])
+        .select('id')
+        .single();
+
+      if (availabilityResult?.error) {
+        console.error('Error inserting to tutor_availability_config:', availabilityResult.error);
+        throw new Error(`Failed to create availability config: ${availabilityResult.error.message}`);
+      }
+
+      console.log('✅ Tutor availability config created with ID:', availabilityResult?.data?.id);
+
+      // Step 3j: Insert to tutor_teaching_preferences (NEW TABLE)
+      console.log('Step 3j: Inserting to tutor_teaching_preferences...');
+      const preferencesResult = await supabase
+        ?.from('t_315_04_01_tutor_teaching_preferences')
+        .insert([{ ...teachingPreferencesData, educator_id: educatorId }])
+        .select('id')
+        .single();
+
+      if (preferencesResult?.error) {
+        console.error('Error inserting to tutor_teaching_preferences:', preferencesResult.error);
+        throw new Error(`Failed to create teaching preferences: ${preferencesResult.error.message}`);
+      }
+
+      console.log('✅ Tutor teaching preferences created with ID:', preferencesResult?.data?.id);
+
+      // Step 3k: Insert to tutor_personality_traits (NEW TABLE)
+      console.log('Step 3k: Inserting to tutor_personality_traits...');
+      const personalityResult = await supabase
+        ?.from('t_315_05_01_tutor_personality_traits')
+        .insert([{ ...personalityTraitsData, educator_id: educatorId }])
+        .select('id')
+        .single();
+
+      if (personalityResult?.error) {
+        console.error('Error inserting to tutor_personality_traits:', personalityResult.error);
+        throw new Error(`Failed to create personality traits: ${personalityResult.error.message}`);
+      }
+
+      console.log('✅ Tutor personality traits created with ID:', personalityResult?.data?.id);
+
+      // Step 3l: Insert to tutor_program_mappings (NEW TABLE) - multiple records
+      if (programMappingsData.length > 0) {
+        console.log('Step 3l: Inserting to tutor_program_mappings...');
+        const mappingsResult = await supabase
+          ?.from('t_315_06_01_tutor_program_mappings')
+          .insert(programMappingsData.map(mapping => ({ ...mapping, educator_id: educatorId })));
+
+        if (mappingsResult?.error) {
+          console.error('Error inserting to tutor_program_mappings:', mappingsResult.error);
+          throw new Error(`Failed to create program mappings: ${mappingsResult.error.message}`);
+        }
+
+        console.log('✅ Tutor program mappings created:', programMappingsData.length, 'records');
+      }
+
+      // Step 3m: Insert to document_storage (NEW TABLE) - multiple records
+      if (documentStorageData.length > 0) {
+        console.log('Step 3m: Inserting to document_storage...');
+        const documentsResult = await supabase
+          ?.from('t_460_03_01_document_storage')
+          .insert(documentStorageData.map(doc => ({ ...doc, user_id: userId })));
+
+        if (documentsResult?.error) {
+          console.error('Error inserting to document_storage:', documentsResult.error);
+          throw new Error(`Failed to create document storage records: ${documentsResult.error.message}`);
+        }
+
+        console.log('✅ Document storage records created:', documentStorageData.length, 'records');
+      }
+
+      console.log('🎉 ALL 8 TABLES inserted successfully!');
+
+      // Return the main user data for reference
+      const insertedData = {
+        user_id: userId,
+        educator_id: educatorId,
+        trn: trn,
+        email: formData.email,
+        name: formData.namaLengkap,
+        religion: formData.agama
+      };
 
       // Step 4: Handle file uploads (skip if no files)
       const uploadPromises = [];
       
       if (formData.fotoProfil && typeof formData.fotoProfil !== 'string') {
         const fileExt = formData.fotoProfil.name.split('.').pop();
-        const fileName = `${submissionData.trn}/foto-profil.${fileExt}`;
+        const fileName = `${trn}/foto-profil.${fileExt}`;
         
         uploadPromises.push(
           supabase?.storage
@@ -322,7 +916,7 @@ export default function AddTutorPage() {
       
       if (formData.dokumenIdentitas && typeof formData.dokumenIdentitas !== 'string') {
         const fileExt = formData.dokumenIdentitas.name.split('.').pop();
-        const fileName = `${submissionData.trn}/identitas.${fileExt}`;
+        const fileName = `${trn}/identitas.${fileExt}`;
         
         uploadPromises.push(
           supabase?.storage
@@ -336,7 +930,7 @@ export default function AddTutorPage() {
       
       if (formData.dokumenPendidikan && typeof formData.dokumenPendidikan !== 'string') {
         const fileExt = formData.dokumenPendidikan.name.split('.').pop();
-        const fileName = `${submissionData.trn}/pendidikan.${fileExt}`;
+        const fileName = `${trn}/pendidikan.${fileExt}`;
         
         uploadPromises.push(
           supabase?.storage
@@ -350,7 +944,7 @@ export default function AddTutorPage() {
       
       if (formData.dokumenSertifikat && typeof formData.dokumenSertifikat !== 'string') {
         const fileExt = formData.dokumenSertifikat.name.split('.').pop();
-        const fileName = `${submissionData.trn}/sertifikat.${fileExt}`;
+        const fileName = `${trn}/sertifikat.${fileExt}`;
         
         uploadPromises.push(
           supabase?.storage
@@ -364,44 +958,23 @@ export default function AddTutorPage() {
 
       // Wait for all file uploads to complete
       if (uploadPromises.length > 0) {
-        console.log('Uploading documents...');
-        try {
+                try {
           const uploadResults = await Promise.all(uploadPromises);
-          console.log('Document upload results:', uploadResults);
         } catch (uploadError) {
           console.warn('File upload failed but data was saved:', uploadError);
         }
       }
 
-      // Step 5: Generate password if needed
-      let generatedPassword = '';
-      if (formData.generate_password) {
-        generatedPassword = Math.random().toString(36).slice(-8);
-        console.log('Generated password for tutor:', generatedPassword);
-        
-        // TODO: Hash password and save to auth table
-        // TODO: Send welcome email with credentials
-      }
 
-      // Step 6: Send notifications if enabled
-      if (formData.send_welcome_email) {
-        console.log('TODO: Send welcome email to:', formData.email);
-        // TODO: Implement email sending
-      }
-      
-      if (formData.send_whatsapp_notification) {
-        console.log('TODO: Send WhatsApp notification to:', formData.noHp1);
-        // TODO: Implement WhatsApp notification
-      }
 
       // Show success message
-      alert(`✅ Data tutor berhasil disimpan!\nTRN: ${submissionData.trn}`);
+      alert(`✅ Data tutor berhasil disimpan!\nTRN: ${trn}\nUser ID: ${userId}`);
       
       // Navigate back to list page
       router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
       
     } catch (error) {
-      console.error('Error submitting form:', error);
+
       
       // Show user-friendly error message
       let errorMessage = '❌ Gagal menyimpan data.\n\n';
