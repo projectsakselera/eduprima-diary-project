@@ -17,7 +17,7 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
   swcMinify: true,
-  disable: process.env.NODE_ENV === "development",
+  disable: true, // Disable PWA completely to fix InvariantError
   workboxOptions: {
     disableDevLogs: true,
   },

@@ -55,10 +55,23 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           // Try Supabase connection first
           const supabase = createAdminSupabaseClient();
           
-          // Get user from database
+          // Get user from database with role information via JOIN
           const { data: user, error: userError } = await supabase
             .from('t_310_01_01_users_universal')
-            .select('*')
+            .select(`
+              id,
+              email,
+              user_code,
+              user_status,
+              password_hash,
+              account_type,
+              primary_role_id,
+              t_340_01_01_roles!primary_role_id (
+                role_code,
+                role_name,
+                role_description
+              )
+            `)
             .eq('email', credentials.email)
             .eq('user_status', 'active')
             .single();
@@ -68,13 +81,28 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
             
             if (isPasswordValid) {
+              // Map role_code to authorization system
+              const roleCode = user.t_340_01_01_roles?.role_code;
+              let mappedRole = roleCode;
+              
+              // Map roles for backward compatibility with existing auth system
+              if (roleCode === 'admin') {
+                mappedRole = 'super_admin'; // Admin gets super admin access
+              } else if (roleCode === 'database_tutor_manager') {
+                mappedRole = 'database_tutor_manager'; // Keep same
+              } else if (roleCode === 'tutor_manager') {
+                mappedRole = 'database_tutor_manager'; // Map to database tutor manager
+              }
+              
               return {
                 id: user.id,
                 email: user.email,
-                name: user.name || user.email,
+                name: user.email, // Use email as name since name column doesn't exist
                 userCode: user.user_code,
-                role: user.role,
-                primaryRole: user.primary_role,
+                role: mappedRole,
+                roleCode: roleCode, // Original role code
+                roleName: user.t_340_01_01_roles?.role_name,
+                primaryRole: roleCode, // Use role_code as primary_role
                 accountType: user.account_type,
               } as any;
             }
@@ -87,23 +115,27 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         // Fallback development/demo users if Supabase is not available
         const validUsers = [
           {
-            email: 'admin@eduprima.com',
-            password: 'admin123',
+            email: 'amhar.idn@gmail.com',
+            password: 'password123',
             id: '1',
-            name: 'Admin EduPrima',
+            name: 'Super Admin',
             userCode: 'ADM001',
-            role: 'admin',
-            primaryRole: 'super_admin',
-            accountType: 'staff'
+            role: 'super_admin',
+            roleCode: 'admin',
+            roleName: 'Administrator',
+            primaryRole: 'admin',
+            accountType: 'admin'
           },
           {
-            email: 'staff@eduprima.com', 
-            password: 'staff123',
+            email: 'em@eduprima.id', 
+            password: 'password123',
             id: '2',
-            name: 'Staff EduPrima',
-            userCode: 'STF001',
-            role: 'staff',
-            primaryRole: 'staff',
+            name: 'Database Tutor Manager',
+            userCode: 'DTM001',
+            role: 'database_tutor_manager',
+            roleCode: 'database_tutor_manager',
+            roleName: 'Database Tutor',
+            primaryRole: 'database_tutor_manager',
             accountType: 'staff'
           },
           {
@@ -112,8 +144,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             id: '3', 
             name: 'Demo User',
             userCode: 'DMO001',
-            role: 'user',
-            primaryRole: 'user',
+            role: 'database_tutor_manager',
+            roleCode: 'tutor',
+            roleName: 'Tutor',
+            primaryRole: 'tutor',
             accountType: 'demo'
           }
         ];
@@ -130,6 +164,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             name: devUser.name,
             userCode: devUser.userCode,
             role: devUser.role,
+            roleCode: devUser.roleCode,
+            roleName: devUser.roleName,
             primaryRole: devUser.primaryRole,
             accountType: devUser.accountType,
           } as any;

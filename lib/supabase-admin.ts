@@ -5,9 +5,12 @@ export const createAdminSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_service_role_key'
   
-  // For development, provide placeholder values if not configured
+  // Check if Supabase credentials are configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('⚠️  Supabase credentials not configured, using fallback authentication')
+    console.error('❌ SUPABASE CREDENTIALS REQUIRED! Please configure:');
+    console.error('   - NEXT_PUBLIC_SUPABASE_URL');
+    console.error('   - SUPABASE_SERVICE_ROLE_KEY');
+    console.warn('⚠️  All authentication will FAIL until Supabase is properly configured')
     // Return a mock client that will fail gracefully with complete method chain
     return {
       from: () => ({

@@ -16,7 +16,7 @@ export interface SupabaseUser {
   user_code: string;
   email: string;
   phone?: string;
-  primary_role: string;
+  primary_role_id: string;
   user_status: string;
   created_at: string;
 }
@@ -116,11 +116,25 @@ export class SupabaseTutorService {
     try {
       console.log('🔍 Fetching tutors from Supabase...');
 
-      // First, let's get users with primary_role = 'educator' or similar
+      // First, get role UUIDs for educators/tutors
+      const { data: roles, error: rolesError } = await supabase
+        .from('t_340_01_01_roles')
+        .select('id, name')
+        .in('name', ['educator', 'tutor']);
+
+      if (rolesError || !roles || roles.length === 0) {
+        console.error('❌ Error fetching roles:', rolesError);
+        return { data: null, error: 'No educator/tutor roles found', count: 0 };
+      }
+
+      const roleIds = roles.map(role => role.id);
+      console.log('🔍 Found role IDs:', roleIds);
+
+      // Now get users with those role IDs
       const { data: users, error: usersError } = await supabase
         .from('t_310_01_01_users_universal')
         .select('*')
-        .in('primary_role', ['educator', 'tutor'])
+        .in('primary_role_id', roleIds)
         .eq('user_status', 'active');
 
       if (usersError) {
