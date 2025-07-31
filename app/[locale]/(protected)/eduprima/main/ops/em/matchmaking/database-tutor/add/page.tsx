@@ -396,12 +396,10 @@ export default function AddTutorPage() {
         bio: formData.deskripsiDiri || null, // ✅ bio field exists
         social_media_1: formData.socialMedia1 || null, // ✅ Fix: gunakan nama kolom yang benar
         social_media_2: formData.socialMedia2 || null, // ✅ Fix: gunakan nama kolom yang benar
-        whatsapp_number: formData.whatsappNumber || null, // ✅ Add: whatsapp_number field
-        languages_mastered: formData.bahasaYangDikuasai || [], // ✅ Add: languages_mastered JSONB
+        whatsapp_number: formatPhoneNumber(formData.noHp1 || ''), // ✅ Use main WhatsApp number from identity section
+        languages_mastered: ['id'], // ✅ Default to Indonesian only since we removed language selection
         motivation_as_tutor: formData.motivasiMenjadiTutor || null, // ✅ Add: motivation_as_tutor field
-        preferred_language: Array.isArray(formData.bahasaYangDikuasai) && formData.bahasaYangDikuasai.length > 0 
-          ? formData.bahasaYangDikuasai[0] 
-          : 'id',
+        preferred_language: 'id', // ✅ Default to Indonesian
         
         // Education fields  
         education_level: formData.statusAkademik || null,

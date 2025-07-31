@@ -53,7 +53,7 @@ interface TutorSpreadsheetData {
   motivasiMenjadiTutor: string;
   socialMedia1: string;
   socialMedia2: string;
-  bahasaYangDikuasai: string[];
+
   
   // Address - Domisili
   provinsiDomisili: string;
@@ -133,12 +133,10 @@ interface TutorSpreadsheetData {
   scheduleFlexibilityLevel: string;
   
   // Emergency Contact
-  whatsappNumber: string;
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
-  preferredCommunicationTime: string;
-  communicationLanguagePreference: string[];
+
   
   // Documents
   dokumenIdentitas: string | null;
@@ -198,7 +196,7 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'motivasiMenjadiTutor', label: 'Motivasi', width: 300, type: 'text', category: 'Profile' },
   { key: 'socialMedia1', label: 'Social Media 1', width: 200, type: 'text', category: 'Profile' },
   { key: 'socialMedia2', label: 'Social Media 2', width: 200, type: 'text', category: 'Profile' },
-  { key: 'bahasaYangDikuasai', label: 'Bahasa Dikuasai', width: 180, type: 'array', category: 'Profile' },
+  
   
   // Address - Domisili
   { key: 'provinsiDomisili', label: 'Provinsi Domisili', width: 150, type: 'text', category: 'Address' },
@@ -278,12 +276,11 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'scheduleFlexibilityLevel', label: 'Fleksibilitas Jadwal', width: 170, type: 'number', category: 'Personality' },
   
   // Emergency Contact
-  { key: 'whatsappNumber', label: 'WhatsApp', width: 140, type: 'phone', category: 'Contact' },
+  
   { key: 'emergencyContactName', label: 'Kontak Darurat Nama', width: 180, type: 'text', category: 'Contact' },
   { key: 'emergencyContactRelationship', label: 'Hubungan Kontak Darurat', width: 200, type: 'select', category: 'Contact' },
   { key: 'emergencyContactPhone', label: 'No HP Kontak Darurat', width: 180, type: 'phone', category: 'Contact' },
-  { key: 'preferredCommunicationTime', label: 'Waktu Komunikasi', width: 160, type: 'select', category: 'Contact' },
-  { key: 'communicationLanguagePreference', label: 'Bahasa Komunikasi', width: 180, type: 'array', category: 'Contact' },
+
   
   // Documents
   { key: 'dokumenIdentitas', label: 'Dokumen Identitas', width: 150, type: 'file', category: 'Documents' },
