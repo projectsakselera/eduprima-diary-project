@@ -134,7 +134,7 @@ export interface TutorFormData {
   deskripsiDiri?: string; // Deskripsi Diri/Bio Tutor
   socialMedia1?: string; // Link Media Sosial 1 (Instagram/LinkedIn)
   socialMedia2?: string; // Link Media Sosial 2 (YouTube/TikTok)
-  bahasaYangDikuasai?: string[]; // Languages mastered (checkbox multiple)
+
   
   // Address Information - Domisili (New Structure)
   provinsiDomisili: string; // UUID from dropdown
@@ -166,8 +166,8 @@ export interface TutorFormData {
   namaUniversitas?: string;
   fakultas?: string;
   jurusan?: string;
-  akreditasiJurusan?: string;
-  ipk?: number;
+
+  ipk?: string;
   tahunMasuk?: string;
   tahunLulus?: string;
   transkripNilai?: File | string | null;
@@ -223,19 +223,16 @@ export interface TutorFormData {
   presensiUpdateCapability?: string;
 
   // Personality & Character
-  tutorPersonalityType?: string;
-  communicationStyle?: string;
+  tutorPersonalityType?: string[];
+  communicationStyle?: string[];
   teachingPatienceLevel?: string;
   studentMotivationAbility?: string;
   scheduleFlexibilityLevel?: string;
 
   // Emergency Contact & Communication
-  whatsappNumber?: string;
   emergencyContactName?: string;
   emergencyContactRelationship?: string;
   emergencyContactPhone?: string;
-  preferredCommunicationTime?: string;
-  communicationLanguagePreference?: string[];
   
   // Profile Information (legacy - kept for compatibility)
   motivasi: string;
@@ -1352,15 +1349,7 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:link',
           size: 'lg'
         },
-        {
-          name: 'bahasaYangDikuasai',
-          label: 'Bahasa yang Dikuasai',
-          type: 'checkbox',
-          options: dynamicOptions.bahasaYangDikuasai,
-          multiple: true,
-          helperText: 'Centang bahasa yang Anda kuasai untuk mengajar.',
-          icon: 'ph:translate'
-        },
+
 
         // === ALAMAT DOMISILI SAAT INI ===
         {
@@ -1428,7 +1417,7 @@ export const tutorFormConfig: FormConfig = {
         },
         {
           name: 'kodePosDomisili',
-          label: 'Kode Pos (Opsional)',
+          label: 'Kode Pos',
           type: 'text',
           placeholder: '12345',
           helperText: 'Kode pos wilayah tempat tinggal.',
@@ -1511,7 +1500,7 @@ export const tutorFormConfig: FormConfig = {
         },
         {
           name: 'kodePosKTP',
-          label: 'Kode Pos KTP/KK (Opsional)',
+          label: 'Kode Pos KTP/KK',
           type: 'text',
           placeholder: '12345',
           helperText: 'Kode pos wilayah sesuai KTP/KK.',
@@ -1672,31 +1661,13 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:books',
           size: 'lg'
         },
-        {
-          name: 'akreditasiJurusan',
-          label: 'Akreditasi Jurusan (Saat Lulus/Saat Ini)',
-          type: 'select',
-          placeholder: 'Pilih akreditasi jurusan...',
-          options: [
-            { value: 'A', label: 'Unggul / A' },
-            { value: 'B', label: 'Baik Sekali / B' },
-            { value: 'C', label: 'Baik / C' },
-            { value: 'belum', label: 'Belum Terakreditasi' }
-          ],
-          helperText: 'Pilih akreditasi jurusan saat ini atau saat lulus.',
-          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
-          icon: 'ph:star',
-          size: 'lg'
-        },
+
         {
           name: 'ipk',
           label: 'IPK Terakhir',
-          type: 'number',
+          type: 'text',
           required: true,
-          placeholder: '3.75',
-          min: 0.0,
-          max: 4.0,
-          step: 0.01,
+          placeholder: '3.75 atau 3,75',
           helperText: 'Gunakan format desimal dengan titik, contoh: 3.75. Hanya isi dengan angka.',
           conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
           icon: 'ph:trophy',
@@ -1900,9 +1871,10 @@ export const tutorFormConfig: FormConfig = {
         {
           name: 'keahlianLainnya',
           label: 'Keahlian Lainnya (jika ada)',
-          type: 'text',
-          placeholder: 'Public Speaking, Penulisan Kreatif, Desain Grafis',
-          helperText: 'Gunakan koma untuk memisahkan keahlian lain, contoh: Public Speaking, Penulisan Kreatif.',
+          type: 'textarea',
+          rows: 5,
+          placeholder: 'Contoh:\n• Public Speaking - Pengalaman sebagai MC acara kampus dan seminar\n• Penulisan Kreatif - Menulis artikel blog dan cerpen sejak 2020\n• Desain Grafis - Mahir Adobe Photoshop dan Canva untuk materi pembelajaran\n• Video Editing - Bisa membuat video pembelajaran dengan software editing dasar',
+          helperText: 'Tuliskan keahlian lain yang Anda miliki yang bisa mendukung proses mengajar. Jelaskan singkat pengalaman atau tingkat kemahiran Anda.',
           icon: 'ph:plus-circle',
           size: 'lg'
         },
@@ -2345,9 +2317,9 @@ export const tutorFormConfig: FormConfig = {
         {
           name: 'tutorPersonalityType',
           label: 'Tipe Kepribadian Tutor',
-          type: 'select',
+          type: 'checkbox',
           required: true,
-          placeholder: 'Pilih tipe kepribadian...',
+          multiple: true,
           options: [
             { value: 'sabar_lembut', label: '🤗 Sabar & Lembut - Pendekatan halus, tidak terburu-buru' },
             { value: 'energik_motivator', label: '⚡ Energik & Motivator - Semangat tinggi, inspiring' },
@@ -2358,16 +2330,16 @@ export const tutorFormConfig: FormConfig = {
             { value: 'adaptif_fleksibel', label: '🔄 Adaptif & Fleksibel - Menyesuaikan dengan siswa' },
             { value: 'caring_empathetic', label: '💝 Caring & Empathetic - Perhatian, memahami perasaan' }
           ],
-          helperText: 'Pilih tipe kepribadian yang paling menggambarkan diri Anda sebagai tutor.',
+          helperText: 'Pilih tipe kepribadian yang menggambarkan diri Anda sebagai tutor (bisa pilih lebih dari satu).',
           icon: 'ph:user-circle',
           size: 'lg'
         },
         {
           name: 'communicationStyle',
           label: 'Gaya Komunikasi',
-          type: 'select',
+          type: 'checkbox',
           required: true,
-          placeholder: 'Pilih gaya komunikasi...',
+          multiple: true,
           options: [
             { value: 'formal_sopan', label: '🎩 Formal & Sopan - Bahasa baku, hormat' },
             { value: 'kasual_santai', label: '😎 Kasual & Santai - Bahasa sehari-hari' },
@@ -2376,7 +2348,7 @@ export const tutorFormConfig: FormConfig = {
             { value: 'interaktif_tanya_jawab', label: '💬 Interaktif & Tanya Jawab - Dialog aktif' },
             { value: 'storytelling', label: '📚 Storytelling - Suka bercerita, analogi' }
           ],
-          helperText: 'Gaya komunikasi yang biasa digunakan saat mengajar.',
+          helperText: 'Gaya komunikasi yang biasa digunakan saat mengajar (bisa pilih lebih dari satu).',
           icon: 'ph:chat-circle',
           size: 'lg'
         },
@@ -2387,14 +2359,18 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Pilih level kesabaran...',
           options: [
-            { value: '5', label: '5 - Cukup Sabar' },
-            { value: '6', label: '6 - Sabar' },
-            { value: '7', label: '7 - Sabar Sekali' },
-            { value: '8', label: '8 - Sangat Sabar' },
-            { value: '9', label: '9 - Extremely Sabar' },
-            { value: '10', label: '10 - Saint-Level Patience 😇' }
+            { value: '1', label: '1 - Cepat, Efisien & Dinamis - Membantu siswa berpikir cepat' },
+            { value: '2', label: '2 - Tegas & Efektif - Memberikan dorongan motivasi yang kuat' },
+            { value: '3', label: '3 - Aktif & Responsif - Membuat siswa tetap fokus dan engaged' },
+            { value: '4', label: '4 - Antusias & Energik - Mendorong semangat belajar siswa' },
+            { value: '5', label: '5 - Seimbang & Adaptif - Menyesuaikan dengan kebutuhan siswa' },
+            { value: '6', label: '6 - Sabar & Supportive - Memberikan dukungan yang konsisten' },
+            { value: '7', label: '7 - Sangat Sabar & Teliti - Memastikan pemahaman mendalam' },
+            { value: '8', label: '8 - Extra Sabar & Caring - Perhatian detail pada setiap siswa' },
+            { value: '9', label: '9 - Extremely Patient & Empathetic - Memahami keunikan setiap siswa' },
+            { value: '10', label: '10 - Master of Patience 😇 - Mampu mengajar dengan ketenangan sempurna' }
           ],
-          helperText: 'Seberapa sabar Anda menghadapi siswa yang lambat memahami? (Scale 1-10)',
+          helperText: 'Bagaimana gaya mengajar Anda? Dari yang energik-dinamis (1) hingga yang sangat sabar-tenang (10). Semua memiliki nilai positif!',
           icon: 'ph:clock-clockwise',
           size: 'lg'
         },
@@ -2405,14 +2381,18 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Pilih kemampuan motivasi...',
           options: [
-            { value: '5', label: '5 - Cukup Mampu Memotivasi' },
-            { value: '6', label: '6 - Mampu Memotivasi' },
-            { value: '7', label: '7 - Baik Memotivasi' },
-            { value: '8', label: '8 - Sangat Baik Memotivasi' },
-            { value: '9', label: '9 - Expert Motivator' },
-            { value: '10', label: '10 - Inspirational Teacher 🔥' }
+            { value: '1', label: '1 - Pendekatan Praktis - Fokus pada hasil nyata dan aplikasi langsung' },
+            { value: '2', label: '2 - Motivasi Teknis - Menjelaskan manfaat konkret dari materi' },
+            { value: '3', label: '3 - Encourager - Memberikan dorongan positif secara konsisten' },
+            { value: '4', label: '4 - Supportive Coach - Membimbing dengan dukungan yang solid' },
+            { value: '5', label: '5 - Active Motivator - Aktif membangun semangat belajar siswa' },
+            { value: '6', label: '6 - Inspiring Teacher - Mampu menginspirasi dengan contoh positif' },
+            { value: '7', label: '7 - Energetic Motivator - Membawa energi positif ke dalam pembelajaran' },
+            { value: '8', label: '8 - Passion Builder - Membantu siswa menemukan passion mereka' },
+            { value: '9', label: '9 - Life Changer - Mampu mengubah mindset siswa secara fundamental' },
+            { value: '10', label: '10 - Inspirational Leader 🔥 - Guru yang mengubah hidup siswa' }
           ],
-          helperText: 'Seberapa baik Anda memotivasi siswa yang malas atau putus asa? (Scale 1-10)',
+          helperText: 'Seberapa baik Anda memotivasi siswa yang malas atau putus asa? Semua level memiliki value unik!',
           icon: 'ph:trending-up',
           size: 'lg'
         },
@@ -2446,16 +2426,7 @@ export const tutorFormConfig: FormConfig = {
           className: 'section-divider',
           icon: 'ph:phone-call'
         },
-        {
-          name: 'whatsappNumber',
-          label: 'Nomor WhatsApp Utama',
-          type: 'tel',
-          required: true,
-          placeholder: '+62 812-3456-7890',
-          helperText: 'Nomor WhatsApp yang aktif untuk koordinasi dengan EM dan siswa.',
-          icon: 'ph:whatsapp-logo',
-          size: 'lg'
-        },
+
         {
           name: 'emergencyContactName',
           label: 'Nama Kontak Darurat',
@@ -2494,38 +2465,8 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:phone',
           size: 'lg'
         },
-        {
-          name: 'preferredCommunicationTime',
-          label: 'Waktu Komunikasi yang Disukai',
-          type: 'select',
-          placeholder: 'Pilih waktu komunikasi...',
-          options: [
-            { value: 'pagi', label: '🌅 Pagi (06:00-10:00)' },
-            { value: 'siang', label: '☀️ Siang (10:00-15:00)' },
-            { value: 'sore', label: '🌇 Sore (15:00-18:00)' },
-            { value: 'malam', label: '🌙 Malam (18:00-22:00)' },
-            { value: 'kapan_saja', label: '⏰ Kapan Saja' }
-          ],
-          helperText: 'Waktu yang disukai untuk dihubungi EM atau koordinasi.',
-          icon: 'ph:clock',
-          size: 'lg'
-        },
-        {
-          name: 'communicationLanguagePreference',
-          label: 'Bahasa Komunikasi yang Disukai',
-          type: 'checkbox',
-          options: [
-            { value: 'indonesia', label: '🇮🇩 Bahasa Indonesia' },
-            { value: 'jawa', label: '🏛️ Bahasa Jawa' },
-            { value: 'sunda', label: '🏔️ Bahasa Sunda' },
-            { value: 'inggris', label: '🇺🇸 Bahasa Inggris' },
-            { value: 'arab', label: '🕌 Bahasa Arab' },
-            { value: 'mandarin', label: '🇨🇳 Bahasa Mandarin' }
-          ],
-          multiple: true,
-          helperText: 'Bahasa yang nyaman digunakan untuk komunikasi.',
-          icon: 'ph:translate'
-        }
+
+
       ]
     },
     
@@ -2636,7 +2577,6 @@ export const defaultFormData: Partial<TutorFormData> = {
   deskripsiDiri: undefined,
   socialMedia1: undefined,
   socialMedia2: undefined,
-  bahasaYangDikuasai: [],
   // Address Information - Domisili (New Structure)
   provinsiDomisili: '',
   kotaKabupatenDomisili: '',
@@ -2664,8 +2604,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   namaUniversitas: '',
   fakultas: '',
   jurusan: '',
-  akreditasiJurusan: '',
-  ipk: undefined,
+  ipk: '',
   tahunMasuk: '',
   tahunLulus: '',
   transkripNilai: null,
@@ -2720,19 +2659,16 @@ export const defaultFormData: Partial<TutorFormData> = {
   presensiUpdateCapability: '',
 
   // Personality & Character
-  tutorPersonalityType: '',
-  communicationStyle: '',
+  tutorPersonalityType: [],
+  communicationStyle: [],
   teachingPatienceLevel: '',
   studentMotivationAbility: '',
   scheduleFlexibilityLevel: '',
 
   // Emergency Contact & Communication
-  whatsappNumber: '',
   emergencyContactName: '',
   emergencyContactRelationship: '',
   emergencyContactPhone: '',
-  preferredCommunicationTime: '',
-  communicationLanguagePreference: [],
   
   // Subject Information - Mata Pelajaran per Kategori
   mataPelajaran_SD_Kelas_1_6_: [],
