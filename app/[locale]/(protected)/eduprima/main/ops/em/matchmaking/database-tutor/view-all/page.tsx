@@ -82,8 +82,8 @@ interface TutorSpreadsheetData {
   namaUniversitas: string;
   fakultas: string;
   jurusan: string;
-  akreditasiJurusan: string;
-  ipk: number;
+
+  ipk: string;
   tahunMasuk: string;
   tahunLulus: string;
   namaSMA: string;
@@ -126,8 +126,8 @@ interface TutorSpreadsheetData {
   presensiUpdateCapability: string;
   
   // Personality
-  tutorPersonalityType: string;
-  communicationStyle: string;
+  tutorPersonalityType: string[];
+  communicationStyle: string[];
   teachingPatienceLevel: string;
   studentMotivationAbility: string;
   scheduleFlexibilityLevel: string;
@@ -225,8 +225,8 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'namaUniversitas', label: 'Universitas', width: 200, type: 'text', category: 'Education' },
   { key: 'fakultas', label: 'Fakultas', width: 150, type: 'text', category: 'Education' },
   { key: 'jurusan', label: 'Jurusan', width: 150, type: 'text', category: 'Education' },
-  { key: 'akreditasiJurusan', label: 'Akreditasi', width: 120, type: 'select', category: 'Education' },
-  { key: 'ipk', label: 'IPK', width: 80, type: 'number', category: 'Education' },
+
+  { key: 'ipk', label: 'IPK', width: 80, type: 'text', category: 'Education' },
   { key: 'tahunMasuk', label: 'Tahun Masuk', width: 120, type: 'text', category: 'Education' },
   { key: 'tahunLulus', label: 'Tahun Lulus', width: 120, type: 'text', category: 'Education' },
   { key: 'namaSMA', label: 'Nama SMA', width: 200, type: 'text', category: 'Education' },
@@ -269,11 +269,11 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'presensiUpdateCapability', label: 'Update Presensi', width: 150, type: 'select', category: 'Teaching' },
   
   // Personality
-  { key: 'tutorPersonalityType', label: 'Tipe Kepribadian', width: 180, type: 'select', category: 'Personality' },
-  { key: 'communicationStyle', label: 'Gaya Komunikasi', width: 150, type: 'select', category: 'Personality' },
-  { key: 'teachingPatienceLevel', label: 'Level Kesabaran', width: 140, type: 'number', category: 'Personality' },
-  { key: 'studentMotivationAbility', label: 'Kemampuan Motivasi', width: 170, type: 'number', category: 'Personality' },
-  { key: 'scheduleFlexibilityLevel', label: 'Fleksibilitas Jadwal', width: 170, type: 'number', category: 'Personality' },
+  { key: 'tutorPersonalityType', label: 'Tipe Kepribadian', width: 180, type: 'array', category: 'Personality' },
+  { key: 'communicationStyle', label: 'Gaya Komunikasi', width: 150, type: 'array', category: 'Personality' },
+  { key: 'teachingPatienceLevel', label: 'Level Kesabaran', width: 140, type: 'text', category: 'Personality' },
+  { key: 'studentMotivationAbility', label: 'Kemampuan Motivasi', width: 170, type: 'text', category: 'Personality' },
+  { key: 'scheduleFlexibilityLevel', label: 'Fleksibilitas Jadwal', width: 170, type: 'text', category: 'Personality' },
   
   // Emergency Contact
   

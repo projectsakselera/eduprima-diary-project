@@ -478,7 +478,7 @@ export default function AddTutorPage() {
             institution_name: formData.namaUniversitas,
             faculty: formData.fakultas,
             major: formData.jurusan,
-            accreditation: formData.akreditasiJurusan,
+            accreditation: null, // Removed akreditasiJurusan field
             gpa: formData.ipk,
             entry_year: formData.tahunMasuk ? parseInt(formData.tahunMasuk) : null,
             graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,

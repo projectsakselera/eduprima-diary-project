@@ -19,6 +19,9 @@ declare module "next-auth" {
     primaryRole?: string
     accountType?: string
     userCode?: string
+    emailVerified?: Date | null
+    name?: string | null
+    image?: string | null
   }
 
   interface Session {
@@ -156,7 +159,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       // Pass user data from JWT to session
       if (token.user) {
-        session.user = token.user
+        session.user = {
+          ...session.user,
+          ...token.user,
+          emailVerified: session.user.emailVerified || null
+        }
       }
       return session
     },

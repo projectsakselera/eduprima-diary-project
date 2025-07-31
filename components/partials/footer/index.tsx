@@ -42,8 +42,8 @@ const EduPrimaFooter = async () => {
                     >
                         <div className="h-[50px] w-[50px] rounded-full relative left-[0px] top-[0px] custom-dropshadow">
                             <Image
-                                src={session?.user?.image || "/images/avatar/av-1.jpg"}
-                                alt={session?.user?.name?.charAt(0) || "U"}
+                                src={(session?.user as any)?.image || "/images/avatar/av-1.jpg"}
+                                alt={(session?.user as any)?.name?.charAt(0) || session?.user?.email?.charAt(0) || "U"}
                                 width={50}
                                 height={50}
                                 className="w-full h-full rounded-full border-2"
