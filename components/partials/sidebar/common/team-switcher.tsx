@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useSession } from "next-auth/react";
+import { useCustomSession } from "@/hooks/use-custom-session";
 import { ChevronsUpDown, Check } from 'lucide-react';
 
 import { cn } from "@/lib/utils"
@@ -65,7 +65,9 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
     const [config] = useConfig();
     const [hoverConfig] = useMenuHoverConfig();
     const { hovered } = hoverConfig;
-    const { data: session } = useSession();
+    const { user: sessionUser } = useCustomSession();
+    // Create session-like object for compatibility
+    const session = sessionUser ? { user: { ...sessionUser, name: sessionUser.email, image: null } } : null;
     const router = useRouter();
     const pathname = usePathname();
     const params = useParams();

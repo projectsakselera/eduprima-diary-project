@@ -6,6 +6,20 @@ import Link from 'next/link';
 export default function TestIndexPage() {
   const testPages = [
     {
+      title: 'Upload Test - JWT Bridge',
+      description: 'Test file upload dengan Custom JWT Authentication',
+      href: '/test/upload-jwt-bridge',
+      icon: 'ph:upload-simple',
+      status: 'New',
+      features: [
+        'Custom JWT token generation',
+        'Supabase Storage integration',
+        'User folder segregation',
+        'RLS policy testing',
+        'File management demo'
+      ]
+    },
+    {
       title: 'Supabase Form Test',
       description: 'Test koneksi Supabase dengan form educator (5 fields)',
       href: '/test/form-supabase',

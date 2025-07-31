@@ -1,4 +1,4 @@
-import { signIn } from "@/lib/auth";
+import { signIn } from "@/auth";
 import Image from "next/image";
 
 const Social = ({ locale }: { locale: string }) => {

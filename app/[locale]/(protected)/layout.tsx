@@ -4,15 +4,15 @@ import DashCodeSidebar from '@/components/partials/sidebar'
 import DashCodeFooter from '@/components/partials/footer'
 import ConditionalCustomizer from '@/components/partials/customizer/conditional-customizer'
 import DashCodeHeader from '@/components/partials/header'
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth"; // Use NextAuth instead of legacy auth
 import { redirect } from "@/components/navigation";
-import { AuthProvider } from "@/lib/auth-context";
+import AuthProvider from "@/providers/auth.provider"; // Use NextAuth SessionProvider
 
 const layout = async ({ children }: { children: React.ReactNode }) => {
     const session = await auth();
 
     if (!session) {
-        redirect({ href: '/', locale: 'en' })
+        redirect({ href: '/auth/login', locale: 'en' })
     }
     return (
         <AuthProvider>

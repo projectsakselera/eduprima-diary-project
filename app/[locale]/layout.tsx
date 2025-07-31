@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://dashcode-app.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://dashcode-app.vercel.app'),
   openGraph: {
     title: "Eduprima Diary - A Journey of Building Civilization Together",
     description: "Where every step in education becomes a meaningful story. Chronicle your mission to elevate humanity.",

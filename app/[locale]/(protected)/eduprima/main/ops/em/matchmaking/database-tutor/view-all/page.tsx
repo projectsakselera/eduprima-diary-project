@@ -155,25 +155,28 @@ interface TutorSpreadsheetData {
 }
 
 // Column definition interface
-interface SpreadsheetColumn {
+interface Column {
   key: keyof TutorSpreadsheetData;
   label: string;
   width: number;
-  type: 'text' | 'number' | 'date' | 'boolean' | 'array' | 'email' | 'phone' | 'file' | 'select';
-  category: string;
+  type: 'text' | 'number' | 'date' | 'array' | 'status' | 'select' | 'boolean' | 'file' | 'email' | 'phone';
+  category?: string;
   sticky?: boolean;
-  formatter?: (value: any) => string;
+  editable?: boolean;
+  options?: string[]; // For select type
   sortable?: boolean;
   filterable?: boolean;
+  frozen?: boolean;
+  formatter?: (value: any) => string;
   required?: boolean;
   description?: string;
 }
 
 // Define columns with categories - matching form structure
-const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
+const SPREADSHEET_COLUMNS: Column[] = [
   // System & Status
   { key: 'id', label: 'ID', width: 100, type: 'text', category: 'System', sticky: true },
-  { key: 'trn', label: 'TRN', width: 120, type: 'text', category: 'System', sticky: true },
+  { key: 'trn', label: 'TRN', width: 120, type: 'text', category: 'System', sticky: true, frozen: true },
   { key: 'status_tutor', label: 'Status Tutor', width: 140, type: 'select', category: 'System' },
   { key: 'approval_level', label: 'Level Approval', width: 130, type: 'select', category: 'System' },
   { key: 'staff_notes', label: 'Catatan Staff', width: 200, type: 'text', category: 'System' },
@@ -453,7 +456,7 @@ export default function ViewAllTutorsPage() {
   }, [categoryFilter, visibleColumns]);
 
   // Format cell value based on column type
-  const formatCellValue = (value: any, column: SpreadsheetColumn): string => {
+  const formatCellValue = (value: any, column: Column): string => {
     if (value === null || value === undefined || value === '') {
       return '';
     }
@@ -572,64 +575,68 @@ export default function ViewAllTutorsPage() {
 
   // Get unique categories
   const categories = useMemo(() => {
-    const cats = [...new Set(SPREADSHEET_COLUMNS.map(col => col.category))];
+    const cats = [...new Set(SPREADSHEET_COLUMNS.map(col => col.category).filter(Boolean))];
     return cats.sort();
   }, []);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <div className="text-lg font-medium">Memuat data tutor dari Supabase...</div>
-          <div className="text-sm text-muted-foreground">Mengambil semua field dari database...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-card rounded-lg shadow-sm border p-6 flex items-center space-x-4">
+          <Icon icon="ph:spinner" className="h-8 w-8 animate-spin text-primary" />
+          <div>
+            <div className="text-lg font-medium text-foreground">Loading tutor data...</div>
+            <div className="text-sm text-muted-foreground">Fetching all fields from Supabase database...</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="max-w-full mx-auto p-4">
       {/* Header */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="p-4 space-y-4">
-          {/* Title */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-3">
-                <Icon icon="ph:table" className="h-6 w-6 text-primary" />
-                Tutor Database Spreadsheet
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Complete view of all tutor data from Supabase • {totalRecords} total records • Google Sheets style
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => fetchTutorData(searchTerm, false)} // Don't force full screen loading
-                disabled={isLoading || isSearching}
-              >
-                <Icon 
-                  icon={isLoading ? "ph:spinner" : "ph:arrow-clockwise"} 
-                  className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")}
-                />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportToCSV}>
-                <Icon icon="ph:download" className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button size="sm" onClick={() => router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add')}>
-                <Icon icon="ph:plus" className="h-4 w-4 mr-2" />
-                Add Tutor
-              </Button>
+      <div className="bg-card rounded-lg shadow-sm border mb-4 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Icon icon="ph:table" className="h-6 w-6 text-primary" />
+              Tutor Database Spreadsheet
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Complete view of all tutor data from Supabase • {totalRecords} total records • Google Sheets style
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fetchTutorData(searchTerm, false)} // Don't force full screen loading
+              disabled={isLoading || isSearching}
+            >
+              <Icon 
+                icon={isLoading ? "ph:spinner" : "ph:arrow-clockwise"} 
+                className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")}
+              />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Icon icon="ph:download" className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={() => router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Icon icon="ph:plus" className="h-4 w-4 mr-2" />
+              Add Tutor
+            </Button>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 mb-4">
             {/* Search */}
             <div className="relative flex-1 min-w-64">
               <div className="flex items-center gap-2">
@@ -657,7 +664,7 @@ export default function ViewAllTutorsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={handleClearSearch}
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
                     >
                       <Icon icon="ph:x" className="h-3 w-3" />
                     </Button>
@@ -686,7 +693,7 @@ export default function ViewAllTutorsPage() {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -707,13 +714,13 @@ export default function ViewAllTutorsPage() {
                 </div>
               )}
               {searchTerm && !isSearching && (
-                <div className="flex items-center gap-1 text-green-600">
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                   <Icon icon="ph:check-circle" className="h-3 w-3" />
                   <span>Search results for "{searchTerm}"</span>
                 </div>
               )}
               {!searchTerm && hasInitialData && !isLoading && !isSearching && (
-                <div className="flex items-center gap-1 text-blue-600">
+                <div className="flex items-center gap-1 text-primary">
                   <Icon icon="ph:database" className="h-3 w-3" />
                   <span>All data (cached)</span>
                 </div>
@@ -722,219 +729,224 @@ export default function ViewAllTutorsPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="p-4">
-          <Alert className="border-destructive bg-destructive/10">
-            <Icon icon="ph:warning" className="h-4 w-4 text-destructive" />
-            <AlertDescription>
-              <div className="font-medium text-destructive">Failed to load tutor data</div>
-              <div className="text-sm mt-1 text-destructive">{error}</div>
-              <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchTutorData('')}>
-                <Icon icon="ph:arrow-clockwise" className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
-      {/* Column Visibility Controls */}
-      <div className="border-b bg-muted/30 p-4">
-        <div className="flex items-center gap-4">
-          <div className="text-sm font-medium">Visible Columns:</div>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(category => (
-              <DropdownMenu key={category}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    {category} ({SPREADSHEET_COLUMNS.filter(col => col.category === category && visibleColumns.has(col.key)).length})
-                    <Icon icon="ph:caret-down" className="h-3 w-3 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 max-h-96 overflow-y-auto">
-                  <DropdownMenuLabel>{category} Columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {SPREADSHEET_COLUMNS
-                    .filter(col => col.category === category)
-                    .map(col => (
-                    <DropdownMenuItem 
-                      key={col.key}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <div className="flex items-center w-full">
-                        <Checkbox
-                          checked={visibleColumns.has(col.key)}
-                          onCheckedChange={() => toggleColumnVisibility(col.key)}
-                          className="mr-2"
-                        />
-                        <span className="flex-1 text-sm">{col.label}</span>
-                        {col.required && (
-                          <Badge className="text-xs bg-secondary text-secondary-foreground">Required</Badge>
-                        )}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ))}
+        {/* Error State */}
+        {error && (
+          <div className="mb-4">
+            <Alert className="border-destructive/50 bg-destructive/10">
+              <Icon icon="ph:warning" className="h-4 w-4 text-destructive" />
+              <AlertDescription>
+                <div className="font-medium text-destructive">Failed to load tutor data</div>
+                <div className="text-sm mt-1 text-destructive/80">{error}</div>
+                <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchTutorData('')}>
+                  <Icon icon="ph:arrow-clockwise" className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Spreadsheet */}
-      <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 280px)' }}>
-        <div 
-          ref={spreadsheetRef}
-          className="overflow-auto h-full"
-          onScroll={(e) => {
-            const target = e.target as HTMLDivElement;
-            setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
-          }}
-        >
-          <table className="min-w-full border-collapse bg-background">
-            {/* Header */}
-            <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
-              <tr>
-                {/* Select All Checkbox */}
-                <th className="w-12 h-10 border border-border bg-muted sticky left-0 z-20">
-                  <Checkbox
-                    checked={selectedRows.size === tutorData.length && tutorData.length > 0}
-                    onCheckedChange={toggleSelectAll}
-                    className="mx-auto"
-                  />
-                </th>
-                
-                {/* Row Number */}
-                <th className="w-16 h-10 border border-border bg-muted sticky left-12 z-20 text-xs font-medium text-center">
-                  #
-                </th>
-
-                {/* Column Headers */}
-                {filteredColumns.map((column, index) => (
-                  <th
-                    key={column.key}
-                    className={cn(
-                      "h-10 border border-border bg-muted/90 text-left px-3 select-none cursor-pointer hover:bg-muted",
-                      column.sticky && "sticky z-20"
-                    )}
-                    style={{ 
-                      width: columnWidths[column.key] || column.width,
-                      left: column.sticky ? (12 + 16 + (index * (columnWidths[column.key] || column.width))) : undefined
-                    }}
-                    onClick={() => handleSort(column.key)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-medium truncate">{column.label}</span>
-                        {column.required && (
-                          <span className="text-destructive text-xs">*</span>
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        {sortConfig?.key === column.key && (
-                          <Icon 
-                            icon={sortConfig.direction === 'asc' ? 'ph:caret-up' : 'ph:caret-down'} 
-                            className="h-3 w-3" 
+        {/* Column Visibility Controls */}
+        <div className="bg-card rounded-lg shadow-sm border mb-4 p-4">
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-foreground">Visible Columns:</div>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(category => (
+                <DropdownMenu key={category}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      {category} ({SPREADSHEET_COLUMNS.filter(col => col.category === category && visibleColumns.has(col.key)).length})
+                      <Icon icon="ph:caret-down" className="h-3 w-3 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 max-h-96 overflow-y-auto">
+                    <DropdownMenuLabel>{category} Columns</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {SPREADSHEET_COLUMNS
+                      .filter(col => col.category === category)
+                      .map(col => (
+                      <DropdownMenuItem 
+                        key={col.key}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <div className="flex items-center w-full py-1">
+                          <Checkbox
+                            checked={visibleColumns.has(col.key)}
+                            onCheckedChange={() => toggleColumnVisibility(col.key)}
+                            className="mr-3 h-4 w-4"
                           />
-                        )}
-                      </div>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* Body */}
-            <tbody>
-              {sortedData.map((tutor, rowIndex) => (
-                <tr
-                  key={tutor.id}
-                  className={cn(
-                    "hover:bg-muted/50 transition-colors",
-                    selectedRows.has(tutor.id) && "bg-primary/5"
-                  )}
-                >
-                  {/* Select Checkbox */}
-                  <td className="w-12 h-10 border border-border bg-background sticky left-0 z-10">
-                    <Checkbox
-                      checked={selectedRows.has(tutor.id)}
-                      onCheckedChange={() => toggleRowSelection(tutor.id)}
-                      className="mx-auto"
-                    />
-                  </td>
-                  
-                  {/* Row Number */}
-                  <td className="w-16 h-10 border border-border bg-background sticky left-12 z-10 text-xs text-center text-muted-foreground">
-                    {rowIndex + 1}
-                  </td>
-
-                  {/* Data Cells */}
-                  {filteredColumns.map((column, colIndex) => (
-                    <td
-                      key={column.key}
-                      className={cn(
-                        "h-10 border border-border px-3 text-sm cursor-pointer hover:bg-muted/30",
-                        column.sticky && "sticky bg-background z-10",
-                        selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/10 ring-1 ring-primary"
-                      )}
-                      style={{ 
-                        width: columnWidths[column.key] || column.width,
-                        left: column.sticky ? (12 + 16 + (colIndex * (columnWidths[column.key] || column.width))) : undefined
-                      }}
-                      onClick={() => setSelectedCell({ row: rowIndex, col: column.key })}
-                    >
-                      <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
-                        {formatCellValue(tutor[column.key], column)}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
+                          <span className="flex-1 text-sm">{col.label}</span>
+                          {col.required && (
+                            <Badge className="text-xs bg-muted text-muted-foreground">Required</Badge>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ))}
+            </div>
+          </div>
+        </div>
 
-              {/* Empty State */}
-              {sortedData.length === 0 && !isLoading && (
-                <tr>
-                  <td colSpan={filteredColumns.length + 2} className="h-32 text-center">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Icon icon="ph:table" className="h-12 w-12 text-muted-foreground/30" />
-                      <div className="text-lg font-medium text-muted-foreground">No tutor data found</div>
-                      <div className="text-sm text-muted-foreground">
-                        {searchTerm 
-                          ? `No results for "${searchTerm}". Try adjusting your search.`
-                          : 'No tutors in the database. Add some tutors to get started.'
-                        }
+        {/* Spreadsheet */}
+        <div className="bg-card rounded-lg shadow-sm border overflow-hidden">
+          <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 480px)' }}>
+            <div 
+              ref={spreadsheetRef}
+              className="overflow-auto h-full"
+              onScroll={(e) => {
+                const target = e.target as HTMLDivElement;
+                setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
+              }}
+            >
+              <table className="min-w-full border-collapse">
+                {/* Header */}
+                <thead className="sticky top-0 z-10 bg-muted/50 border-b">
+                  <tr>
+                    {/* Select All Checkbox */}
+                    <th className="w-12 h-10 border border-border bg-muted/50 sticky left-0 z-20 p-2">
+                      <div className="flex items-center justify-center h-full">
+                        <Checkbox
+                          checked={selectedRows.size === tutorData.length && tutorData.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                          className="h-4 w-4"
+                        />
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    </th>
+                    
+                    {/* Row Number */}
+                    <th className="w-16 h-10 border border-border bg-muted/50 sticky left-12 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
+                      #
+                    </th>
 
-      {/* Footer Stats */}
-      <div className="border-t bg-muted/30 p-4">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center space-x-4">
-            <span>Total: {totalRecords} tutors</span>
-            <span>Filtered: {sortedData.length} rows</span>
-            <span>Columns: {filteredColumns.length} visible</span>
-            {selectedRows.size > 0 && (
-              <span className="text-primary font-medium">
-                {selectedRows.size} selected
-              </span>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <span>Real-time data from Supabase</span>
-            <Icon icon="ph:database" className="h-4 w-4 text-primary" />
+                    {/* Column Headers */}
+                    {filteredColumns.map((column, index) => (
+                      <th
+                        key={column.key}
+                        className={cn(
+                          "h-10 border border-border bg-muted/50 text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
+                          column.sticky && "sticky z-20"
+                        )}
+                        style={{ 
+                          width: columnWidths[column.key] || column.width,
+                          left: column.sticky ? (12 + 16 + (index * (columnWidths[column.key] || column.width))) : undefined
+                        }}
+                        onClick={() => handleSort(column.key)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-medium truncate">{column.label}</span>
+                            {column.required && (
+                              <span className="text-destructive text-xs">*</span>
+                            )}
+                          </div>
+                          <div className="flex items-center">
+                            {sortConfig?.key === column.key && (
+                              <Icon 
+                                icon={sortConfig.direction === 'asc' ? 'ph:caret-up' : 'ph:caret-down'} 
+                                className="h-3 w-3" 
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                {/* Body */}
+                <tbody className="bg-card divide-y divide-border">
+                  {sortedData.map((tutor, rowIndex) => (
+                    <tr
+                      key={tutor.id}
+                      className={cn(
+                        "hover:bg-muted/50 transition-colors",
+                        selectedRows.has(tutor.id) && "bg-primary/10"
+                      )}
+                    >
+                      {/* Select Checkbox */}
+                      <td className="w-12 h-10 border border-border bg-card sticky left-0 z-10 p-2">
+                        <div className="flex items-center justify-center h-full">
+                          <Checkbox
+                            checked={selectedRows.has(tutor.id)}
+                            onCheckedChange={() => toggleRowSelection(tutor.id)}
+                            className="h-4 w-4"
+                          />
+                        </div>
+                      </td>
+                      
+                      {/* Row Number */}
+                      <td className="w-16 h-10 border border-border bg-card sticky left-12 z-10 text-xs text-center text-muted-foreground">
+                        {rowIndex + 1}
+                      </td>
+
+                      {/* Data Cells */}
+                      {filteredColumns.map((column, colIndex) => (
+                        <td
+                          key={column.key}
+                          className={cn(
+                            "h-10 border border-border px-3 text-sm cursor-pointer hover:bg-muted/50 text-foreground",
+                            column.sticky && "sticky bg-card z-10",
+                            selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/10 ring-1 ring-primary"
+                          )}
+                          style={{ 
+                            width: columnWidths[column.key] || column.width,
+                            left: column.sticky ? (12 + 16 + (colIndex * (columnWidths[column.key] || column.width))) : undefined
+                          }}
+                          onClick={() => setSelectedCell({ row: rowIndex, col: column.key })}
+                        >
+                          <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
+                            {formatCellValue(tutor[column.key], column)}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+
+                  {/* Empty State */}
+                  {sortedData.length === 0 && !isLoading && (
+                    <tr>
+                      <td colSpan={filteredColumns.length + 2} className="h-32 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <Icon icon="ph:table" className="h-12 w-12 text-muted-foreground/50" />
+                          <div className="text-lg font-medium text-muted-foreground">No tutor data found</div>
+                          <div className="text-sm text-muted-foreground/80">
+                            {searchTerm 
+                              ? `No results for "${searchTerm}". Try adjusting your search.`
+                              : 'No tutors in the database. Add some tutors to get started.'
+                            }
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Footer Stats */}
+        <div className="bg-card rounded-lg shadow-sm border mt-4 p-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center space-x-4">
+              <span>Total: {totalRecords} tutors</span>
+              <span>Filtered: {sortedData.length} rows</span>
+              <span>Columns: {filteredColumns.length} visible</span>
+              {selectedRows.size > 0 && (
+                <span className="text-primary font-medium">
+                  {selectedRows.size} selected
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <span>Real-time data from Supabase</span>
+              <Icon icon="ph:database" className="h-4 w-4 text-primary" />
+            </div>
+          </div>
+        </div>
     </div>
   );
 }

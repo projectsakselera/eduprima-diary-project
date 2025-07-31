@@ -373,14 +373,37 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
   // File validation function
   const validateFile = (file: File): string | null => {
-    // File size validation (2MB limit)
-    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    // File size validation - different limits for different file types
+    let maxSize: number;
+    let maxSizeText: string;
+    
+    if (field.name === 'fotoProfil') {
+      maxSize = 2 * 1024 * 1024; // 2MB for profile photos
+      maxSizeText = '2MB';
+    } else {
+      maxSize = 5 * 1024 * 1024; // 5MB for documents
+      maxSizeText = '5MB';
+    }
+    
     if (file.size > maxSize) {
-      return `File size too large. Maximum size is 2MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
+      return `File size too large. Maximum size is ${maxSizeText}. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
     }
 
-    // File format validation for images
-    if (field.accept === 'image/*' || field.name === 'fotoProfil') {
+    // File format validation based on field type
+    if (field.name === 'fotoProfil') {
+      // Profile photo - only images
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        return `Invalid file format. Only JPG and PNG files are allowed for profile photos. Current format: ${file.type}`;
+      }
+    } else if (field.accept?.includes('.pdf')) {
+      // Document fields - images and PDF
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        return `Invalid file format. Only JPG, PNG, and PDF files are allowed for documents. Current format: ${file.type}`;
+      }
+    } else {
+      // Default image validation
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(file.type)) {
         return `Invalid file format. Only JPG and PNG files are allowed. Current format: ${file.type}`;
@@ -829,9 +852,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               {/* File upload guidelines */}
               <div className="mt-2 text-xs text-muted-foreground">
                 <div className="flex items-center space-x-4">
-                  <span>📁 Max 2MB</span>
-                  <span>🖼️ JPG, PNG only</span>
-                  <span>📐 Min: 200x200px</span>
+                  <span>📁 Max {field.name === 'fotoProfil' ? '2MB' : '5MB'}</span>
+                  <span>{field.name === 'fotoProfil' ? '🖼️ JPG, PNG only' : '📄 JPG, PNG, PDF'}</span>
+                  {field.name === 'fotoProfil' && <span>📐 Min: 200x200px</span>}
                 </div>
               </div>
             </div>
@@ -841,6 +864,40 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               <div className="flex items-start space-x-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                 <Icon icon="ph:warning" className="h-4 w-4 text-destructive mt-0.5" />
                 <div className="text-sm text-destructive">{fileError}</div>
+              </div>
+            )}
+
+            {/* File Upload Success (for non-image files) */}
+            {value && !fileError && !filePreview && (
+              <div className="flex items-center justify-between p-3 bg-success/10 border border-success/20 rounded-md">
+                <div className="flex items-center space-x-2">
+                  <Icon icon="ph:check-circle" className="h-4 w-4 text-success" />
+                  <div className="text-sm text-success">
+                    <span className="font-medium">File uploaded successfully</span>
+                    {typeof value === 'object' && value?.name && (
+                      <div className="text-xs opacity-80">{value.name}</div>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-xs text-success hover:bg-success/10"
+                  onClick={() => {
+                    handleChange(null);
+                    setFilePreview(null);
+                    setFileError(null);
+                    
+                    // Clear the file input
+                    const fileInput = document.getElementById(field.name) as HTMLInputElement;
+                    if (fileInput) {
+                      fileInput.value = '';
+                    }
+                  }}
+                >
+                  <Icon icon="ph:x" className="h-3 w-3" />
+                </Button>
               </div>
             )}
             

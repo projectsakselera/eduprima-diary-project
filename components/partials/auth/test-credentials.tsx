@@ -10,11 +10,25 @@ interface TestCredentialsProps {
 export function TestCredentials({ onSelectCredentials }: TestCredentialsProps) {
   const testUsers = [
     {
-      name: "Database Tutor Manager",
-      email: "em@eduprima.id", 
-      password: "EduPrima2024!@#",
-      role: "Database Tutor Only",
+      name: "Admin User",
+      email: "admin@eduprima.id", 
+      password: "password123",
+      role: "Administrator",
+      color: "bg-red-500"
+    },
+    {
+      name: "Tutor Manager",
+      email: "tutor@eduprima.id", 
+      password: "password123",
+      role: "Database Tutor Manager",
       color: "bg-green-500"
+    },
+    {
+      name: "Demo User",
+      email: "demo@demo.com", 
+      password: "demo123",
+      role: "Demo Account",
+      color: "bg-blue-500"
     }
   ]
 

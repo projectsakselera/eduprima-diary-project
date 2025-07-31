@@ -1,7 +1,7 @@
 'use server'
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import {signIn} from "@/lib/auth";
+import { signIn } from "@/auth";
 export const loginUser = async (data: any) => {
   try {
     const response = await signIn("credentials", {

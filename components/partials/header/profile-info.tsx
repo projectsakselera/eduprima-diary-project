@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon"
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import Image from "next/image";
 import { Link } from '@/i18n/routing';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

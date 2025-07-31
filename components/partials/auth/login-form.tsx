@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils"
 import { Loader2 } from 'lucide-react';
 import { toast } from "sonner"
 import { useRouter } from '@/components/navigation';
-import { TestCredentials } from './test-credentials';
-import { signIn } from "next-auth/react"
+import { signIn } from "next-auth/react";
+// Using NextAuth with custom credentials provider for universal table authentication
 
 const schema = z.object({
   email: z.string().email({ message: "Your email is invalid." }),
@@ -47,54 +47,68 @@ const LoginForm = () => {
     },
   });
 
-  const handleCredentialSelect = (email: string, password: string) => {
-    setValue('email', email);
-    setValue('password', password);
-  };
+  // Removed credential select - using real accounts only
 
   const onSubmit = (data: z.infer<typeof schema>) => {
     startTransition(async () => {
       try {
-        // Use NextAuth signIn 
+        console.log('🔐 Attempting NextAuth login for:', data.email.trim());
+        
+        // Use NextAuth signIn with credentials provider
         const result = await signIn('credentials', {
-          email: data.email,
+          email: data.email.trim(),
           password: data.password,
-          redirect: false,
+          redirect: false, // Handle redirect manually
         });
 
-        if (result?.ok && !result.error) {
+        console.log('🔍 NextAuth SignIn Result:', result);
+
+        if (result?.error) {
+          console.error('❌ NextAuth login failed:', result.error);
+          toast.error('Invalid email or password');
+          return;
+        }
+
+        if (result?.ok) {
+          console.log('✅ NextAuth login successful');
           toast.success('Login successful!');
           
-          // Get session to determine redirect based on role
-          const response = await fetch('/api/auth/session');
-          const session = await response.json();
+          // No need to store user in sessionStorage - NextAuth handles session
+          // Redirect based on role or default to tutor database
+          // Note: Remove /en/ prefix - next-intl router will auto-add current locale
+          const redirectUrl = '/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
           
-          console.log('Session after login:', session);
+          console.log('🚀 Attempting redirect to:', redirectUrl);
           
-          if (session?.user?.role) {
-            const role = session.user.role;
-            let redirectUrl = '/en/eduprima/main'; // default
+          // Use router for navigation
+          try {
+            console.log('Method 1: Using next-intl router.push...');
+            router.push(redirectUrl);
             
-            // Role-based redirect logic
-            if (role === 'super_admin') {
-              redirectUrl = '/en/eduprima/main';
-            } else if (role === 'database_tutor_manager') {
-              redirectUrl = '/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
-            }
+            // Fallback after a delay in case router fails
+            setTimeout(() => {
+              if (window.location.pathname.includes('/auth/login')) {
+                console.log('Method 2: Using window.location.href as fallback...');
+                // For fallback, we need to include current locale
+                const currentLocale = window.location.pathname.split('/')[1] || 'en';
+                window.location.href = `/${currentLocale}${redirectUrl}`;
+              }
+            }, 1000);
             
-            console.log('Redirecting to:', redirectUrl);
-            window.location.href = redirectUrl;
-          } else {
-            // Fallback redirect if no role info
-            window.location.href = '/en/eduprima/main';
+          } catch (routerError) {
+            console.error('Router error:', routerError);
+            console.log('Method 3: Direct window.location.href...');
+            // For direct fallback, we need to include current locale
+            const currentLocale = window.location.pathname.split('/')[1] || 'en';
+            window.location.href = `/${currentLocale}${redirectUrl}`;
           }
         } else {
-          toast.error('Invalid credentials. Please check email and password.');
+          console.log('❌ NextAuth login failed - no ok status');
+          toast.error('Login failed - please try again');
         }
       } catch (err: any) {
-        console.error('Login error:', err);
-        console.error('Error details:', err.message, err.stack);
-        toast.error(`Login failed: ${err.message || 'Please try again.'}`);
+        console.error('❌ NextAuth login error:', err);
+        toast.error('Network error. Please try again.');
       }
     });
   };
@@ -173,7 +187,7 @@ const LoginForm = () => {
         {isPending ? "Loading..." : "Sign In"}
       </Button>
       
-      <TestCredentials onSelectCredentials={handleCredentialSelect} />
+      {/* Test credentials removed - use real accounts from universal table */}
     </form>
   );
 };

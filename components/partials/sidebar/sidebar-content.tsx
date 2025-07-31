@@ -26,7 +26,7 @@ const SidebarContent = ({ children }: { children: React.ReactNode }) => {
         config.sidebar === "classic" && setHoverConfig({ hovered: false })
       }
       className={cn(
-        "fixed z-50 w-[280px] bg-sidebar shadow-base lg:block hidden ",
+        "fixed z-50 w-[248px] bg-sidebar shadow-base lg:block hidden ",
         {
           [`dark theme-${config.sidebarColor}`]:
             config.sidebarColor !== "light",
@@ -39,7 +39,7 @@ const SidebarContent = ({ children }: { children: React.ReactNode }) => {
             config.layout === "semi-box",
           "m-10 bottom-0 top-0  start-0   ": config.layout === "compact",
           "w-28": config.sidebar === "compact",
-          "w-[280px]": hoverConfig.hovered,
+          "w-[248px]": hoverConfig.hovered,
         }
       )}
     >

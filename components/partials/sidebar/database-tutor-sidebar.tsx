@@ -15,674 +15,75 @@ import MenuItem from "./common/menu-item";
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useAuth } from '@/lib/auth-context';
+import { useCustomSession } from '@/hooks/use-custom-session';
+import { signOut } from 'next-auth/react';
 import SidebarHoverToggle from './sidebar-hover-toggle';
 import { useMenuHoverConfig } from '@/hooks/use-menu-hover';
 
+// Simplified menu - only working pages
 const tutorManagerMenus = [
   {
-    groupLabel: "📊 Mission Control",
+    groupLabel: "📊 Dashboard",
     menus: [
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor",
-        label: "Mission Overview",
+        label: "Overview",
         active: false,
-        icon: "heroicons:chart-bar",
-        children: [
-          {
-            href: "#",
-            label: "Tutor Analytics Dashboard",
-            active: false,
-            icon: "heroicons:chart-pie",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Geographic Coverage Map",
-            active: false,
-            icon: "heroicons:map",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Subject Distribution Analysis", 
-            active: false,
-            icon: "heroicons:academic-cap",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Performance Metrics Overview",
-            active: false,
-            icon: "heroicons:presentation-chart-line",
-            comingSoon: true
-          }
-        ]
+        icon: "heroicons:chart-bar"
       }
     ]
   },
   {
-    groupLabel: "👥 Tutor Database",
+    groupLabel: "👥 Tutor Management",
     menus: [
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor/view-all",
         label: "View All Tutors",
         active: true,
-        icon: "heroicons:table-cells",
-        children: [
-          {
-            href: "#",
-            label: "Active Tutors",
-            active: false,
-            icon: "heroicons:check-circle",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Pending Approval",
-            active: false,
-            icon: "heroicons:clock",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Inactive/Alumni",
-            active: false,
-            icon: "heroicons:archive-box",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Blacklist Management",
-            active: false,
-            icon: "heroicons:x-circle",
-            comingSoon: true
-          }
-        ]
+        icon: "heroicons:table-cells"
       },
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor/add",
         label: "Add New Tutor",
         active: false,
-        icon: "heroicons:plus-circle",
-        children: [
-          {
-            href: "#",
-            label: "Quick Entry Form",
-            active: false,
-            icon: "heroicons:bolt",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Bulk Import (CSV/Excel)",
-            active: false,
-            icon: "heroicons:arrow-up-tray",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Interview Integration",
-            active: false,
-            icon: "heroicons:video-camera",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Document Upload",
-            active: false,
-            icon: "heroicons:paper-clip",
-            comingSoon: true
-          }
-        ]
+        icon: "heroicons:plus-circle"
       },
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor/import-export",
         label: "Import/Export",
         active: false,
-        icon: "heroicons:arrow-up-tray",
-        children: [
-          {
-            href: "#",
-            label: "Bulk Data Import",
-            active: false,
-            icon: "heroicons:arrow-down-tray",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Export Templates",
-            active: false,
-            icon: "heroicons:document",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Data Sync Tools",
-            active: false,
-            icon: "heroicons:arrow-path",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Backup Management",
-            active: false,
-            icon: "heroicons:shield-check",
-            comingSoon: true
-          }
-        ]
+        icon: "heroicons:arrow-up-tray"
       }
     ]
   },
   {
-    groupLabel: "🔍 Advanced Search & Matching",
+    groupLabel: "🔍 Smart Search",
     menus: [
       {
         href: "/eduprima/main/ops/em/matchmaking/database-tutor/educator-query",
-        label: "Smart Tutor Query",
+        label: "Tutor Query",
         active: false,
         icon: "ph:brain",
-        badge: "NEW",
-        children: [
-          {
-            href: "#",
-            label: "AI-Powered Search",
-            active: false,
-            icon: "heroicons:magnifying-glass",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Advanced Filter Engine",
-            active: false,
-            icon: "heroicons:adjustments-horizontal",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Geographic Intelligence",
-            active: false,
-            icon: "heroicons:map-pin",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Compatibility Scoring",
-            active: false,
-            icon: "heroicons:heart",
-            comingSoon: true
-          }
-        ]
+        badge: "NEW"
       },
-      {
-        href: "#",
-        label: "Matching Algorithm",
-        active: false,
-        icon: "heroicons:puzzle-piece",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Student-Tutor Pairing",
-            active: false,
-            icon: "heroicons:link",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Success Prediction",
-            active: false,
-            icon: "heroicons:chart-bar-square",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Optimization Rules",
-            active: false,
-            icon: "heroicons:cog-6-tooth",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Manual Override Tools",
-            active: false,
-            icon: "heroicons:wrench-screwdriver",
-            comingSoon: true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    groupLabel: "📝 Profile Management",
-    menus: [
-      {
-        href: "#",
-        label: "Profile Enhancement",
-        active: false,
-        icon: "heroicons:user-circle",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Skill Assessment Tools",
-            active: false,
-            icon: "heroicons:star",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Certification Tracking",
-            active: false,
-            icon: "heroicons:trophy",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Performance History",
-            active: false,
-            icon: "heroicons:chart-bar",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Photo/Document Manager",
-            active: false,
-            icon: "heroicons:photo",
-            comingSoon: true
-          }
-        ]
-      },
-      {
-        href: "#",
-        label: "Quality Assurance",
-        active: false,
-        icon: "heroicons:shield-check",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Profile Completeness Check",
-            active: false,
-            icon: "heroicons:check-circle",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Data Validation Rules",
-            active: false,
-            icon: "heroicons:clipboard-document-check",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Duplicate Detection",
-            active: false,
-            icon: "heroicons:eye",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Verification Status",
-            active: false,
-            icon: "heroicons:badge-check",
-            comingSoon: true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    groupLabel: "🎓 Subject & Skills",
-    menus: [
-      {
-        href: "#",
-        label: "Subject Management",
-        active: false,
-        icon: "heroicons:academic-cap",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Subject Taxonomy",
-            active: false,
-            icon: "heroicons:squares-2x2",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Skill Level Matrix",
-            active: false,
-            icon: "heroicons:chart-bar-square",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Certification Mapping",
-            active: false,
-            icon: "heroicons:map",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Competency Standards",
-            active: false,
-            icon: "heroicons:scale",
-            comingSoon: true
-          }
-        ]
-      },
-      {
-        href: "#",
-        label: "Teaching Methods",
-        active: false,
-        icon: "heroicons:light-bulb",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Method Categories",
-            active: false,
-            icon: "heroicons:tag",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Effectiveness Tracking",
-            active: false,
-            icon: "heroicons:chart-bar",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Best Practices Database",
-            active: false,
-            icon: "heroicons:book-open",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Training Resources",
-            active: false,
-            icon: "heroicons:play-circle",
-            comingSoon: true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    groupLabel: "📊 Analytics & Insights",
-    menus: [
-      {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/reports",
-        label: "Tutor Statistics",
-        active: false,
-        icon: "heroicons:chart-pie",
-        children: [
-          {
-            href: "#",
-            label: "Performance Analytics",
-            active: false,
-            icon: "heroicons:chart-bar",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Success Rate Analysis",
-            active: false,
-            icon: "heroicons:trophy",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Geographic Distribution",
-            active: false,
-            icon: "heroicons:map",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Subject Coverage",
-            active: false,
-            icon: "heroicons:squares-plus",
-            comingSoon: true
-          }
-        ]
-      },
-      {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/analytics",
-        label: "Performance Reports",
-        active: false,
-        icon: "heroicons:presentation-chart-line",
-        children: [
-          {
-            href: "#",
-            label: "Individual Tutor Reports",
-            active: false,
-            icon: "heroicons:user",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Comparative Analysis",
-            active: false,
-            icon: "heroicons:scale",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Trend Monitoring",
-            active: false,
-            icon: "heroicons:arrow-trending-up",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Predictive Insights",
-            active: false,
-            icon: "heroicons:crystal-ball",
-            comingSoon: true
-          }
-        ]
-      },
-      {
-        href: "#",
-        label: "Market Intelligence",
-        active: false,
-        icon: "heroicons:globe-alt",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Demand Forecasting",
-            active: false,
-            icon: "heroicons:arrow-trending-up",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Rate Analysis",
-            active: false,
-            icon: "heroicons:currency-dollar",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Competitor Benchmarking",
-            active: false,
-            icon: "heroicons:building-office-2",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Growth Opportunities",
-            active: false,
-            icon: "heroicons:arrow-up-right",
-            comingSoon: true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    groupLabel: "🛠️ Tools & Utilities",
-    menus: [
-      {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/dashboard",
-        label: "Data Migration Tools",
-        active: false,
-        icon: "heroicons:arrow-right-circle",
-        badge: "LEGACY",
-        children: [
-          {
-            href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/dashboard",
-            label: "Migration Dashboard",
-            active: false,
-            icon: "heroicons:cog-6-tooth",
-          },
-          {
-            href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/column-mapping",
-            label: "Column Mapping",
-            active: false,
-            icon: "heroicons:link",
-          },
-          {
-            href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/schema-validation",
-            label: "Schema Validation",
-            active: false,
-            icon: "heroicons:shield-check",
-          },
-          {
-            href: "/eduprima/main/ops/em/matchmaking/database-tutor/migration/progress-tracking",
-            label: "Progress Tracking",
-            active: false,
-            icon: "heroicons:chart-bar",
-          }
-        ]
-      },
-      {
-        href: "#",
-        label: "Maintenance Tools",
-        active: false,
-        icon: "heroicons:wrench-screwdriver",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Database Cleanup",
-            active: false,
-            icon: "heroicons:trash",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Duplicate Merger",
-            active: false,
-            icon: "heroicons:arrows-pointing-in",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Inactive Tutor Archival",
-            active: false,
-            icon: "heroicons:archive-box",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Performance Optimization",
-            active: false,
-            icon: "heroicons:rocket-launch",
-            comingSoon: true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    groupLabel: "🤖 AI & Automation",
-    menus: [
       {
         href: "/eduprima/main/ops/em/matchmaking/subject-recommendation",
-        label: "AI Features",
+        label: "Subject Recommendation",
         active: false,
-        icon: "ph:brain",
-        badge: "AI",
-        children: [
-          {
-            href: "/eduprima/main/ops/em/matchmaking/subject-recommendation",
-            label: "Subject Recommendation",
-            active: false,
-            icon: "heroicons:lightbulb",
-          },
-          {
-            href: "#",
-            label: "Auto-Profile Enhancement",
-            active: false,
-            icon: "heroicons:sparkles",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Smart Tagging",
-            active: false,
-            icon: "heroicons:hashtag",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Anomaly Detection",
-            active: false,
-            icon: "heroicons:exclamation-triangle",
-            comingSoon: true
-          }
-        ]
-      },
+        icon: "heroicons:lightbulb",
+        badge: "AI"
+      }
+    ]
+  },
+  {
+    groupLabel: "🔧 Tools & Test",
+    menus: [
       {
-        href: "#",
-        label: "Automation Rules",
+        href: "/eduprima/main/ops/em/matchmaking/database-tutor/storage-test",
+        label: "Storage Test",
         active: false,
-        icon: "heroicons:cog-8-tooth",
-        badge: "NEW",
-        comingSoon: true,
-        children: [
-          {
-            href: "#",
-            label: "Auto-Assignment Logic",
-            active: false,
-            icon: "heroicons:arrow-right-circle",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Notification Triggers",
-            active: false,
-            icon: "heroicons:bell",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Status Updates",
-            active: false,
-            icon: "heroicons:arrow-path",
-            comingSoon: true
-          },
-          {
-            href: "#",
-            label: "Workflow Automation",
-            active: false,
-            icon: "heroicons:squares-2x2",
-            comingSoon: true
-          }
-        ]
+        icon: "ph:cloud-arrow-up",
+        badge: "TEST"
       }
     ]
   }
@@ -695,7 +96,7 @@ export function DatabaseTutorSidebar() {
     const collapsed = config.collapsed
     const [hoverConfig] = useMenuHoverConfig();
     const { hovered } = hoverConfig;
-    const { user, logout } = useAuth();
+    const { user } = useCustomSession();
 
     // Update active states based on current pathname
     const menuList = tutorManagerMenus.map(group => ({
@@ -746,7 +147,7 @@ export function DatabaseTutorSidebar() {
                                 variant="outline" 
                                 size="sm" 
                                 className="w-full hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                onClick={logout}
+                                onClick={() => signOut({ callbackUrl: '/auth/login' })}
                             >
                                 <Icon icon="heroicons:arrow-right-on-rectangle" className="mr-2 h-4 w-4" />
                                 Logout
@@ -760,11 +161,13 @@ export function DatabaseTutorSidebar() {
                         {menuList?.map(({ groupLabel, menus }, index) => (
                             <li className="w-full" key={`${groupLabel}-${index}`}>
                                 {(!collapsed || hovered) && (
-                                    <p className="text-sm font-medium text-default-600 pb-2 max-w-[280px] truncate px-3 pt-5">
+                                    <p className="text-sm font-medium text-default-600 pb-2 max-w-[248px] truncate px-3 pt-5">
                                         {groupLabel}
                                     </p>
                                 )}
-                                {menus?.map(({ href, label, icon, active, badge, comingSoon, children }, index) => (
+                                {menus?.map((menu, index) => {
+                                    const { href, label, icon, active, badge, comingSoon, children } = menu as any;
+                                    return (
                                     <div className="w-full mb-2" key={index}>
                                         <TooltipProvider disableHoverableContent>
                                             <Tooltip delayDuration={100}>
@@ -811,7 +214,7 @@ export function DatabaseTutorSidebar() {
                                                         {/* Children/Subcategories */}
                                                         {children && children.length > 0 && (!collapsed || hovered) && (
                                                             <div className="ml-6 mt-2 space-y-1 border-l border-muted pl-4">
-                                                                {children.map((child, childIndex) => (
+                                                                {children.map((child: any, childIndex: number) => (
                                                                     <div key={childIndex} className="relative">
                                                                         <MenuItem 
                                                                             label={child.label} 
@@ -862,7 +265,8 @@ export function DatabaseTutorSidebar() {
                                             </Tooltip>
                                         </TooltipProvider>
                                     </div>
-                                ))}
+                                );
+                                })}
                             </li>
                         ))}
                     </ul>
