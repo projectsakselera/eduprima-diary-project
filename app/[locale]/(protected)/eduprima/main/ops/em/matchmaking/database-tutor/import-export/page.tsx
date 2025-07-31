@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/icon";
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
+import { toast } from '@/components/ui/use-toast';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -249,7 +250,12 @@ export default function ImportExportPage() {
       setParsedData(processedData);
       setShowPreview(true);
     } catch (error) {
-      alert(`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              toast({
+          title: "Error Parsing File",
+          description: `${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: "destructive",
+          duration: 3000,
+        });
     } finally {
       setIsParsing(false);
     }
@@ -339,7 +345,12 @@ export default function ImportExportPage() {
       setExportProgress(50);
 
       if (!data || data.length === 0) {
-        alert('No data found to export');
+        toast({
+        title: "No Data Found",
+        description: "Tidak ada data yang ditemukan untuk di export",
+        variant: "destructive",
+        duration: 3000,
+      });
         return;
       }
 
@@ -382,7 +393,12 @@ export default function ImportExportPage() {
       setExportProgress(100);
     } catch (error) {
       console.error('Export error:', error);
-      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        title: "Export Failed",
+        description: `${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+        duration: 3000,
+      });
     } finally {
       setIsExporting(false);
       setExportProgress(0);

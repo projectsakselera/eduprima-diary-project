@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toast } from '@/components/ui/use-toast'
 
 interface User {
   id: string
@@ -68,7 +69,12 @@ export function SupabaseDashboard() {
 
   const handleSignUp = async () => {
     if (!supabase) {
-      alert('Supabase client not configured')
+      toast({
+        title: "Configuration Error",
+        description: "Supabase client tidak terkonfigurasi",
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
@@ -84,16 +90,30 @@ export function SupabaseDashboard() {
 
     if (error) {
       console.error('Error signing up:', error.message)
-      alert(`Error: ${error.message}`)
+      toast({
+        title: "Sign Up Error",
+        description: error.message,
+        variant: "destructive",
+        duration: 3000,
+      })
     } else {
       console.log('Sign up successful!')
-      alert('Sign up successful! Check your email for confirmation.')
+      toast({
+        title: "Sign Up Successful!",
+        description: "Periksa email Anda untuk konfirmasi akun",
+        duration: 5000,
+      })
     }
   }
 
   const handleSignIn = async () => {
     if (!supabase) {
-      alert('Supabase client not configured')
+      toast({
+        title: "Configuration Error",
+        description: "Supabase client tidak terkonfigurasi",
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
@@ -104,33 +124,69 @@ export function SupabaseDashboard() {
 
     if (error) {
       console.error('Error signing in:', error.message)
-      alert(`Error: ${error.message}`)
+      toast({
+        title: "Sign In Error",
+        description: error.message,
+        variant: "destructive",
+        duration: 3000,
+      })
     } else {
       console.log('Sign in successful!')
+      toast({
+        title: "Sign In Successful!",
+        description: "Berhasil masuk ke akun Anda",
+        duration: 3000,
+      })
     }
   }
 
   const handleSignOut = async () => {
     if (!supabase) {
-      alert('Supabase client not configured')
+      toast({
+        title: "Configuration Error",
+        description: "Supabase client tidak terkonfigurasi",
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error('Error signing out:', error.message)
-      alert(`Error: ${error.message}`)
+      toast({
+        title: "Sign Out Error",
+        description: error.message,
+        variant: "destructive",
+        duration: 3000,
+      })
+    } else {
+      toast({
+        title: "Signed Out",
+        description: "Berhasil keluar dari akun",
+        duration: 3000,
+      })
     }
   }
 
   const handleCreatePost = async () => {
     if (!user) {
-      alert('Please sign in to create a post')
+      toast({
+        title: "Authentication Required",
+        description: "Silakan masuk untuk membuat post",
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
     if (!supabase) {
-      alert('Supabase client not configured')
+      toast({
+        title: "Configuration Error",
+        description: "Supabase client tidak terkonfigurasi",
+        variant: "destructive",
+        duration: 3000,
+      })
       return
     }
 
@@ -147,10 +203,19 @@ export function SupabaseDashboard() {
 
     if (error) {
       console.error('Error creating post:', error.message)
-      alert(`Error: ${error.message}`)
+      toast({
+        title: "Create Post Error",
+        description: error.message,
+        variant: "destructive",
+        duration: 3000,
+      })
     } else {
       console.log('Post created successfully!')
-      alert('Post created successfully!')
+      toast({
+        title: "Post Created!",
+        description: "Post berhasil dibuat",
+        duration: 3000,
+      })
       setPostTitle('')
       setPostContent('')
       setIsPublished(false)

@@ -323,6 +323,17 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       documentsMap.get(doc.user_id)[doc.document_type] = doc;
     });
 
+    // 🐛 DEBUG: Log document types found
+    console.log('📄 Document types found in database:', 
+      documentsResult.data?.map(d => d.document_type) || []
+    );
+    console.log('📊 Documents per user:', 
+      Array.from(documentsMap.entries()).map(([userId, docs]) => ({
+        userId: userId.substring(0, 8) + '...',
+        types: Object.keys(docs)
+      }))
+    );
+
     // Combine all data
     const completeTutorData: CompleteTutorData[] = usersData.map(user => {
       const profile = profilesMap.get(user.id);

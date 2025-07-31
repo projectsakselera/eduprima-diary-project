@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@supabase/supabase-js';
+import { toast } from '@/components/ui/use-toast';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,6 +33,7 @@ export default function StorageTestPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [authenticatedSupabase, setAuthenticatedSupabase] = useState<any>(null);
 
   const addResult = (result: TestResult) => {
     setTestResults(prev => [...prev, result]);
@@ -40,6 +42,41 @@ export default function StorageTestPage() {
   const clearResults = () => {
     setTestResults([]);
     setUploadProgress(0);
+  };
+
+  // Get authenticated Supabase client using JWT Bridge
+  const getAuthenticatedSupabaseClient = async () => {
+    try {
+      console.log('🔐 Getting authenticated Supabase client via JWT Bridge...');
+      
+      const response = await fetch('/api/supabase-session');
+      if (!response.ok) {
+        throw new Error(`JWT Bridge API failed: ${response.status}`);
+      }
+      
+      const { success, supabaseToken, authSystem, user } = await response.json();
+      if (!success || !supabaseToken) {
+        throw new Error('No JWT token received from bridge');
+      }
+      
+      console.log('🎯 JWT Bridge Success:', { authSystem, userEmail: user.email });
+      
+      // Create authenticated Supabase client with JWT token
+      const authenticatedClient = createClient(supabaseUrl!, supabaseKey!, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${supabaseToken}`
+          }
+        }
+      });
+      
+      setAuthenticatedSupabase(authenticatedClient);
+      return authenticatedClient;
+      
+    } catch (error) {
+      console.error('❌ JWT Bridge error:', error);
+      throw error;
+    }
   };
 
   // Test 1: Environment Variables
@@ -315,15 +352,30 @@ export default function StorageTestPage() {
     }
   };
 
-  // Test 5: File Upload Test
+  // Test 5: File Upload Test (with JWT Bridge Authentication)
   const testFileUpload = async () => {
-    console.log('🧪 Testing File Upload...');
+    console.log('🧪 Testing File Upload with JWT Bridge Authentication...');
     
-    if (!supabase) {
+    // First get authenticated client via JWT Bridge
+    let authClient;
+    try {
+      authClient = await getAuthenticatedSupabaseClient();
+      console.log('✅ Authenticated Supabase client ready');
+    } catch (authError) {
       addResult({
         test: 'File Upload',
         status: 'error',
-        message: 'Supabase client not available'
+        message: 'JWT Bridge authentication failed',
+        details: authError instanceof Error ? authError.message : 'Unknown auth error'
+      });
+      return false;
+    }
+    
+    if (!authClient) {
+      addResult({
+        test: 'File Upload',
+        status: 'error',
+        message: 'Authenticated Supabase client not available'
       });
       return false;
     }
@@ -347,8 +399,8 @@ export default function StorageTestPage() {
       
       setUploadProgress(30);
       
-      // Upload file to eduprimadiary bucket
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      // Upload file to eduprimadiary bucket using authenticated client
+      const { data: uploadData, error: uploadError } = await authClient.storage
         .from('eduprimadiary')
         .upload(fileName, selectedFile, {
           cacheControl: '3600',
@@ -370,7 +422,7 @@ export default function StorageTestPage() {
       setUploadProgress(80);
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = authClient.storage
         .from('eduprimadiary')
         .getPublicUrl(fileName);
 
@@ -382,20 +434,21 @@ export default function StorageTestPage() {
       let usingAuthenticatedUser = false;
       
       try {
+        // With JWT Bridge, we should have user info from the token
         // First: Try to get authenticated user ID (PREFERRED)
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { user: authUser }, error: authError } = await authClient.auth.getUser();
+        const { data: { session }, error: sessionError } = await authClient.auth.getSession();
         
         const currentUser = authUser || session?.user;
         
         if (currentUser?.id) {
           testUserId = currentUser.id;
           usingAuthenticatedUser = true;
-          console.log('🔐 Using authenticated user ID for testing:', testUserId, currentUser.email);
+          console.log('🔐 Using JWT Bridge authenticated user ID:', testUserId, currentUser.email);
         } else {
           // Fallback: Try to get any real user ID from the database
-          console.log('⚠️ No authenticated user, trying to find any real user...');
-          const { data: users, error: userError } = await supabase
+          console.log('⚠️ No JWT user, trying to find any real user...');
+          const { data: users, error: userError } = await authClient
             .from('t_310_01_01_users_universal')
             .select('id, email')
             .limit(1);
@@ -417,8 +470,8 @@ export default function StorageTestPage() {
       let dbError = null;
 
       if (!dbInsertSkipped && testUserId) {
-        // Test document storage table insert with real user ID
-        const insertResult = await supabase
+        // Test document storage table insert with authenticated client
+        const insertResult = await authClient
           .from('t_460_03_01_document_storage')
           .insert([{
             user_id: testUserId, // Use real user ID
@@ -470,18 +523,17 @@ export default function StorageTestPage() {
         test: 'File Upload',
         status: 'success',
         message: usingAuthenticatedUser 
-          ? '🔐 File upload and database insert successful (using authenticated user)'
-          : 'File upload and database insert successful (using fallback user)',
+          ? '🔐 File upload and database insert successful (JWT Bridge + authenticated user)'
+          : '✅ File upload and database insert successful (JWT Bridge + fallback user)',
         details: {
           fileName,
           fileSize: selectedFile.size,
           publicUrl: urlData.publicUrl,
           dbRecordId: dbData?.id,
           usedUserId: testUserId,
-          securityLevel: usingAuthenticatedUser ? '🔐 Authenticated' : '⚠️ Fallback user',
-          note: usingAuthenticatedUser 
-            ? 'Perfect! Using your logged-in user account - ready for production.'
-            : 'Used fallback user for testing. In production, will use authenticated user.'
+          authMethod: '🔐 JWT Bridge Authentication',
+          securityLevel: usingAuthenticatedUser ? '🔐 Authenticated via JWT' : '⚠️ Fallback user',
+          note: 'Successfully used JWT Bridge for authenticated Supabase access! RLS policies working correctly.'
         }
       });
       return true;
@@ -532,7 +584,12 @@ export default function StorageTestPage() {
     if (file) {
       // Limit file size to 1MB for test
       if (file.size > 1024 * 1024) {
-        alert('Please select a file smaller than 1MB for testing');
+        toast({
+        title: "File Terlalu Besar",
+        description: "Pilih file yang lebih kecil dari 1MB untuk testing",
+        variant: "destructive",
+        duration: 3000,
+      });
         return;
       }
       setSelectedFile(file);
@@ -645,6 +702,32 @@ export default function StorageTestPage() {
                 >
                   <Icon icon="ph:broom" className="h-4 w-4 mr-2" />
                   Clear
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await getAuthenticatedSupabaseClient();
+                      addResult({
+                        test: 'JWT Bridge Test',
+                        status: 'success',
+                        message: '🔐 JWT Bridge authentication successful!',
+                        details: 'Authenticated Supabase client ready for file operations'
+                      });
+                    } catch (error) {
+                      addResult({
+                        test: 'JWT Bridge Test',
+                        status: 'error',
+                        message: 'JWT Bridge authentication failed',
+                        details: error instanceof Error ? error.message : 'Unknown error'
+                      });
+                    }
+                  }}
+                  disabled={isRunning}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Icon icon="ph:key" className="h-4 w-4 mr-2" />
+                  Test JWT Bridge
                 </Button>
                 <Button
                   onClick={runAllTests}
@@ -768,7 +851,11 @@ FOR SELECT USING (
   auth.role() = 'authenticated'
 );`;
                     navigator.clipboard.writeText(hybridPolicy);
-                    alert('🏗️ Hybrid architecture policy copied!');
+                    toast({
+                      title: "🏗️ Copied!",
+                      description: "Hybrid architecture policy telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -799,7 +886,11 @@ const uploadResult = await adminSupabase.storage
 
 // This bypasses RLS entirely for admin operations`;
                     navigator.clipboard.writeText(serviceRoleCode);
-                    alert('🔧 Service role pattern copied!');
+                    toast({
+                      title: "🔧 Copied!",
+                      description: "Service role pattern telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -824,7 +915,11 @@ FOR INSERT WITH CHECK (bucket_id = 'eduprimadiary');
 CREATE POLICY "Allow eduprimadiary reads" ON storage.objects
 FOR SELECT USING (bucket_id = 'eduprimadiary');`;
                     navigator.clipboard.writeText(bucketPolicy);
-                    alert('📦 Simple bucket policy copied!');
+                    toast({
+                      title: "📦 Copied!",
+                      description: "Simple bucket policy telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -901,7 +996,11 @@ WHERE schemaname = 'storage'
   AND tablename = 'objects' 
   AND policyname LIKE '%authenticated%';`;
                     navigator.clipboard.writeText(securePolicy);
-                    alert('🔒 Secure production policies copied to clipboard!');
+                    toast({
+                      title: "🔒 Copied!",
+                      description: "Secure production policies telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -976,7 +1075,11 @@ FOR UPDATE USING (auth.role() = 'authenticated');
 CREATE POLICY "Allow authenticated delete" ON storage.objects
 FOR DELETE USING (auth.role() = 'authenticated');`;
                       navigator.clipboard.writeText(sqlCommands);
-                      alert('✅ SQL commands copied to clipboard!');
+                      toast({
+                      title: "✅ Copied!",
+                      description: "SQL commands telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                     }}
                     size="sm"
                     variant="outline"
@@ -1059,7 +1162,11 @@ FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon read" ON storage.objects
 FOR SELECT USING (true);`;
                     navigator.clipboard.writeText(anonSql);
-                    alert('✅ Anonymous policy SQL copied to clipboard!');
+                    toast({
+                      title: "✅ Copied!",
+                      description: "Anonymous policy SQL telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -1087,7 +1194,11 @@ FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Allow authenticated read" ON storage.objects
 FOR SELECT USING (auth.role() = 'authenticated');`;
                     navigator.clipboard.writeText(authSql);
-                    alert('✅ Authenticated policy SQL copied to clipboard!');
+                    toast({
+                      title: "✅ Copied!",
+                      description: "Authenticated policy SQL telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -1114,7 +1225,12 @@ ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY;
 -- To re-enable later:
 -- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;`;
                     navigator.clipboard.writeText(disableRls);
-                    alert('⚠️ Disable RLS SQL copied! Use only for testing!');
+                    toast({
+                      title: "⚠️ Copied!",
+                      description: "Disable RLS SQL telah disalin - Hanya untuk testing!",
+                      duration: 3000,
+                      variant: "destructive"
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -1184,7 +1300,11 @@ INSERT INTO t_310_01_01_users_universal (
   NOW()
 ) ON CONFLICT (id) DO NOTHING;`;
                     navigator.clipboard.writeText(createTestUser);
-                    alert('✅ Create test user SQL copied!');
+                    toast({
+                      title: "✅ Copied!",
+                      description: "Create test user SQL telah disalin ke clipboard",
+                      duration: 3000,
+                    });
                   }}
                   size="sm"
                   variant="outline"
@@ -1209,7 +1329,12 @@ DROP CONSTRAINT IF EXISTS t_460_03_01_document_storage_user_id_fkey;
 -- ADD CONSTRAINT t_460_03_01_document_storage_user_id_fkey 
 -- FOREIGN KEY (user_id) REFERENCES t_310_01_01_users_universal(id);`;
                     navigator.clipboard.writeText(disableFk);
-                    alert('⚠️ Disable FK constraint SQL copied! Use carefully!');
+                    toast({
+                      title: "⚠️ Copied!",
+                      description: "Disable FK constraint SQL telah disalin - Gunakan dengan hati-hati!",
+                      duration: 3000,
+                      variant: "destructive"
+                    });
                   }}
                   size="sm"
                   variant="outline"

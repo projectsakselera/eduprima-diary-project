@@ -5,6 +5,11 @@ export const createAdminSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_service_role_key'
   
+  // Debug logging for environment check
+  console.log('🔍 Environment Variables Check:');
+  console.log('   - NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'FOUND' : 'MISSING');
+  console.log('   - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FOUND' : 'MISSING');
+  
   // Check if Supabase credentials are configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.error('❌ SUPABASE CREDENTIALS REQUIRED! Please configure:');
@@ -21,10 +26,17 @@ export const createAdminSupabaseClient = () => {
             })
           })
         })
-      })
+      }),
+      storage: {
+        from: () => ({
+          upload: () => Promise.resolve({ data: null, error: new Error('Supabase storage not configured') }),
+          getPublicUrl: () => ({ data: { publicUrl: '' } })
+        })
+      }
     } as any;
   }
   
+  console.log('✅ Creating REAL Supabase Admin Client with valid credentials');
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

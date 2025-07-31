@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from '@supabase/supabase-js';
 import { tutorFormConfig } from '../../add/form-config';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from '@/components/ui/use-toast';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -245,7 +246,11 @@ export default function ColumnMapping() {
     // Save to localStorage for now (could be saved to database later)
     localStorage.setItem('tutorColumnMapping', JSON.stringify(config));
     
-    alert('Mapping configuration saved successfully!');
+    toast({
+      title: "Configuration Saved!",
+      description: "Mapping configuration telah berhasil disimpan",
+      duration: 3000,
+    });
   };
 
   // Load saved configuration

@@ -27,6 +27,76 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useRouter } from "@/components/navigation";
 
+// FileCell component for handling file display with links and previews
+interface FileCellProps {
+  value: string | null;
+  filename: string;
+  tutorName: string;
+  onPreview: (url: string, title: string, type: string) => void;
+}
+
+const FileCell: React.FC<FileCellProps> = ({ value, filename, tutorName, onPreview }) => {
+  if (!value) {
+    return (
+      <div className="text-muted-foreground text-xs">
+        No file
+      </div>
+    );
+  }
+
+  const getFileIcon = (filename: string) => {
+    if (filename === 'fotoProfil') return '🖼️';
+    if (filename === 'dokumenIdentitas') return '🆔';
+    if (filename === 'dokumenPendidikan') return '🎓';
+    if (filename === 'dokumenSertifikat') return '📜';
+    return '📎';
+  };
+
+  const getFileLabel = (filename: string) => {
+    if (filename === 'fotoProfil') return 'Foto';
+    if (filename === 'dokumenIdentitas') return 'ID';
+    if (filename === 'dokumenPendidikan') return 'Edu';
+    if (filename === 'dokumenSertifikat') return 'Cert';
+    return 'File';
+  };
+
+  const getFileTitle = (filename: string, tutorName: string) => {
+    if (filename === 'fotoProfil') return `Foto Profil - ${tutorName}`;
+    if (filename === 'dokumenIdentitas') return `Dokumen Identitas - ${tutorName}`;
+    if (filename === 'dokumenPendidikan') return `Dokumen Pendidikan - ${tutorName}`;
+    if (filename === 'dokumenSertifikat') return `Dokumen Sertifikat - ${tutorName}`;
+    return `File - ${tutorName}`;
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent cell selection
+    onPreview(value, getFileTitle(filename, tutorName), filename);
+  };
+
+  const handleDirectLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(value, '_blank');
+  };
+
+  return (
+    <div className="flex items-center gap-1 min-w-0">
+      <span className="text-sm">{getFileIcon(filename)}</span>
+      <div className="flex flex-col min-w-0">
+        <button
+          onClick={handleClick}
+          className="text-xs text-primary hover:text-primary/80 hover:underline text-left truncate max-w-[80px]"
+          title={`Preview ${getFileLabel(filename)} - ${tutorName}`}
+        >
+          {getFileLabel(filename)}
+        </button>
+        <div className="text-[10px] text-muted-foreground">
+          Click to preview
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Complete Tutor Interface matching API response
 interface TutorSpreadsheetData {
   // System & Status
@@ -319,6 +389,19 @@ export default function ViewAllTutorsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [totalRecords, setTotalRecords] = useState(0);
   
+  // File preview modal state
+  const [filePreview, setFilePreview] = useState<{
+    isOpen: boolean;
+    url: string;
+    title: string;
+    type: string;
+  }>({
+    isOpen: false,
+    url: '',
+    title: '',
+    type: ''
+  });
+  
   const spreadsheetRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -326,9 +409,10 @@ export default function ViewAllTutorsPage() {
   // Initialize visible columns (show essential columns by default)
   useEffect(() => {
     const essentialColumns: (keyof TutorSpreadsheetData)[] = [
-      'trn', 'namaLengkap', 'email', 'noHp1', 'status_tutor', 
+      'trn', 'fotoProfil', 'namaLengkap', 'email', 'noHp1', 'status_tutor', 
       'statusAkademik', 'namaUniversitas', 'selectedPrograms', 
-      'hourly_rate', 'statusMenerimaSiswa', 'created_at'
+      'hourly_rate', 'statusMenerimaSiswa', 'dokumenIdentitas', 
+      'dokumenPendidikan', 'status_verifikasi_identitas', 'created_at'
     ];
     setVisibleColumns(new Set(essentialColumns));
 
@@ -818,6 +902,11 @@ export default function ViewAllTutorsPage() {
                       #
                     </th>
 
+                    {/* Actions Header */}
+                    <th className="w-20 h-10 border border-border bg-muted/50 sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
+
                     {/* Column Headers */}
                     {filteredColumns.map((column, index) => (
                       <th
@@ -879,6 +968,38 @@ export default function ViewAllTutorsPage() {
                         {rowIndex + 1}
                       </td>
 
+                      {/* Actions Column */}
+                      <td className="w-20 h-10 border border-border bg-card sticky right-0 z-10 p-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                              <Icon icon="ph:dots-three-vertical" className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => window.open(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${tutor.id}`, '_blank')}
+                            >
+                              <Icon icon="ph:eye" className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutor.id}`)}
+                            >
+                              <Icon icon="ph:pencil" className="mr-2 h-4 w-4" />
+                              Edit Tutor
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              <Icon icon="ph:trash" className="mr-2 h-4 w-4" />
+                              Delete Tutor
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+
                       {/* Data Cells */}
                       {filteredColumns.map((column, colIndex) => (
                         <td
@@ -894,9 +1015,23 @@ export default function ViewAllTutorsPage() {
                           }}
                           onClick={() => setSelectedCell({ row: rowIndex, col: column.key })}
                         >
-                          <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
-                            {formatCellValue(tutor[column.key], column)}
-                          </div>
+                          {column.type === 'file' ? (
+                            <FileCell 
+                              value={tutor[column.key] as string | null} 
+                              filename={column.key}
+                              tutorName={tutor.namaLengkap}
+                              onPreview={(url, title, type) => setFilePreview({
+                                isOpen: true,
+                                url,
+                                title,
+                                type
+                              })}
+                            />
+                          ) : (
+                            <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
+                              {formatCellValue(tutor[column.key], column)}
+                            </div>
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -905,7 +1040,7 @@ export default function ViewAllTutorsPage() {
                   {/* Empty State */}
                   {sortedData.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={filteredColumns.length + 2} className="h-32 text-center">
+                      <td colSpan={filteredColumns.length + 3} className="h-32 text-center">
                         <div className="flex flex-col items-center justify-center space-y-2">
                           <Icon icon="ph:table" className="h-12 w-12 text-muted-foreground/50" />
                           <div className="text-lg font-medium text-muted-foreground">No tutor data found</div>
@@ -944,6 +1079,56 @@ export default function ViewAllTutorsPage() {
             </div>
           </div>
         </div>
+
+        {/* File Preview Modal */}
+        {filePreview.isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setFilePreview(prev => ({ ...prev, isOpen: false }))}
+          >
+            <div 
+              className="bg-white rounded-lg max-w-4xl max-h-[90vh] w-full mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-semibold">{filePreview.title}</h3>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(filePreview.url, '_blank')}
+                  >
+                    <Icon icon="ph:arrow-square-out" className="h-4 w-4 mr-2" />
+                    Open in New Tab
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFilePreview(prev => ({ ...prev, isOpen: false }))}
+                  >
+                    <Icon icon="ph:x" className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-4 max-h-[80vh] overflow-auto">
+                {filePreview.type === 'fotoProfil' ? (
+                  <img 
+                    src={filePreview.url} 
+                    alt={filePreview.title}
+                    className="max-w-full h-auto rounded-lg mx-auto"
+                    style={{ maxHeight: '70vh' }}
+                  />
+                ) : (
+                  <iframe
+                    src={filePreview.url}
+                    className="w-full h-[70vh] border rounded-lg"
+                    title={filePreview.title}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
