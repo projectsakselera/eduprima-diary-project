@@ -985,94 +985,87 @@ export default function AddTutorPage() {
       // Step 4: Handle file uploads using admin client (skip if no files)
       console.log('📤 Preparing file uploads...');
 
+      // Debug: Check form data files
+      console.log('🔍 Checking files in formData:');
+      console.log('fotoProfil:', formData.fotoProfil ? `${typeof formData.fotoProfil} - ${formData.fotoProfil instanceof File ? formData.fotoProfil.name : 'not a file'}` : 'null');
+      console.log('dokumenIdentitas:', formData.dokumenIdentitas ? `${typeof formData.dokumenIdentitas} - ${formData.dokumenIdentitas instanceof File ? formData.dokumenIdentitas.name : 'not a file'}` : 'null');
+      console.log('dokumenPendidikan:', formData.dokumenPendidikan ? `${typeof formData.dokumenPendidikan} - ${formData.dokumenPendidikan instanceof File ? formData.dokumenPendidikan.name : 'not a file'}` : 'null');
+      console.log('dokumenSertifikat:', formData.dokumenSertifikat ? `${typeof formData.dokumenSertifikat} - ${formData.dokumenSertifikat instanceof File ? formData.dokumenSertifikat.name : 'not a file'}` : 'null');
+
       // Check if there are any files to upload
       const hasFiles = (formData.fotoProfil && typeof formData.fotoProfil !== 'string') ||
                       (formData.dokumenIdentitas && typeof formData.dokumenIdentitas !== 'string') ||
                       (formData.dokumenPendidikan && typeof formData.dokumenPendidikan !== 'string') ||
                       (formData.dokumenSertifikat && typeof formData.dokumenSertifikat !== 'string');
 
-      // ✅ Use admin client for file uploads to bypass RLS issues
+      console.log('🎯 hasFiles result:', hasFiles);
+
+      // ✅ Use API route for file uploads to ensure server-side environment access
       if (hasFiles) {
-        console.log('📤 Uploading files to bucket "eduprimadiary" using admin client...');
+        console.log('📤 Uploading files via API route...');
         try {
-          // Import admin client for file operations
-          const { createAdminSupabaseClient } = await import('@/lib/supabase-admin');
-          const adminSupabase = createAdminSupabaseClient();
+          // Prepare FormData for API
+          const uploadFormData = new FormData();
+          uploadFormData.append('userId', userId);
           
-          // Create upload promises with admin client
-          const adminUploadPromises = [];
+          const fileTypes = [];
           
           if (formData.fotoProfil && typeof formData.fotoProfil !== 'string') {
-            const fileExt = formData.fotoProfil.name.split('.').pop();
-            const fileName = `${trn}/foto-profil.${fileExt}`;
-            adminUploadPromises.push(
-              adminSupabase.storage
-                .from('eduprimadiary')
-                .upload(fileName, formData.fotoProfil, {
-                  cacheControl: '3600',
-                  upsert: true
-                })
-            );
+            uploadFormData.append('files', formData.fotoProfil);
+            uploadFormData.append('fileTypes', 'profile_photo');
+            fileTypes.push('profile_photo');
+            console.log('📸 Adding foto profil to upload queue');
           }
           
           if (formData.dokumenIdentitas && typeof formData.dokumenIdentitas !== 'string') {
-            const fileExt = formData.dokumenIdentitas.name.split('.').pop();
-            const fileName = `${trn}/identitas.${fileExt}`;
-            adminUploadPromises.push(
-              adminSupabase.storage
-                .from('eduprimadiary')
-                .upload(fileName, formData.dokumenIdentitas, {
-                  cacheControl: '3600',
-                  upsert: true
-                })
-            );
+            uploadFormData.append('files', formData.dokumenIdentitas);
+            uploadFormData.append('fileTypes', 'identity_document');
+            fileTypes.push('identity_document');
+            console.log('📄 Adding dokumen identitas to upload queue');
           }
           
           if (formData.dokumenPendidikan && typeof formData.dokumenPendidikan !== 'string') {
-            const fileExt = formData.dokumenPendidikan.name.split('.').pop();
-            const fileName = `${trn}/pendidikan.${fileExt}`;
-            adminUploadPromises.push(
-              adminSupabase.storage
-                .from('eduprimadiary')
-                .upload(fileName, formData.dokumenPendidikan, {
-                  cacheControl: '3600',
-                  upsert: true
-                })
-            );
+            uploadFormData.append('files', formData.dokumenPendidikan);
+            uploadFormData.append('fileTypes', 'education_document');
+            fileTypes.push('education_document');
+            console.log('🎓 Adding dokumen pendidikan to upload queue');
           }
           
           if (formData.dokumenSertifikat && typeof formData.dokumenSertifikat !== 'string') {
-            const fileExt = formData.dokumenSertifikat.name.split('.').pop();
-            const fileName = `${trn}/sertifikat.${fileExt}`;
-            adminUploadPromises.push(
-              adminSupabase.storage
-                .from('eduprimadiary')
-                .upload(fileName, formData.dokumenSertifikat, {
-                  cacheControl: '3600',
-                  upsert: true
-                })
-            );
+            uploadFormData.append('files', formData.dokumenSertifikat);
+            uploadFormData.append('fileTypes', 'certificate_document');
+            fileTypes.push('certificate_document');
+            console.log('🏆 Adding dokumen sertifikat to upload queue');
           }
           
-          const uploadResults = await Promise.all(adminUploadPromises);
-          console.log('✅ File uploads completed successfully with admin client:', uploadResults);
+          console.log(`🚀 Starting upload of ${fileTypes.length} files via API...`);
           
-          // Update document storage records with actual file URLs
-          for (let i = 0; i < uploadResults.length; i++) {
-            const result = uploadResults[i];
-            if (result?.data?.path) {
-              // Get public URL for the uploaded file using admin client
-              const { data: urlData } = adminSupabase.storage
-                .from('eduprimadiary')
-                .getPublicUrl(result.data.path);
-              
-              console.log(`📁 File ${i + 1} uploaded: ${result.data.path}`);
-              console.log(`🔗 Public URL: ${urlData.publicUrl}`);
-              
-              // Here you could update the document_storage table with the actual URL
-              // This would require keeping track of which document record corresponds to which upload
-            }
+          // Call API route
+          const uploadResponse = await fetch('/api/upload/tutor-files', {
+            method: 'POST',
+            body: uploadFormData
+          });
+          
+          const uploadResult = await uploadResponse.json();
+          
+          if (!uploadResponse.ok || !uploadResult.success) {
+            throw new Error(uploadResult.error || 'Upload API failed');
           }
+          
+          console.log('✅ File uploads completed via API:', uploadResult);
+          
+          // Log individual results
+          uploadResult.results.forEach((result: any, index: number) => {
+            console.log(`📁 Upload ${index + 1} (${result.fileType}):`, {
+              success: result.success,
+              url: result.publicUrl,
+              error: result.error
+            });
+          });
+          
+          const successCount = uploadResult.results.filter((r: any) => r.success).length;
+          console.log(`✅ Successfully uploaded ${successCount}/${uploadResult.results.length} files`);
+          
         } catch (uploadError) {
           console.error('❌ File upload failed:', uploadError);
           console.warn('⚠️ Data was saved to database but file upload failed');
@@ -1081,6 +1074,8 @@ export default function AddTutorPage() {
           const errorMsg = uploadError instanceof Error ? uploadError.message : 'Unknown upload error';
           alert(`⚠️ Data tersimpan tapi upload file gagal:\n${errorMsg}\n\nAnda bisa upload file manual nanti.`);
         }
+      } else {
+        console.log('⏩ No files to upload - skipping file upload step');
       }
 
 
@@ -1371,7 +1366,7 @@ export default function AddTutorPage() {
                                 key={field.name} 
                                 className={cn(
                                   "transition-all duration-200",
-                                  field.type === 'textarea' || field.type === 'checkbox' || field.type === 'ai-core-select' || field.type === 'ai-recommendations' || field.type === 'category-program-selector' || (field.disabled && field.className === 'info-text') ? 'lg:col-span-2 xl:col-span-3' : ''
+                                  field.type === 'textarea' || field.type === 'checkbox' || field.type === 'ai-core-select' || field.type === 'ai-recommendations' || field.type === 'category-program-selector' || (field.disabled && field.className === 'info-text') || field.className === 'full-width-field' ? 'lg:col-span-2 xl:col-span-3' : ''
                                 )}
                               >
                                 <DynamicFormField

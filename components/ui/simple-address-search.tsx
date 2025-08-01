@@ -81,12 +81,6 @@ export function SimpleAddressSearch({
   return (
     <Card className={`p-4 ${className}`}>
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center space-x-2">
-          <Icon icon={icon} className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">{label}</span>
-        </div>
-
         {/* Search Input */}
         <div className="flex space-x-2">
           <div className="relative flex-1">

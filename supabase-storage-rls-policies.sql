@@ -296,7 +296,9 @@ WHERE tablename = 'objects'
 -- ================================================================
 -- 
 -- 1. File Upload Path Structure:
---    ✅ Correct: '550e8400-e29b-41d4-a716-446655440000/avatar.jpg'
+--    ✅ Correct: '550e8400-e29b-41d4-a716-446655440000/foto-profil.jpg'
+--    ✅ Correct: '550e8400-e29b-41d4-a716-446655440000/identitas.pdf'
+--    ❌ Wrong:   'TRN001/foto-profil.jpg' (user can't access TRN folder)
 --    ❌ Wrong:   'shared/document.pdf' (user can't access shared folder)
 --
 -- 2. Custom JWT Structure (from /api/supabase-session):

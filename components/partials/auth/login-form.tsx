@@ -65,7 +65,14 @@ const LoginForm = () => {
 
         if (result?.error) {
           console.error('❌ NextAuth login failed:', result.error);
-          toast.error('Invalid email or password');
+          
+          // Handle different error types for better UX
+          if (result.error === 'CredentialsSignin') {
+            // This includes both invalid credentials AND unauthorized roles
+            toast.error('Invalid email/password or user not authorized to access this system');
+          } else {
+            toast.error('Login failed. Please try again.');
+          }
           return;
         }
 

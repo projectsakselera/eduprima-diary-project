@@ -10,12 +10,26 @@ export const createAdminSupabaseClient = () => {
   console.log('   - NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'FOUND' : 'MISSING');
   console.log('   - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FOUND' : 'MISSING');
   
+  // Additional debug: show actual values (masked for security)
+  console.log('🔍 Actual Values Check:');
+  console.log('   - NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 30)}...` : 'undefined');
+  console.log('   - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? `${process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20)}...` : 'undefined');
+  
   // Check if Supabase credentials are configured
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  console.log('🔍 Detailed Check:');
+  console.log('   - hasUrl:', hasUrl);
+  console.log('   - hasKey:', hasKey);
+  console.log('   - Both present:', hasUrl && hasKey);
+  
+  if (!hasUrl || !hasKey) {
     console.error('❌ SUPABASE CREDENTIALS REQUIRED! Please configure:');
-    console.error('   - NEXT_PUBLIC_SUPABASE_URL');
-    console.error('   - SUPABASE_SERVICE_ROLE_KEY');
+    if (!hasUrl) console.error('   - NEXT_PUBLIC_SUPABASE_URL is missing');
+    if (!hasKey) console.error('   - SUPABASE_SERVICE_ROLE_KEY is missing');
     console.warn('⚠️  All authentication will FAIL until Supabase is properly configured')
+    console.warn('🚫 RETURNING MOCK CLIENT - All uploads will fail');
     // Return a mock client that will fail gracefully with complete method chain
     return {
       from: () => ({
@@ -37,6 +51,7 @@ export const createAdminSupabaseClient = () => {
   }
   
   console.log('✅ Creating REAL Supabase Admin Client with valid credentials');
+  console.log('🚀 Service Role Key found, client will have full admin access');
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

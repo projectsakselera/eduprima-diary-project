@@ -28,7 +28,7 @@ const generateMonthYearOptions = (startYear: number, endYear: number) => {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch' | 'category-program-selector';
+  type: 'text' | 'email' | 'tel' | 'tel_split' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'switch' | 'category-program-selector';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -48,6 +48,7 @@ export interface FormField {
   dependsOn?: string; // field dependency
   conditional?: (formData: any) => boolean; // conditional visibility
   className?: string; // for custom styling
+  inputProps?: any; // for additional input properties
   // New AI-related properties
   maxCoreSelections?: number; // for ai-core-select
   aiCorrelationMap?: string; // reference to correlation matrix
@@ -306,9 +307,66 @@ const validationRules = {
     if (value.length < 10) return 'Nomor rekening minimal 10 digit';
     return null;
   },
-  ipk: (value: number) => {
+  ipk: (value: string) => {
     if (!value) return null;
-    if (value < 2.0 || value > 4.0) return 'IPK harus antara 2.0 - 4.0';
+    
+    // Check if contains comma instead of dot
+    if (value.includes(',')) {
+      return 'IPK harus menggunakan titik (.) sebagai pemisah desimal, bukan koma (,)';
+    }
+    
+    // More flexible format validation - allow formats like: 4, 3.76, 2.7, 3.766
+    if (!/^[0-4](\.[0-9]{1,3})?$/.test(value)) {
+      return 'Format IPK tidak valid. Contoh: 4, 3.76, 2.7, atau 3.766';
+    }
+    
+    const numValue = parseFloat(value);
+    if (numValue < 2.0 || numValue > 4.0) {
+      return 'IPK harus antara 2.0 - 4.0';
+    }
+    
+    return null;
+  },
+  phone_split: (value: string) => {
+    if (!value) return null;
+    
+    // Parse country code and number
+    const match = value.match(/^(\d{1,4})(\d+)$/);
+    if (!match) {
+      return 'Format nomor HP tidak valid. Gunakan format: [kode negara][nomor]';
+    }
+    
+    const [, countryCode, phoneNumber] = match;
+    const totalLength = value.length;
+    
+    // Validate based on country code
+    if (countryCode === '62') {
+      // Indonesia: 62 + 9-12 digits
+      if (phoneNumber.length < 9 || phoneNumber.length > 12) {
+        return 'Nomor Indonesia harus 9-12 digit setelah kode negara 62';
+      }
+    } else if (countryCode === '1') {
+      // US/Canada: 1 + 10 digits
+      if (phoneNumber.length !== 10) {
+        return 'Nomor US/Canada harus 10 digit setelah kode negara 1';
+      }
+    } else if (countryCode === '60') {
+      // Malaysia: 60 + 9-10 digits
+      if (phoneNumber.length < 9 || phoneNumber.length > 10) {
+        return 'Nomor Malaysia harus 9-10 digit setelah kode negara 60';
+      }
+    } else if (countryCode === '65') {
+      // Singapore: 65 + 8 digits
+      if (phoneNumber.length !== 8) {
+        return 'Nomor Singapore harus 8 digit setelah kode negara 65';
+      }
+    } else {
+      // Generic validation for other countries
+      if (totalLength < 8 || totalLength > 15) {
+        return 'Nomor HP harus 8-15 digit total (termasuk kode negara)';
+      }
+    }
+    
     return null;
   },
   tarif: (value: number) => {
@@ -1209,7 +1267,8 @@ export const tutorFormConfig: FormConfig = {
           accept: 'image/*',
           helperText: 'Unggah foto diri tutor. Format JPG, PNG maksimal 2MB.',
           icon: 'ph:camera',
-          size: 'lg'
+          size: 'lg',
+          className: 'full-width-field'
         },
         {
           name: 'trn',
@@ -1275,18 +1334,18 @@ export const tutorFormConfig: FormConfig = {
         {
           name: 'noHp1',
           label: 'No. HP (WhatsApp)',
-          type: 'tel',
-          placeholder: '6281234567890',
-          helperText: 'Nomor WhatsApp aktif untuk komunikasi. JANGAN pakai spasi/strip! Format: 6281234567890 atau 081234567890 (diutamakan pakai 62).',
+          type: 'tel_split',
+          placeholder: '811234567890',
+          helperText: 'Nomor WhatsApp aktif untuk komunikasi utama. Kode Area + Ekstensi. jangan pakai spasi/strip/tanda minus, dan Jangan mulai dengan 0. Contoh BENAR: 811234567890',
           icon: 'ph:phone',
           size: 'lg'
         },
         {
           name: 'noHp2',
           label: 'No. HP Alternatif (Opsional)',
-          type: 'tel',
-          placeholder: '6281234567890',
-          helperText: 'Nomor alternatif untuk kontak darurat. JANGAN pakai spasi/strip! Format: 6281234567890 atau 081234567890 (diutamakan pakai 62).',
+          type: 'tel_split',
+          placeholder: '811234567890',
+          helperText: 'Nomor alternatif untuk kontak darurat. Kode Area + Ekstensi. jangan pakai spasi/strip/tanda minus, dan Jangan mulai dengan 0. Contoh BENAR: 811234567890',
           icon: 'ph:phone-plus',
           size: 'lg'
         },
@@ -1667,11 +1726,25 @@ export const tutorFormConfig: FormConfig = {
           label: 'IPK Terakhir',
           type: 'text',
           required: true,
-          placeholder: '3.75 atau 3,75',
-          helperText: 'Gunakan format desimal dengan titik, contoh: 3.75. Hanya isi dengan angka.',
+          placeholder: '3.76',
+          helperText: 'WAJIB gunakan titik (.) sebagai pemisah desimal. Format boleh: 4, 3.76, 2.7, atau 3.766 (BUKAN 3,75)',
           conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
           icon: 'ph:trophy',
-          size: 'lg'
+          size: 'lg',
+          inputProps: {
+            onInput: (e: any) => {
+              // Replace comma with dot automatically
+              let value = e.target.value.replace(',', '.');
+              // Only allow numbers and single dot
+              value = value.replace(/[^0-9.]/g, '');
+              // Prevent multiple dots
+              const dots = value.split('.').length - 1;
+              if (dots > 1) {
+                value = value.substring(0, value.lastIndexOf('.'));
+              }
+              e.target.value = value;
+            }
+          }
         },
         {
           name: 'section_periode_studi',
@@ -2042,7 +2115,7 @@ export const tutorFormConfig: FormConfig = {
           name: 'location_notes',
           label: 'Preferensi Area Mengajar (Opsional)',
           type: 'textarea',
-          placeholder: 'Contoh: "Prefer Jakarta Pusat-Selatan, hindari Utara karena macet" atau "Area Sleman-Yogya OK, Bantul Selatan susah akses" atau "Surabaya Barat-Timur prefer, Utara jauh dari rumah"',
+          placeholder: 'Contoh: "Prefer Jakarta Pusat-Selatan, hindari Utara karena macet" atau "Area Sleman-Yogya OK, Bantul Selatan gak bisa malem" atau "Surabaya Barat-Timur prefer, Utara jauh dari rumah"',
           rows: 3,
           helperText: '💬 Opsional: Jelaskan preferensi area khusus, area yang dihindari, atau pertimbangan akses jalan/transportasi untuk membantu EM dalam matching siswa.',
           icon: 'ph:note',
@@ -2101,14 +2174,14 @@ export const tutorFormConfig: FormConfig = {
         },
         {
           name: 'hourly_rate',
-          label: 'Tarif per Jam (Rupiah)',
+          label: 'Ekspektasi Fee Minimal Per Jam',
           type: 'number',
           required: true,
           placeholder: '75000',
           min: 25000,
           max: 1000000,
           step: 5000,
-          helperText: 'Tarif mengajar per jam dalam Rupiah. Minimal Rp 25.000, maksimal Rp 1.000.000.',
+          helperText: 'Ekspektasi fee minimal mengajar per jam dalam Rupiah. Minimal Rp 25.000, maksimal Rp 1.000.000.',
           icon: 'ph:money',
           size: 'lg'
         },
@@ -2458,10 +2531,10 @@ export const tutorFormConfig: FormConfig = {
         {
           name: 'emergencyContactPhone',
           label: 'Nomor HP Kontak Darurat',
-          type: 'tel',
+          type: 'tel_split',
           required: true,
-          placeholder: '+62 812-9876-5432',
-          helperText: 'Nomor HP yang bisa dihubungi untuk kontak darurat.',
+          placeholder: '812987654321',
+          helperText: 'Nomor HP kontak darurat. Kode Area + Ekstensi. jangan pakai spasi/strip/tanda minus, dan Jangan mulai dengan 0. Contoh BENAR: 812345678901',
           icon: 'ph:phone',
           size: 'lg'
         },

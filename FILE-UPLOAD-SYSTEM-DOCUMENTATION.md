@@ -160,7 +160,7 @@ const authenticatedUserId = user.id;
 ### **File Organization Structure**
 ```
 eduprimadiary/
-├── {TRN}/
+├── {user_id}/
 │   ├── foto-profil.jpg
 │   ├── identitas.pdf
 │   ├── pendidikan.pdf

@@ -118,6 +118,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             mappedRole = 'database_tutor_manager' // Map to database tutor manager
           }
 
+          // ✅ AUTHORIZATION CHECK: Only allow specific roles to access the system
+          const allowedRoles = ['super_admin', 'database_tutor_manager'];
+          if (!allowedRoles.includes(mappedRole || '')) {
+            console.log('❌ NextAuth - User role not authorized for system access:', roleCode, '→', mappedRole)
+            console.log('❌ NextAuth - Allowed roles:', allowedRoles)
+            return null // Reject login for unauthorized roles
+          }
+
           // Return user object for NextAuth session
           const userResponse: User = {
             id: user.id,
@@ -131,7 +139,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             userCode: user.user_code
           }
 
-          console.log('✅ NextAuth - User object created:', userResponse.email, userResponse.role)
+          console.log('✅ NextAuth - User authorized and object created:', userResponse.email, userResponse.role)
           return userResponse
 
         } catch (error: any) {

@@ -12,6 +12,24 @@ import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { toast } from '@/components/ui/use-toast';
+// Import form config types and data (avoiding potential circular deps)
+// import { 
+//   tutorFormConfig, 
+//   type TutorFormData, 
+//   type FormField as TutorFormField 
+// } from '../add/form-config';
+
+// Temporary simplified types to avoid dependency issues
+interface TutorFormField {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  options?: Array<{ value: string | number; label: string; disabled?: boolean }>;
+  validation?: (value: any) => string | null;
+  min?: number;
+  max?: number;
+}
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -51,6 +69,152 @@ export default function ImportExportPage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Generate comprehensive field mapping from simplified config
+  const generateFieldMapping = (): Array<{field: TutorFormField, csvColumn: string}> => {
+    const fieldMap: Array<{field: TutorFormField, csvColumn: string}> = [];
+    
+    // Define essential fields for bulk import (based on form config)
+    const essentialFields: TutorFormField[] = [
+      { name: 'status_tutor', label: 'Status Tutor', type: 'select', required: false },
+      { name: 'trn', label: 'TRN (Tutor Registration Number)', type: 'text', required: false },
+      { name: 'namaLengkap', label: 'Nama Lengkap', type: 'text', required: true },
+      { name: 'namaPanggilan', label: 'Nama Panggilan', type: 'text', required: false },
+      { name: 'tanggalLahir', label: 'Tanggal Lahir', type: 'date', required: true },
+      { name: 'jenisKelamin', label: 'Jenis Kelamin', type: 'select', required: true },
+      { name: 'agama', label: 'Agama', type: 'select', required: false },
+      { name: 'email', label: 'Email Aktif', type: 'email', required: true },
+      { name: 'noHp1', label: 'No. HP (WhatsApp)', type: 'tel_split', required: true },
+      { name: 'noHp2', label: 'No. HP Alternatif (Opsional)', type: 'tel_split', required: false },
+      { name: 'headline', label: 'Headline/Tagline Tutor', type: 'text', required: false },
+      { name: 'deskripsiDiri', label: 'Deskripsi Diri/Bio Tutor', type: 'textarea', required: false },
+      { name: 'motivasiMenjadiTutor', label: 'Motivasi Menjadi Tutor', type: 'textarea', required: true },
+      { name: 'socialMedia1', label: 'Link Media Sosial 1 (Opsional)', type: 'text', required: false },
+      { name: 'socialMedia2', label: 'Link Media Sosial 2 (Opsional)', type: 'text', required: false },
+      { name: 'provinsiDomisili', label: 'Provinsi', type: 'select', required: true },
+      { name: 'kotaKabupatenDomisili', label: 'Kota/Kabupaten', type: 'select', required: true },
+      { name: 'kecamatanDomisili', label: 'Kecamatan', type: 'text', required: true },
+      { name: 'kelurahanDomisili', label: 'Kelurahan/Desa', type: 'text', required: true },
+      { name: 'alamatLengkapDomisili', label: 'Alamat Lengkap/Nama Jalan', type: 'textarea', required: true },
+      { name: 'kodePosDomisili', label: 'Kode Pos', type: 'text', required: false },
+      { name: 'namaNasabah', label: 'Nama Pemilik Rekening', type: 'text', required: true },
+      { name: 'nomorRekening', label: 'Nomor Rekening', type: 'text', required: true },
+      { name: 'namaBank', label: 'Nama Bank', type: 'select', required: true },
+      { name: 'statusAkademik', label: 'Status Akademik Saat Ini', type: 'select', required: true },
+      { name: 'namaUniversitas', label: 'Nama Universitas / Institusi', type: 'text', required: false },
+      { name: 'fakultas', label: 'Fakultas', type: 'text', required: false },
+      { name: 'jurusan', label: 'Jurusan / Program Studi', type: 'text', required: false },
+      { name: 'ipk', label: 'IPK Terakhir', type: 'text', required: false },
+      { name: 'tahunMasuk', label: 'Tahun Masuk', type: 'select', required: false },
+      { name: 'tahunLulus', label: 'Tahun Lulus', type: 'select', required: false },
+      { name: 'namaSMA', label: 'Nama SMA / SMK / Sederajat', type: 'text', required: false },
+      { name: 'jurusanSMA', label: 'Jurusan', type: 'select', required: false },
+      { name: 'tahunLulusSMA', label: 'Tahun Lulus', type: 'select', required: false },
+      { name: 'keahlianSpesialisasi', label: 'Keahlian & Spesialisasi', type: 'textarea', required: true },
+      { name: 'keahlianLainnya', label: 'Keahlian Lainnya (jika ada)', type: 'textarea', required: false },
+      { name: 'pengalamanMengajar', label: 'Pengalaman Mengajar', type: 'textarea', required: true },
+      { name: 'pengalamanLainRelevan', label: 'Pengalaman Lain yang Relevan', type: 'textarea', required: false },
+      { name: 'prestasiAkademik', label: 'Prestasi Akademik', type: 'textarea', required: false },
+      { name: 'prestasiNonAkademik', label: 'Prestasi Non-Akademik', type: 'textarea', required: false },
+      { name: 'sertifikasiPelatihan', label: 'Sertifikasi & Pelatihan', type: 'textarea', required: false },
+      { name: 'selectedPrograms', label: '📚 Pilih Program/Mata Pelajaran yang Diajarkan', type: 'checkbox', required: true },
+      { name: 'mataPelajaranLainnya', label: '📝 Mata Pelajaran Lainnya (Jika Tidak Ditemukan)', type: 'textarea', required: false },
+      { name: 'teaching_radius_km', label: 'Radius Area Mengajar (KM)', type: 'number', required: false },
+      { name: 'alamatTitikLokasi', label: 'Titik Pusat Area Target Mengajar', type: 'textarea', required: false },
+      { name: 'location_notes', label: 'Preferensi Area Mengajar (Opsional)', type: 'textarea', required: false },
+      { name: 'statusMenerimaSiswa', label: 'Status Availability', type: 'select', required: true },
+      { name: 'available_schedule', label: 'Jadwal Mingguan Tersedia', type: 'checkbox', required: true },
+      { name: 'teaching_methods', label: 'Metode Pengajaran', type: 'checkbox', required: true },
+      { name: 'hourly_rate', label: 'Ekspektasi Fee Minimal Per Jam', type: 'number', required: true, min: 25000, max: 1000000 },
+      { name: 'maksimalSiswaBaru', label: 'Maksimal Siswa Baru per Minggu', type: 'number', required: false },
+      { name: 'maksimalTotalSiswa', label: 'Maksimal Total Siswa', type: 'number', required: false },
+      { name: 'usiaTargetSiswa', label: 'Usia Target Siswa', type: 'checkbox', required: false },
+      { name: 'catatanAvailability', label: 'Catatan Availability', type: 'textarea', required: false },
+      { name: 'teachingMethods', label: 'Gaya Pembelajaran yang Dikuasai', type: 'checkbox', required: false },
+      { name: 'studentLevelPreferences', label: 'Preferensi Level Kemampuan Siswa', type: 'checkbox', required: false },
+      { name: 'specialNeedsCapable', label: 'Mampu Mengajar Siswa Berkebutuhan Khusus', type: 'select', required: false },
+      { name: 'groupClassWilling', label: 'Bersedia Mengajar Kelas Grup', type: 'select', required: false },
+      { name: 'onlineTeachingCapable', label: 'Kemampuan Mengajar Online', type: 'select', required: true },
+      { name: 'techSavviness', label: 'Tingkat Melek Teknologi', type: 'select', required: false },
+      { name: 'gmeetExperience', label: 'Pengalaman Google Meet/Zoom', type: 'select', required: false },
+      { name: 'presensiUpdateCapability', label: 'Kemampuan Update Presensi Online', type: 'select', required: false },
+      { name: 'tutorPersonalityType', label: 'Tipe Kepribadian Tutor', type: 'checkbox', required: true },
+      { name: 'communicationStyle', label: 'Gaya Komunikasi', type: 'checkbox', required: true },
+      { name: 'teachingPatienceLevel', label: 'Level Kesabaran Mengajar (1-10)', type: 'select', required: true },
+      { name: 'studentMotivationAbility', label: 'Kemampuan Memotivasi Siswa (1-10)', type: 'select', required: true },
+      { name: 'scheduleFlexibilityLevel', label: 'Level Fleksibilitas Jadwal (1-10)', type: 'select', required: false },
+      { name: 'emergencyContactName', label: 'Nama Kontak Darurat', type: 'text', required: true },
+      { name: 'emergencyContactRelationship', label: 'Hubungan dengan Kontak Darurat', type: 'select', required: true },
+      { name: 'emergencyContactPhone', label: 'Nomor HP Kontak Darurat', type: 'tel_split', required: true }
+    ];
+    
+    essentialFields.forEach(field => {
+      fieldMap.push({
+        field,
+        csvColumn: field.label // Default CSV column name
+      });
+    });
+    
+    return fieldMap;
+  };
+
+  // Generate CSV template based on form config
+  const downloadCSVTemplate = () => {
+    const fieldMapping = generateFieldMapping();
+    
+    // Create CSV headers
+    const headers = fieldMapping.map(({ field }) => field.label);
+    
+    // Create sample data row with examples
+    const sampleRow = fieldMapping.map(({ field }) => {
+      switch (field.type) {
+        case 'email':
+          return 'contoh@gmail.com';
+        case 'tel':
+        case 'tel_split':
+          return '6281234567890';
+        case 'number':
+          return field.name.includes('tarif') ? '75000' : 
+                 field.name.includes('ipk') ? '3.75' : 
+                 field.name.includes('tahun') ? '2023' : '1';
+        case 'date':
+          return '2000-01-15';
+        case 'checkbox':
+          return 'Option 1, Option 2';
+        case 'select':
+          return field.options && field.options.length > 0 ? field.options[0].label : 'Pilih Opsi';
+        case 'textarea':
+          return 'Contoh deskripsi atau penjelasan...';
+        case 'switch':
+          return 'Ya';
+        default:
+          return `Contoh ${field.label}`;
+      }
+    });
+    
+    // Generate CSV content
+    const csvContent = [
+      headers.join(','),
+      sampleRow.map(value => `"${value}"`).join(',')
+    ].join('\n');
+    
+    // Download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tutor_import_template_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Template Downloaded",
+      description: "CSV template has been downloaded. Use this as a reference for your data import.",
+      duration: 3000,
+    });
+  };
 
   // Load saved column mapping
   const getColumnMapping = () => {
@@ -124,22 +288,51 @@ export default function ImportExportPage() {
     }
   }, []);
 
-  // Apply column mapping and validation
-  const processData = (rawData: any[], columnMapping: any[]): ParsedRecord[] => {
+  // Apply column mapping and validation using form config
+  const processData = (rawData: any[]): ParsedRecord[] => {
+    // Get field mapping from form config
+    const fieldMapping = generateFieldMapping();
+    
     return rawData.map((row, index) => {
       const mappedData: Record<string, any> = {};
       const errors: string[] = [];
       const warnings: string[] = [];
 
-      // Apply column mappings
-      columnMapping.forEach(mapping => {
-        const sourceValue = row[mapping.formField];
+      // Apply field mappings based on form config
+      fieldMapping.forEach(({ field, csvColumn }) => {
+        // Try multiple variations of column names
+        const possibleColumns = [
+          csvColumn,
+          field.label,
+          field.name,
+          field.label.toLowerCase(),
+          field.label.replace(/\s+/g, ''),
+          field.label.replace(/\s+/g, '_'),
+          field.label.replace(/\s+/g, '-')
+        ];
+        
+        let sourceValue = undefined;
+        let usedColumn = '';
+        
+        // Find the first matching column
+        for (const colName of possibleColumns) {
+          if (row[colName] !== undefined) {
+            sourceValue = row[colName];
+            usedColumn = colName;
+            break;
+          }
+        }
+
         if (sourceValue !== undefined && sourceValue !== '') {
-          // Apply transformations based on database field type
-          const transformedValue = transformValue(sourceValue, mapping.databaseField);
-          mappedData[mapping.databaseField] = transformedValue;
-        } else if (mapping.required) {
-          errors.push(`Required field '${mapping.formField}' is missing or empty`);
+          try {
+            // Apply transformations based on field type
+            const transformedValue = transformValue(sourceValue, field.name, field.type);
+            mappedData[field.name] = transformedValue;
+          } catch (err) {
+            errors.push(`Error transforming ${field.label}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          }
+        } else if (field.required) {
+          errors.push(`Required field '${field.label}' is missing or empty (tried columns: ${possibleColumns.join(', ')})`);
         }
       });
 
@@ -158,72 +351,154 @@ export default function ImportExportPage() {
     });
   };
 
-  // Transform values based on database field requirements
-  const transformValue = (value: any, dbFieldName: string): any => {
+  // Transform values based on field type from form config
+  const transformValue = (value: any, fieldName: string, fieldType: string): any => {
     if (value === null || value === undefined || value === '') {
       return null;
     }
 
-    // Handle array fields (subjects, methods, etc.)
-    if (dbFieldName.includes('mata_pelajaran') || dbFieldName.includes('metode') || dbFieldName.includes('jadwal')) {
-      if (typeof value === 'string') {
-        return value.split(/[,;|]/).map(v => v.trim()).filter(v => v);
-      }
-      return Array.isArray(value) ? value : [value];
+    switch (fieldType) {
+      case 'email':
+        return String(value).toLowerCase().trim();
+        
+      case 'tel':
+      case 'tel_split':
+        // Format phone number (remove spaces, format to Indonesian standard)
+        let cleaned = String(value).replace(/[\s\-\(\)\.\+]/g, '');
+        if (cleaned.startsWith('0')) {
+          cleaned = '62' + cleaned.slice(1);
+        } else if (cleaned.startsWith('8')) {
+          cleaned = '62' + cleaned;
+        } else if (!cleaned.startsWith('62')) {
+          cleaned = '62' + cleaned;
+        }
+        return cleaned;
+        
+      case 'number':
+        const num = parseFloat(String(value).replace(/[^\d.-]/g, ''));
+        return isNaN(num) ? null : num;
+        
+      case 'date':
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+        
+      case 'checkbox':
+        // Handle array fields (subjects, methods, etc.)
+        if (typeof value === 'string') {
+          return value.split(/[,;|]/).map(v => v.trim()).filter(v => v);
+        }
+        return Array.isArray(value) ? value : [value];
+        
+      case 'switch':
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          return lowerValue === 'true' || lowerValue === 'yes' || lowerValue === '1' || lowerValue === 'ya';
+        }
+        return false;
+        
+      case 'select':
+      case 'radio':
+        return String(value).trim();
+        
+      case 'textarea':
+        return String(value).trim();
+        
+      default:
+        return String(value).trim();
     }
-
-    // Handle numeric fields
-    if (dbFieldName.includes('tarif') || dbFieldName.includes('ipk') || dbFieldName === 'tahun_lulus' || dbFieldName === 'tahun_masuk') {
-      const num = parseFloat(String(value).replace(/[^\d.-]/g, ''));
-      return isNaN(num) ? null : num;
-    }
-
-    // Handle date fields
-    if (dbFieldName.includes('tanggal') || dbFieldName.includes('date')) {
-      const date = new Date(value);
-      return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
-    }
-
-    // Handle boolean fields
-    if (typeof value === 'boolean') {
-      return value;
-    }
-    if (typeof value === 'string') {
-      const lowerValue = value.toLowerCase();
-      if (lowerValue === 'true' || lowerValue === 'yes' || lowerValue === '1') return true;
-      if (lowerValue === 'false' || lowerValue === 'no' || lowerValue === '0') return false;
-    }
-
-    // Default: return as string
-    return String(value).trim();
   };
 
-  // Validate individual record
+  // Comprehensive validation based on form config
   const validateRecord = (record: Record<string, any>): string[] => {
     const errors: string[] = [];
 
-    // Email validation
-    if (record.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(record.email)) {
-        errors.push('Invalid email format');
-      }
-    }
+    // Get all fields for validation
+    const fieldMapping = generateFieldMapping();
+    const allFields = fieldMapping.map(f => f.field);
 
-    // Phone validation
-    if (record.no_hp_1) {
-      const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
-      if (!phoneRegex.test(String(record.no_hp_1).replace(/\s|-/g, ''))) {
-        errors.push('Invalid phone number format');
+    // Validate each field
+    allFields.forEach(field => {
+      const value = record[field.name];
+      
+      // Required field validation
+      if (field.required && (!value || (Array.isArray(value) && value.length === 0))) {
+        errors.push(`${field.label} is required`);
+        return;
       }
-    }
 
-    // TRN validation
-    if (record.trn) {
-      if (!/^[A-Z0-9]+$/.test(record.trn)) {
-        errors.push('TRN must contain only uppercase letters and numbers');
+      // Skip validation if field is empty and not required
+      if (!value || value === '') return;
+
+      try {
+        // Type-specific validation
+        switch (field.type) {
+          case 'email':
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+              errors.push(`${field.label}: Invalid email format`);
+            }
+            break;
+            
+          case 'tel':
+          case 'tel_split':
+            const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+            if (!phoneRegex.test(String(value).replace(/\s|-/g, ''))) {
+              errors.push(`${field.label}: Invalid phone number format`);
+            }
+            break;
+            
+          case 'number':
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+              errors.push(`${field.label}: Must be a valid number`);
+            } else {
+              if (field.min !== undefined && num < field.min) {
+                errors.push(`${field.label}: Must be at least ${field.min}`);
+              }
+              if (field.max !== undefined && num > field.max) {
+                errors.push(`${field.label}: Must be at most ${field.max}`);
+              }
+            }
+            break;
+            
+          case 'date':
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+              errors.push(`${field.label}: Invalid date format`);
+            }
+            break;
+            
+          case 'select':
+            if (field.options && field.options.length > 0) {
+              const validValues = field.options.map(opt => opt.value);
+              if (!validValues.includes(value)) {
+                errors.push(`${field.label}: Invalid option selected`);
+              }
+            }
+            break;
+        }
+
+        // Apply basic validation rules
+        if (field.name === 'trn' && value) {
+          if (!/^[A-Z0-9]+$/.test(value)) {
+            errors.push(`${field.label}: Must contain only uppercase letters and numbers`);
+          }
+        }
+        
+        if (field.name === 'ipk' && value) {
+          if (value.includes(',')) {
+            errors.push(`${field.label}: Use dot (.) as decimal separator, not comma (,)`);
+          }
+          const numValue = parseFloat(value);
+          if (numValue < 2.0 || numValue > 4.0) {
+            errors.push(`${field.label}: Must be between 2.0 - 4.0`);
+          }
+        }
+      } catch (err) {
+        errors.push(`${field.label}: Validation error - ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
-    }
+    });
 
     return errors;
   };
@@ -240,13 +515,12 @@ export default function ImportExportPage() {
 
     try {
       const rawData = await parseFile(file);
-      const columnMapping = getColumnMapping();
       
-      if (columnMapping.length === 0) {
-        throw new Error('No column mapping found. Please configure column mapping first.');
+      if (rawData.length === 0) {
+        throw new Error('The file appears to be empty or has no valid data rows.');
       }
 
-      const processedData = processData(rawData, columnMapping);
+      const processedData = processData(rawData);
       setParsedData(processedData);
       setShowPreview(true);
     } catch (error) {
@@ -426,10 +700,10 @@ export default function ImportExportPage() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={() => window.open('/en/eduprima/main/ops/em/matchmaking/database-tutor/migration/column-mapping', '_blank')}
+            onClick={downloadCSVTemplate}
           >
-            <Icon icon="heroicons:cog-6-tooth" className="w-4 h-4 mr-2" />
-            Column Mapping
+            <Icon icon="heroicons:document-arrow-down" className="w-4 h-4 mr-2" />
+            Download Template
           </Button>
           <Button onClick={executeExport} disabled={isExporting}>
             <Icon icon="heroicons:arrow-down-tray" className="w-4 h-4 mr-2" />
@@ -498,19 +772,20 @@ export default function ImportExportPage() {
               )}
             </div>
 
-            {/* Column Mapping Warning */}
+            {/* Import Instructions */}
             {parsedData.length === 0 && (
               <Alert>
                 <Icon icon="heroicons:information-circle" className="h-4 w-4" />
                 <AlertDescription>
-                  Make sure to configure column mapping before importing. 
+                  Upload a CSV or Excel file with tutor data. The system will automatically map columns based on field names.
+                  Make sure your file has column headers that match the expected field names.
                   <Button 
                     variant="ghost" 
                     size="sm"
                     className="p-0 h-auto ml-1 underline"
-                    onClick={() => window.open('/en/eduprima/main/ops/em/matchmaking/database-tutor/migration/column-mapping', '_blank')}
+                    onClick={() => downloadCSVTemplate()}
                   >
-                    Configure now
+                    Download CSV Template
                   </Button>
                 </AlertDescription>
               </Alert>

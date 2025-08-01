@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { FormField as FormFieldConfig, TutorFormData } from './form-config';
 import { AddressSearchPicker } from '@/components/ui/address-search-picker';
 import { SimpleAddressSearch } from '@/components/ui/simple-address-search';
+import { OptimizedImageUpload } from '@/components/ui/optimized-image-upload';
 import { Icon as IconifyIcon } from '@iconify/react';
 
 interface DynamicFormFieldProps {
@@ -280,6 +281,9 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
     if (field.type === 'tel' && newValue) {
       // Format phone numbers with +62 prefix
       formattedValue = formatPhoneNumber(newValue);
+    } else if (field.type === 'tel_split' && newValue) {
+      // For tel_split, value is already formatted as 62XXXXXXXXX
+      formattedValue = newValue;
     } else if ((field.name === 'nomorRekening' || field.name.includes('rekening')) && newValue) {
       // Sanitize account numbers (remove spaces, dashes)
       formattedValue = sanitizeInput(newValue);
@@ -415,15 +419,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
   // Image dimension validation
   const validateImageDimensions = (width: number, height: number): string | null => {
-    // Minimum dimensions
-    const minWidth = 200;
-    const minHeight = 200;
-    
-    if (width < minWidth || height < minHeight) {
-      return `Image dimensions too small. Minimum size: ${minWidth}x${minHeight}px. Current: ${width}x${height}px`;
-    }
-
-    // Maximum dimensions
+    // Only check maximum dimensions - no minimum restrictions
     const maxWidth = 2000;
     const maxHeight = 2000;
     
@@ -585,6 +581,104 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               "ring-2 ring-primary/20 border-primary": !error && value
             })}
           />
+        );
+
+      case 'tel_split':
+        // Split phone input: dynamic country code + number
+        const parsePhoneValue = (fullValue: string) => {
+          if (!fullValue) return ['62', '']; // Default to Indonesia
+          
+          // Try to detect country code (1-4 digits at start)
+          const match = fullValue.match(/^(\d{1,4})(\d*)$/);
+          if (match) {
+            const [, code, number] = match;
+            // Common country codes: 1(US), 44(UK), 60(MY), 62(ID), 65(SG), 86(CN), etc.
+            if (['1', '44', '60', '62', '65', '86', '91', '81', '82', '84'].includes(code)) {
+              return [code, number];
+            }
+            // For 2-digit codes
+            if (code.length >= 2 && ['60', '62', '65', '86', '91', '81', '82', '84'].includes(code.substring(0, 2))) {
+              return [code.substring(0, 2), code.substring(2) + number];
+            }
+          }
+          
+          // Default parsing: assume first 2 digits are country code
+          if (fullValue.length >= 2) {
+            return [fullValue.substring(0, 2), fullValue.substring(2)];
+          }
+          
+          return ['62', fullValue]; // Fallback to Indonesia
+        };
+        
+        const [countryCode, phoneNumber] = parsePhoneValue(value || '');
+
+        return (
+          <div className="flex gap-2">
+            {/* Country Code Input - Editable, default 62 */}
+            <div className="w-20">
+              <Input
+                id={`${field.name}_country`}
+                name={`${field.name}_country`}
+                type="text"
+                value={countryCode}
+                onChange={(e) => {
+                  let code = e.target.value.replace(/[^0-9]/g, ''); // Only numbers
+                  if (code.length <= 4) { // Max 4 digits for country codes
+                    const newFullNumber = code + phoneNumber;
+                    handleChange(newFullNumber);
+                  }
+                }}
+                placeholder="62"
+                disabled={disabled}
+                className="text-center font-mono"
+                size={field.size || 'default'}
+                maxLength={4}
+              />
+            </div>
+            
+            {/* Phone Number Input */}
+            <div className="flex-1">
+              <Input
+                id={field.name}
+                name={field.name}
+                type="tel"
+                placeholder={field.placeholder}
+                value={phoneNumber}
+                onChange={(e) => {
+                  let input = e.target.value;
+                  
+                  // Step 1: Remove all non-numeric characters (spaces, dashes, parentheses, etc.)
+                  let cleaned = input.replace(/[^0-9]/g, '');
+                  
+                  // Step 2: Handle common wrong formats
+                  // Remove multiple leading zeros: 00811 -> 811
+                  cleaned = cleaned.replace(/^0+/, '0'); // Keep only one leading zero
+                  
+                  // Step 3: Remove leading 0 if present
+                  if (cleaned.startsWith('0')) {
+                    cleaned = cleaned.slice(1);
+                  }
+                  
+                  // Step 4: Limit length to reasonable phone number length
+                  if (cleaned.length > 12) {
+                    cleaned = cleaned.substring(0, 12);
+                  }
+                  
+                  // Step 5: Combine with country code and update
+                  const fullNumber = countryCode + cleaned;
+                  handleChange(fullNumber);
+                }}
+                disabled={disabled}
+                size={field.size || 'default'}
+                color={error ? 'destructive' : field.color || 'default'}
+                className={cn("transition-all duration-200", {
+                  "ring-2 ring-destructive/20": error,
+                  "ring-2 ring-primary/20 border-primary": !error && value
+                })}
+                maxLength={12} // Max 12 digits for Indonesian numbers
+              />
+            </div>
+          </div>
         );
 
       case 'textarea':
@@ -833,6 +927,26 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
         );
 
       case 'file':
+        // Special handling for profile photo with optimization
+        if (field.name === 'fotoProfil') {
+          console.log('🖼️ Rendering OptimizedImageUpload for fotoProfil');
+          return (
+            <OptimizedImageUpload
+              onImageSelect={(file) => handleChange(file)}
+              maxSizeMB={2}
+              maxWidthOrHeight={800}
+              quality={0.8}
+              placeholder="Upload foto profil"
+              disabled={disabled}
+              error={error || fileError}
+              currentValue={filePreview}
+            />
+          );
+        }
+        
+        console.log('📁 Rendering standard file input for:', field.name);
+
+        // Standard file upload for documents
         return (
           <div className="space-y-3">
             <div className="relative">
@@ -852,9 +966,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               {/* File upload guidelines */}
               <div className="mt-2 text-xs text-muted-foreground">
                 <div className="flex items-center space-x-4">
-                  <span>📁 Max {field.name === 'fotoProfil' ? '2MB' : '5MB'}</span>
-                  <span>{field.name === 'fotoProfil' ? '🖼️ JPG, PNG only' : '📄 JPG, PNG, PDF'}</span>
-                  {field.name === 'fotoProfil' && <span>📐 Min: 200x200px</span>}
+                  <span>📁 Max 5MB</span>
+                  <span>📄 JPG, PNG, PDF</span>
                 </div>
               </div>
             </div>
