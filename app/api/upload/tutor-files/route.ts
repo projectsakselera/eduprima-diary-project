@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase-admin';
+import { auth } from '@/auth';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 API: Starting tutor file upload...');
+    
+    // 🔐 Add minimal auth check - TIDAK MENGUBAH LOGIC UPLOAD SAMA SEKALI
+    const session = await auth();
+    if (!session?.user) {
+      console.log('❌ API Upload: Authentication required');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    console.log('✅ API Upload: User authenticated:', session.user.email);
     
     const formData = await request.formData();
     const userId = formData.get('userId') as string;

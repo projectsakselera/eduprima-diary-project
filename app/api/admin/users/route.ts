@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server'
 import { SupabaseAdmin, UserRole } from '@/lib/supabase-admin'
+import { auth } from '@/auth'
 
 const admin = new SupabaseAdmin()
 
 export async function GET() {
   try {
+    // 🔐 Add minimal auth check without changing core logic
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({
+        status: 'error',
+        message: 'Authentication required'
+      }, { status: 401 })
+    }
+
     const users = await admin.getAllUsers()
     
     return NextResponse.json({
@@ -22,6 +32,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    // 🔐 Add minimal auth check without changing core logic
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({
+        status: 'error',
+        message: 'Authentication required'
+      }, { status: 401 })
+    }
+
     const body = await request.json()
     const { email, name, role = UserRole.KARYAWAN, department, position, phone } = body
     
