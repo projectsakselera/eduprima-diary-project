@@ -63,15 +63,15 @@ export default function EditTutorPage() {
     e.preventDefault();
     // Mock form submission
     console.log('Update tutor:', formData);
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const handleCancel = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const handleBack = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   if (loading) {

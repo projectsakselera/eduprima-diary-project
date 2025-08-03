@@ -202,6 +202,39 @@ interface TutorSpreadsheetData {
   studentMotivationAbility: string;
   scheduleFlexibilityLevel: string;
   
+  // Transportation & Location Details
+  transportation_method: string | null;
+  teaching_center_lat: number | null;
+  teaching_center_lng: number | null;
+  
+  // Extended Professional Info
+  other_experience: string | null;
+  other_skills: string | null;
+  reason_for_teaching: string | null;
+  
+  // Extended Education Fields
+  namaUniversitasS1: string | null; // For S2 students
+  fakultasS1: string | null;
+  jurusanS1: string | null;
+  namaInstitusi: string | null; // For alternative background
+  bidangKeahlian: string | null;
+  pengalamanBelajar: string | null;
+  namaSMP: string | null; // Middle school
+  tahunLulusSMP: string | null;
+  
+  // Form Agreement & Management
+  form_agreement_check: boolean;
+  additional_screening: string[];
+  recruitment_stage_history: any[]; // JSONB
+  last_status_change: string | null;
+  status_changed_by: string | null;
+  
+  // Enhanced Banking Info
+  bank_id: string | null;
+  is_verified: boolean;
+  total_payouts: number;
+  payout_count: number;
+
   // Emergency Contact
   emergencyContactName: string;
   emergencyContactRelationship: string;
@@ -249,6 +282,13 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'approval_level', label: 'Level Approval', width: 130, type: 'select', category: 'System' },
   { key: 'staff_notes', label: 'Catatan Staff', width: 200, type: 'text', category: 'System' },
   
+  // Management & Tracking
+  { key: 'additional_screening', label: 'Screening Tambahan', width: 200, type: 'array', category: 'System' },
+  { key: 'recruitment_stage_history', label: 'Riwayat Stage', width: 250, type: 'text', category: 'System' },
+  { key: 'last_status_change', label: 'Perubahan Status Terakhir', width: 180, type: 'date', category: 'System' },
+  { key: 'status_changed_by', label: 'Diubah Oleh', width: 150, type: 'text', category: 'System' },
+  { key: 'form_agreement_check', label: 'Persetujuan Form', width: 140, type: 'boolean', category: 'System' },
+  
   // Personal Info
   { key: 'fotoProfil', label: 'Foto Profil', width: 120, type: 'file', category: 'Personal' },
   { key: 'namaLengkap', label: 'Nama Lengkap', width: 180, type: 'text', category: 'Personal', required: true },
@@ -290,6 +330,12 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'nomorRekening', label: 'Nomor Rekening', width: 160, type: 'text', category: 'Banking' },
   { key: 'namaBank', label: 'Nama Bank', width: 160, type: 'text', category: 'Banking' },
   
+  // Enhanced Banking Info
+  { key: 'bank_id', label: 'Bank ID', width: 120, type: 'text', category: 'Banking' },
+  { key: 'is_verified', label: 'Bank Verified', width: 120, type: 'boolean', category: 'Banking' },
+  { key: 'total_payouts', label: 'Total Payouts', width: 120, type: 'number', category: 'Banking' },
+  { key: 'payout_count', label: 'Payout Count', width: 120, type: 'number', category: 'Banking' },
+  
   // Education
   { key: 'statusAkademik', label: 'Status Akademik', width: 150, type: 'select', category: 'Education' },
   { key: 'namaUniversitas', label: 'Universitas', width: 200, type: 'text', category: 'Education' },
@@ -303,6 +349,16 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'jurusanSMA', label: 'Jurusan SMA', width: 150, type: 'text', category: 'Education' },
   { key: 'tahunLulusSMA', label: 'Tahun Lulus SMA', width: 140, type: 'text', category: 'Education' },
   
+  // Extended Education Fields
+  { key: 'namaUniversitasS1', label: 'Universitas S1 (untuk S2)', width: 200, type: 'text', category: 'Education' },
+  { key: 'fakultasS1', label: 'Fakultas S1', width: 150, type: 'text', category: 'Education' },
+  { key: 'jurusanS1', label: 'Jurusan S1', width: 150, type: 'text', category: 'Education' },
+  { key: 'namaInstitusi', label: 'Nama Institusi (Alternative)', width: 200, type: 'text', category: 'Education' },
+  { key: 'bidangKeahlian', label: 'Bidang Keahlian', width: 180, type: 'text', category: 'Education' },
+  { key: 'pengalamanBelajar', label: 'Pengalaman Belajar', width: 200, type: 'text', category: 'Education' },
+  { key: 'namaSMP', label: 'Nama SMP', width: 200, type: 'text', category: 'Education' },
+  { key: 'tahunLulusSMP', label: 'Tahun Lulus SMP', width: 140, type: 'text', category: 'Education' },
+  
   // Professional Profile
   { key: 'keahlianSpesialisasi', label: 'Keahlian Spesialisasi', width: 300, type: 'text', category: 'Professional' },
   { key: 'keahlianLainnya', label: 'Keahlian Lainnya', width: 200, type: 'text', category: 'Professional' },
@@ -311,6 +367,11 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'prestasiAkademik', label: 'Prestasi Akademik', width: 300, type: 'text', category: 'Professional' },
   { key: 'prestasiNonAkademik', label: 'Prestasi Non-Akademik', width: 300, type: 'text', category: 'Professional' },
   { key: 'sertifikasiPelatihan', label: 'Sertifikasi Pelatihan', width: 300, type: 'text', category: 'Professional' },
+  
+  // Extended Professional Info
+  { key: 'other_experience', label: 'Pengalaman Lain Relevan', width: 300, type: 'text', category: 'Professional' },
+  { key: 'other_skills', label: 'Keahlian Lainnya (Detail)', width: 250, type: 'text', category: 'Professional' },
+  { key: 'reason_for_teaching', label: 'Motivasi Mengajar', width: 300, type: 'text', category: 'Professional' },
   
   // Programs & Subjects
   { key: 'selectedPrograms', label: 'Program Dipilih', width: 300, type: 'array', category: 'Subjects' },
@@ -327,6 +388,11 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'teaching_radius_km', label: 'Radius Mengajar (km)', width: 160, type: 'number', category: 'Availability' },
   { key: 'alamatTitikLokasi', label: 'Titik Lokasi', width: 300, type: 'text', category: 'Availability' },
   { key: 'location_notes', label: 'Catatan Lokasi', width: 200, type: 'text', category: 'Availability' },
+  
+  // Transportation & Location Details
+  { key: 'transportation_method', label: 'Metode Transportasi', width: 180, type: 'text', category: 'Availability' },
+  { key: 'teaching_center_lat', label: 'Koordinat Lat', width: 120, type: 'number', category: 'Availability' },
+  { key: 'teaching_center_lng', label: 'Koordinat Lng', width: 120, type: 'number', category: 'Availability' },
   
   // Teaching Preferences
   { key: 'teachingMethods', label: 'Gaya Pembelajaran', width: 200, type: 'array', category: 'Teaching' },
@@ -707,7 +773,7 @@ export default function ViewAllTutorsPage() {
             </Button>
             <Button 
               size="sm" 
-              onClick={() => router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add')}
+              onClick={() => router.push('/eduprima/main/ops/em/database-tutor/add')}
               className="bg-primary hover:bg-primary/90"
             >
               <Icon icon="ph:plus" className="h-4 w-4 mr-2" />
@@ -980,13 +1046,13 @@ export default function ViewAllTutorsPage() {
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => window.open(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${tutor.id}`, '_blank')}
+                              onClick={() => window.open(`/eduprima/main/ops/em/database-tutor/view/${tutor.id}`, '_blank')}
                             >
                               <Icon icon="ph:eye" className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutor.id}`)}
+                              onClick={() => router.push(`/eduprima/main/ops/em/database-tutor/edit/${tutor.id}`)}
                             >
                               <Icon icon="ph:pencil" className="mr-2 h-4 w-4" />
                               Edit Tutor

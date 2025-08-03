@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Database tutor manager only has access to database-tutor paths
     if (user.role === 'database_tutor_manager') {
-      return path.includes('/eduprima/main/ops/em/matchmaking/database-tutor')
+      return path.includes('/eduprima/main/ops/em/database-tutor')
     }
     
     return false

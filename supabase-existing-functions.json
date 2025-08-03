@@ -1,0 +1,502 @@
+[
+  {
+    "function_name": "graphql",
+    "schema_name": "graphql_public",
+    "return_type": "jsonb"
+  },
+  {
+    "function_name": "_postgis_deprecate",
+    "schema_name": "public",
+    "return_type": "void"
+  },
+  {
+    "function_name": "_postgis_index_extent",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_postgis_join_selectivity",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_postgis_pgsql_version",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "_postgis_scripts_pgsql_version",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "_postgis_selectivity",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_postgis_stats",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "_st_3ddfullywithin",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_3ddwithin",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_3dintersects",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_asgml",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "_st_asx3d",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "_st_bestsrid",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "_st_bestsrid",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "_st_contains",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_containsproperly",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_coveredby",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_coveredby",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_covers",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_covers",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_crosses",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_dfullywithin",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_distancetree",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_distancetree",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_distanceuncached",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_distanceuncached",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_distanceuncached",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_dwithin",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_dwithin",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_dwithinuncached",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_dwithinuncached",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_equals",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_expand",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_st_geomfromgml",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_st_intersects",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_linecrossingdirection",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "_st_longestline",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_st_maxdistance",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "_st_orderingequals",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_overlaps",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_pointoutside",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_st_sortablehash",
+    "schema_name": "public",
+    "return_type": "bigint"
+  },
+  {
+    "function_name": "_st_touches",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "_st_voronoi",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "_st_within",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "addauth",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "addgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "addgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "addgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "box",
+    "schema_name": "public",
+    "return_type": "box"
+  },
+  {
+    "function_name": "box",
+    "schema_name": "public",
+    "return_type": "box"
+  },
+  {
+    "function_name": "box2d",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box2d",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box2d_in",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box2d_out",
+    "schema_name": "public",
+    "return_type": "cstring"
+  },
+  {
+    "function_name": "box2df_in",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box2df_out",
+    "schema_name": "public",
+    "return_type": "cstring"
+  },
+  {
+    "function_name": "box3d",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box3d",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box3d_in",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "box3d_out",
+    "schema_name": "public",
+    "return_type": "cstring"
+  },
+  {
+    "function_name": "box3dtobox",
+    "schema_name": "public",
+    "return_type": "box"
+  },
+  {
+    "function_name": "bytea",
+    "schema_name": "public",
+    "return_type": "bytea"
+  },
+  {
+    "function_name": "bytea",
+    "schema_name": "public",
+    "return_type": "bytea"
+  },
+  {
+    "function_name": "calculate_invoice_amounts",
+    "schema_name": "public",
+    "return_type": "trigger"
+  },
+  {
+    "function_name": "calculate_registration_totals",
+    "schema_name": "public",
+    "return_type": "trigger"
+  },
+  {
+    "function_name": "check_password",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "checkauth",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "checkauth",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "checkauthtrigger",
+    "schema_name": "public",
+    "return_type": "trigger"
+  },
+  {
+    "function_name": "contains_2d",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "contains_2d",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "contains_2d",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "disablelongtransactions",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrycolumn",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrytable",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrytable",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "dropgeometrytable",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "enablelongtransactions",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "equals",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "find_srid",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "generate_educator_registration_number",
+    "schema_name": "public",
+    "return_type": "text"
+  },
+  {
+    "function_name": "geog_brin_inclusion_add_value",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "geography",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "geography",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "geography",
+    "schema_name": "public",
+    "return_type": "USER-DEFINED"
+  },
+  {
+    "function_name": "geography_analyze",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "geography_cmp",
+    "schema_name": "public",
+    "return_type": "integer"
+  },
+  {
+    "function_name": "geography_distance_knn",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "geography_eq",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "geography_ge",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "geography_gist_compress",
+    "schema_name": "public",
+    "return_type": "internal"
+  },
+  {
+    "function_name": "geography_gist_consistent",
+    "schema_name": "public",
+    "return_type": "boolean"
+  },
+  {
+    "function_name": "geography_gist_decompress",
+    "schema_name": "public",
+    "return_type": "internal"
+  },
+  {
+    "function_name": "geography_gist_distance",
+    "schema_name": "public",
+    "return_type": "double precision"
+  },
+  {
+    "function_name": "geography_gist_penalty",
+    "schema_name": "public",
+    "return_type": "internal"
+  },
+  {
+    "function_name": "geography_gist_picksplit",
+    "schema_name": "public",
+    "return_type": "internal"
+  }
+]

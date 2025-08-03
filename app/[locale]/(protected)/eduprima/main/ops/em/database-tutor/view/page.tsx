@@ -39,17 +39,17 @@ export default function ViewTutorPage() {
   }, []);
 
   const handleEdit = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/edit');
+    router.push('/eduprima/main/ops/em/database-tutor/edit');
   };
 
   const handleDelete = () => {
     // Mock delete functionality
     console.log('Delete tutor');
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const handleBack = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   if (loading) {

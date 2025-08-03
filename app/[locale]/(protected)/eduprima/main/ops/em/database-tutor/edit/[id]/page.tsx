@@ -177,15 +177,15 @@ export default function EditTutorPage() {
     console.log('Updated form data:', formData);
     // In real app, this would be: await updateTutor(tutorId, formData);
     // Navigate back to database tutor page
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const handleCancel = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const handleView = () => {
-    router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${tutorId}`);
+    router.push(`/eduprima/main/ops/em/database-tutor/view/${tutorId}`);
   };
 
   if (isLoading) {

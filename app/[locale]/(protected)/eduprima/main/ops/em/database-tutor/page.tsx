@@ -537,27 +537,27 @@ export default function DatabaseTutorPage() {
 
   // Navigation handlers
   const handleViewTutor = (id: string) => {
-    router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/view/${id}`);
+    router.push(`/eduprima/main/ops/em/database-tutor/view/${id}`);
   };
 
   const handleEditTutor = (id: string) => {
-    router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${id}`);
+    router.push(`/eduprima/main/ops/em/database-tutor/edit/${id}`);
   };
 
   const handleAddTutor = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/add');
+    router.push('/eduprima/main/ops/em/database-tutor/add');
   };
 
   const handleImportExport = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/import-export');
+    router.push('/eduprima/main/ops/em/database-tutor/import-export');
   };
 
   const handleMigration = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/migration/dashboard');
+    router.push('/eduprima/main/ops/em/database-tutor/migration/dashboard');
   };
 
   const handleViewAll = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor/view-all');
+    router.push('/eduprima/main/ops/em/database-tutor/view-all');
   };
 
   const getStatusVariant = (status?: string) => {

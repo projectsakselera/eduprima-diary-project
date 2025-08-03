@@ -83,7 +83,7 @@ const LoginForm = () => {
           // No need to store user in sessionStorage - NextAuth handles session
           // Redirect based on role or default to tutor database
           // Note: Remove /en/ prefix - next-intl router will auto-add current locale
-          const redirectUrl = '/eduprima/main/ops/em/matchmaking/database-tutor/view-all';
+          const redirectUrl = '/eduprima/main/ops/em/database-tutor/view-all';
           
           console.log('🚀 Attempting redirect to:', redirectUrl);
           

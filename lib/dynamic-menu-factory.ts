@@ -278,9 +278,9 @@ function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any, 
                 icon: "heroicons:document-text",
               },
               {
-                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale),
+                href: addLocalePrefix("/eduprima/main/ops/em/database-tutor", locale),
                 label: "Database Tutor",
-                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale)),
+                active: pathname.includes(addLocalePrefix("/eduprima/main/ops/em/database-tutor", locale)),
                 icon: "heroicons:server-stack",
               },
             ]
@@ -290,8 +290,8 @@ function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any, 
       };
     }
     
-    // If we're in ops/em/matchmaking/database-tutor
-    if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'matchmaking' && pathSegments[5] === 'database-tutor') {
+            // If we're in ops/em/database-tutor
+    if (pathSegments[2] === 'ops' && pathSegments[3] === 'em' && pathSegments[4] === 'database-tutor') {
       return {
         groupLabel: "Eduprima",
         currentPage: "Database Tutor",
@@ -333,7 +333,7 @@ function generateEduprimaMenu(pathSegments: string[], pathname: string, t: any, 
                 icon: "heroicons:document-text",
               },
               {
-                href: addLocalePrefix("/eduprima/main/ops/em/matchmaking/database-tutor", locale),
+                href: addLocalePrefix("/eduprima/main/ops/em/database-tutor", locale),
                 label: "Database Tutor",
                 active: true,
                 icon: "heroicons:server-stack",

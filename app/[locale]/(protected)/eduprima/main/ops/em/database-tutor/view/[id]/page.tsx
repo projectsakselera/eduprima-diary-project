@@ -78,11 +78,11 @@ export default function ViewTutorPage() {
   }, [tutorId, mockTutorData]);
 
   const handleEdit = () => {
-    router.push(`/eduprima/main/ops/em/matchmaking/database-tutor/edit/${tutorId}`);
+    router.push(`/eduprima/main/ops/em/database-tutor/edit/${tutorId}`);
   };
 
   const handleBack = () => {
-    router.push('/eduprima/main/ops/em/matchmaking/database-tutor');
+    router.push('/eduprima/main/ops/em/database-tutor');
   };
 
   const getStatusIcon = (status: string) => {

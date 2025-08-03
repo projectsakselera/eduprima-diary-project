@@ -211,7 +211,10 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       preferencesResult,
       personalityResult,
       programMappingsResult,
-      documentsResult
+      documentsResult,
+      provincesResult,
+      citiesResult,
+      programsResult
     ] = await Promise.all([
       // User profiles
       supabase
@@ -272,7 +275,22 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       supabase
         .from('t_460_03_01_document_storage')
         .select('*')
-        .in('user_id', userIds)
+        .in('user_id', userIds),
+      
+      // Master Data - Provinces
+      supabase
+        .from('t_120_01_02_province')
+        .select('id, region_name'),
+      
+      // Master Data - Cities  
+      supabase
+        .from('t_120_01_03_cities')
+        .select('id, city_name'),
+        
+      // Master Data - Programs
+      supabase
+        .from('t_210_02_02_programs_catalog')
+        .select('id, program_name_local, program_name')
     ]);
 
     // Create lookup maps for efficient data joining
@@ -322,6 +340,31 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       }
       documentsMap.get(doc.user_id)[doc.document_type] = doc;
     });
+    
+    // Create master data lookup maps
+    const provincesMap = new Map(provincesResult.data?.map(p => [p.id, p.region_name]) || []);
+    const citiesMap = new Map(citiesResult.data?.map(c => [c.id, c.city_name]) || []);
+    const programsMap = new Map(programsResult.data?.map(prog => [
+      prog.id, 
+      prog.program_name_local || prog.program_name
+    ]) || []);
+    
+    console.log('🗺️ Master data loaded:', {
+      provinces: provincesMap.size,
+      cities: citiesMap.size, 
+      programs: programsMap.size
+    });
+    
+    // Debug: Sample lookups
+    if (provincesMap.size > 0) {
+      console.log('📍 Sample province lookup:', Array.from(provincesMap.entries()).slice(0, 2));
+    }
+    if (citiesMap.size > 0) {
+      console.log('🏙️ Sample city lookup:', Array.from(citiesMap.entries()).slice(0, 2));
+    }
+    if (programsMap.size > 0) {
+      console.log('📚 Sample program lookup:', Array.from(programsMap.entries()).slice(0, 2));
+    }
 
     // 🐛 DEBUG: Log document types found
     console.log('📄 Document types found in database:', 
@@ -354,7 +397,7 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       return {
         // System & Status
         id: user.id,
-        trn: user.user_code || '',
+        trn: educatorDetails?.educator_registration_number || user.user_code || '',
         status_tutor: management?.status_tutor || '',
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',
@@ -378,18 +421,18 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         socialMedia2: profile?.social_media_2 || '',
         bahasaYangDikuasai: profile?.languages_mastered || [],
         
-        // Address - Domisili
-        provinsiDomisili: domicileAddr.province_id || '',
-        kotaKabupatenDomisili: domicileAddr.city_id || '',
+        // Address - Domisili (with lookups to master tables)
+        provinsiDomisili: provincesMap.get(domicileAddr.province_id) || domicileAddr.province_id || '',
+        kotaKabupatenDomisili: citiesMap.get(domicileAddr.city_id) || domicileAddr.city_id || '',
         kecamatanDomisili: domicileAddr.district_name || '',
         kelurahanDomisili: domicileAddr.village_name || '',
         alamatLengkapDomisili: domicileAddr.street_address || '',
         kodePosDomisili: domicileAddr.postal_code || '',
         
-        // Address - KTP
+        // Address - KTP (with lookups to master tables)
         alamatSamaDenganKTP: !ktpAddr.id, // If no KTP address, assume same as domicile
-        provinsiKTP: ktpAddr.province_id || '',
-        kotaKabupatenKTP: ktpAddr.city_id || '',
+        provinsiKTP: provincesMap.get(ktpAddr.province_id) || ktpAddr.province_id || '',
+        kotaKabupatenKTP: citiesMap.get(ktpAddr.city_id) || ktpAddr.city_id || '',
         kecamatanKTP: ktpAddr.district_name || '',
         kelurahanKTP: ktpAddr.village_name || '',
         alamatLengkapKTP: ktpAddr.street_address || '',
@@ -422,8 +465,10 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         prestasiNonAkademik: educatorDetails?.non_academic_achievements || '',
         sertifikasiPelatihan: educatorDetails?.certifications_training || '',
         
-        // Programs & Subjects
-        selectedPrograms: programMappings,
+        // Programs & Subjects (with lookups to program names)
+        selectedPrograms: programMappings.map((programId: string) => 
+          programsMap.get(programId) || programId
+        ),
         mataPelajaranLainnya: '', // This would be in notes or additional field
         
         // Availability

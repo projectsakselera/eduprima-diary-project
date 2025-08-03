@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
 import { Upload, Image as ImageIcon, X, Check, Loader2, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,29 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
   const [originalSize, setOriginalSize] = useState<number>(0);
   const [optimizedSize, setOptimizedSize] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('🖼️ OptimizedImageUpload render - State:', {
+      preview: preview ? 'set' : 'null',
+      isProcessing,
+      processingStatus,
+      currentValue,
+      disabled
+    });
+  });
+
+  // Reset preview when currentValue changes externally
+  useEffect(() => {
+    if (currentValue && currentValue !== preview) {
+      console.log('🖼️ Setting preview from currentValue:', currentValue);
+      setPreview(currentValue);
+    } else if (!currentValue && preview && !preview.startsWith('blob:')) {
+      // Clear preview if currentValue is cleared externally (but keep blob URLs from uploads)
+      console.log('🖼️ Clearing preview due to currentValue being cleared');
+      setPreview(null);
+    }
+  }, [currentValue, preview]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -77,6 +100,8 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
   }, [maxSizeMB, maxWidthOrHeight, quality]);
 
   const handleFileSelect = useCallback(async (file: File) => {
+    console.log('🖼️ handleFileSelect called with file:', file.name);
+    
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file (JPG, PNG)');
       return;
@@ -89,6 +114,7 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
     try {
       // Create preview
       const previewUrl = URL.createObjectURL(file);
+      console.log('🖼️ Setting preview URL:', previewUrl);
       setPreview(previewUrl);
 
       // Optimize image
@@ -108,13 +134,15 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
     } catch (error) {
       console.error('Error processing image:', error);
       setProcessingStatus('Failed to process image');
+      setPreview(null); // Clear preview on error
       onImageSelect(null);
     } finally {
+      console.log('🖼️ Processing finished, setting isProcessing to false');
       setIsProcessing(false);
     }
   }, [optimizeImage, onImageSelect]);
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     if (disabled || isProcessing) return;
 
@@ -124,7 +152,7 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
     }
   }, [disabled, isProcessing, handleFileSelect]);
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
   }, []);
 
@@ -150,34 +178,25 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
     }
   }, [onImageSelect]);
 
-  const triggerFileInput = useCallback(() => {
-    console.log('🖱️ Trigger file input clicked', { disabled, isProcessing });
-    if (!disabled && !isProcessing) {
-      console.log('🖱️ Triggering file input click');
-      fileInputRef.current?.click();
-    } else {
-      console.log('🖱️ File input blocked', { disabled, isProcessing });
-    }
-  }, [disabled, isProcessing]);
-
   return (
     <div className={cn("space-y-4", className)}>
       {/* Upload Area */}
-      <div
+      <label
+        htmlFor="image-upload-input"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        onClick={triggerFileInput}
         className={cn(
-          "relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
+          "relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 block",
           {
-            "border-primary bg-primary/5 hover:bg-primary/10": !error && !disabled,
+            "border-primary bg-primary/5 hover:bg-primary/10": !error && !disabled && !isProcessing,
             "border-destructive bg-destructive/5": error,
-            "border-muted bg-muted/20 cursor-not-allowed": disabled,
+            "border-muted bg-muted/20 cursor-not-allowed": disabled || isProcessing,
             "border-success bg-success/5": preview && !error,
           }
         )}
       >
         <input
+          id="image-upload-input"
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/jpg,image/png"
@@ -187,11 +206,15 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
         />
 
         {/* Preview Image */}
-        {preview && !isProcessing && (
+        {(() => {
+          const shouldShowPreview = preview && !isProcessing;
+          console.log('🖼️ Preview condition check:', { preview: !!preview, isProcessing, shouldShowPreview });
+          return shouldShowPreview;
+        })() && (
           <div className="space-y-4">
             <div className="relative inline-block group">
               <img
-                src={preview}
+                src={preview || ''}
                 alt="Preview"
                 className="max-w-full max-h-48 rounded-xl shadow-lg border-2 border-success/20 transition-all duration-200 group-hover:shadow-xl"
               />
@@ -281,7 +304,7 @@ export const OptimizedImageUpload: React.FC<OptimizedImageUploadProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </label>
 
       {/* Guidelines */}
       <div className="bg-muted/30 rounded-lg p-3 border border-muted/50">

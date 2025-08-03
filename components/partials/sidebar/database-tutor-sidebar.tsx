@@ -26,7 +26,7 @@ const tutorManagerMenus = [
     groupLabel: "📊 Dashboard",
     menus: [
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor",
+        href: "/eduprima/main/ops/em/database-tutor",
         label: "Overview",
         active: false,
         icon: "heroicons:chart-bar"
@@ -37,19 +37,19 @@ const tutorManagerMenus = [
     groupLabel: "👥 Tutor Management",
     menus: [
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/view-all",
+        href: "/eduprima/main/ops/em/database-tutor/view-all",
         label: "View All Tutors",
         active: true,
         icon: "heroicons:table-cells"
       },
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/add",
+        href: "/eduprima/main/ops/em/database-tutor/add",
         label: "Add New Tutor",
         active: false,
         icon: "heroicons:plus-circle"
       },
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/import-export",
+        href: "/eduprima/main/ops/em/database-tutor/import-export",
         label: "Import/Export",
         active: false,
         icon: "heroicons:arrow-up-tray"
@@ -60,7 +60,7 @@ const tutorManagerMenus = [
     groupLabel: "🔍 Smart Search",
     menus: [
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/educator-query",
+        href: "/eduprima/main/ops/em/database-tutor/educator-query",
         label: "Tutor Query",
         active: false,
         icon: "ph:brain",
@@ -79,7 +79,7 @@ const tutorManagerMenus = [
     groupLabel: "🔧 Tools & Test",
     menus: [
       {
-        href: "/eduprima/main/ops/em/matchmaking/database-tutor/storage-test",
+        href: "/eduprima/main/ops/em/database-tutor/storage-test",
         label: "Storage Test",
         active: false,
         icon: "ph:cloud-arrow-up",

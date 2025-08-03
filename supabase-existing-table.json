@@ -1,19 +1,19 @@
 [
   {
+    "table_name": "Foundations_corporate_entities",
+    "columns": "feature_flags, id, entity_code, configuration_settings, updated_by, created_by, entity_name, entity_type, parent_entity_id, entity_status, business_focus, target_market, geographic_scope, launch_date, hierarchy_level, hierarchy_path, sort_order, updated_at, created_at"
+  },
+  {
     "table_name": "domains",
-    "columns": "domain_category, domain_name_local, domain_name, domain_code, original_id, id, numeric_scale, character_set_schema, datetime_precision, interval_type, interval_precision, domain_default, domain_catalog, character_set_catalog, character_octet_length, character_maximum_length, data_type, domain_name, domain_schema, udt_catalog, udt_schema, udt_name, scope_catalog, scope_schema, scope_name, maximum_cardinality, dtd_identifier, market_demand, difficulty_range, target_age_max, target_age_min, domain_type, character_set_name, collation_catalog, collation_schema, collation_name, numeric_precision, numeric_precision_radix, updated_at, created_at, is_active, career_applications, learning_objectives, description, prerequisite_domains, color_theme, icon_name, total_programs"
+    "columns": "updated_at, created_at, is_active, career_applications, learning_objectives, description, prerequisite_domains, color_theme, icon_name, total_programs, market_demand, difficulty_range, target_age_max, target_age_min, domain_category, domain_type, domain_name_local, domain_name, domain_code, original_id, id, scope_name, character_set_name, collation_catalog, collation_schema, collation_name, numeric_precision, numeric_precision_radix, numeric_scale, datetime_precision, interval_type, interval_precision, domain_default, udt_catalog, udt_schema, udt_name, scope_catalog, scope_schema, maximum_cardinality, dtd_identifier, domain_schema, domain_name, data_type, character_maximum_length, character_octet_length, character_set_catalog, character_set_schema, domain_catalog"
   },
   {
     "table_name": "spatial_ref_sys",
-    "columns": "proj4text, srtext, auth_srid, auth_name, srid"
-  },
-  {
-    "table_name": "t_110_01_01_corporate_entities",
-    "columns": "feature_flags, id, entity_code, entity_name, entity_type, parent_entity_id, entity_status, business_focus, target_market, geographic_scope, launch_date, hierarchy_level, hierarchy_path, sort_order, configuration_settings, created_at, updated_at, created_by, updated_by"
+    "columns": "auth_srid, srtext, proj4text, srid, auth_name"
   },
   {
     "table_name": "t_120_01_01_countries",
-    "columns": "capital_city, government_type, subregion, region, continent, country_local_name, country_name, country_code, id, official_languages, independence_date, currency_code, currency_name, currency_symbol, updated_at, created_at, ease_of_business_rank, business_environment, timezone_primary, internet_tld, phone_code, text_direction, writing_systems, common_languages"
+    "columns": "capital_city, government_type, ease_of_business_rank, business_environment, timezone_primary, internet_tld, phone_code, text_direction, writing_systems, common_languages, independence_date, currency_code, currency_name, currency_symbol, updated_at, created_at, official_languages, id, country_name, country_code, country_local_name, continent, region, subregion"
   },
   {
     "table_name": "t_120_01_02_province",
@@ -21,15 +21,15 @@
   },
   {
     "table_name": "t_120_01_03_cities",
-    "columns": "population_density, economic_importance, business_district, id, country_id, province_id, city_code, city_name, city_local_name, latitude, longitude, elevation_meters, area_sq_km, population_estimate, city_type, education_hub, technology_center, created_at, updated_at"
+    "columns": "updated_at, city_type, population_density, population_estimate, id, area_sq_km, elevation_meters, longitude, latitude, city_local_name, city_name, city_code, province_id, country_id, economic_importance, business_district, education_hub, technology_center, created_at"
   },
   {
     "table_name": "t_120_01_04_districts",
-    "columns": "postal_code_prefix, created_at, is_active, area_sq_km, longitude, district_local_name, district_name, updated_at, district_code, latitude, city_id, id"
+    "columns": "district_local_name, updated_at, created_at, is_active, area_sq_km, longitude, latitude, postal_code_prefix, district_name, district_code, city_id, id"
   },
   {
     "table_name": "t_120_01_05_villages",
-    "columns": "village_code, village_local_name, village_name, village_type, is_active, updated_at, created_at, postal_code, latitude, longitude, area_sq_km, population_estimate, id, district_id"
+    "columns": "village_name, village_code, is_active, district_id, id, updated_at, created_at, population_estimate, area_sq_km, longitude, latitude, postal_code, village_type, village_local_name"
   },
   {
     "table_name": "t_120_01_06_street_addresses",
@@ -57,7 +57,7 @@
   },
   {
     "table_name": "t_210_02_05_m_popularity_levels",
-    "columns": "created_at, id, code, label, description, sort_order, is_active, updated_at"
+    "columns": "updated_at, id, code, label, description, sort_order, is_active, created_at"
   },
   {
     "table_name": "t_210_02_07_m_simple_categories",
@@ -65,35 +65,39 @@
   },
   {
     "table_name": "t_210_03_01_program_category_mappings",
-    "columns": "created_at, notes, mapped_at, relevance_score, mapped_by, weight, is_primary_category, sub_category_id, main_category_id, program_id, id, updated_at"
+    "columns": "updated_at, created_at, notes, mapped_by, mapped_at, relevance_score, weight, is_primary_category, sub_category_id, main_category_id, program_id, id"
   },
   {
     "table_name": "t_310_01_01_users_universal",
-    "columns": "password_hash, password_salt, two_factor_enabled, two_factor_secret, user_status, account_type, primary_entity_id, associated_entities, primary_country, timezone, primary_city_id, last_login_at, last_activity_at, login_count, failed_login_attempts, locked_until, terms_accepted_at, privacy_accepted_at, marketing_consent, created_at, updated_at, created_by, updated_by, primary_role_id, id, user_code, email, phone, phone_verified, email_verified"
+    "columns": "email_verified, password_hash, password_salt, two_factor_enabled, two_factor_secret, user_status, account_type, primary_entity_id, associated_entities, primary_city_id, primary_country, timezone, last_login_at, last_activity_at, login_count, failed_login_attempts, locked_until, terms_accepted_at, privacy_accepted_at, marketing_consent, created_at, updated_at, created_by, updated_by, primary_role_id, id, user_code, email, phone, phone_verified"
   },
   {
     "table_name": "t_310_01_02_user_profiles",
-    "columns": "gender, nationality, national_id, passport_number, driver_license, social_media_links, education_level, linkedin_url, university, graduation_year, major, gpa, job_title, employer, work_experience_years, professional_summary, preferred_language, teaching_subjects, learning_subjects, grade_level, academic_goals, address_line1, address_line2, city, state_province, postal_code, availability_schedule, preferred_session_duration, preferred_session_type, location_preference, profile_completion_percentage, identity_verified, education_verified, background_check_status, background_check_date, created_at, updated_at, institution_name, full_name, nick_name, headline, social_media_1, social_media_2, languages_mastered, motivation_as_tutor, whatsapp_number, website_url, bio, cover_photo_url, profile_photo_url, emergency_contact_relationship, emergency_contact_phone, emergency_contact_name, mobile_phone_2, home_phone, mobile_phone, country_code, id, user_id, date_of_birth"
+    "columns": "date_of_birth, gender, nationality, national_id, passport_number, linkedin_url, social_media_links, education_level, university, website_url, major, graduation_year, gpa, job_title, employer, work_experience_years, professional_summary, preferred_language, teaching_subjects, learning_subjects, grade_level, state_province, city, address_line2, address_line1, driver_license, academic_goals, availability_schedule, preferred_session_duration, preferred_session_type, location_preference, profile_completion_percentage, identity_verified, education_verified, background_check_status, background_check_date, created_at, updated_at, institution_name, full_name, nick_name, headline, social_media_1, social_media_2, languages_mastered, motivation_as_tutor, whatsapp_number, bio, cover_photo_url, profile_photo_url, emergency_contact_relationship, emergency_contact_phone, emergency_contact_name, mobile_phone_2, home_phone, mobile_phone, country_code, postal_code, id, user_id"
   },
   {
     "table_name": "t_310_01_03_user_addresses",
-    "columns": "address_type, id, user_id, address_label, province_id, city_id, district_id, village_id, district_name, village_name, street_address, postal_code, landmark, notes, is_primary, is_verified, verified_at, verified_by, created_at, updated_at, is_same_as_domicile"
+    "columns": "city_id, id, user_id, address_type, address_label, province_id, district_id, village_id, district_name, village_name, street_address, postal_code, landmark, notes, is_primary, is_verified, verified_at, verified_by, created_at, updated_at, is_same_as_domicile"
   },
   {
     "table_name": "t_310_02_01_emergency_contacts",
-    "columns": "updated_at, created_at, is_primary, phone_number, relationship, contact_name, user_id, id"
+    "columns": "relationship, user_id, contact_name, id, updated_at, created_at, is_primary, phone_number"
   },
   {
     "table_name": "t_315_01_01_educator_details",
-    "columns": "reason_for_teaching, education_history, teaching_experience, other_experience, id, special_skills, teaching_service_options, service_areas, teaching_style_descriptions, personality_tags, average_rating, total_teaching_hours, cancellation_rate, registration_notes_to_admin, form_agreement_check, is_top_educator, created_at, updated_at, middle_school, middle_school_graduation_year, high_school, high_school_graduation_year, faculty, academic_status, university_s1_name, faculty_s1, major_s1, achievements, user_id, educator_registration_number, form_submission_timestamp, onboarding_status, background_check_status, bio_summary, teaching_philosophy, current_faculty, major_accreditation, entry_year, alternative_institution_name, expertise_field, learning_experience, other_skills, other_relevant_experience, academic_achievements, non_academic_achievements, certifications_training"
+    "columns": "reason_for_teaching, education_history, teaching_experience, teaching_philosophy, id, user_id, educator_registration_number, form_submission_timestamp, onboarding_status, background_check_status, bio_summary, other_experience, achievements, special_skills, teaching_service_options, service_areas, teaching_style_descriptions, personality_tags, average_rating, total_teaching_hours, cancellation_rate, registration_notes_to_admin, form_agreement_check, is_top_educator, created_at, updated_at, middle_school, middle_school_graduation_year, high_school, high_school_graduation_year, faculty, academic_status, university_s1_name, faculty_s1, major_s1, current_faculty, major_accreditation, entry_year, alternative_institution_name, expertise_field, learning_experience, other_skills, other_relevant_experience, academic_achievements, non_academic_achievements, certifications_training"
+  },
+  {
+    "table_name": "t_315_01_02_educator_sequences",
+    "columns": "country_year, current_sequence, id, updated_at"
   },
   {
     "table_name": "t_315_02_01_tutor_management",
-    "columns": "user_id, id, education_verification_status, identity_verification_status, updated_at, created_at, status_changed_by, last_status_change, recruitment_stage_history, additional_screening, staff_notes, approval_level, status_tutor"
+    "columns": "approval_level, status_tutor, user_id, id, last_status_change, recruitment_stage_history, additional_screening, staff_notes, education_verification_status, identity_verification_status, updated_at, created_at, status_changed_by"
   },
   {
     "table_name": "t_315_03_01_tutor_availability_config",
-    "columns": "id, educator_id, availability_status, max_new_students_per_week, max_total_students, target_student_ages, availability_notes, available_schedule, teaching_methods, hourly_rate, teaching_radius_km, teaching_center_location, teaching_center_lat, teaching_center_lng, location_notes, created_at, updated_at"
+    "columns": "location_notes, created_at, updated_at, transportation_method, id, educator_id, availability_status, max_new_students_per_week, max_total_students, target_student_ages, availability_notes, available_schedule, teaching_methods, hourly_rate, teaching_radius_km, teaching_center_location, teaching_center_lat, teaching_center_lng"
   },
   {
     "table_name": "t_315_04_01_tutor_teaching_preferences",
@@ -101,43 +105,43 @@
   },
   {
     "table_name": "t_315_05_01_tutor_personality_traits",
-    "columns": "updated_at, created_at, schedule_flexibility_level, student_motivation_ability, teaching_patience_level, communication_style, personality_type, educator_id, id"
+    "columns": "personality_type, communication_style, teaching_patience_level, student_motivation_ability, schedule_flexibility_level, created_at, id, educator_id, updated_at"
   },
   {
     "table_name": "t_315_06_01_tutor_program_mappings",
-    "columns": "proficiency_level, id, educator_id, program_id, competency_level, years_of_experience, is_primary_subject, confidence_score, mapped_at, mapped_by, updated_at, certification_status, created_at"
+    "columns": "is_primary_subject, years_of_experience, competency_level, id, program_id, mapped_at, proficiency_level, created_at, mapped_by, updated_at, certification_status, confidence_score, educator_id"
   },
   {
     "table_name": "t_315_07_01_tutor_additional_subjects",
-    "columns": "competency_description, id, educator_id, target_level, subject_description, subject_name, updated_at, created_at, rejection_reason, approved_at, approved_by, approval_status, teaching_method_description"
+    "columns": "approved_by, id, educator_id, subject_name, subject_description, target_level, updated_at, created_at, rejection_reason, approved_at, approval_status, teaching_method_description, competency_description"
   },
   {
     "table_name": "t_340_01_01_roles",
-    "columns": "role_name, role_code, id, role_description, created_at"
+    "columns": "role_description, created_at, role_name, role_code, id"
   },
   {
     "table_name": "t_340_01_03_permissions",
-    "columns": "id, action, created_at, resource, permission_name, permission_code"
+    "columns": "created_at, action, permission_name, permission_code, id, resource"
   },
   {
     "table_name": "t_340_01_04_role_permissions",
-    "columns": "id, role_id, permission_id, created_at"
+    "columns": "id, role_id, created_at, permission_id"
   },
   {
     "table_name": "t_380_01_01_user_demographics",
-    "columns": "preferred_communication_time, user_id, religion, religious_practice_level, ethnicity, socioeconomic_status, parent_education_level, parent_occupation, marital_status, created_at, updated_at, communication_language_preference, id"
+    "columns": "religion, preferred_communication_time, communication_language_preference, updated_at, created_at, marital_status, parent_occupation, parent_education_level, socioeconomic_status, ethnicity, religious_practice_level, user_id, id"
   },
   {
     "table_name": "t_460_02_04_educator_banking_info",
-    "columns": "payout_count, updated_at, bank_id, bank_code, id, educator_id, account_holder_name, account_number, bank_name, swift_code, bank_branch, city, country_code, is_verified, verification_document_url, last_verified_at, total_payouts, last_payout_at, created_at"
+    "columns": "updated_at, last_verified_at, verification_document_url, is_verified, country_code, city, bank_branch, swift_code, bank_name, account_number, account_holder_name, educator_id, id, bank_code, bank_id, created_at, payout_count, last_payout_at, total_payouts"
   },
   {
     "table_name": "t_460_02_04_educator_sessions",
-    "columns": "updated_at, created_at, payout_status, session_rate, completion_status, session_status, duration_hours, session_end_time, session_start_time, session_date, program_code, student_id, educator_id, id"
+    "columns": "payout_status, session_rate, completion_status, session_status, duration_hours, session_end_time, session_start_time, session_date, program_code, student_id, educator_id, id, updated_at, created_at"
   },
   {
     "table_name": "t_460_02_05_payout_requests",
-    "columns": "tutor_id, id, educator_id, period_start, period_end, total_sessions, total_amount, net_amount, request_status, submitted_at, updated_at, created_at, admin_notes, tutor_notes, selected_bank_account_id, payout_id, processed_at, processed_by, rejection_reason, rejected_at, rejected_by, approved_at, approved_by, validated_at, validated_by, submitted_at, previous_request_id, request_number_in_month, validation_notes, validation_status, request_status, estimated_net_amount, admin_fee, tax_amount, deduction_amount, total_gross_amount, bonus_amount, base_amount, total_hours, selected_session_ids, total_sessions, month_year, period_end, period_start, request_type, entity_id, id"
+    "columns": "id, id, educator_id, period_start, period_end, total_sessions, total_amount, net_amount, request_status, submitted_at, updated_at, created_at, admin_notes, tutor_notes, selected_bank_account_id, payout_id, processed_at, processed_by, rejection_reason, rejected_at, rejected_by, approved_at, approved_by, validated_at, validated_by, submitted_at, previous_request_id, request_number_in_month, validation_notes, validation_status, request_status, estimated_net_amount, admin_fee, tax_amount, deduction_amount, total_gross_amount, bonus_amount, base_amount, total_hours, selected_session_ids, total_sessions, month_year, period_end, period_start, request_type, entity_id, tutor_id"
   },
   {
     "table_name": "t_460_03_01_document_storage",

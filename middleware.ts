@@ -72,7 +72,7 @@ export default async function middleware(request: NextRequest) {
     // Database tutor manager restricted to database-tutor paths only
     else if (userRole === 'database_tutor_manager') {
       if (!pathname.includes('/database-tutor') && !pathname.includes('/profile')) {
-        return NextResponse.redirect(new URL('/en/eduprima/main/ops/em/matchmaking/database-tutor/view-all', request.url));
+        return NextResponse.redirect(new URL('/en/eduprima/main/ops/em/database-tutor/view-all', request.url));
       }
     } 
     // Other roles - redirect to unauthorized
