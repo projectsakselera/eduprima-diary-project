@@ -20,33 +20,100 @@ import { signOut } from 'next-auth/react';
 import SidebarHoverToggle from './sidebar-hover-toggle';
 import { useMenuHoverConfig } from '@/hooks/use-menu-hover';
 
-// Simplified menu - only working pages
+// Enhanced menu with comprehensive CRUD and extensible database features
 const tutorManagerMenus = [
   {
-    groupLabel: "📊 Dashboard",
+    groupLabel: "📊 Dashboard & Analytics",
     menus: [
       {
         href: "/eduprima/main/ops/em/database-tutor",
-        label: "Overview",
+        label: "Overview Dashboard",
         active: false,
         icon: "heroicons:chart-bar"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/field-mapping",
+        label: "Field Mapping",
+        active: false,
+        icon: "heroicons:arrow-path-rounded-square"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/analytics",
+        label: "Advanced Analytics",
+        active: false,
+        icon: "heroicons:chart-pie",
+        comingSoon: true
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/reports",
+        label: "Data Reports",
+        active: false,
+        icon: "heroicons:document-chart-bar",
+        comingSoon: true
       }
     ]
   },
   {
-    groupLabel: "👥 Tutor Management",
+    groupLabel: "👥 Tutor CRUD Operations",
     menus: [
       {
         href: "/eduprima/main/ops/em/database-tutor/view-all",
         label: "View All Tutors",
         active: true,
-        icon: "heroicons:table-cells"
+        icon: "heroicons:table-cells",
+        children: [
+          {
+            href: "/eduprima/main/ops/em/database-tutor/view-all?mode=table",
+            label: "Table View",
+            icon: "heroicons:table-cells",
+            active: false
+          },
+          {
+            href: "/eduprima/main/ops/em/database-tutor/view-all?mode=grid",
+            label: "Grid View",
+            icon: "heroicons:squares-2x2",
+            comingSoon: true
+          },
+          {
+            href: "/eduprima/main/ops/em/database-tutor/view-all?mode=kanban",
+            label: "Kanban View",
+            icon: "heroicons:view-columns",
+            comingSoon: true
+          }
+        ]
       },
       {
         href: "/eduprima/main/ops/em/database-tutor/add",
         label: "Add New Tutor",
         active: false,
         icon: "heroicons:plus-circle"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/bulk-operations",
+        label: "Bulk Operations",
+        active: false,
+        icon: "heroicons:queue-list",
+        comingSoon: true,
+        children: [
+          {
+            href: "/eduprima/main/ops/em/database-tutor/bulk-edit",
+            label: "Bulk Edit",
+            icon: "heroicons:pencil-square",
+            comingSoon: true
+          },
+          {
+            href: "/eduprima/main/ops/em/database-tutor/bulk-delete",
+            label: "Bulk Delete",
+            icon: "heroicons:trash",
+            comingSoon: true
+          },
+          {
+            href: "/eduprima/main/ops/em/database-tutor/bulk-status",
+            label: "Bulk Status Update",
+            icon: "heroicons:arrow-path",
+            comingSoon: true
+          }
+        ]
       },
       {
         href: "/eduprima/main/ops/em/database-tutor/import-export",
@@ -57,18 +124,33 @@ const tutorManagerMenus = [
     ]
   },
   {
-    groupLabel: "🔍 Smart Search",
+    groupLabel: "🔍 Smart Search & Query",
     menus: [
       {
         href: "/eduprima/main/ops/em/database-tutor/educator-query",
-        label: "Tutor Query",
+        label: "Smart Tutor Search",
         active: false,
         icon: "ph:brain",
         badge: "NEW"
       },
       {
+        href: "/eduprima/main/ops/em/database-tutor/advanced-filter",
+        label: "Advanced Filters",
+        active: false,
+        icon: "heroicons:funnel",
+        comingSoon: true
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/query-builder",
+        label: "Custom Query Builder",
+        active: false,
+        icon: "heroicons:code-bracket",
+        comingSoon: true,
+        badge: "PRO"
+      },
+      {
         href: "/eduprima/main/ops/em/matchmaking/subject-recommendation",
-        label: "Subject Recommendation",
+        label: "AI Recommendations",
         active: false,
         icon: "heroicons:lightbulb",
         badge: "AI"
@@ -76,7 +158,80 @@ const tutorManagerMenus = [
     ]
   },
   {
-    groupLabel: "🔧 Tools & Test",
+    groupLabel: "🗄️ Database Extensions",
+    menus: [
+      {
+        href: "/eduprima/main/ops/em/database-tutor/schema-builder",
+        label: "Schema Builder",
+        active: false,
+        icon: "heroicons:squares-plus",
+        comingSoon: true,
+        badge: "ADMIN"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/field-manager",
+        label: "Field Manager",
+        active: false,
+        icon: "heroicons:adjustments-horizontal",
+        comingSoon: true,
+        badge: "ADMIN"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/relations",
+        label: "Table Relations",
+        active: false,
+        icon: "heroicons:link",
+        comingSoon: true,
+        badge: "ADMIN"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/migrations",
+        label: "Data Migrations",
+        active: false,
+        icon: "heroicons:arrow-right-circle",
+        comingSoon: true,
+        badge: "ADMIN"
+      }
+    ]
+  },
+  {
+    groupLabel: "📈 Data Mining & Intelligence",
+    menus: [
+      {
+        href: "/eduprima/main/ops/em/database-tutor/data-mining",
+        label: "Data Mining Tools",
+        active: false,
+        icon: "heroicons:magnifying-glass-circle",
+        comingSoon: true,
+        badge: "PRO"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/trend-analysis",
+        label: "Trend Analysis",
+        active: false,
+        icon: "heroicons:arrow-trending-up",
+        comingSoon: true
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/predictive",
+        label: "Predictive Analytics",
+        active: false,
+        icon: "heroicons:crystal-ball",
+        comingSoon: true,
+        badge: "AI"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/insights",
+        label: "Smart Insights",
+        active: false,
+        icon: "heroicons:light-bulb",
+        comingSoon: true,
+        badge: "AI"
+      }
+    ]
+  },
+  {
+    groupLabel: "🔧 System Tools",
     menus: [
       {
         href: "/eduprima/main/ops/em/database-tutor/storage-test",
@@ -84,6 +239,28 @@ const tutorManagerMenus = [
         active: false,
         icon: "ph:cloud-arrow-up",
         badge: "TEST"
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/backup",
+        label: "Backup & Restore",
+        active: false,
+        icon: "heroicons:archive-box",
+        comingSoon: true
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/audit-logs",
+        label: "Audit Logs",
+        active: false,
+        icon: "heroicons:document-text",
+        comingSoon: true
+      },
+      {
+        href: "/eduprima/main/ops/em/database-tutor/performance",
+        label: "Performance Monitor",
+        active: false,
+        icon: "heroicons:cpu-chip",
+        comingSoon: true,
+        badge: "PRO"
       }
     ]
   }
@@ -193,7 +370,10 @@ export function DatabaseTutorSidebar() {
                                                                         {
                                                                             "bg-blue-100 text-blue-700": badge === "NEW",
                                                                             "bg-green-100 text-green-700": badge === "AI",
-                                                                            "bg-orange-100 text-orange-700": badge === "LEGACY"
+                                                                            "bg-orange-100 text-orange-700": badge === "LEGACY",
+                                                                            "bg-purple-100 text-purple-700": badge === "PRO",
+                                                                            "bg-red-100 text-red-700": badge === "ADMIN",
+                                                                            "bg-yellow-100 text-yellow-700": badge === "TEST"
                                                                         }
                                                                     )}>
                                                                         {badge}
@@ -250,7 +430,10 @@ export function DatabaseTutorSidebar() {
                                                                     {
                                                                         "bg-blue-100 text-blue-700": badge === "NEW",
                                                                         "bg-green-100 text-green-700": badge === "AI",
-                                                                        "bg-orange-100 text-orange-700": badge === "LEGACY"
+                                                                        "bg-orange-100 text-orange-700": badge === "LEGACY",
+                                                                        "bg-purple-100 text-purple-700": badge === "PRO",
+                                                                        "bg-red-100 text-red-700": badge === "ADMIN",
+                                                                        "bg-yellow-100 text-yellow-700": badge === "TEST"
                                                                     }
                                                                 )}>
                                                                     {badge}

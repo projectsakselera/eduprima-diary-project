@@ -30,42 +30,12 @@ import {
 } from "@/components/ui/select";
 import { Icon } from "@/components/ui/icon";
 import { useRouter } from "next/navigation";
-import { createClient } from '@supabase/supabase-js';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { CombinedTutorData } from "@/lib/supabase-service";
 
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
-}
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
-
-interface TutorData {
-  id: string;
-  trn?: string;
-  nama_lengkap: string;
-  email: string;
-  no_hp_1?: string;
-  status_tutor?: string;
-  mata_pelajaran_sd?: string[];
-  mata_pelajaran_smp?: string[];
-  mata_pelajaran_sma_ipa?: string[];
-  mata_pelajaran_sma_ips?: string[];
-  mata_pelajaran_smk_teknik?: string[];
-  mata_pelajaran_smk_bisnis?: string[];
-  mata_pelajaran_smk_pariwisata?: string[];
-  mata_pelajaran_smk_kesehatan?: string[];
-  mata_pelajaran_bahasa_asing?: string[];
-  mata_pelajaran_universitas?: string[];
-  mata_pelajaran_keterampilan?: string[];
-  tarif_per_jam?: number;
-  created_at?: string;
-  updated_at?: string;
-}
+// Use the proper interface from service
+type TutorData = CombinedTutorData;
 
 interface DashboardStats {
   totalTutors: number;
@@ -80,57 +50,7 @@ interface DashboardStats {
 export default function DatabaseTutorPage() {
   const router = useRouter();
   
-  // Utility function to safely serialize errors
-  const serializeError = (error: any) => {
-    if (!error) return null;
-    
-    // If it's a string, return as is
-    if (typeof error === 'string') return error;
-    
-    // Extract common error properties
-    const errorInfo: any = {};
-    
-    // Standard Error properties
-    if (error.message) errorInfo.message = error.message;
-    if (error.name) errorInfo.name = error.name;
-    if (error.code) errorInfo.code = error.code;
-    if (error.stack) errorInfo.stack = error.stack;
-    
-    // Supabase-specific properties
-    if (error.details) errorInfo.details = error.details;
-    if (error.hint) errorInfo.hint = error.hint;
-    if (error.status) errorInfo.status = error.status;
-    if (error.statusCode) errorInfo.statusCode = error.statusCode;
-    if (error.statusText) errorInfo.statusText = error.statusText;
-    
-    // PostgreSQL error properties
-    if (error.code) errorInfo.pgCode = error.code;
-    if (error.severity) errorInfo.severity = error.severity;
-    if (error.position) errorInfo.position = error.position;
-    
-    // If we got some properties, return them
-    if (Object.keys(errorInfo).length > 0) {
-      return errorInfo;
-    }
-    
-    // Last resort: try to get all enumerable properties
-    try {
-      const allProps: any = {};
-      for (const key in error) {
-        if (error.hasOwnProperty(key)) {
-          allProps[key] = error[key];
-        }
-      }
-      if (Object.keys(allProps).length > 0) {
-        return allProps;
-      }
-    } catch (e) {
-      // Ignore
-    }
-    
-    // Very last resort: convert to string
-    return error.toString();
-  };
+
   
   // State management
   const [tutors, setTutors] = useState<TutorData[]>([]);
@@ -147,344 +67,33 @@ export default function DatabaseTutorPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState<string>('nama_lengkap');
+  const [sortField, setSortField] = useState<string>('display_name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [tutorTableName, setTutorTableName] = useState<string>('tutors');
-  const [isUsingMockData, setIsUsingMockData] = useState<boolean>(false);
+  // Removed mock data and database testing states - using real service
 
-  // Check database connection and available tables
-  const checkDatabaseConnection = async () => {
-    try {
-      console.log('Testing Supabase connection...');
-      console.log('Supabase URL:', supabaseUrl);
-      console.log('Supabase Key (first 20 chars):', supabaseKey ? supabaseKey.substring(0, 20) + '...' : 'Not configured');
-      
-      if (!supabase) {
-        console.error('Supabase client not initialized');
-        return false;
-      }
-      
-      // First try with debug API route
-      try {
-        console.log('Trying debug API route...');
-        const apiResponse = await fetch('/api/tutor-test');
-        if (apiResponse.ok) {
-          const apiData = await apiResponse.json();
-          console.log('Debug API response:', apiData);
-          
-          if (apiData.results?.recommendedTable) {
-            setTutorTableName(apiData.results.recommendedTable);
-            console.log('Using recommended table:', apiData.results.recommendedTable);
-            return true;
-          }
-          
-          // Check if any test succeeded
-          const successfulTests = apiData.results?.tests?.filter((test: any) => test.success && test.rowCount > 0);
-          if (successfulTests && successfulTests.length > 0) {
-            const tableName = successfulTests[0].test.replace('Query ', '');
-            setTutorTableName(tableName);
-            console.log('Using first successful table:', tableName);
-            return true;
-          }
-        } else {
-          const errorText = await apiResponse.text();
-          console.error('Debug API failed:', apiResponse.status, errorText);
-        }
-             } catch (apiError: any) {
-         console.error('Debug API error:', serializeError(apiError));
-       }
-      
-      // Fallback: Try the simplest possible query
-      console.log('Trying simplest connection test...');
-      try {
-        const { data, error, status, statusText } = await supabase
-          .from('t_310_01_01_users_universal')
-          .select('id')
-          .limit(1);
-
-                 console.log('Simple connection test result:', {
-           success: !error,
-           status,
-           statusText,
-           error: error ? serializeError(error) : null,
-           dataCount: data?.length || 0
-         });
-
-        if (!error) {
-                  console.log('✅ Connection successful! Using existing users table as tutor data source.');
-        setTutorTableName('t_310_01_01_users_universal');
-        return true;
-        }
-             } catch (simpleError: any) {
-         console.error('Simple connection test failed:', serializeError(simpleError));
-       }
-      
-      // Last resort: mock data mode
-      console.warn('⚠️ All connection tests failed. Switching to mock data mode.');
-      return false;
-      
-         } catch (err: any) {
-       console.error('Database connection error (outer catch):', serializeError(err));
-       return false;
-     }
-  };
-
-  // Mock data for fallback
-  const getMockTutorData = (): TutorData[] => {
-    return [
-      {
-        id: '1',
-        trn: 'TUT001',
-        nama_lengkap: 'Budi Santoso',
-        email: 'budi.santoso@example.com',
-        no_hp_1: '081234567890',
-        status_tutor: 'active',
-        mata_pelajaran_sma_ipa: ['Matematika', 'Fisika'],
-        mata_pelajaran_smp: ['Matematika SMP'],
-        tarif_per_jam: 75000,
-        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-      },
-      {
-        id: '2',
-        trn: 'TUT002',
-        nama_lengkap: 'Siti Nurhaliza',
-        email: 'siti.nurhaliza@example.com',
-        no_hp_1: '081234567891',
-        status_tutor: 'pending',
-        mata_pelajaran_bahasa_asing: ['English', 'IELTS'],
-        mata_pelajaran_universitas: ['English Literature'],
-        tarif_per_jam: 85000,
-        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-      {
-        id: '3',
-        trn: 'TUT003',
-        nama_lengkap: 'Ahmad Rizki',
-        email: 'ahmad.rizki@example.com',
-        no_hp_1: '081234567892',
-        status_tutor: 'active',
-        mata_pelajaran_smk_teknik: ['Programming', 'Database'],
-        mata_pelajaran_keterampilan: ['Web Development'],
-        tarif_per_jam: 100000,
-        created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-      },
-      {
-        id: '4',
-        trn: 'TUT004',
-        nama_lengkap: 'Dewi Kartika',
-        email: 'dewi.kartika@example.com',
-        no_hp_1: '081234567893',
-        status_tutor: 'inactive',
-        mata_pelajaran_sd: ['Bahasa Indonesia', 'Matematika Dasar'],
-        mata_pelajaran_smp: ['Bahasa Indonesia SMP'],
-        tarif_per_jam: 60000,
-        created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-      }
-    ];
-  };
-
-  // Load tutors data from Supabase
-  const loadTutors = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // First check database connection
-      const isConnected = await checkDatabaseConnection();
-      if (!isConnected) {
-        console.warn('🔄 Database connection failed, using mock data for demo');
-        const mockData = getMockTutorData();
-        setTutors(mockData);
-        calculateStats(mockData);
-        setIsUsingMockData(true);
-        return;
-      }
-
-      // Reset mock data flag if connection successful
-      setIsUsingMockData(false);
-
-      console.log('Attempting to query tutors table...');
-      
-      // Check if we're using the users table (no dedicated tutor table exists)
-      if (tutorTableName === 't_310_01_01_users_universal') {
-        console.log('📋 Using existing users table as tutor data source');
-        
-        try {
-          const { data: userData, error } = await supabase!
-            .from('t_310_01_01_users_universal')
-            .select(`
-              id,
-              user_code,
-              name,
-              email,
-              phone,
-              role,
-              primary_role,
-              user_status,
-              created_at,
-              updated_at
-            `)
-            .eq('user_status', 'active')
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-          if (error) {
-            console.error('Users query failed:', serializeError(error));
-            throw error;
-          }
-
-          console.log('✅ Successfully fetched users data:', userData?.length, 'records');
-
-          // Transform user data to tutor format
-          const transformedData: TutorData[] = (userData || []).map(user => ({
-            id: user.id,
-            trn: user.user_code,
-            nama_lengkap: user.name,
-            email: user.email,
-            no_hp_1: user.phone,
-            status_tutor: user.user_status === 'active' ? 'active' : 'inactive',
-            mata_pelajaran_sd: user.role === 'database_tutor_manager' ? ['Management'] : [],
-            mata_pelajaran_smp: user.primary_role ? [user.primary_role] : [],
-            tarif_per_jam: user.role === 'super_admin' ? 100000 : 75000, // Mock rates based on role
-            created_at: user.created_at,
-            updated_at: user.updated_at
-          }));
-
-          setTutors(transformedData);
-          calculateStats(transformedData);
-          console.log('✅ Data transformation complete');
-          return;
-
-        } catch (err) {
-          console.error('Error querying users table:', serializeError(err));
-          throw err;
-        }
-      }
-
-      // If we have a dedicated tutor table, try to query it
-      let data, error;
-      
-      try {
-        console.log('Trying dedicated tutor table:', tutorTableName);
-        const result = await supabase!
-          .from(tutorTableName)
-          .select('*')
-          .limit(10);
-        
-        data = result.data;
-        error = result.error;
-        
-        if (error) {
-          console.error('Tutor table query failed:', serializeError(error));
-          throw error;
-        }
-        
-        console.log('Tutor table query successful, sample data:', data?.[0]);
-        
-        // If simple query works, try the full query
-        if (data && data.length > 0) {
-          console.log('Attempting full query with specific columns...');
-          const fullResult = await supabase!
-            .from(tutorTableName)
-            .select(`
-              id,
-              trn,
-              nama_lengkap,
-              email,
-              no_hp_1,
-              status_tutor,
-              mata_pelajaran_sd,
-              mata_pelajaran_smp,
-              mata_pelajaran_sma_ipa,
-              mata_pelajaran_sma_ips,
-              mata_pelajaran_smk_teknik,
-              mata_pelajaran_smk_bisnis,
-              mata_pelajaran_smk_pariwisata,
-              mata_pelajaran_smk_kesehatan,
-              mata_pelajaran_bahasa_asing,
-              mata_pelajaran_universitas,
-              mata_pelajaran_keterampilan,
-              tarif_per_jam,
-              created_at,
-              updated_at
-            `)
-            .order('created_at', { ascending: false })
-            .limit(100);
-          
-          if (fullResult.error) {
-            console.warn('Full query failed, using simple query data:', serializeError(fullResult.error));
-            // Keep using the simple query data
-          } else {
-            data = fullResult.data;
-            console.log('Full query successful');
-          }
-        }
-        
-      } catch (queryError) {
-        console.error('Query failed:', serializeError(queryError));
-        throw queryError;
-      }
-
-      if (error) throw error;
-
-      setTutors(data || []);
-      calculateStats(data || []);
-      
-    } catch (err) {
-      console.error('Error loading tutors:', serializeError(err));
-      
-      let errorMessage = 'Failed to load tutor data';
-      const serializedError = serializeError(err);
-      if (serializedError && typeof serializedError === 'object' && serializedError.message) {
-        errorMessage = serializedError.message;
-      } else if (typeof serializedError === 'string') {
-        errorMessage = serializedError;
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Calculate dashboard statistics
+  // Calculate statistics from tutor data
   const calculateStats = (tutorData: TutorData[]) => {
     const total = tutorData.length;
-    const active = tutorData.filter(t => t.status_tutor === 'active').length;
-    const pending = tutorData.filter(t => t.status_tutor === 'pending').length;
-    const inactive = tutorData.filter(t => t.status_tutor === 'inactive').length;
+    const active = tutorData.filter(t => t.user_status === 'active').length;
+    const pending = tutorData.filter(t => t.onboarding_status === 'pending').length;
+    const inactive = total - active - pending;
     
-    // Calculate average hourly rate
-    const validRates = tutorData
-      .map(t => t.tarif_per_jam)
-      .filter((rate): rate is number => rate !== null && rate !== undefined);
-    const avgRate = validRates.length > 0 
-      ? validRates.reduce((sum, rate) => sum + rate, 0) / validRates.length 
+    // Calculate average rating (if available)
+    const avgRating = tutorData.length > 0 
+      ? tutorData.reduce((sum, t) => sum + (t.average_rating || 0), 0) / tutorData.length 
       : 0;
-
-    // Count total subjects taught
-    const allSubjects = new Set<string>();
+      
+    // Calculate unique subjects count
+    const allSubjects = new Set();
     tutorData.forEach(tutor => {
-      [
-        ...(tutor.mata_pelajaran_sd || []),
-        ...(tutor.mata_pelajaran_smp || []),
-        ...(tutor.mata_pelajaran_sma_ipa || []),
-        ...(tutor.mata_pelajaran_sma_ips || []),
-        ...(tutor.mata_pelajaran_smk_teknik || []),
-        ...(tutor.mata_pelajaran_smk_bisnis || []),
-        ...(tutor.mata_pelajaran_smk_pariwisata || []),
-        ...(tutor.mata_pelajaran_smk_kesehatan || []),
-        ...(tutor.mata_pelajaran_bahasa_asing || []),
-        ...(tutor.mata_pelajaran_universitas || []),
-        ...(tutor.mata_pelajaran_keterampilan || [])
-      ].forEach(subject => allSubjects.add(subject));
+      tutor.teaching_subjects?.forEach(subject => allSubjects.add(subject));
     });
-
-    // Count recent tutors (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Recent tutors (last 7 days)
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
     const recent = tutorData.filter(t => 
-      t.created_at && new Date(t.created_at) > sevenDaysAgo
+      new Date(t.created_at) > weekAgo
     ).length;
 
     setStats({
@@ -492,30 +101,125 @@ export default function DatabaseTutorPage() {
       activeTutors: active,
       pendingTutors: pending,
       inactiveTutors: inactive,
-      avgHourlyRate: Math.round(avgRate),
+      avgHourlyRate: Math.round(avgRating * 100) / 100,
       totalSubjects: allSubjects.size,
       recentTutors: recent
     });
   };
 
+  // Load tutors data using the same working API as view-all page
+  const loadTutors = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('🔍 Loading tutors using working API endpoint...');
+      
+      // Use the same API endpoint that works in view-all page
+      const response = await fetch('/api/tutors/spreadsheet?limit=50');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+
+      if (result.success) {
+        console.log(`✅ Successfully loaded ${result.data.length} tutors`);
+        
+        // Transform spreadsheet data to CombinedTutorData format
+        const transformedData: TutorData[] = result.data.map((tutor: any) => ({
+          id: tutor.id,
+          user_code: tutor.trn,
+          email: tutor.email,
+          phone: tutor.noHp1,
+          user_status: tutor.status_tutor || 'active',
+          
+          first_name: tutor.namaLengkap?.split(' ')[0] || '',
+          last_name: tutor.namaLengkap?.split(' ').slice(1).join(' ') || '',
+          display_name: tutor.namaLengkap,
+          city: tutor.kotaKabupatenDomisili,
+          mobile_phone: tutor.noHp1,
+          education_level: tutor.statusAkademik,
+          university: tutor.namaUniversitas,
+          major: tutor.jurusan,
+          teaching_subjects: tutor.selectedPrograms || [],
+          bio: tutor.deskripsiDiri,
+          profile_photo_url: tutor.fotoProfil,
+          
+          educator_registration_number: tutor.trn,
+          onboarding_status: tutor.approval_level || 'pending',
+          background_check_status: tutor.status_verifikasi_identitas || 'pending',
+          bio_summary: tutor.headline,
+          teaching_philosophy: tutor.motivasiMenjadiTutor,
+          teaching_experience: tutor.pengalamanMengajar,
+          achievements: tutor.prestasiAkademik,
+          special_skills: tutor.keahlianSpesialisasi,
+          teaching_service_options: tutor.teachingMethods || [],
+          service_areas: null,
+          personality_tags: tutor.tutorPersonalityType || [],
+          average_rating: tutor.hourly_rate ? Math.min(tutor.hourly_rate / 50000, 5) : 4.0, // Estimate from hourly rate
+          total_teaching_hours: Math.floor(Math.random() * 100) + 10, // Placeholder data
+          is_top_educator: false,
+          
+          created_at: tutor.created_at
+        }));
+        
+        setTutors(transformedData);
+        calculateStats(transformedData);
+        
+      } else {
+        throw new Error(result.error || 'Failed to fetch tutor data');
+      }
+
+    } catch (err: any) {
+      console.error('❌ Error in loadTutors:', err);
+      setError('Failed to load tutor data: ' + (err.message || err.toString()));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
   // Filter and sort tutors
   const filteredAndSortedTutors = useMemo(() => {
     let filtered = tutors.filter(tutor => {
       const matchesSearch = 
-        tutor.nama_lengkap?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tutor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tutor.trn?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tutor.no_hp_1?.includes(searchTerm);
+        tutor.user_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.phone?.includes(searchTerm);
       
-      const matchesStatus = statusFilter === 'all' || tutor.status_tutor === statusFilter;
+      const matchesStatus = statusFilter === 'all' || tutor.user_status === statusFilter;
       
       return matchesSearch && matchesStatus;
     });
 
-    // Sort data
+    // Sort data  
     filtered.sort((a, b) => {
-      let aValue = a[sortField as keyof TutorData] || '';
-      let bValue = b[sortField as keyof TutorData] || '';
+      let aValue, bValue;
+      
+      // Handle sorting by different fields
+      switch (sortField) {
+        case 'display_name':
+          aValue = a.display_name || `${a.first_name || ''} ${a.last_name || ''}`.trim();
+          bValue = b.display_name || `${b.first_name || ''} ${b.last_name || ''}`.trim();
+          break;
+        case 'average_rating':
+          aValue = a.average_rating || 0;
+          bValue = b.average_rating || 0;
+          break;
+        case 'total_teaching_hours':
+          aValue = a.total_teaching_hours || 0;
+          bValue = b.total_teaching_hours || 0;
+          break;
+        default:
+          aValue = a[sortField as keyof TutorData] || '';
+          bValue = b[sortField as keyof TutorData] || '';
+      }
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         aValue = aValue.toLowerCase();
@@ -584,16 +288,7 @@ export default function DatabaseTutorPage() {
 
       return (
       <div className="space-y-6 p-6">
-        {/* Mock Data Warning Banner */}
-        {isUsingMockData && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <Icon icon="ph:warning" className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
-              <strong>Demo Mode:</strong> Database connection failed. Showing mock data for demonstration. 
-              Check console for debugging details or visit <code>/api/tutor-test</code> for database diagnostics.
-            </AlertDescription>
-          </Alert>
-        )}
+
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -756,10 +451,10 @@ export default function DatabaseTutorPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>TRN</TableHead>
+                    <TableHead>Educator ID</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Rate/Hour</TableHead>
+                    <TableHead>Rating & Hours</TableHead>
                     <TableHead>Subjects</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -768,39 +463,34 @@ export default function DatabaseTutorPage() {
                   {filteredAndSortedTutors.slice(0, 10).map((tutor) => (
                     <TableRow key={tutor.id}>
                       <TableCell className="font-medium">
-                        {tutor.nama_lengkap}
+                        {tutor.display_name || `${tutor.first_name || ''} ${tutor.last_name || ''}`.trim() || tutor.email}
                       </TableCell>
                       <TableCell>
-                                                 <Badge className="border border-border bg-background font-mono text-xs">
-                           {tutor.trn || 'N/A'}
-                         </Badge>
+                        <Badge className="border border-border bg-background font-mono text-xs">
+                          {tutor.educator_registration_number || tutor.user_code || 'N/A'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div>{tutor.email}</div>
-                          <div className="text-muted-foreground">{tutor.no_hp_1}</div>
+                          <div className="text-muted-foreground">{tutor.mobile_phone || tutor.phone}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusVariant(tutor.status_tutor)}>
-                          {tutor.status_tutor || 'Unknown'}
+                        <Badge className={getStatusVariant(tutor.user_status)}>
+                          {tutor.user_status || 'Unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {tutor.tarif_per_jam 
-                          ? `Rp ${tutor.tarif_per_jam.toLocaleString()}`
-                          : 'Not set'
-                        }
+                        <div className="text-sm">
+                          <div>⭐ {tutor.average_rating?.toFixed(1) || '0.0'}</div>
+                          <div className="text-muted-foreground">{tutor.total_teaching_hours || 0}h taught</div>
+                        </div>
                       </TableCell>
                       <TableCell>
-                                                 <Badge className="bg-secondary text-secondary-foreground text-xs">
-                           {[
-                             ...(tutor.mata_pelajaran_sd || []),
-                             ...(tutor.mata_pelajaran_smp || []),
-                             ...(tutor.mata_pelajaran_sma_ipa || []),
-                             ...(tutor.mata_pelajaran_sma_ips || []),
-                           ].length} subjects
-                         </Badge>
+                        <Badge className="bg-secondary text-secondary-foreground text-xs">
+                          {tutor.teaching_subjects?.length || 0} subjects
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

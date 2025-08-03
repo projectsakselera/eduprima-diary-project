@@ -168,7 +168,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
       const uniqueValues = [...new Set(
         data
-          ?.map(row => row[columnConfig.field])
+          ?.map((row: any) => row[columnConfig.field] as string)
           .filter(val => val !== null && val !== '')
       )] as string[];
 
@@ -189,7 +189,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
       const uniqueValues = [...new Set(
         data
-          ?.map(row => row[columnConfig.field])
+          ?.map((row: any) => row[columnConfig.field] as string)
           .filter(val => val !== null && val !== '')
       )] as string[];
 
@@ -211,7 +211,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
       // Extract unique values
       const uniqueValues = [...new Set(
         data
-          ?.map(row => row[columnConfig.field])
+          ?.map((row: any) => row[columnConfig.field] as string)
           .filter(val => val !== null && val !== '')
       )] as string[];
 
@@ -233,7 +233,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
       const uniqueValues = [...new Set(
         data
-          ?.map(row => row[columnConfig.field])
+          ?.map((row: any) => row[columnConfig.field] as string)
           .filter(val => val !== null && val !== '')
       )] as string[];
 

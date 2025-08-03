@@ -19,6 +19,7 @@ interface ColumnFilterProps {
   totalCount?: number;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
+  error?: string;
 }
 
 export default function ColumnFilter({
@@ -30,7 +31,8 @@ export default function ColumnFilter({
   isLoading = false,
   totalCount = 0,
   className,
-  onClick
+  onClick,
+  error
 }: ColumnFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,23 +114,28 @@ export default function ColumnFilter({
         onClick={handleToggleOpen}
         className={cn(
           "h-6 w-6 p-0 hover:bg-muted",
-          hasActiveFilter && "text-primary bg-primary/10"
+          hasActiveFilter && "text-primary bg-primary/10",
+          isLoading && "animate-pulse",
+          error && "text-red-600"
         )}
-        title={`Filter ${columnLabel}`}
+        title={`Filter ${columnLabel}${error ? ` - Error: ${error}` : ''}`}
+        disabled={isLoading}
       >
         <span 
-          className="text-xs font-bold text-black leading-none select-none"
+          className={cn(
+            "text-xs font-bold leading-none select-none",
+            isLoading ? "text-blue-600" : error ? "text-red-600" : uniqueValues.length > 0 ? "text-green-600" : "text-black"
+          )}
           style={{ fontFamily: 'monospace' }}
         >
-          {hasActiveFilter ? "🔽" : "▼"}
+          {isLoading ? "⏳" : error ? "⚠️" : uniqueValues.length > 0 ? "✅" : hasActiveFilter ? "🔽" : "▼"}
         </span>
       </Button>
 
       {/* Active Filter Indicator */}
       {hasActiveFilter && (
         <Badge 
-          variant="secondary" 
-          className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs"
+          className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-secondary text-secondary-foreground"
         >
           {selectedValues.length}
         </Badge>
@@ -192,12 +199,45 @@ export default function ColumnFilter({
             <div className="max-h-48 overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <span className="inline-block w-4 h-4 mr-2 animate-spin">⚪</span>
-                  <span className="text-sm text-muted-foreground">Loading values...</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm text-muted-foreground">Loading values...</span>
+                  </div>
                 </div>
               ) : filteredValues.length === 0 ? (
                 <div className="text-center py-4 text-sm text-muted-foreground">
                   {searchTerm ? `No values match "${searchTerm}"` : 'No values available'}
+                  {!searchTerm && uniqueValues.length === 0 && (
+                    <div className="mt-2 text-xs text-red-500">
+                      {error ? (
+                        <div>
+                          <div>Error: {error}</div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onClick) onClick(e);
+                            }}
+                            className="mt-1 text-blue-600 hover:text-blue-700 underline"
+                          >
+                            Retry loading values
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div>Try refreshing the page or check API connection</div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onClick) onClick(e);
+                            }}
+                            className="mt-1 text-blue-600 hover:text-blue-700 underline"
+                          >
+                            Retry loading values
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-1">

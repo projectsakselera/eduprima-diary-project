@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,16 @@ import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { toast } from '@/components/ui/use-toast';
+import { 
+  findBestLocationMatches, 
+  findBestSubjectMatches, 
+  findBestBankMatches, 
+  findBestCategoryMatches,
+  advancedSimilarity, 
+  testLocationMatching, 
+  type LocationMatch,
+  type FieldMatch 
+} from '@/lib/fuzzy-location-matcher';
 // Import form config types and data (avoiding potential circular deps)
 // import { 
 //   tutorFormConfig, 
@@ -70,6 +80,20 @@ export default function ImportExportPage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Data cache for fuzzy matching
+  const [dataCache, setDataCache] = useState<{
+    provinces: Array<{id: string, name: string, local_name?: string}>;
+    cities: Array<{id: string, name: string, local_name?: string, province_id: string}>;
+    subjects: Array<{id: string, name: string, local_name?: string, alternate_name?: string}>;
+    banks: Array<{id: string, name: string, local_name?: string, alternate_name?: string}>;
+    categories: Array<{id: string, name: string, local_name?: string, alternate_name?: string}>;
+  }>({ provinces: [], cities: [], subjects: [], banks: [], categories: [] });
+
+  // Load all data on component mount
+  useEffect(() => {
+    loadAllData();
+  }, []);
 
   // Generate comprehensive field mapping from simplified config
   const generateFieldMapping = (): Array<{field: TutorFormField, csvColumn: string}> => {
@@ -310,14 +334,17 @@ export default function ImportExportPage() {
   }, []);
 
   // Apply column mapping and validation using form config
-  const processData = (rawData: any[]): ParsedRecord[] => {
+  const processData = async (rawData: any[]): Promise<ParsedRecord[]> => {
     // Get field mapping from form config
     const fieldMapping = generateFieldMapping();
     
     console.log('Processing data with field mapping:', fieldMapping.map(f => f.field.label));
     console.log('Available columns in CSV:', Object.keys(rawData[0] || {}));
     
-    return rawData.map((row, index) => {
+    const processedResults: ParsedRecord[] = [];
+    
+    for (let index = 0; index < rawData.length; index++) {
+      const row = rawData[index];
       const mappedData: Record<string, any> = {};
       const errors: string[] = [];
       const warnings: string[] = [];
@@ -375,7 +402,95 @@ export default function ImportExportPage() {
         }
       });
 
-      // Validate mapped data
+      // ===== ENHANCED LOCATION VALIDATION =====
+      // Validate province field with fuzzy matching
+      if (mappedData.provinsiDomisili) {
+        const provinceValidation = await validateLocationField(
+          mappedData.provinsiDomisili, 
+          'provinsiDomisili'
+        );
+        
+        if (provinceValidation.autoFix) {
+          mappedData.provinsiDomisili = provinceValidation.transformedValue;
+          if (provinceValidation.error) {
+            warnings.push(`🔧 ${provinceValidation.error}`);
+          }
+        } else if (!provinceValidation.isValid) {
+          errors.push(`Province: ${provinceValidation.error}`);
+          if (provinceValidation.suggestions.length > 0) {
+            const suggestions = provinceValidation.suggestions.slice(0, 2)
+              .map(s => `${s.name} (${s.similarity}%)`)
+              .join(', ');
+            errors.push(`Suggestions: ${suggestions}`);
+          }
+        }
+      }
+      
+      // Validate city field with fuzzy matching (depends on province)
+      if (mappedData.kotaKabupatenDomisili) {
+        const cityValidation = await validateLocationField(
+          mappedData.kotaKabupatenDomisili, 
+          'kotaKabupatenDomisili',
+          mappedData.provinsiDomisili // Use validated province ID
+        );
+        
+        if (cityValidation.autoFix) {
+          mappedData.kotaKabupatenDomisili = cityValidation.transformedValue;
+          if (cityValidation.error) {
+            warnings.push(`🔧 ${cityValidation.error}`);
+          }
+        } else if (!cityValidation.isValid) {
+          errors.push(`City: ${cityValidation.error}`);
+          if (cityValidation.suggestions.length > 0) {
+            const suggestions = cityValidation.suggestions.slice(0, 2)
+              .map(s => `${s.name} (${s.similarity}%)`)
+              .join(', ');
+            errors.push(`Suggestions: ${suggestions}`);
+          }
+        }
+      }
+      
+      // ===== ENHANCED SUBJECT VALIDATION =====
+      if (mappedData.selectedPrograms) {
+        const subjectValidation = await validateSubjectField(mappedData.selectedPrograms);
+        
+        if (subjectValidation.autoFix) {
+          mappedData.selectedPrograms = subjectValidation.transformedValue;
+          if (subjectValidation.error) {
+            warnings.push(`📚 ${subjectValidation.error}`);
+          }
+        } else if (!subjectValidation.isValid) {
+          errors.push(`Subjects: ${subjectValidation.error}`);
+          if (subjectValidation.suggestions.length > 0) {
+            const suggestions = subjectValidation.suggestions.slice(0, 2)
+              .map(s => `${s.name} (${s.similarity}%)`)
+              .join(', ');
+            errors.push(`Subject suggestions: ${suggestions}`);
+          }
+        }
+      }
+      
+      // ===== ENHANCED BANK VALIDATION =====
+      if (mappedData.namaBank) {
+        const bankValidation = await validateBankField(mappedData.namaBank);
+        
+        if (bankValidation.autoFix) {
+          mappedData.namaBank = bankValidation.transformedValue;
+          if (bankValidation.error) {
+            warnings.push(`🏦 ${bankValidation.error}`);
+          }
+        } else if (!bankValidation.isValid) {
+          errors.push(`Bank: ${bankValidation.error}`);
+          if (bankValidation.suggestions.length > 0) {
+            const suggestions = bankValidation.suggestions.slice(0, 2)
+              .map(s => `${s.name} (${s.similarity}%)`)
+              .join(', ');
+            errors.push(`Bank suggestions: ${suggestions}`);
+          }
+        }
+      }
+
+      // Standard validation for other fields
       const validationErrors = validateRecord(mappedData);
       errors.push(...validationErrors);
 
@@ -391,11 +506,14 @@ export default function ImportExportPage() {
       console.log(`Row ${index + 1} result:`, {
         isValid: result.isValid,
         errors: result.errors,
+        warnings: result.warnings,
         mappedFields: Object.keys(result.mappedData)
       });
 
-      return result;
-    });
+      processedResults.push(result);
+    }
+    
+    return processedResults;
   };
 
   // Transform values based on field type from form config
@@ -454,6 +572,333 @@ export default function ImportExportPage() {
       default:
         return String(value).trim();
     }
+  };
+
+  // Load all data for fuzzy matching
+  const loadAllData = async () => {
+    try {
+      console.log('🌍 Loading all reference data for fuzzy matching...');
+      
+      // Load data in parallel for better performance
+      const [
+        provincesResponse,
+        citiesResponse,
+        subjectsResponse,
+        banksResponse,
+        categoriesResponse
+      ] = await Promise.all([
+        fetch('/api/locations/provinces'),
+        fetch('/api/locations/cities'),
+        fetch('/api/subjects/programs?limit=1000'),
+        fetch('/api/banks/indonesia?limit=1000'),
+        fetch('/api/subjects/simple-categories')
+      ]);
+      
+      // Parse provinces
+      const provincesData = await provincesResponse.json();
+      const provinces = provincesData.provinces?.map((p: any) => ({
+        id: p.value,
+        name: p.label,
+        local_name: p.local_name
+      })) || [];
+      
+      // Parse cities
+      const citiesData = await citiesResponse.json();
+      const cities = citiesData.cities?.map((c: any) => ({
+        id: c.value,
+        name: c.label,
+        local_name: c.local_name,
+        province_id: c.province_id
+      })) || [];
+      
+      // Parse subjects/programs
+      const subjectsData = await subjectsResponse.json();
+      const subjects = subjectsData.programs?.map((s: any) => ({
+        id: s.id,
+        name: s.program_name_local || s.program_name,
+        local_name: s.program_name,
+        alternate_name: s.subject_focus || s.program_code
+      })) || [];
+      
+      // Parse banks
+      const banksData = await banksResponse.json();
+      const banks = banksData.data?.map((b: any) => ({
+        id: b.value,
+        name: b.label, // popular_bank_name
+        local_name: b.fullName, // bank_name
+        alternate_name: b.code // bank_code
+      })) || [];
+      
+      // Parse categories
+      const categoriesData = await categoriesResponse.json();
+      const categories = categoriesData.categories?.map((c: any) => ({
+        id: c.id,
+        name: c.label,
+        local_name: c.code,
+        alternate_name: c.description
+      })) || [];
+      
+      setDataCache({ provinces, cities, subjects, banks, categories });
+      
+      console.log(`✅ Successfully loaded reference data:`, {
+        provinces: provinces.length,
+        cities: cities.length,
+        subjects: subjects.length,
+        banks: banks.length,
+        categories: categories.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Failed to load reference data:', error);
+      toast({
+        title: "Warning",
+        description: "Failed to load reference data. Validation may be limited.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Enhanced location validation with fuzzy matching
+  const validateLocationField = async (
+    value: string, 
+    fieldName: string, 
+    provinceId?: string
+  ): Promise<{
+    isValid: boolean;
+    transformedValue: string | null;
+    suggestions: LocationMatch[];
+    autoFix?: string;
+    error?: string;
+  }> => {
+    if (!value || value.trim() === '') {
+      return { isValid: true, transformedValue: null, suggestions: [] };
+    }
+
+    const cleanValue = value.trim();
+    
+    // Determine if this is province or city field
+    const isProvinceField = fieldName.toLowerCase().includes('provinsi');
+    const locationData = isProvinceField ? dataCache.provinces : dataCache.cities;
+    
+    // Filter cities by province if provided and we're validating city
+    const filteredData = !isProvinceField && provinceId 
+      ? dataCache.cities.filter(city => city.province_id === provinceId)
+      : locationData;
+    
+    if (filteredData.length === 0) {
+      // If no location data loaded, fallback to basic validation
+      return { 
+        isValid: false, 
+        transformedValue: null, 
+        suggestions: [],
+        error: `Location data not available for validation`
+      };
+    }
+
+    // Use fuzzy matching to find best matches
+    const matches = findBestLocationMatches(
+      cleanValue, 
+      filteredData, 
+      isProvinceField ? 'provinces' : 'cities'
+    );
+
+    if (matches.length === 0) {
+      return {
+        isValid: false,
+        transformedValue: null,
+        suggestions: [],
+        error: `No matching ${isProvinceField ? 'province' : 'city'} found for "${cleanValue}"`
+      };
+    }
+
+    const bestMatch = matches[0];
+    
+    // Auto-accept if similarity is very high (95%+)
+    if (bestMatch.similarity >= 95) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3), // Top 3 suggestions
+        autoFix: bestMatch.id
+      };
+    }
+    
+    // Accept with warning if similarity is high (85%+)
+    if (bestMatch.similarity >= 85) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: `Auto-corrected "${cleanValue}" to "${bestMatch.name}" (${bestMatch.similarity}% match)`
+      };
+    }
+    
+    // Smart auto-accept for reasonable matches (60%+) - especially if it's the clear best option
+    if (bestMatch.similarity >= 60 && (matches.length === 1 || bestMatch.similarity > matches[1]?.similarity + 10)) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: `Auto-selected "${cleanValue}" → "${bestMatch.name}" (${bestMatch.similarity}% confidence)`
+      };
+    }
+    
+    // Accept moderate matches (50%+) but with lower confidence note
+    if (bestMatch.similarity >= 50) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: `Best guess: "${cleanValue}" → "${bestMatch.name}" (${bestMatch.similarity}% confidence)`
+      };
+    }
+    
+    // Reject if similarity is too low
+    return {
+      isValid: false,
+      transformedValue: null,
+      suggestions: matches.slice(0, 3),
+      error: `"${cleanValue}" not found. Did you mean: ${matches.slice(0, 2).map(m => m.name).join(', ')}?`
+    };
+  };
+
+  // Enhanced subject validation with fuzzy matching
+  const validateSubjectField = async (
+    value: string | string[]
+  ): Promise<{
+    isValid: boolean;
+    transformedValue: string[] | null;
+    suggestions: FieldMatch[];
+    autoFix?: string[];
+    error?: string;
+  }> => {
+    if (!value || (Array.isArray(value) && value.length === 0)) {
+      return { isValid: true, transformedValue: null, suggestions: [] };
+    }
+
+    const subjects = Array.isArray(value) ? value : [value];
+    const validatedSubjects: string[] = [];
+    const allSuggestions: FieldMatch[] = [];
+    const errors: string[] = [];
+    let hasAutoFix = false;
+
+    for (const subject of subjects) {
+      const cleanSubject = subject.trim();
+      if (!cleanSubject) continue;
+
+      const matches = findBestSubjectMatches(cleanSubject, dataCache.subjects);
+      
+      if (matches.length === 0) {
+        errors.push(`Subject "${cleanSubject}" not found`);
+        continue;
+      }
+
+      const bestMatch = matches[0];
+      
+      // Auto-accept high similarity
+      if (bestMatch.similarity >= 85) {
+        validatedSubjects.push(bestMatch.id);
+        if (bestMatch.similarity < 95) {
+          hasAutoFix = true;
+        }
+      } 
+      // Smart auto-accept for reasonable matches (60%+) - especially if it's the clear best option
+      else if (bestMatch.similarity >= 60 && (matches.length === 1 || bestMatch.similarity > matches[1]?.similarity + 10)) {
+        validatedSubjects.push(bestMatch.id);
+        hasAutoFix = true; // Mark as auto-fix to show confidence level
+      } 
+      // Accept moderate matches (50%+) but with lower confidence note
+      else if (bestMatch.similarity >= 50) {
+        validatedSubjects.push(bestMatch.id);
+        hasAutoFix = true; // Mark as auto-fix to show confidence level
+      } 
+      // Only reject very low similarity
+      else {
+        errors.push(`Subject "${cleanSubject}" not found. Suggestions: ${matches.slice(0, 2).map(m => m.name).join(', ')}`);
+        allSuggestions.push(...matches.slice(0, 2));
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      transformedValue: validatedSubjects.length > 0 ? validatedSubjects : null,
+      suggestions: allSuggestions,
+      autoFix: hasAutoFix ? validatedSubjects : undefined,
+      error: errors.length > 0 ? errors.join('; ') : undefined
+    };
+  };
+
+  // Enhanced bank validation with fuzzy matching
+  const validateBankField = async (
+    value: string
+  ): Promise<{
+    isValid: boolean;
+    transformedValue: string | null;
+    suggestions: FieldMatch[];
+    autoFix?: string;
+    error?: string;
+  }> => {
+    if (!value || value.trim() === '') {
+      return { isValid: true, transformedValue: null, suggestions: [] };
+    }
+
+    const cleanValue = value.trim();
+    const matches = findBestBankMatches(cleanValue, dataCache.banks);
+
+    if (matches.length === 0) {
+      return {
+        isValid: false,
+        transformedValue: null,
+        suggestions: [],
+        error: `Bank "${cleanValue}" not found`
+      };
+    }
+
+    const bestMatch = matches[0];
+    
+    // Auto-accept high similarity
+    if (bestMatch.similarity >= 85) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: bestMatch.similarity < 95 ? `Auto-corrected "${cleanValue}" to "${bestMatch.name}" (${bestMatch.similarity}% match)` : undefined
+      };
+    } 
+    
+    // Smart auto-accept for reasonable matches (60%+) - especially if it's the clear best option
+    if (bestMatch.similarity >= 60 && (matches.length === 1 || bestMatch.similarity > matches[1]?.similarity + 10)) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: `Auto-selected "${cleanValue}" → "${bestMatch.name}" (${bestMatch.similarity}% confidence)`
+      };
+    }
+    
+    // Accept moderate matches (50%+) but with lower confidence note
+    if (bestMatch.similarity >= 50) {
+      return {
+        isValid: true,
+        transformedValue: bestMatch.id,
+        suggestions: matches.slice(0, 3),
+        autoFix: bestMatch.id,
+        error: `Best guess: "${cleanValue}" → "${bestMatch.name}" (${bestMatch.similarity}% confidence)`
+      };
+    }
+    
+    // Only reject if very low similarity
+    return {
+      isValid: false,
+      transformedValue: null,
+      suggestions: matches.slice(0, 3),
+      error: `Bank "${cleanValue}" not found. Did you mean: ${matches.slice(0, 2).map(m => m.name).join(', ')}?`
+    };
   };
 
   // Comprehensive validation based on form config
@@ -580,7 +1025,7 @@ export default function ImportExportPage() {
       }
 
       console.log('🔄 Processing parsed data...');
-      const processedData = processData(rawData);
+      const processedData = await processData(rawData);
       
       console.log('✅ Processing complete:', {
         totalRecords: processedData.length,
@@ -744,6 +1189,13 @@ export default function ImportExportPage() {
         // Hash password (using simple method for import)
         const autoGeneratedPassword = generatePasswordFromBirthDate(record.mappedData.tanggalLahir || '');
         
+        // Sanitize account number (same as add form)
+        const sanitizeAccountNumber = (accountNumber: string): string => {
+          if (!accountNumber) return '';
+          // Remove all spaces, dashes, and non-numeric characters except dots
+          return accountNumber.replace(/[\s\-\(\)\+]/g, '').replace(/[^0-9\.]/g, '');
+        };
+        
         console.log(`🔄 Processing row ${record.rowNumber} with ERN: ${trn || 'will be auto-generated'}`);
         console.log('Mapped data fields:', Object.keys(record.mappedData));
 
@@ -846,16 +1298,94 @@ export default function ImportExportPage() {
           .single();
 
         let generatedTRN = null;
+        let educatorId = null;
         if (educatorResult.error) {
           console.error(`❌ Educator details failed for row ${record.rowNumber}:`, educatorResult.error);
           console.warn('⚠️ Continuing without educator details');
         } else {
+          educatorId = educatorResult.data?.id;
           generatedTRN = educatorResult.data?.educator_registration_number;
           console.log(`✅ Educator details created for user ${userId}`);
           console.log(`✅ Generated ERN: ${generatedTRN}`);
         }
+
+        // ===== STEP 5: Insert banking information (if provided) =====
+        if (educatorId && record.mappedData.namaBank) {
+          console.log(`🏦 Creating banking info for educator ${educatorId}...`);
+          
+          // Get bank name from bank ID (similar to add form)
+          let bankName = 'Bank Indonesia'; // Default fallback
+          try {
+            if (record.mappedData.namaBank) {
+              const bankResult = await supabase
+                ?.from('t_120_02_01_banks_indonesia')
+                .select('name, local_name')
+                .eq('id', record.mappedData.namaBank)
+                .single();
+              
+              if (bankResult?.data) {
+                bankName = bankResult.data.local_name || bankResult.data.name || bankName;
+              }
+            }
+          } catch (bankError) {
+            console.warn('⚠️ Could not fetch bank name, using fallback');
+          }
+
+          const bankingData = {
+            educator_id: educatorId,
+            bank_id: record.mappedData.namaBank, // UUID from fuzzy matching
+            bank_name: bankName,
+            account_holder_name: record.mappedData.namaNasabah || record.mappedData.namaLengkap || '',
+            account_number: sanitizeAccountNumber(record.mappedData.nomorRekening || ''),
+            country_code: 'IDN',
+            is_verified: false,
+            total_payouts: 0,
+            payout_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const bankingResult = await supabase
+            ?.from('t_460_02_04_educator_banking_info')
+            .insert([bankingData])
+            .select('id')
+            .single();
+
+          if (bankingResult?.error) {
+            console.error(`❌ Banking info failed for row ${record.rowNumber}:`, bankingResult.error);
+            console.warn('⚠️ Continuing without banking info');
+          } else {
+            console.log(`✅ Banking info created for educator ${educatorId}`);
+          }
+        }
+
+        // ===== STEP 6: Insert program mappings (subjects/lessons) =====
+        if (educatorId && record.mappedData.selectedPrograms && Array.isArray(record.mappedData.selectedPrograms)) {
+          console.log(`📚 Creating program mappings for educator ${educatorId}...`);
+          
+          const programMappingsData = record.mappedData.selectedPrograms.map((programId: string) => ({
+            educator_id: educatorId,
+            program_id: programId, // UUID from fuzzy matching
+            proficiency_level: 'intermediate', // Default value
+            years_of_experience: 1, // Default value  
+            certification_status: 'none', // Default value
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+
+          const mappingsResult = await supabase
+            ?.from('t_315_06_01_tutor_program_mappings')
+            .insert(programMappingsData);
+
+          if (mappingsResult?.error) {
+            console.error(`❌ Program mappings failed for row ${record.rowNumber}:`, mappingsResult.error);
+            console.warn('⚠️ Continuing without program mappings');
+          } else {
+            console.log(`✅ Program mappings created for educator ${educatorId}: ${programMappingsData.length} programs`);
+          }
+        }
         
-        console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, ERN: ${generatedTRN || trn || 'Not generated'}`);
+        console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, Educator ID: ${educatorId}, ERN: ${generatedTRN || trn || 'Not generated'}`);
         successCount++;
       } catch (error) {
         console.error(`❌ Full error details for row ${record.rowNumber}:`, error);

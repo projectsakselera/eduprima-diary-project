@@ -143,8 +143,8 @@
 --default-800: 217.2 32.6% 17.5%;
 --default-900: 201 42% 8%; /* Super dark teal instead of blue-gray */
 --default-950: 222.2 84% 4.9%;
-    --default: 201 42% 45%; /* Primary color untuk background active */
-    --default-foreground: 0 0% 100%; /* Putih untuk text */
+    --default: 210 40% 96.1%; /* Light neutral background untuk badges */
+    --default-foreground: 215.3 19.3% 34.5%; /* Dark text untuk contrast */
 
 /* [ DIGANTI ] Skala Warna Primer Eduprima Teal */
 --primary-50: 202 45% 94%;
@@ -217,8 +217,8 @@
     --default-200: 217.2 32.6% 17.5%;
     --default-100: 201 42% 8%; /* Super dark teal for dark mode */
     --default-50: 201 30% 12%;
-    --default: 213.8 100% 96.9%;
-    --default-foreground: 222.2 47.4% 11.2%;
+    --default: 215.3 25% 26.7%; /* Dark neutral background untuk badges */
+    --default-foreground: 210 40% 98%; /* Light text untuk dark mode */
     
     /* [ DIGANTI ] Skala Warna Primer Eduprima Teal */
     --primary-50: 202 45% 94%;
