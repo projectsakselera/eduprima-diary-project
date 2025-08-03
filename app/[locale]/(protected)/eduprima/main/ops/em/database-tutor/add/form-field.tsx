@@ -938,8 +938,8 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               quality={0.8}
               placeholder="Upload foto profil"
               disabled={disabled}
-              error={error || fileError}
-              currentValue={filePreview}
+              error={error || (fileError ?? undefined)}
+              currentValue={filePreview ?? undefined}
             />
           );
         }

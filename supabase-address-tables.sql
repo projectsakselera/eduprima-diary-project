@@ -1,4 +1,4 @@
--- ===== ENHANCED ADDRESS SYSTEM FOR SELESTIA =====
+-- ===== ENHANCED ADDRESS SYSTEM FOR EDUPRIMA DIARY =====
 -- Script untuk membuat tabel alamat yang terstruktur dan scalable
 -- Berlaku untuk semua user: tutor, staff, siswa, dll
 

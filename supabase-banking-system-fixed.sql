@@ -1,4 +1,4 @@
--- ===== ENHANCED BANKING SYSTEM FOR SELESTIA (CORRECTED VERSION) =====
+-- ===== ENHANCED BANKING SYSTEM FOR EDUPRIMA DIARY (CORRECTED VERSION) =====
 -- Script untuk sistem perbankan yang lebih baik dengan master data bank Indonesia
 -- Menggunakan TEXT data type dan referensi tabel country yang benar
 -- Berlaku untuk semua user: tutor, staff, siswa, dll

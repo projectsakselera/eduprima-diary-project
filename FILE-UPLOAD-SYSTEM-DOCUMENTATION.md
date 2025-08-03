@@ -1,5 +1,5 @@
 # 📁 File Upload System Documentation
-**Selestia Eduprima - Storage & Authentication Integration**
+**Eduprima Diary - Storage & Authentication Integration (Staging)**
 
 ---
 

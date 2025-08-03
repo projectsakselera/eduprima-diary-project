@@ -8,7 +8,7 @@
 
 ### 2. Navigasi ke Project Directory
 ```bash
-cd "C:\Users\MASTER CORE\Documents\Windsurf\selestia-main"
+cd "C:\Users\MASTER CORE\Documents\Windsurf\eduprima-diary-staging"
 ```
 
 ### 3. Jalankan Development Server
@@ -60,7 +60,7 @@ Biasanya ada warning tentang `signIn` import, tapi tidak mempengaruhi functional
 
 ## 🎯 Quick Start
 ```bash
-cd "C:\Users\MASTER CORE\Documents\Windsurf\selestia-main"
+cd "C:\Users\MASTER CORE\Documents\Windsurf\eduprima-diary-staging"
 npm run dev
 ```
 Lalu buka: http://localhost:3000 atau http://localhost:3001

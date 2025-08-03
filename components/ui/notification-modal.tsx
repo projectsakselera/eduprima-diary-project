@@ -193,7 +193,7 @@ export function NotificationModal({
                     )}>
                       {item.value}
                       {item.sensitive && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
+                        <Badge color="secondary" className="ml-2 text-xs">
                           SENSITIF
                         </Badge>
                       )}
@@ -218,15 +218,29 @@ export function NotificationModal({
         )}
 
         <div className="flex justify-end gap-2 pt-4">
-          {actions?.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant || 'default'}
-              onClick={action.action}
-            >
-              {action.label}
-            </Button>
-          ))}
+          {actions?.map((action, index) => {
+            // Map variants to correct Button props
+            const variant = action.variant || 'default';
+            let buttonProps: any = { variant: 'default' };
+            
+            if (variant === 'destructive' || variant === 'secondary') {
+              buttonProps = { color: variant, variant: 'default' };
+            } else if (variant === 'link') {
+              buttonProps = { variant: 'ghost' };
+            } else {
+              buttonProps = { variant };
+            }
+            
+            return (
+              <Button
+                key={index}
+                {...buttonProps}
+                onClick={action.action}
+              >
+                {action.label}
+              </Button>
+            );
+          })}
           <Button variant="outline" onClick={onClose}>
             Tutup
           </Button>

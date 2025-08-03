@@ -1,7 +1,7 @@
 {
-  "name": "eduprima-space",
+  "name": "eduprima-diary-staging",
   "version": "0.1.0",
-  "description": "Eduprima Diary - A Journey of Building Civilization Together",
+  "description": "Eduprima Diary - Staging Environment for Testing and QA",
   "private": true,
   "scripts": {
     "dev": "next dev",

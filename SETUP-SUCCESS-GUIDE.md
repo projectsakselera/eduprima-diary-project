@@ -1,4 +1,4 @@
-# 🚀 Selestia (Eduprima Space) - Setup Success Guide
+# 🚀 Eduprima Diary - Staging Environment Setup Guide
 
 ## ✅ Status: BERHASIL BERJALAN
 **Tanggal Setup:** 31 Juli 2025  
@@ -37,7 +37,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 #### 3. Instalasi Dependencies
 ```bash
 # Navigasi ke direktori project
-cd "c:\Users\MASTER CORE\Documents\Windsurf\selestia-main"
+cd "c:\Users\MASTER CORE\Documents\Windsurf\eduprima-diary-staging"
 
 # Install dependencies dengan legacy peer deps (SOLUSI UTAMA)
 npm install --legacy-peer-deps
@@ -80,7 +80,7 @@ GET /en 200 in 4190ms
 
 ### Direktori Utama
 ```
-selestia-main/
+eduprima-diary-staging/
 ├── app/                 # Next.js App Router
 ├── components/          # React Components
 ├── lib/                # Utilities & Configurations
@@ -167,4 +167,4 @@ npm run type-check   # TypeScript checking
 ---
 
 **✅ Setup Completed Successfully!**  
-*Aplikasi Selestia (Eduprima Space) siap untuk development di http://localhost:3000*
+*Aplikasi Eduprima Diary (Staging) siap untuk development di http://localhost:3000*

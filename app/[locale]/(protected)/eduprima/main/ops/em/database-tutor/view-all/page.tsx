@@ -253,6 +253,9 @@ interface TutorSpreadsheetData {
   // Timestamps
   created_at: string;
   updated_at: string;
+  
+  // Actions (virtual field for UI)
+  actions?: string;
 }
 
 // Column definition interface
@@ -430,6 +433,9 @@ const SPREADSHEET_COLUMNS: Column[] = [
   // Timestamps
   { key: 'created_at', label: 'Dibuat', width: 160, type: 'date', category: 'System' },
   { key: 'updated_at', label: 'Diupdate', width: 160, type: 'date', category: 'System' },
+  
+  // Actions (not filterable, always visible)
+  { key: 'actions' as keyof TutorSpreadsheetData, label: 'Actions', width: 120, type: 'text', category: 'Actions', sticky: true }
 ];
 
 export default function ViewAllTutorsPage() {
@@ -466,6 +472,19 @@ export default function ViewAllTutorsPage() {
     url: '',
     title: '',
     type: ''
+  });
+  
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    tutor: TutorSpreadsheetData | null;
+    isDeleting: boolean;
+    cascadePreview: any[] | null;
+  }>({
+    isOpen: false,
+    tutor: null,
+    isDeleting: false,
+    cascadePreview: null
   });
   
   const spreadsheetRef = useRef<HTMLDivElement>(null);
@@ -726,6 +745,110 @@ export default function ViewAllTutorsPage() {
     return cats.sort();
   }, []);
 
+  // Delete functions
+  const handleDeleteClick = async (tutor: TutorSpreadsheetData) => {
+    console.log('🗑️ Delete clicked for tutor:', tutor.namaLengkap, tutor.id);
+    
+    setDeleteModal(prev => ({
+      ...prev,
+      isOpen: true,
+      tutor: tutor,
+      cascadePreview: null
+    }));
+    
+    // Fetch CASCADE preview
+    try {
+      console.log('🔍 Fetching delete preview for:', tutor.id);
+      const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`);
+      
+      console.log('📡 Delete preview response status:', response.status);
+      
+      if (response.ok) {
+        const previewData = await response.json();
+        console.log('📊 Delete preview data:', previewData);
+        
+        setDeleteModal(prev => ({
+          ...prev,
+          cascadePreview: previewData.preview || []
+        }));
+      } else {
+        // Handle error response
+        const errorData = await response.json();
+        console.error('❌ Delete preview API error:', errorData);
+        
+        setDeleteModal(prev => ({
+          ...prev,
+          cascadePreview: [{
+            table_name: 'error',
+            records_affected: 0,
+            data_type: `Error: ${errorData.error || 'Unknown error'}`
+          }]
+        }));
+      }
+    } catch (error: any) {
+      console.error('❌ Network error fetching delete preview:', error);
+      
+      setDeleteModal(prev => ({
+        ...prev,
+        cascadePreview: [{
+          table_name: 'network_error',
+          records_affected: 0,
+          data_type: `Network Error: ${error.message}`
+        }]
+      }));
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.tutor) return;
+    
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+    
+    try {
+      const response = await fetch(`/api/tutors/delete/${deleteModal.tutor.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        // Success - refresh data
+        console.log('✅ Tutor deleted successfully');
+        setDeleteModal({
+          isOpen: false,
+          tutor: null,
+          isDeleting: false,
+          cascadePreview: null
+        });
+        
+        // Refresh tutor data
+        fetchTutorData(searchTerm);
+        
+        // Show success message (you can add toast notification here)
+        alert(`Tutor ${deleteModal.tutor.namaLengkap} berhasil dihapus dari database.`);
+        
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete tutor');
+      }
+    } catch (error: any) {
+      console.error('❌ Error deleting tutor:', error);
+      alert(`Error deleting tutor: ${error.message}`);
+    } finally {
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({
+      isOpen: false,
+      tutor: null,
+      isDeleting: false,
+      cascadePreview: null
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -778,6 +901,26 @@ export default function ViewAllTutorsPage() {
             >
               <Icon icon="ph:plus" className="h-4 w-4 mr-2" />
               Add Tutor
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                console.log('🧪 Testing connection...');
+                try {
+                  const response = await fetch('/api/tutors/test-connection');
+                  const result = await response.json();
+                  console.log('🧪 Test result:', result);
+                  alert(`Connection Test:\n${JSON.stringify(result, null, 2)}`);
+                } catch (error) {
+                  console.error('❌ Test failed:', error);
+                  alert(`Test Error: ${error}`);
+                }
+              }}
+              className="gap-2"
+            >
+              <Icon icon="ph:bug" className="h-4 w-4 mr-2" />
+              Debug
             </Button>
             </div>
           </div>
@@ -1058,7 +1201,10 @@ export default function ViewAllTutorsPage() {
                               Edit Tutor
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDeleteClick(tutor)}
+                            >
                               <Icon icon="ph:trash" className="mr-2 h-4 w-4" />
                               Delete Tutor
                             </DropdownMenuItem>
@@ -1191,6 +1337,105 @@ export default function ViewAllTutorsPage() {
                     title={filePreview.title}
                   />
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal.isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={handleCancelDelete}
+          >
+            <div 
+              className="bg-white rounded-lg max-w-2xl w-full mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-center mb-6">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <Icon icon="ph:warning" className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+                
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Konfirmasi Hapus Tutor
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen tutor
+                    <strong className="text-gray-900"> {deleteModal.tutor?.namaLengkap}</strong> dari database.
+                  </p>
+                </div>
+                
+                {/* Tutor Info */}
+                {deleteModal.tutor && (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Informasi Tutor:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div><strong>Nama:</strong> {deleteModal.tutor.namaLengkap}</div>
+                      <div><strong>Email:</strong> {deleteModal.tutor.email}</div>
+                      <div><strong>TRN:</strong> {deleteModal.tutor.trn}</div>
+                      <div><strong>Status:</strong> {deleteModal.tutor.status_tutor}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* CASCADE Preview */}
+                {deleteModal.cascadePreview && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <h4 className="text-sm font-medium text-red-900 mb-3 flex items-center">
+                      <Icon icon="ph:warning-circle" className="h-4 w-4 mr-2" />
+                      Data yang akan terhapus (CASCADE):
+                    </h4>
+                    <div className="space-y-2 text-xs text-red-700">
+                      {deleteModal.cascadePreview.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between">
+                          <span>{item.table_name}</span>
+                          <span className="font-medium">{item.records_affected} record(s)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Loading CASCADE preview */}
+                {!deleteModal.cascadePreview && (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6 flex items-center justify-center">
+                    <Icon icon="ph:spinner" className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-gray-600">Menganalisis data yang akan terhapus...</span>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={handleConfirmDelete}
+                    disabled={deleteModal.isDeleting}
+                    className="gap-2 bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleteModal.isDeleting ? (
+                      <>
+                        <Icon icon="ph:spinner" className="h-4 w-4 animate-spin" />
+                        Menghapus...
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="ph:trash" className="h-4 w-4" />
+                        Ya, Hapus Tutor
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelDelete}
+                    disabled={deleteModal.isDeleting}
+                  >
+                    Batal
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

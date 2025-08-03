@@ -170,8 +170,8 @@ interface TutorResult {
 ### **Getting Started:**
 ```bash
 # 1. Clone/Pull from GitHub
-git clone https://github.com/amhar999/selestia-main.git
-cd selestia-main
+git clone https://github.com/amhar999/eduprima-diary-staging.git
+cd eduprima-diary-staging
 
 # 2. Install Dependencies  
 npm install
