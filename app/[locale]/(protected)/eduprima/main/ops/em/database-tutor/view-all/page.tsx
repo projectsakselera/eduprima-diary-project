@@ -26,6 +26,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useRouter } from "@/components/navigation";
+import ColumnFilter from "@/components/ui/column-filter";
+import TutorDeleteConfirmationDialog from "@/components/tutor-delete-confirmation-dialog";
+import { toast } from "react-hot-toast";
 
 // FileCell component for handling file display with links and previews
 interface FileCellProps {
@@ -253,9 +256,6 @@ interface TutorSpreadsheetData {
   // Timestamps
   created_at: string;
   updated_at: string;
-  
-  // Actions (virtual field for UI)
-  actions?: string;
 }
 
 // Column definition interface
@@ -433,9 +433,6 @@ const SPREADSHEET_COLUMNS: Column[] = [
   // Timestamps
   { key: 'created_at', label: 'Dibuat', width: 160, type: 'date', category: 'System' },
   { key: 'updated_at', label: 'Diupdate', width: 160, type: 'date', category: 'System' },
-  
-  // Actions (not filterable, always visible)
-  { key: 'actions' as keyof TutorSpreadsheetData, label: 'Actions', width: 120, type: 'text', category: 'Actions', sticky: true }
 ];
 
 export default function ViewAllTutorsPage() {
@@ -443,13 +440,22 @@ export default function ViewAllTutorsPage() {
   
   // State
   const [tutorData, setTutorData] = useState<TutorSpreadsheetData[]>([]);
-  const [allTutorData, setAllTutorData] = useState<TutorSpreadsheetData[]>([]); // Cache all data
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState(''); // Separate input state for debouncing
   const [isSearching, setIsSearching] = useState(false); // Loading state for search only
-  const [hasInitialData, setHasInitialData] = useState(false); // Track if we have loaded initial data
+
+  // 🚀 PAGINATION STATE - Advanced pagination system
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  
+  // 🚀 COLUMN FILTERS STATE - Advanced filtering like Excel/Google Sheets
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+  const [columnUniqueValues, setColumnUniqueValues] = useState<Record<string, string[]>>({});
+  const [loadingColumnValues, setLoadingColumnValues] = useState<Record<string, boolean>>({});
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{key: keyof TutorSpreadsheetData; direction: 'asc' | 'desc'} | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -459,10 +465,9 @@ export default function ViewAllTutorsPage() {
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
   const [selectedCell, setSelectedCell] = useState<{row: number; col: string} | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [totalRecords, setTotalRecords] = useState(0);
   
   // File preview modal state
-  const [filePreview, setFilePreview] = useState<{
+  const [previewModal, setPreviewModal] = useState<{
     isOpen: boolean;
     url: string;
     title: string;
@@ -473,18 +478,20 @@ export default function ViewAllTutorsPage() {
     title: '',
     type: ''
   });
-  
-  // Delete confirmation modal state
+
+  // 🚀 DELETE MODAL STATE - Advanced delete with cascade preview
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     tutor: TutorSpreadsheetData | null;
-    isDeleting: boolean;
-    cascadePreview: any[] | null;
+    isLoading: boolean;
+    cascadePreview: Array<{table_name: string; records_affected: number; data_type: string}> | null;
+    previewError: string | null;
   }>({
     isOpen: false,
     tutor: null,
-    isDeleting: false,
-    cascadePreview: null
+    isLoading: false,
+    cascadePreview: null,
+    previewError: null
   });
   
   const spreadsheetRef = useRef<HTMLDivElement>(null);
@@ -509,79 +516,165 @@ export default function ViewAllTutorsPage() {
     setColumnWidths(initialWidths);
   }, []);
 
-  // Fetch data from API
-  const fetchTutorData = async (search = '', isInitialLoad = false) => {
+  // 🚀 ADVANCED FETCH DATA - With pagination, column filters, and smart caching
+  const fetchTutorData = async (search = '', page = 1, limit = 25) => {
     try {
-      // Smart loading states
-      if (isInitialLoad || !hasInitialData) {
-        setIsLoading(true);
-      } else {
-        setIsSearching(true);
-      }
+      setIsLoading(true);
       setError(null);
 
       const url = new URL('/api/tutors/spreadsheet', window.location.origin);
+      
+      // Add pagination parameters
+      url.searchParams.set('page', page.toString());
+      url.searchParams.set('limit', limit.toString());
+      
+      // Add search parameter
       if (search && search.trim()) {
         url.searchParams.set('search', search.trim());
       }
+      
+      // Add column filters
+      if (Object.keys(columnFilters).length > 0) {
+        url.searchParams.set('filters', JSON.stringify(columnFilters));
+      }
 
       const response = await fetch(url.toString());
+      
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Expected JSON but got:', contentType, 'Response:', text.substring(0, 200));
+        throw new Error(`Expected JSON response but got ${contentType}. Response: ${text.substring(0, 100)}`);
+      }
+      
       const result = await response.json();
 
       if (result.success) {
         setTutorData(result.data);
         setTotalRecords(result.total);
+        setTotalPages(Math.ceil(result.total / limit));
+        setCurrentPage(page);
         
-        // Cache all data when no search term (this is complete dataset)
-        if (!search || !search.trim()) {
-          setAllTutorData(result.data);
-          setHasInitialData(true);
-        }
-        
-        console.log(`✅ Loaded ${result.data.length} tutors from Supabase${search ? ` (search: "${search}")` : ''}`);
+        console.log(`✅ Loaded ${result.data.length} tutors (Page ${page}/${Math.ceil(result.total / limit)}) - Total: ${result.total}`);
       } else {
         setError(result.error || 'Failed to fetch data');
         setTutorData([]);
+        setTotalRecords(0);
+        setTotalPages(0);
       }
     } catch (err) {
       console.error('❌ Error fetching tutor data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
       setTutorData([]);
+      setTotalRecords(0);
+      setTotalPages(0);
     } finally {
       setIsLoading(false);
       setIsSearching(false);
     }
   };
 
-  // Debounced search effect
+  // 🚀 ADVANCED SEARCH EFFECT - With pagination reset
   useEffect(() => {
-    if (searchTerm === '') {
-      // If search is cleared, use cached data if available (no loading needed!)
-      if (hasInitialData && allTutorData.length > 0) {
-        setTutorData(allTutorData);
-        setTotalRecords(allTutorData.length);
-        console.log(`✅ Restored cached data: ${allTutorData.length} tutors (no loading needed)`);
-        return;
-      }
-      // If no cached data, fetch from API
-      fetchTutorData('');
-      return;
-    }
-
-    // Debounce search - wait 500ms after user stops typing
+    // Reset to page 1 when search changes
     const debounceTimer = setTimeout(() => {
-      fetchTutorData(searchTerm);
+      fetchTutorData(searchTerm, 1, itemsPerPage);
     }, 500);
 
     return () => {
       clearTimeout(debounceTimer);
     };
-  }, [searchTerm, hasInitialData, allTutorData]);
+  }, [searchTerm, itemsPerPage, columnFilters]);
 
   // Load initial data on mount
   useEffect(() => {
-    fetchTutorData('', true); // Mark as initial load
+    fetchTutorData('', 1, itemsPerPage);
   }, []);
+
+  // 🚀 COLUMN FILTERS: Define which columns support filtering
+  const filterableColumns = useMemo(() => {
+    const filterable = new Set([
+      // System & Status columns (visible in screenshot)
+      'status_tutor', 'approval_level', 
+      
+      // Personal columns (visible in screenshot) 
+      'namaLengkap', 'email', 'jenisKelamin', 'agama',
+      
+      // Education columns
+      'statusAkademik', 'namaUniversitas', 'fakultas', 'jurusan',
+      
+      // Availability columns
+      'statusMenerimaSiswa',
+      
+      // Location columns  
+      'provinsiDomisili', 'kotaKabupatenDomisili', 'provinsiKTP', 'kotaKabupatenKTP',
+      
+      // Verification columns
+      'status_verifikasi_identitas', 'status_verifikasi_pendidikan',
+      
+      // Banking
+      'namaBank'
+    ]);
+    return filterable;
+  }, []);
+
+  // 🚀 COLUMN FILTER FUNCTIONS
+  const fetchColumnValues = async (columnKey: string) => {
+    if (loadingColumnValues[columnKey]) return;
+    
+    setLoadingColumnValues(prev => ({ ...prev, [columnKey]: true }));
+    
+    try {
+      const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Expected JSON but got:', contentType, 'Response:', text.substring(0, 200));
+        throw new Error(`Expected JSON response but got ${contentType}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setColumnUniqueValues(prev => ({
+          ...prev,
+          [columnKey]: result.values
+        }));
+      }
+    } catch (error) {
+      console.error(`Failed to fetch values for ${columnKey}:`, error);
+    } finally {
+      setLoadingColumnValues(prev => ({ ...prev, [columnKey]: false }));
+    }
+  };
+
+  const handleColumnFilter = (columnKey: string, selectedValues: string[]) => {
+    setColumnFilters(prev => {
+      const newFilters = { ...prev };
+      if (selectedValues.length === 0) {
+        delete newFilters[columnKey];
+      } else {
+        newFilters[columnKey] = selectedValues;
+      }
+      return newFilters;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setColumnFilters({});
+  };
 
   // Handle search input change (for debouncing)
   const handleSearchInputChange = (value: string) => {
@@ -592,22 +685,133 @@ export default function ViewAllTutorsPage() {
   // Handle explicit search button click
   const handleSearchClick = () => {
     setSearchTerm(searchInput);
-    fetchTutorData(searchInput);
+    fetchTutorData(searchInput, 1, itemsPerPage);
   };
 
-  // Handle clear search (smooth UX - no loading!)
+  // Handle clear search - reset pagination
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchTerm('');
-    
-    // Use cached data immediately if available
-    if (hasInitialData && allTutorData.length > 0) {
-      setTutorData(allTutorData);
-      setTotalRecords(allTutorData.length);
-      console.log(`✅ Clear search: restored ${allTutorData.length} cached tutors instantly`);
-    } else {
-      // Fallback to API call if no cache
-      fetchTutorData('');
+    fetchTutorData('', 1, itemsPerPage);
+  };
+
+  // 🚀 PAGINATION FUNCTIONS
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchTutorData(searchTerm, page, itemsPerPage);
+    }
+  };
+
+  const handleItemsPerPageChange = (newLimit: number) => {
+    setItemsPerPage(newLimit);
+    fetchTutorData(searchTerm, 1, newLimit);
+  };
+
+  // 🚀 ADVANCED DELETE WITH CASCADE PREVIEW
+  const handleDeleteTutor = async (tutor: TutorSpreadsheetData) => {
+    setDeleteModal({
+      isOpen: true,
+      tutor,
+      isLoading: true,
+      cascadePreview: null,
+      previewError: null
+    });
+
+    try {
+      // Fetch cascade preview
+      const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Expected JSON but got:', contentType, 'Response:', text.substring(0, 200));
+        throw new Error(`Expected JSON response but got ${contentType}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setDeleteModal(prev => ({
+          ...prev,
+          isLoading: false,
+          cascadePreview: result.preview || result.cascadePreview,
+          previewError: null
+        }));
+      } else {
+        setDeleteModal(prev => ({
+          ...prev,
+          isLoading: false,
+          cascadePreview: null,
+          previewError: result.error || 'Failed to load cascade preview'
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch delete preview:', error);
+      setDeleteModal(prev => ({
+        ...prev,
+        isLoading: false,
+        cascadePreview: null,
+        previewError: error instanceof Error ? error.message : 'Unknown error occurred'
+      }));
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.tutor) return;
+
+    try {
+      setDeleteModal(prev => ({ ...prev, isLoading: true }));
+      
+      const response = await fetch(`/api/tutors/delete/${deleteModal.tutor.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Expected JSON but got:', contentType, 'Response:', text.substring(0, 200));
+        throw new Error(`Expected JSON response but got ${contentType}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Show success message as per documentation
+        toast.success(`✅ Tutor ${deleteModal.tutor.namaLengkap} berhasil dihapus dari database`, {
+          duration: 5000,
+          position: 'top-right',
+        });
+        
+        // Refresh tutor data
+        fetchTutorData(searchTerm, currentPage, itemsPerPage);
+        
+        setDeleteModal({
+          isOpen: false,
+          tutor: null,
+          isLoading: false,
+          cascadePreview: null,
+          previewError: null
+        });
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast.error(`❌ Gagal menghapus tutor: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        duration: 8000,
+        position: 'top-right',
+      });
+      setDeleteModal(prev => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -739,115 +943,21 @@ export default function ViewAllTutorsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // 🚀 FILE PREVIEW FUNCTIONALITY  
+  const handleFilePreview = (url: string, title: string, type: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      title,
+      type
+    });
+  };
+
   // Get unique categories
   const categories = useMemo(() => {
     const cats = [...new Set(SPREADSHEET_COLUMNS.map(col => col.category).filter(Boolean))];
     return cats.sort();
   }, []);
-
-  // Delete functions
-  const handleDeleteClick = async (tutor: TutorSpreadsheetData) => {
-    console.log('🗑️ Delete clicked for tutor:', tutor.namaLengkap, tutor.id);
-    
-    setDeleteModal(prev => ({
-      ...prev,
-      isOpen: true,
-      tutor: tutor,
-      cascadePreview: null
-    }));
-    
-    // Fetch CASCADE preview
-    try {
-      console.log('🔍 Fetching delete preview for:', tutor.id);
-      const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`);
-      
-      console.log('📡 Delete preview response status:', response.status);
-      
-      if (response.ok) {
-        const previewData = await response.json();
-        console.log('📊 Delete preview data:', previewData);
-        
-        setDeleteModal(prev => ({
-          ...prev,
-          cascadePreview: previewData.preview || []
-        }));
-      } else {
-        // Handle error response
-        const errorData = await response.json();
-        console.error('❌ Delete preview API error:', errorData);
-        
-        setDeleteModal(prev => ({
-          ...prev,
-          cascadePreview: [{
-            table_name: 'error',
-            records_affected: 0,
-            data_type: `Error: ${errorData.error || 'Unknown error'}`
-          }]
-        }));
-      }
-    } catch (error: any) {
-      console.error('❌ Network error fetching delete preview:', error);
-      
-      setDeleteModal(prev => ({
-        ...prev,
-        cascadePreview: [{
-          table_name: 'network_error',
-          records_affected: 0,
-          data_type: `Network Error: ${error.message}`
-        }]
-      }));
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deleteModal.tutor) return;
-    
-    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
-    
-    try {
-      const response = await fetch(`/api/tutors/delete/${deleteModal.tutor.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        // Success - refresh data
-        console.log('✅ Tutor deleted successfully');
-        setDeleteModal({
-          isOpen: false,
-          tutor: null,
-          isDeleting: false,
-          cascadePreview: null
-        });
-        
-        // Refresh tutor data
-        fetchTutorData(searchTerm);
-        
-        // Show success message (you can add toast notification here)
-        alert(`Tutor ${deleteModal.tutor.namaLengkap} berhasil dihapus dari database.`);
-        
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete tutor');
-      }
-    } catch (error: any) {
-      console.error('❌ Error deleting tutor:', error);
-      alert(`Error deleting tutor: ${error.message}`);
-    } finally {
-      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteModal({
-      isOpen: false,
-      tutor: null,
-      isDeleting: false,
-      cascadePreview: null
-    });
-  };
 
   if (isLoading) {
     return (
@@ -874,14 +984,14 @@ export default function ViewAllTutorsPage() {
               Tutor Database Spreadsheet
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Complete view of all tutor data from Supabase • {totalRecords} total records • Google Sheets style
+              Advanced pagination system • Page {currentPage} of {totalPages} • {totalRecords} total records
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => fetchTutorData(searchTerm, false)} // Don't force full screen loading
+              onClick={() => fetchTutorData(searchTerm, currentPage, itemsPerPage)} // Refresh current page
               disabled={isLoading || isSearching}
             >
               <Icon 
@@ -901,26 +1011,6 @@ export default function ViewAllTutorsPage() {
             >
               <Icon icon="ph:plus" className="h-4 w-4 mr-2" />
               Add Tutor
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                console.log('🧪 Testing connection...');
-                try {
-                  const response = await fetch('/api/tutors/test-connection');
-                  const result = await response.json();
-                  console.log('🧪 Test result:', result);
-                  alert(`Connection Test:\n${JSON.stringify(result, null, 2)}`);
-                } catch (error) {
-                  console.error('❌ Test failed:', error);
-                  alert(`Test Error: ${error}`);
-                }
-              }}
-              className="gap-2"
-            >
-              <Icon icon="ph:bug" className="h-4 w-4 mr-2" />
-              Debug
             </Button>
             </div>
           </div>
@@ -1009,12 +1099,21 @@ export default function ViewAllTutorsPage() {
                   <span>Search results for "{searchTerm}"</span>
                 </div>
               )}
-              {!searchTerm && hasInitialData && !isLoading && !isSearching && (
-                <div className="flex items-center gap-1 text-primary">
-                  <Icon icon="ph:database" className="h-3 w-3" />
-                  <span>All data (cached)</span>
+              {!isLoading && !isSearching && (
+                <div className="flex items-center gap-1 text-green-600">
+                  <Icon icon="ph:lightning" className="h-3 w-3" />
+                  <span>Fast pagination</span>
                 </div>
               )}
+
+              {/* 🚀 ACTIVE FILTERS INDICATOR - Show when column filters are applied */}
+              {Object.keys(columnFilters).length > 0 && (
+                <Badge className="bg-blue-100 text-blue-700">
+                  <Icon icon="ph:funnel-fill" className="h-3 w-3 mr-1" />
+                  {Object.keys(columnFilters).length} filter{Object.keys(columnFilters).length !== 1 ? 's' : ''} active
+                </Badge>
+              )}
+              
               <span>Showing {filteredColumns.length} columns • {sortedData.length} rows</span>
             </div>
           </div>
@@ -1077,6 +1176,92 @@ export default function ViewAllTutorsPage() {
                 </DropdownMenu>
               ))}
             </div>
+
+            {/* 🚀 CLEAR ALL FILTERS BUTTON */}
+            {Object.keys(columnFilters).length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-xs text-red-600 hover:text-red-700"
+              >
+                <Icon icon="ph:x-circle" className="h-3 w-3 mr-1" />
+                Clear all filters
+              </Button>
+            )}
+          </div>
+
+          {/* 🚀 PAGINATION CONTROLS */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}
+              >
+                <SelectTrigger className="w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalRecords)} of {totalRecords} entries
+              </span>
+              
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1 || isLoading}
+                  className="h-8 w-8 p-0"
+                >
+                  <Icon icon="ph:caret-double-left" className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || isLoading}
+                  className="h-8 w-8 p-0"
+                >
+                  <Icon icon="ph:caret-left" className="h-4 w-4" />
+                </Button>
+                
+                <span className="px-3 py-1 text-sm bg-muted rounded">
+                  {currentPage} / {totalPages}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || isLoading}
+                  className="h-8 w-8 p-0"
+                >
+                  <Icon icon="ph:caret-right" className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages || isLoading}
+                  className="h-8 w-8 p-0"
+                >
+                  <Icon icon="ph:caret-double-right" className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1113,7 +1298,7 @@ export default function ViewAllTutorsPage() {
 
                     {/* Actions Header */}
                     <th className="w-20 h-10 border border-border bg-muted/50 sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
-                      Actions
+                      <Icon icon="ph:gear" className="h-4 w-4 mx-auto" />
                     </th>
 
                     {/* Column Headers */}
@@ -1135,6 +1320,19 @@ export default function ViewAllTutorsPage() {
                             <span className="text-xs font-medium truncate">{column.label}</span>
                             {column.required && (
                               <span className="text-destructive text-xs">*</span>
+                            )}
+
+                            {/* 🚀 COLUMN FILTER - Advanced filtering like Excel/Google Sheets */}
+                            {filterableColumns.has(column.key) && (
+                              <ColumnFilter
+                                column={column.key}
+                                columnLabel={column.label}
+                                uniqueValues={columnUniqueValues[column.key] || []}
+                                selectedValues={columnFilters[column.key] || []}
+                                onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
+                                isLoading={loadingColumnValues[column.key] || false}
+                                onClick={() => fetchColumnValues(column.key)}
+                              />
                             )}
                           </div>
                           <div className="flex items-center">
@@ -1181,9 +1379,9 @@ export default function ViewAllTutorsPage() {
                       <td className="w-20 h-10 border border-border bg-card sticky right-0 z-10 p-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                              <Icon icon="ph:dots-three-vertical" className="h-4 w-4" />
-                            </Button>
+                            <button className="h-7 w-7 flex items-center justify-center hover:opacity-70 transition-opacity">
+                              <Icon icon="ph:dots-three-vertical" className="h-4 w-4 text-muted-foreground" />
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -1203,7 +1401,7 @@ export default function ViewAllTutorsPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteClick(tutor)}
+                              onClick={() => handleDeleteTutor(tutor)}
                             >
                               <Icon icon="ph:trash" className="mr-2 h-4 w-4" />
                               Delete Tutor
@@ -1232,7 +1430,7 @@ export default function ViewAllTutorsPage() {
                               value={tutor[column.key] as string | null} 
                               filename={column.key}
                               tutorName={tutor.namaLengkap}
-                              onPreview={(url, title, type) => setFilePreview({
+                                                                    onPreview={(url, title, type) => setPreviewModal({
                                 isOpen: true,
                                 url,
                                 title,
@@ -1293,22 +1491,22 @@ export default function ViewAllTutorsPage() {
         </div>
 
         {/* File Preview Modal */}
-        {filePreview.isOpen && (
+        {previewModal.isOpen && (
           <div 
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setFilePreview(prev => ({ ...prev, isOpen: false }))}
+            onClick={() => setPreviewModal(prev => ({ ...prev, isOpen: false }))}
           >
             <div 
               className="bg-white rounded-lg max-w-4xl max-h-[90vh] w-full mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-semibold">{filePreview.title}</h3>
+                <h3 className="text-lg font-semibold">{previewModal.title}</h3>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(filePreview.url, '_blank')}
+                    onClick={() => window.open(previewModal.url, '_blank')}
                   >
                     <Icon icon="ph:arrow-square-out" className="h-4 w-4 mr-2" />
                     Open in New Tab
@@ -1316,25 +1514,25 @@ export default function ViewAllTutorsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setFilePreview(prev => ({ ...prev, isOpen: false }))}
+                    onClick={() => setPreviewModal(prev => ({ ...prev, isOpen: false }))}
                   >
                     <Icon icon="ph:x" className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               <div className="p-4 max-h-[80vh] overflow-auto">
-                {filePreview.type === 'fotoProfil' ? (
+                {previewModal.type === 'fotoProfil' ? (
                   <img 
-                    src={filePreview.url} 
-                    alt={filePreview.title}
+                    src={previewModal.url} 
+                    alt={previewModal.title}
                     className="max-w-full h-auto rounded-lg mx-auto"
                     style={{ maxHeight: '70vh' }}
                   />
                 ) : (
                   <iframe
-                    src={filePreview.url}
+                    src={previewModal.url}
                     className="w-full h-[70vh] border rounded-lg"
-                    title={filePreview.title}
+                    title={previewModal.title}
                   />
                 )}
               </div>
@@ -1342,104 +1540,16 @@ export default function ViewAllTutorsPage() {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
-        {deleteModal.isOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={handleCancelDelete}
-          >
-            <div 
-              className="bg-white rounded-lg max-w-2xl w-full mx-4 overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                {/* Header */}
-                <div className="flex items-center justify-center mb-6">
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <Icon icon="ph:warning" className="h-6 w-6 text-red-600" />
-                  </div>
-                </div>
-                
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Konfirmasi Hapus Tutor
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen tutor
-                    <strong className="text-gray-900"> {deleteModal.tutor?.namaLengkap}</strong> dari database.
-                  </p>
-                </div>
-                
-                {/* Tutor Info */}
-                {deleteModal.tutor && (
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Informasi Tutor:</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div><strong>Nama:</strong> {deleteModal.tutor.namaLengkap}</div>
-                      <div><strong>Email:</strong> {deleteModal.tutor.email}</div>
-                      <div><strong>TRN:</strong> {deleteModal.tutor.trn}</div>
-                      <div><strong>Status:</strong> {deleteModal.tutor.status_tutor}</div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* CASCADE Preview */}
-                {deleteModal.cascadePreview && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <h4 className="text-sm font-medium text-red-900 mb-3 flex items-center">
-                      <Icon icon="ph:warning-circle" className="h-4 w-4 mr-2" />
-                      Data yang akan terhapus (CASCADE):
-                    </h4>
-                    <div className="space-y-2 text-xs text-red-700">
-                      {deleteModal.cascadePreview.map((item: any, index: number) => (
-                        <div key={index} className="flex justify-between">
-                          <span>{item.table_name}</span>
-                          <span className="font-medium">{item.records_affected} record(s)</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Loading CASCADE preview */}
-                {!deleteModal.cascadePreview && (
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6 flex items-center justify-center">
-                    <Icon icon="ph:spinner" className="h-4 w-4 animate-spin mr-2" />
-                    <span className="text-sm text-gray-600">Menganalisis data yang akan terhapus...</span>
-                  </div>
-                )}
-                
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-4">
-                  <Button
-                    onClick={handleConfirmDelete}
-                    disabled={deleteModal.isDeleting}
-                    className="gap-2 bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    {deleteModal.isDeleting ? (
-                      <>
-                        <Icon icon="ph:spinner" className="h-4 w-4 animate-spin" />
-                        Menghapus...
-                      </>
-                    ) : (
-                      <>
-                        <Icon icon="ph:trash" className="h-4 w-4" />
-                        Ya, Hapus Tutor
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelDelete}
-                    disabled={deleteModal.isDeleting}
-                  >
-                    Batal
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 🚀 ENHANCED DELETE MODAL - With CASCADE preview as per documentation */}
+        <TutorDeleteConfirmationDialog
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmDelete}
+          tutor={deleteModal.tutor}
+          isLoading={deleteModal.isLoading}
+          cascadePreview={deleteModal.cascadePreview}
+          previewError={deleteModal.previewError}
+        />
     </div>
   );
 }

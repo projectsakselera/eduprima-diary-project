@@ -11,6 +11,14 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
+// Helper function to extract data from education_history JSONB
+function extractFromEducationHistory(educationHistory: any[], level: string, field: string): any {
+  if (!educationHistory || !Array.isArray(educationHistory)) return null;
+  
+  const education = educationHistory.find(edu => edu.level === level);
+  return education ? education[field] : null;
+}
+
 // Complete Tutor Interface matching form fields
 interface CompleteTutorData {
   // System & Status
@@ -37,7 +45,6 @@ interface CompleteTutorData {
   motivasiMenjadiTutor: string;
   socialMedia1: string;
   socialMedia2: string;
-  bahasaYangDikuasai: string[];
   
   // Address - Domisili
   provinsiDomisili: string;
@@ -66,13 +73,31 @@ interface CompleteTutorData {
   namaUniversitas: string;
   fakultas: string;
   jurusan: string;
-  akreditasiJurusan: string;
+  jurusanSMKDetail: string;
   ipk: number;
   tahunMasuk: string;
   tahunLulus: string;
   namaSMA: string;
   jurusanSMA: string;
   tahunLulusSMA: string;
+  
+  // Education Documents
+  transkripNilai: string | null;
+  sertifikatKeahlian: string | null;
+  
+  // Education - Middle School
+  namaSMP: string;
+  tahunLulusSMP: string;
+  
+  // Education - S1 Background
+  namaUniversitasS1: string;
+  fakultasS1: string;
+  jurusanS1: string;
+  
+  // Education - Alternative Learning
+  namaInstitusi: string;
+  bidangKeahlian: string;
+  pengalamanBelajar: string;
   
   // Professional Profile
   keahlianSpesialisasi: string;
@@ -98,6 +123,12 @@ interface CompleteTutorData {
   teaching_radius_km: number;
   alamatTitikLokasi: string;
   location_notes: string;
+  catatanAvailability: string;
+  
+  // Transportation & Location Coordinates
+  transportasiTutor: string[];
+  titikLokasiLat: number | null;
+  titikLokasiLng: number | null;
   
   // Teaching Preferences
   teachingMethods: string[];
@@ -133,13 +164,16 @@ interface CompleteTutorData {
   status_verifikasi_identitas: string;
   status_verifikasi_pendidikan: string;
   
+  // System Management
+  additionalScreening: string[];
+  
   // Timestamps
   created_at: string;
   updated_at: string;
 }
 
-// Fetch all tutor data from Supabase
-async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: CompleteTutorData[], error: string | null, total: number}> {
+// Fetch all tutor data from Supabase with server-side search and filtering
+async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilters: Record<string, string[]> = {}): Promise<{data: CompleteTutorData[], error: string | null, total: number, filtered?: number}> {
   if (!supabase) {
     return { data: [], error: 'Supabase not configured', total: 0 };
   }
@@ -165,8 +199,8 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
       return { data: [], error: null, total: 0 };
     }
 
-    // Main query: fetch users with matching role IDs
-    const { data: usersData, error: usersError, count: totalCount } = await supabase
+    // 🚀 PERFORMANCE FIX: Server-side search query
+    let userQuery = supabase
       .from('t_310_01_01_users_universal')
       .select(`
         id,
@@ -180,7 +214,21 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         primary_role_id,
         t_340_01_01_roles!inner(role_name, role_code)
       `, { count: 'exact' })
-      .in('primary_role_id', roleIds)
+      .in('primary_role_id', roleIds);
+
+    // Add search filtering if search term provided
+    if (search && search.length >= 2) {
+      const searchTerm = search.toLowerCase();
+      userQuery = userQuery.or(`
+        user_code.ilike.%${searchTerm}%,
+        email.ilike.%${searchTerm}%,
+        phone.ilike.%${searchTerm}%
+      `);
+      console.log(`🔍 Server-side search applied: "${search}"`);
+    }
+
+    // Apply pagination and ordering
+    const { data: usersData, error: usersError, count: totalCount } = await userQuery
       .range(offset, offset + limit - 1)
       .order('created_at', { ascending: false });
 
@@ -419,7 +467,6 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         motivasiMenjadiTutor: profile?.motivation_as_tutor || '',
         socialMedia1: profile?.social_media_1 || '',
         socialMedia2: profile?.social_media_2 || '',
-        bahasaYangDikuasai: profile?.languages_mastered || [],
         
         // Address - Domisili (with lookups to master tables)
         provinsiDomisili: provincesMap.get(domicileAddr.province_id) || domicileAddr.province_id || '',
@@ -448,13 +495,31 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         namaUniversitas: educatorDetails?.university_s1_name || '',
         fakultas: educatorDetails?.faculty || '',
         jurusan: educatorDetails?.major_s1 || '',
-        akreditasiJurusan: '', // Need to add this field to DB if needed
         ipk: profile?.gpa || 0,
         tahunMasuk: educatorDetails?.entry_year?.toString() || '',
         tahunLulus: profile?.graduation_year?.toString() || '',
         namaSMA: educatorDetails?.high_school || '',
-        jurusanSMA: '', // Need to extract from education_history if needed
+        jurusanSMA: extractFromEducationHistory(educatorDetails?.education_history, 'sma', 'major') || '',
+        jurusanSMKDetail: extractFromEducationHistory(educatorDetails?.education_history, 'smk', 'major_detail') || extractFromEducationHistory(educatorDetails?.education_history, 'sma', 'major_detail') || '',
         tahunLulusSMA: educatorDetails?.high_school_graduation_year?.toString() || '',
+        
+        // Education Documents
+        transkripNilai: documents.transcript_document?.file_url || null,
+        sertifikatKeahlian: documents.skill_certificate?.file_url || null,
+        
+        // Education - Middle School
+        namaSMP: extractFromEducationHistory(educatorDetails?.education_history, 'smp', 'institution_name') || '',
+        tahunLulusSMP: extractFromEducationHistory(educatorDetails?.education_history, 'smp', 'graduation_year')?.toString() || '',
+        
+        // Education - S1 Background (for S2 students)
+        namaUniversitasS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'institution_name') || '',
+        fakultasS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'faculty') || '',
+        jurusanS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'major') || '',
+        
+        // Education - Alternative Learning
+        namaInstitusi: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'institution_name') || '',
+        bidangKeahlian: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'field_of_expertise') || '',
+        pengalamanBelajar: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'learning_experience') || '',
         
         // Professional Profile
         keahlianSpesialisasi: educatorDetails?.special_skills || '',
@@ -482,6 +547,12 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         teaching_radius_km: availability?.teaching_radius_km || 0,
         alamatTitikLokasi: availability?.teaching_center_location || '',
         location_notes: availability?.location_notes || '',
+        catatanAvailability: availability?.availability_notes || '',
+        
+        // Transportation & Location Coordinates
+        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
+        titikLokasiLat: availability?.teaching_center_lat || null,
+        titikLokasiLng: availability?.teaching_center_lng || null,
         
         // Teaching Preferences
         teachingMethods: preferences?.teaching_styles || [],
@@ -517,6 +588,9 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
         status_verifikasi_identitas: management?.identity_verification_status || '',
         status_verifikasi_pendidikan: management?.education_verification_status || '',
         
+        // System Management
+        additionalScreening: management?.additional_screening || [],
+        
         // Timestamps
         created_at: user.created_at,
         updated_at: user.updated_at
@@ -525,10 +599,45 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
 
     console.log(`✅ Successfully processed ${completeTutorData.length} complete tutor records`);
 
+    // 🚀 COLUMN FILTERING: Apply filters if provided
+    let filteredData = completeTutorData;
+    const originalCount = completeTutorData.length;
+    
+    if (Object.keys(columnFilters).length > 0) {
+      filteredData = completeTutorData.filter(tutor => {
+        return Object.entries(columnFilters).every(([column, values]) => {
+          if (values.length === 0) return true; // No filter applied
+          
+          const tutorValue = tutor[column as keyof CompleteTutorData];
+          
+          // Handle different data types
+          if (Array.isArray(tutorValue)) {
+            // For array fields, check if any filter value matches any array element
+            return values.some(filterValue => 
+              tutorValue.some(arrayItem => 
+                String(arrayItem).toLowerCase().includes(filterValue.toLowerCase())
+              )
+            );
+          } else if (tutorValue !== null && tutorValue !== undefined) {
+            // For single values, check if the value matches any of the filter values
+            const stringValue = String(tutorValue).toLowerCase();
+            return values.some(filterValue => 
+              stringValue.includes(filterValue.toLowerCase())
+            );
+          }
+          
+          return false; // Null/undefined values don't match any filter
+        });
+      });
+      
+      console.log(`🔍 Column filtering applied: ${originalCount} → ${filteredData.length} records`);
+    }
+
     return {
-      data: completeTutorData,
+      data: filteredData,
       error: null,
-      total: totalCount || 0
+      total: totalCount || 0, // Keep original total for pagination calculations
+      filtered: filteredData.length // Add filtered count
     };
 
   } catch (error) {
@@ -545,42 +654,54 @@ async function fetchAllTutorData(limit = 1000, offset = 0): Promise<{data: Compl
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '1000');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const search = searchParams.get('search') || '';
+    
+    // 🚀 PERFORMANCE FIX: Reasonable pagination defaults
+    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100); // Max 100 per page
+    const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
+    const offset = (page - 1) * limit;
+    const search = searchParams.get('search')?.trim() || '';
+    
+    // 🚀 COLUMN FILTERS: Parse column filters from URL
+    const columnFilters: Record<string, string[]> = {};
+    for (const [key, value] of searchParams.entries()) {
+      if (key.startsWith('filter_')) {
+        const columnName = key.replace('filter_', '');
+        columnFilters[columnName] = value.split(',').filter(v => v.trim() !== '');
+      }
+    }
 
-    console.log(`🔍 API: Fetching tutors with limit=${limit}, offset=${offset}, search="${search}"`);
+    console.log(`🔍 API: Page ${page}, limit=${limit}, search="${search}", filters:`, Object.keys(columnFilters).length > 0 ? columnFilters : 'none');
 
-    const result = await fetchAllTutorData(limit, offset);
+    // 🚀 PERFORMANCE FIX: Pass search and filters to database level
+    const result = await fetchAllTutorData(limit, offset, search, columnFilters);
 
     if (result.error) {
       return NextResponse.json({
         success: false,
         error: result.error,
         data: [],
-        total: 0
+        total: 0,
+        page: page,
+        limit: limit,
+        totalPages: 0
       }, { status: 500 });
     }
 
-    // Apply search filter if provided
-    let filteredData = result.data;
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredData = result.data.filter(tutor => 
-        tutor.namaLengkap.toLowerCase().includes(searchLower) ||
-        tutor.email.toLowerCase().includes(searchLower) ||
-        tutor.trn.toLowerCase().includes(searchLower) ||
-        tutor.noHp1.includes(search) ||
-        tutor.selectedPrograms.some(program => program.toLowerCase().includes(searchLower))
-      );
-    }
+    const totalPages = Math.ceil(result.total / limit);
 
     return NextResponse.json({
       success: true,
-      data: filteredData,
+      data: result.data,
       total: result.total,
-      filtered: filteredData.length,
-      message: `Successfully fetched ${filteredData.length} tutors from database`
+      filtered: result.filtered || result.data.length,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      hasActiveFilters: Object.keys(columnFilters).length > 0,
+      activeFilters: Object.keys(columnFilters).length > 0 ? columnFilters : undefined,
+      message: `Page ${page}/${totalPages}: ${result.data.length} tutors loaded efficiently${Object.keys(columnFilters).length > 0 ? ' (filtered)' : ''}`
     });
 
   } catch (error) {
@@ -589,7 +710,10 @@ export async function GET(request: NextRequest) {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
       data: [],
-      total: 0
+      total: 0,
+      page: 1,
+      limit: 25,
+      totalPages: 0
     }, { status: 500 });
   }
 }

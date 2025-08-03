@@ -198,8 +198,7 @@ export interface TutorFormData {
   prestasiNonAkademik?: string;
   sertifikasiPelatihan?: string;
   
-  // Teaching Configuration (legacy)
-  sertifikasi?: string;
+  // Teaching Configuration (legacy) - sertifikasi removed, use sertifikasiPelatihan instead
   hourly_rate: number;
   teaching_methods: string[];
   available_schedule: string[];
@@ -238,18 +237,7 @@ export interface TutorFormData {
   // Profile Information (legacy - kept for compatibility)
   motivasi: string;
   
-  // Subject Information - Mata Pelajaran per Kategori
-  mataPelajaran_SD_Kelas_1_6_: string[];
-  mataPelajaran_SMP_Kelas_7_9_: string[];
-  mataPelajaran_SMA_SMK_IPA: string[];
-  mataPelajaran_SMA_SMK_IPS: string[];
-  mataPelajaran_SMK_Teknik_Teknologi: string[];
-  mataPelajaran_SMK_Bisnis_Manajemen: string[];
-  mataPelajaran_SMK_Pariwisata_Perhotelan: string[];
-  mataPelajaran_SMK_Kesehatan: string[];
-  mataPelajaran_Bahasa_Asing: string[];
-  mataPelajaran_Universitas_Perguruan_Tinggi: string[];
-  mataPelajaran_Keterampilan_Khusus: string[];
+
   
   // Teaching Area Information
   teaching_radius_km?: number;
@@ -2729,7 +2717,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   prestasiAkademik: '',
   prestasiNonAkademik: '',
   sertifikasiPelatihan: '',
-  sertifikasi: undefined,
+  // sertifikasi: removed - use sertifikasiPelatihan instead
   hourly_rate: 0,
   teaching_methods: [],
   available_schedule: [],
@@ -2767,17 +2755,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   emergencyContactPhone: '',
   
   // Subject Information - Mata Pelajaran per Kategori
-  mataPelajaran_SD_Kelas_1_6_: [],
-  mataPelajaran_SMP_Kelas_7_9_: [],
-  mataPelajaran_SMA_SMK_IPA: [],
-  mataPelajaran_SMA_SMK_IPS: [],
-  mataPelajaran_SMK_Teknik_Teknologi: [],
-  mataPelajaran_SMK_Bisnis_Manajemen: [],
-  mataPelajaran_SMK_Pariwisata_Perhotelan: [],
-  mataPelajaran_SMK_Kesehatan: [],
-  mataPelajaran_Bahasa_Asing: [],
-  mataPelajaran_Universitas_Perguruan_Tinggi: [],
-  mataPelajaran_Keterampilan_Khusus: [],
+
   
   // Program Selection Defaults
   selectedPrograms: [],
