@@ -264,6 +264,49 @@ export function getEduprimaMenuList(pathname: string, t: any): Group[] {
       ],
     },
     {
+      groupLabel: "Tutor Portal",
+      id: "tutor-portal",
+      menus: [
+        {
+          id: "tutor-profile",
+          href: "/eduprima/tutor",
+          label: "Profile Tutor",
+          active: pathname.includes("/eduprima/tutor"),
+          icon: "heroicons-outline:user-circle",
+          submenus: [
+            {
+              href: "/eduprima/tutor",
+              label: "Lengkapi Profile",
+              active: pathname === "/eduprima/tutor",
+              icon: "heroicons:user",
+              children: [],
+            },
+            {
+              href: "/eduprima/tutor/schedule",
+              label: "Jadwal Mengajar",
+              active: pathname === "/eduprima/tutor/schedule",
+              icon: "heroicons:calendar",
+              children: [],
+            },
+            {
+              href: "/eduprima/tutor/students",
+              label: "Siswa Saya",
+              active: pathname === "/eduprima/tutor/students",
+              icon: "heroicons:user-group",
+              children: [],
+            },
+            {
+              href: "/eduprima/tutor/earnings",
+              label: "Penghasilan",
+              active: pathname === "/eduprima/tutor/earnings",
+              icon: "heroicons:banknotes",
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
       groupLabel: t("communication"),
       id: "communication",
       menus: [

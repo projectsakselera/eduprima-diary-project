@@ -367,8 +367,17 @@ export default function ImportExportPage() {
             field.label.replace(/\//g, ' '), // Replace slashes with spaces
             field.label.replace(/\//g, '_'), // Replace slashes with underscores
             field.label.replace(/\s+/g, '').toLowerCase(), // Lowercase no spaces
-            field.label.replace(/[^\w\s]/g, '').trim() // Remove special characters
-          ];
+            field.label.replace(/[^\w\s]/g, '').trim(), // Remove special characters
+            // NEW: Remove emojis for better CSV matching
+            field.label.replace(/[\ud83c\udf00-\udfff]|[\ud83d\udc00-\ude4f]|[\ud83d\ude80-\udeff]|[\ud7c9\ude00-\ude5f]|[\ud83e\udd10-\uddff]|[\u2600-\u26ff]|[\u2700-\u27bf]/g, '').trim(), // Remove all emojis
+            field.label.replace(/📚\s*/, '').trim(), // Remove book emoji 📚
+            field.label.replace(/📝\s*/, '').trim(), // Remove memo emoji 📝
+            field.label.replace(/Pilih\s*/, '').trim(), // Remove 'Pilih' prefix
+            // Specific fixes for program field
+            field.name === 'selectedPrograms' ? 'Program/Mata Pelajaran yang Diajarkan' : null,
+            field.name === 'selectedPrograms' ? 'Program Mata Pelajaran yang Diajarkan' : null,
+            field.name === 'selectedPrograms' ? 'Mata Pelajaran yang Diajarkan' : null
+          ].filter(col => col !== null); // Remove null entries
         
         let sourceValue = undefined;
         let usedColumn = '';
@@ -380,6 +389,19 @@ export default function ImportExportPage() {
             usedColumn = colName;
             break;
           }
+        }
+        
+        // DEBUG: Special logging for selectedPrograms field
+        if (field.name === 'selectedPrograms') {
+          console.log(`🔍 DEBUG selectedPrograms mapping:`, {
+            fieldName: field.name,
+            fieldLabel: field.label,
+            availableColumns: Object.keys(row),
+            possibleColumns: possibleColumns,
+            sourceValue: sourceValue,
+            usedColumn: usedColumn,
+            foundMatch: sourceValue !== undefined
+          });
         }
 
         if (sourceValue !== undefined && sourceValue !== '') {
@@ -405,13 +427,22 @@ export default function ImportExportPage() {
       // ===== ENHANCED LOCATION VALIDATION =====
       // Validate province field with fuzzy matching
       if (mappedData.provinsiDomisili) {
+        console.log(`🗺️ Validating province for row ${index + 1}:`, mappedData.provinsiDomisili);
         const provinceValidation = await validateLocationField(
           mappedData.provinsiDomisili, 
           'provinsiDomisili'
         );
         
+        console.log(`🗺️ Province validation result:`, {
+          isValid: provinceValidation.isValid,
+          transformedValue: provinceValidation.transformedValue,
+          hasAutoFix: !!provinceValidation.autoFix,
+          error: provinceValidation.error
+        });
+        
         if (provinceValidation.autoFix) {
           mappedData.provinsiDomisili = provinceValidation.transformedValue;
+          console.log(`🗺️ Auto-fixed province:`, provinceValidation.transformedValue);
           if (provinceValidation.error) {
             warnings.push(`🔧 ${provinceValidation.error}`);
           }
@@ -423,19 +454,32 @@ export default function ImportExportPage() {
               .join(', ');
             errors.push(`Suggestions: ${suggestions}`);
           }
+        } else if (provinceValidation.transformedValue) {
+          // Valid without auto-fix
+          mappedData.provinsiDomisili = provinceValidation.transformedValue;
+          console.log(`🗺️ Valid province (no fix needed):`, provinceValidation.transformedValue);
         }
       }
       
       // Validate city field with fuzzy matching (depends on province)
       if (mappedData.kotaKabupatenDomisili) {
+        console.log(`🏢 Validating city for row ${index + 1}:`, mappedData.kotaKabupatenDomisili, 'in province:', mappedData.provinsiDomisili);
         const cityValidation = await validateLocationField(
           mappedData.kotaKabupatenDomisili, 
           'kotaKabupatenDomisili',
           mappedData.provinsiDomisili // Use validated province ID
         );
         
+        console.log(`🏢 City validation result:`, {
+          isValid: cityValidation.isValid,
+          transformedValue: cityValidation.transformedValue,
+          hasAutoFix: !!cityValidation.autoFix,
+          error: cityValidation.error
+        });
+        
         if (cityValidation.autoFix) {
           mappedData.kotaKabupatenDomisili = cityValidation.transformedValue;
+          console.log(`🏢 Auto-fixed city:`, cityValidation.transformedValue);
           if (cityValidation.error) {
             warnings.push(`🔧 ${cityValidation.error}`);
           }
@@ -447,15 +491,36 @@ export default function ImportExportPage() {
               .join(', ');
             errors.push(`Suggestions: ${suggestions}`);
           }
+        } else if (cityValidation.transformedValue) {
+          // Valid without auto-fix
+          mappedData.kotaKabupatenDomisili = cityValidation.transformedValue;
+          console.log(`🏢 Valid city (no fix needed):`, cityValidation.transformedValue);
         }
       }
       
+      // ===== DEBUG: Check if selectedPrograms was mapped =====
+      console.log(`🔍 Row ${index + 1} - selectedPrograms check:`, {
+        exists: !!mappedData.selectedPrograms,
+        value: mappedData.selectedPrograms,
+        type: typeof mappedData.selectedPrograms,
+        allMappedKeys: Object.keys(mappedData)
+      });
+      
       // ===== ENHANCED SUBJECT VALIDATION =====
       if (mappedData.selectedPrograms) {
+        console.log(`📚 Validating subjects for row ${index + 1}:`, mappedData.selectedPrograms);
         const subjectValidation = await validateSubjectField(mappedData.selectedPrograms);
+        
+        console.log(`📚 Subject validation result:`, {
+          isValid: subjectValidation.isValid,
+          transformedValue: subjectValidation.transformedValue,
+          hasAutoFix: !!subjectValidation.autoFix,
+          error: subjectValidation.error
+        });
         
         if (subjectValidation.autoFix) {
           mappedData.selectedPrograms = subjectValidation.transformedValue;
+          console.log(`📚 Auto-fixed subjects:`, subjectValidation.transformedValue);
           if (subjectValidation.error) {
             warnings.push(`📚 ${subjectValidation.error}`);
           }
@@ -467,6 +532,10 @@ export default function ImportExportPage() {
               .join(', ');
             errors.push(`Subject suggestions: ${suggestions}`);
           }
+        } else if (subjectValidation.transformedValue) {
+          // Valid without auto-fix
+          mappedData.selectedPrograms = subjectValidation.transformedValue;
+          console.log(`📚 Valid subjects (no fix needed):`, subjectValidation.transformedValue);
         }
       }
       
@@ -1242,6 +1311,7 @@ export default function ImportExportPage() {
           nationality: 'IDN',
           country_code: 'ID',
           address_line1: record.mappedData.alamatLengkapDomisili || null,
+          // Keep text versions for backup (fuzzy IDs stored in educator_locations table)
           city: record.mappedData.kotaKabupatenDomisili || null,
           state_province: record.mappedData.provinsiDomisili || null,
           postal_code: record.mappedData.kodePosDomisili || null,
@@ -1359,30 +1429,115 @@ export default function ImportExportPage() {
           }
         }
 
-        // ===== STEP 6: Insert program mappings (subjects/lessons) =====
-        if (educatorId && record.mappedData.selectedPrograms && Array.isArray(record.mappedData.selectedPrograms)) {
-          console.log(`📚 Creating program mappings for educator ${educatorId}...`);
+        // ===== STEP 6: Insert address data (domicile) to CORRECT TABLE =====
+        if (userId && (record.mappedData.provinsiDomisili || record.mappedData.kotaKabupatenDomisili)) {
+          console.log(`🏠 Creating domicile address for user ${userId}...`);
+          console.log(`🗺️ Province ID from fuzzy matching:`, record.mappedData.provinsiDomisili);
+          console.log(`🏢 City ID from fuzzy matching:`, record.mappedData.kotaKabupatenDomisili);
           
-          const programMappingsData = record.mappedData.selectedPrograms.map((programId: string) => ({
-            educator_id: educatorId,
-            program_id: programId, // UUID from fuzzy matching
-            proficiency_level: 'intermediate', // Default value
-            years_of_experience: 1, // Default value  
-            certification_status: 'none', // Default value
+          const addressData = {
+            user_id: userId, // Link to users_universal (NOT educator_id)
+            address_type: 'domicile',
+            address_label: 'Alamat Domisili',
+            province_id: record.mappedData.provinsiDomisili || null, // UUID from fuzzy matching
+            city_id: record.mappedData.kotaKabupatenDomisili || null, // UUID from fuzzy matching
+            district_name: record.mappedData.kecamatanDomisili || null,
+            village_name: record.mappedData.kelurahanDomisili || null,
+            street_address: record.mappedData.alamatLengkapDomisili || null,
+            postal_code: record.mappedData.kodePosDomisili || null,
+            is_primary: true,
+            is_verified: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }));
+          };
 
-          const mappingsResult = await supabase
-            ?.from('t_315_06_01_tutor_program_mappings')
-            .insert(programMappingsData);
+          console.log(`🏠 Address data to insert:`, addressData);
 
-          if (mappingsResult?.error) {
-            console.error(`❌ Program mappings failed for row ${record.rowNumber}:`, mappingsResult.error);
-            console.warn('⚠️ Continuing without program mappings');
+          const addressResult = await supabase
+            ?.from('t_310_01_03_user_addresses') // CORRECT TABLE NAME
+            .insert([addressData])
+            .select('id');
+
+          if (addressResult?.error) {
+            console.error(`❌ Address data failed for row ${record.rowNumber}:`, addressResult.error);
+            console.error('Address data that failed:', addressData);
+            console.warn('⚠️ Continuing without address data');
           } else {
-            console.log(`✅ Program mappings created for educator ${educatorId}: ${programMappingsData.length} programs`);
+            console.log(`✅ Domicile address created for user ${userId}:`, addressResult.data?.[0]?.id);
           }
+        }
+
+        // ===== STEP 7: Insert program mappings (subjects/lessons) =====
+        if (educatorId && record.mappedData.selectedPrograms) {
+          console.log(`📚 Processing programs for educator ${educatorId}...`);
+          console.log(`📚 Raw selectedPrograms:`, record.mappedData.selectedPrograms);
+          console.log(`📚 Type of selectedPrograms:`, typeof record.mappedData.selectedPrograms);
+          console.log(`📚 Is array:`, Array.isArray(record.mappedData.selectedPrograms));
+          
+          // Handle both string and array inputs
+          let programIds = [];
+          if (Array.isArray(record.mappedData.selectedPrograms)) {
+            programIds = record.mappedData.selectedPrograms;
+          } else if (typeof record.mappedData.selectedPrograms === 'string') {
+            // If it's a string, try to parse it
+            try {
+              programIds = JSON.parse(record.mappedData.selectedPrograms);
+            } catch {
+              // If parsing fails, treat as single program ID
+              programIds = [record.mappedData.selectedPrograms];
+            }
+          }
+          
+          console.log(`📚 Processed programIds:`, programIds);
+          
+          // Filter out any invalid/null program IDs
+          const validPrograms = programIds.filter((programId: any) => {
+            const isValid = programId && typeof programId === 'string' && programId.length > 0;
+            if (!isValid) {
+              console.warn(`⚠️ Invalid program ID found:`, programId, typeof programId);
+            }
+            return isValid;
+          });
+          
+          console.log(`📚 Valid programs after filtering:`, validPrograms);
+          
+          if (validPrograms.length === 0) {
+            console.warn('⚠️ No valid program IDs found, skipping program mappings');
+          } else {
+            const programMappingsData = validPrograms.map((programId: string) => ({
+              educator_id: educatorId,
+              program_id: programId, // UUID from fuzzy matching
+              proficiency_level: 'intermediate', // Default value
+              years_of_experience: 1, // Default value  
+              certification_status: 'none', // Default value
+              competency_level: 'intermediate', // Required field based on table schema
+              confidence_score: 0.8, // Default confidence
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }));
+
+            console.log(`📚 Final data to insert (${programMappingsData.length} records):`);
+            programMappingsData.forEach((data, index) => {
+              console.log(`  ${index + 1}. Program ID: ${data.program_id}, Educator ID: ${data.educator_id}`);
+            });
+
+            const mappingsResult = await supabase
+              ?.from('t_315_06_01_tutor_program_mappings')
+              .insert(programMappingsData)
+              .select('id, program_id');
+
+            if (mappingsResult?.error) {
+              console.error(`❌ Program mappings failed for row ${record.rowNumber}:`);
+              console.error('Error details:', mappingsResult.error);
+              console.error('Failed data:', programMappingsData);
+              console.warn('⚠️ Continuing without program mappings');
+            } else {
+              console.log(`✅ Program mappings created for educator ${educatorId}: ${programMappingsData.length} programs`);
+              console.log('Created mappings:', mappingsResult.data);
+            }
+          }
+        } else {
+          console.log(`⚠️ Skipping program mappings - educatorId: ${educatorId}, selectedPrograms:`, record.mappedData.selectedPrograms);
         }
         
         console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, Educator ID: ${educatorId}, ERN: ${generatedTRN || trn || 'Not generated'}`);

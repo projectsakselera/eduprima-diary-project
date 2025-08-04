@@ -1448,17 +1448,19 @@ export default function ViewAllTutorsPage() {
 
   return (
     <div className="max-w-full mx-auto p-4">
-      {/* Header */}
-      <div className="bg-card rounded-lg shadow-sm border mb-4 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-              <Icon icon="ph:table" className="h-6 w-6 text-primary" />
-              Tutor Database Spreadsheet
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Advanced pagination system • Page {currentPage} of {totalPages} • {totalRecords} total records
-            </p>
+      {/* Compact Header */}
+      <div className="bg-card rounded-lg shadow-sm border mb-4 p-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Icon icon="ph:table" className="h-5 w-5 text-primary" />
+              <h1 className="text-lg font-semibold text-foreground">
+                Tutor Database
+              </h1>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Page {currentPage}/{totalPages} • {totalRecords} records
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Icon-only buttons */}
@@ -1502,77 +1504,59 @@ export default function ViewAllTutorsPage() {
             >
               <Icon icon="ph:plus" className="h-4 w-4" />
             </Button>
-            </div>
           </div>
+        </div>
 
-          {/* Controls - Left Aligned, 50% Width */}
-          <div className="mb-4">
-            <div className="w-1/2 flex flex-col gap-3">
-              {/* Search */}
-              <div className="relative">
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Icon 
-                      icon={isSearching ? "ph:spinner" : "ph:magnifying-glass"} 
-                      className={cn(
-                        "absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground",
-                        isSearching && "animate-spin"
-                      )}
-                    />
-                    <Input
-                      placeholder="Search by name, email, TRN, programs... (debounced 500ms)"
-                      value={searchInput}
-                      onChange={(e) => handleSearchInputChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearchClick();
-                        }
-                      }}
-                      className="pl-10 pr-10"
-                    />
-                    {searchInput && (
-                      <Button
-                        variant="ghost"
-                        onClick={handleClearSearch}
-                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-                      >
-                        <Icon icon="ph:x" className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={handleSearchClick}
-                    disabled={isSearching}
-                    className="shrink-0"
-                  >
-                    <Icon 
-                      icon={isSearching ? "ph:spinner" : "ph:magnifying-glass"} 
-                      className={cn("h-4 w-4", isSearching && "animate-spin")}
-                    />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Category Filter */}
-              <div className="w-64">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Controls - Compact Row Layout */}
+        <div className="flex items-center gap-3 flex-1 mt-3">
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Icon 
+                icon={isSearching ? "ph:spinner" : "ph:magnifying-glass"} 
+                className={cn(
+                  "absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground",
+                  isSearching && "animate-spin"
+                )}
+              />
+              <Input
+                placeholder="Search by name, email, TRN..."
+                value={searchInput}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchClick();
+                  }
+                }}
+                className="pl-10 pr-8 h-8 text-sm"
+              />
+              {searchInput && (
+                <Button
+                  variant="ghost"
+                  onClick={handleClearSearch}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  <Icon icon="ph:x" className="h-3 w-3" />
+                </Button>
+              )}
             </div>
-          </div>
 
-          {/* Status Info Row - Left Aligned */}
-          <div className="flex flex-wrap items-center gap-4 mb-4 w-full">
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-40 h-8 text-sm">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+        </div>
+      </div>
+
+      {/* Status Info Row - Left Aligned */}
+      <div className="flex flex-wrap items-center gap-4 mb-4 w-full">
 
             {/* Selected rows indicator */}
             {selectedRows.size > 0 && (
@@ -1646,27 +1630,26 @@ export default function ViewAllTutorsPage() {
               <span>• {sortedData.length} rows</span>
             </div>
           </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="mb-4">
+          <Alert className="border-destructive/50 bg-destructive/10">
+            <Icon icon="ph:warning" className="h-4 w-4 text-destructive" />
+            <AlertDescription>
+              <div className="font-medium text-destructive">Failed to load tutor data</div>
+              <div className="text-sm mt-1 text-destructive/80">{error}</div>
+              <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchTutorData('')}>
+                <Icon icon="ph:arrow-clockwise" className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
         </div>
+      )}
 
-        {/* Error State */}
-        {error && (
-          <div className="mb-4">
-            <Alert className="border-destructive/50 bg-destructive/10">
-              <Icon icon="ph:warning" className="h-4 w-4 text-destructive" />
-              <AlertDescription>
-                <div className="font-medium text-destructive">Failed to load tutor data</div>
-                <div className="text-sm mt-1 text-destructive/80">{error}</div>
-                <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchTutorData('')}>
-                  <Icon icon="ph:arrow-clockwise" className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
-        {/* Cell Selection Info */}
-        {(selectedCell || selectionRange.start || selectedCells.size > 0) && (
+      {/* Cell Selection Info */}
+      {(selectedCell || selectionRange.start || selectedCells.size > 0) && (
           <div className="bg-muted/50 border rounded-lg p-2 mb-4">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
@@ -1675,11 +1658,15 @@ export default function ViewAllTutorsPage() {
                     Selected: Row {selectedCell.row + 1}, Column {filteredColumns.find(col => col.key === selectedCell.col)?.label}
                   </span>
                 )}
-                {selectionRange.start && selectionRange.end && selectionMode === 'range' && (
-                  <span className="text-muted-foreground">
-                    Range: {Math.abs(selectionRange.end.row - selectionRange.start.row) + 1} × {Math.abs(getColumnIndex(selectionRange.end.col) - getColumnIndex(selectionRange.start.col)) + 1} cells
-                  </span>
-                )}
+                {selectionRange.start && selectionRange.end && selectionMode === 'range' && (() => {
+                  const start = selectionRange.start!;
+                  const end = selectionRange.end!;
+                  return (
+                    <span className="text-muted-foreground">
+                      Range: {Math.abs(end.row - start.row) + 1} × {Math.abs(getColumnIndex(end.col) - getColumnIndex(start.col)) + 1} cells
+                    </span>
+                  );
+                })()}
                 {selectedCells.size > 0 && selectionMode === 'multi' && (
                   <span className="text-muted-foreground">
                     Multi-selection: {selectedCells.size} cells
