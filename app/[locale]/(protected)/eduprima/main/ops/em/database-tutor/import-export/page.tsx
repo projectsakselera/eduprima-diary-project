@@ -168,7 +168,7 @@ export default function ImportExportPage() {
       { name: 'communicationStyle', label: 'Gaya Komunikasi', type: 'checkbox', required: false },
       { name: 'teachingPatienceLevel', label: 'Level Kesabaran Mengajar (1-10)', type: 'select', required: false },
       { name: 'studentMotivationAbility', label: 'Kemampuan Memotivasi Siswa (1-10)', type: 'select', required: false },
-      { name: 'scheduleFlexibilityLevel', label: 'Level Fleksibilitas Jadwal (1-10)', type: 'select', required: false },
+      { name: 'scheduleFlexibilityLevel', label: 'Level Fleksibilitas Jadwal (3-10)', type: 'select', required: false },
       { name: 'emergencyContactName', label: 'Nama Kontak Darurat', type: 'text', required: false },
       { name: 'emergencyContactRelationship', label: 'Hubungan dengan Kontak Darurat', type: 'select', required: false },
       { name: 'emergencyContactPhone', label: 'Nomor HP Kontak Darurat', type: 'tel_split', required: false }
@@ -1539,6 +1539,203 @@ export default function ImportExportPage() {
         } else {
           console.log(`⚠️ Skipping program mappings - educatorId: ${educatorId}, selectedPrograms:`, record.mappedData.selectedPrograms);
         }
+
+        // ===== STEP 8A: Insert teaching preferences (MISSING TABLE!) =====
+        if (educatorId) {
+          console.log(`🎯 Creating teaching preferences for educator ${educatorId}...`);
+          
+          const teachingPreferencesData = {
+            educator_id: educatorId,
+            teaching_styles: record.mappedData.teachingMethods ? [record.mappedData.teachingMethods] : [],
+            student_level_preferences: record.mappedData.studentLevelPreferences ? [record.mappedData.studentLevelPreferences] : [],
+            tech_savviness_level: record.mappedData.techSavviness || null,
+            gmeet_experience_level: record.mappedData.gmeetExperience || null,
+            attendance_update_capability: record.mappedData.presensiUpdateCapability || null,
+            special_needs_capability: record.mappedData.specialNeedsCapable || null,
+            group_class_willingness: record.mappedData.groupClassWilling || null,
+            online_teaching_capability: record.mappedData.onlineTeachingCapable || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log(`🎯 Teaching preferences data:`, teachingPreferencesData);
+          console.log(`🎯 Debug specific fields:`, {
+            specialNeedsCapable_raw: record.mappedData.specialNeedsCapable,
+            groupClassWilling_raw: record.mappedData.groupClassWilling,
+            onlineTeachingCapable_raw: record.mappedData.onlineTeachingCapable,
+            special_needs_final: teachingPreferencesData.special_needs_capability,
+            group_class_final: teachingPreferencesData.group_class_willingness,
+            online_teaching_final: teachingPreferencesData.online_teaching_capability
+          });
+          console.log(`🚨 CRITICAL DEBUG - Group Class Willing:`, {
+            csvValue: record.mappedData.groupClassWilling,
+            databaseValue: teachingPreferencesData.group_class_willingness,
+            isNull: teachingPreferencesData.group_class_willingness === null,
+            isEmpty: teachingPreferencesData.group_class_willingness === '',
+            type: typeof teachingPreferencesData.group_class_willingness
+          });
+
+          const preferencesResult = await supabase
+            ?.from('t_315_04_01_tutor_teaching_preferences')
+            .insert([teachingPreferencesData])
+            .select('id')
+            .single();
+
+          if (preferencesResult?.error) {
+            console.error(`❌ Failed to create teaching preferences for educator ${educatorId}:`, preferencesResult.error);
+            console.warn('⚠️ Continuing without teaching preferences');
+          } else {
+            console.log(`✅ Teaching preferences created for educator ${educatorId}:`, preferencesResult.data?.id);
+          }
+        }
+
+        // ===== STEP 8B: Insert personality traits (MISSING TABLE!) =====
+        if (educatorId) {
+          console.log(`💫 Creating personality traits for educator ${educatorId}...`);
+          
+          const personalityTraitsData = {
+            educator_id: educatorId,
+            teaching_patience_level: record.mappedData.teachingPatienceLevel || null,
+            student_motivation_ability: record.mappedData.studentMotivationAbility || null,
+            schedule_flexibility_level: record.mappedData.scheduleFlexibilityLevel || null,
+            personality_type: record.mappedData.tutorPersonalityType ? [record.mappedData.tutorPersonalityType] : [],
+            communication_style: record.mappedData.communicationStyle ? [record.mappedData.communicationStyle] : [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log(`💫 Personality traits data:`, personalityTraitsData);
+          console.log(`💫 Debug specific personality fields:`, {
+            teachingPatienceLevel_raw: record.mappedData.teachingPatienceLevel,
+            studentMotivationAbility_raw: record.mappedData.studentMotivationAbility,
+            scheduleFlexibilityLevel_raw: record.mappedData.scheduleFlexibilityLevel,
+            teaching_patience_level_final: personalityTraitsData.teaching_patience_level,
+            student_motivation_ability_final: personalityTraitsData.student_motivation_ability,
+            schedule_flexibility_level_final: personalityTraitsData.schedule_flexibility_level,
+            personality_type_final: personalityTraitsData.personality_type,
+            communication_style_final: personalityTraitsData.communication_style
+          });
+
+          const personalityResult = await supabase
+            ?.from('t_315_05_01_tutor_personality_traits')
+            .insert([personalityTraitsData])
+            .select('id')
+            .single();
+
+          if (personalityResult?.error) {
+            console.error(`❌ Failed to create personality traits for educator ${educatorId}:`, personalityResult.error);
+            console.error(`❌ FULL ERROR DETAILS:`, JSON.stringify(personalityResult.error, null, 2));
+            console.warn('⚠️ Continuing without personality traits');
+          } else {
+            console.log(`✅ Personality traits created for educator ${educatorId}:`, personalityResult.data?.id);
+            console.log(`✅ PERSONALITY DATA CREATED:`, JSON.stringify(personalityResult.data, null, 2));
+          }
+        }
+
+        // ===== STEP 8C: Insert availability config (MISSING TABLE!) =====
+        if (educatorId) {
+          console.log(`📅 Creating availability config for educator ${educatorId}...`);
+          
+          const availabilityConfigData = {
+            educator_id: educatorId,
+            availability_status: record.mappedData.statusMenerimaSiswa === 'aktif' || record.mappedData.statusMenerimaSiswa === 'yes' ? 'aktif' : 'tidak_aktif',
+            available_schedule: record.mappedData.available_schedule || [],
+            teaching_methods: record.mappedData.teaching_methods || [],
+            hourly_rate: record.mappedData.hourly_rate ? parseInt(record.mappedData.hourly_rate) : null,
+            max_new_students_per_week: record.mappedData.maksimalSiswaBaru ? parseInt(record.mappedData.maksimalSiswaBaru) : null,
+            max_total_students: record.mappedData.maksimalTotalSiswa ? parseInt(record.mappedData.maksimalTotalSiswa) : null,
+            teaching_radius_km: record.mappedData.teaching_radius_km ? parseInt(record.mappedData.teaching_radius_km) : null,
+            transportation_method: record.mappedData.transportasiTutor || [],
+            teaching_center_location: record.mappedData.alamatTitikLokasi || null,
+            location_notes: record.mappedData.location_notes || null,
+            target_student_ages: record.mappedData.usiaTargetSiswa || [],
+            availability_notes: record.mappedData.catatanAvailability || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log(`📅 Availability config data:`, availabilityConfigData);
+          console.log(`📅 Debug specific availability fields:`, {
+            statusMenerimaSiswa_raw: record.mappedData.statusMenerimaSiswa,
+            hourly_rate_raw: record.mappedData.hourly_rate,
+            maksimalSiswaBaru_raw: record.mappedData.maksimalSiswaBaru,
+            maksimalTotalSiswa_raw: record.mappedData.maksimalTotalSiswa,
+            teaching_radius_km_raw: record.mappedData.teaching_radius_km,
+            availability_status_final: availabilityConfigData.availability_status,
+            hourly_rate_final: availabilityConfigData.hourly_rate,
+            max_new_students_final: availabilityConfigData.max_new_students_per_week,
+            max_total_students_final: availabilityConfigData.max_total_students,
+            teaching_radius_final: availabilityConfigData.teaching_radius_km
+          });
+
+          const availabilityResult = await supabase
+            ?.from('t_315_03_01_tutor_availability_config')
+            .insert([availabilityConfigData])
+            .select('id')
+            .single();
+
+          if (availabilityResult?.error) {
+            console.error(`❌ Failed to create availability config for educator ${educatorId}:`, availabilityResult.error);
+            console.error(`❌ FULL AVAILABILITY ERROR DETAILS:`, JSON.stringify(availabilityResult.error, null, 2));
+            console.warn('⚠️ Continuing without availability config');
+          } else {
+            console.log(`✅ Availability config created for educator ${educatorId}:`, availabilityResult.data?.id);
+            console.log(`✅ AVAILABILITY DATA CREATED:`, JSON.stringify(availabilityResult.data, null, 2));
+          }
+        }
+
+        // ===== STEP 8D: Insert tutor management (MISSING TABLE FOR STATUS_TUTOR!) =====
+        if (userId) {
+          console.log(`🎯 Creating tutor management for user ${userId}...`);
+          
+          const tutorManagementData = {
+            user_id: userId,
+            status_tutor: record.mappedData.status_tutor || 'registration',
+            approval_level: record.mappedData.approval_level || 'junior',
+            staff_notes: record.mappedData.staff_notes || null,
+            additional_screening: [],
+            
+            // Document Verification Status - use defaults if not provided
+            identity_verification_status: record.mappedData.status_verifikasi_identitas || 'pending',
+            education_verification_status: record.mappedData.status_verifikasi_pendidikan || 'pending',
+            
+            // Initialize recruitment tracking
+            recruitment_stage_history: [{
+              stage: record.mappedData.status_tutor || 'registration',
+              timestamp: new Date().toISOString(),
+              changed_by: 'system_import',
+              notes: `Imported from CSV - Row ${record.rowNumber}`
+            }],
+            last_status_change: new Date().toISOString(),
+            status_changed_by: null,
+            
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log(`🎯 Tutor management data:`, tutorManagementData);
+          console.log(`🎯 Debug specific management fields:`, {
+            status_tutor_raw: record.mappedData.status_tutor,
+            approval_level_raw: record.mappedData.approval_level,
+            status_tutor_final: tutorManagementData.status_tutor,
+            approval_level_final: tutorManagementData.approval_level
+          });
+
+          const managementResult = await supabase
+            ?.from('t_315_02_01_tutor_management')
+            .insert([tutorManagementData])
+            .select('id')
+            .single();
+
+          if (managementResult?.error) {
+            console.error(`❌ Failed to create tutor management for user ${userId}:`, managementResult.error);
+            console.error(`❌ FULL MANAGEMENT ERROR DETAILS:`, JSON.stringify(managementResult.error, null, 2));
+            console.warn('⚠️ Continuing without tutor management');
+          } else {
+            console.log(`✅ Tutor management created for user ${userId}:`, managementResult.data?.id);
+            console.log(`✅ MANAGEMENT DATA CREATED:`, JSON.stringify(managementResult.data, null, 2));
+          }
+        }
         
         console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, Educator ID: ${educatorId}, ERN: ${generatedTRN || trn || 'Not generated'}`);
         successCount++;
@@ -1625,9 +1822,45 @@ export default function ImportExportPage() {
       
       setExportProgress(25);
       
+      // 🔍 Finding tutor role ID...
+      console.log('🔍 Finding tutor role ID...');
+      
+      const { data: rolesData, error: roleError } = await supabase
+        .from('t_340_01_01_roles')
+        .select('*');
+
+      if (roleError) {
+        console.error('❌ Failed to fetch roles:', roleError);
+        throw new Error(`Failed to fetch roles: ${roleError.message}`);
+      }
+
+      console.log('✅ Found roles in table: t_340_01_01_roles');
+      
+      const tutorRole = rolesData?.find(role => role.role_name?.toLowerCase() === 'tutor');
+      
+      if (!tutorRole) {
+        throw new Error('Tutor role not found in database');
+      }
+
+      const tutorRoleId = tutorRole.id;
+      console.log('✅ Found tutor role ID:', tutorRoleId);
+
+      // 📊 Comprehensive export query with JOINs
       const { data, error } = await supabase
         .from('t_310_01_01_users_universal')
-        .select('*')
+        .select(`
+          *,
+          user_profiles:t_310_02_01_user_profiles(*),
+          educator_details:t_315_01_01_educator_details(*),
+          tutor_management:t_315_02_01_tutor_management(*),
+          availability_config:t_315_03_01_tutor_availability_config(*),
+          teaching_preferences:t_315_04_01_tutor_teaching_preferences(*),
+          personality_traits:t_315_05_01_tutor_personality_traits(*),
+          banking_info:t_315_06_01_educator_banking_info(*),
+          program_mappings:t_315_07_01_tutor_program_mappings(*),
+          addresses:t_310_03_01_addresses(*)
+        `)
+        .eq('primary_role_id', tutorRoleId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -1646,11 +1879,109 @@ export default function ImportExportPage() {
 
       setExportProgress(75);
 
+      // 🔄 Transform joined data to CSV format matching template
+      console.log('🔄 Transforming', data.length, 'records for export...');
+      
+      const transformedData = data.map(user => {
+        const profile = Array.isArray(user.user_profiles) ? user.user_profiles[0] : user.user_profiles;
+        const educator = Array.isArray(user.educator_details) ? user.educator_details[0] : user.educator_details;
+        const management = Array.isArray(user.tutor_management) ? user.tutor_management[0] : user.tutor_management;
+        const availability = Array.isArray(user.availability_config) ? user.availability_config[0] : user.availability_config;
+        const preferences = Array.isArray(user.teaching_preferences) ? user.teaching_preferences[0] : user.teaching_preferences;
+        const personality = Array.isArray(user.personality_traits) ? user.personality_traits[0] : user.personality_traits;
+        const banking = Array.isArray(user.banking_info) ? user.banking_info[0] : user.banking_info;
+        const addresses = Array.isArray(user.addresses) ? user.addresses : [];
+        const domicileAddress = addresses.find(addr => addr.address_type === 'domicile');
+
+        return {
+          // System & Status (FROM TUTOR_MANAGEMENT)
+          'Status Tutor': management?.status_tutor || 'registration',
+          'Level Approval': management?.approval_level || 'junior',
+          'Catatan Staff': management?.staff_notes || '',
+          
+          // Personal Info
+          'Nama Lengkap': profile?.full_name || '',
+          'Nama Panggilan': profile?.nickname || '',
+          'Tanggal Lahir': profile?.date_of_birth || '',
+          'Jenis Kelamin': profile?.gender || '',
+          'Agama': profile?.religion || '',
+          'Email': user.email || '',
+          'No HP 1': user.phone || '',
+          'Social Media 1': profile?.social_media_1 || '',
+          
+          // Address
+          'Provinsi Domisili': domicileAddress?.province_name || '',
+          'Kota/Kabupaten Domisili': domicileAddress?.city_name || '',
+          'Kecamatan Domisili': domicileAddress?.district_name || '',
+          'Kelurahan Domisili': domicileAddress?.village_name || '',
+          'Alamat Lengkap Domisili': domicileAddress?.full_address || '',
+          'Kode Pos Domisili': domicileAddress?.postal_code || '',
+          
+          // Banking
+          'Nama Nasabah': banking?.account_holder_name || '',
+          'Nomor Rekening': banking?.account_number || '',
+          'Nama Bank': banking?.bank_name || '',
+          
+          // Education
+          'Status Akademik': educator?.academic_status || '',
+          'Nama Universitas': educator?.university_s1_name || '',
+          'Fakultas': educator?.faculty_s1 || '',
+          'Jurusan': educator?.major_s1 || '',
+          'IPK': educator?.gpa || '',
+          'Tahun Lulus Universitas': educator?.graduation_year || '',
+          'Tahun Lulus SMA': educator?.high_school_graduation_year || '',
+          
+          // Professional
+          'Pengalaman Mengajar': educator?.teaching_experience || '',
+          'Pengalaman Lain Relevan': educator?.other_relevant_experience || '',
+          
+          // Schedule & Availability (FROM AVAILABILITY_CONFIG)
+          'Radius Area Mengajar (KM)': availability?.teaching_radius_km || '',
+          'Alamat Titik Lokasi': availability?.teaching_center_location || '',
+          'Catatan Lokasi': availability?.location_notes || '',
+          'Status Availability': availability?.availability_status === 'aktif' ? 'aktif' : 'tidak_aktif',
+          'Jadwal Mingguan Tersedia': Array.isArray(availability?.available_schedule) ? availability.available_schedule.join('; ') : '',
+          'Metode Pengajaran': Array.isArray(availability?.teaching_methods) ? availability.teaching_methods.join('; ') : '',
+          'Ekspektasi Fee Minimal Per Jam': availability?.hourly_rate || '',
+          'Maksimal Siswa Baru per Minggu': availability?.max_new_students_per_week || '',
+          'Maksimal Total Siswa': availability?.max_total_students || '',
+          'Usia Target Siswa': Array.isArray(availability?.target_student_ages) ? availability.target_student_ages.join('; ') : '',
+          
+          // Teaching Preferences (FROM TEACHING_PREFERENCES)
+          'Gaya Pembelajaran': Array.isArray(preferences?.teaching_styles) ? preferences.teaching_styles.join('; ') : '',
+          'Preferensi Level Siswa': Array.isArray(preferences?.student_level_preferences) ? preferences.student_level_preferences.join('; ') : '',
+          'Kemampuan Mengajar ABK': preferences?.special_needs_capability || 'tidak',
+          'Bersedia Mengajar Kelas Grup': preferences?.group_class_willingness || 'tidak',
+          'Kemampuan Mengajar Online': preferences?.online_teaching_capability || 'tidak',
+          'Level Tech Savviness': preferences?.tech_savviness_level || 'basic',
+          'Pengalaman Google Meet': preferences?.gmeet_experience_level || 'pemula',
+          'Kemampuan Update Presensi': preferences?.attendance_update_capability || 'tidak',
+          
+          // Personality Traits (FROM PERSONALITY_TRAITS)
+          'Tipe Kepribadian Tutor': Array.isArray(personality?.personality_type) ? personality.personality_type.join('; ') : '',
+          'Level Kesabaran Mengajar (1-10)': personality?.teaching_patience_level || '',
+          'Kemampuan Memotivasi Siswa (1-10)': personality?.student_motivation_ability || '',
+          'Level Fleksibilitas Jadwal (3-10)': personality?.schedule_flexibility_level || ''
+        };
+      });
+
+      console.log('✅ Transformed data sample:', transformedData[0]);
+
+      if (transformedData.length === 0) {
+        toast({
+          title: "No Data Found",
+          description: "Tidak ada data tutor yang ditemukan untuk di export",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
       // Convert to CSV
-      const headers = Object.keys(data[0]);
+      const headers = Object.keys(transformedData[0]);
       const csvContent = [
         headers.join(','),
-        ...data.map(row => 
+        ...transformedData.map(row => 
           headers.map(header => {
             const value = row[header];
             // Handle arrays and objects

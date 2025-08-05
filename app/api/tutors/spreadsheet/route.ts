@@ -366,7 +366,15 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     const bankingMap = new Map(bankingResult.data?.map(b => [educatorIdToUserIdMap.get(b.educator_id), b]) || []);
     const availabilityMap = new Map(availabilityResult.data?.map(a => [educatorIdToUserIdMap.get(a.educator_id), a]) || []);
     const preferencesMap = new Map(preferencesResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
-    const personalityMap = new Map(personalityResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
+    
+    // 🔧 FIX: Create personality map with error handling
+    const personalityMap = new Map();
+    personalityResult.data?.forEach(p => {
+      const userId = educatorIdToUserIdMap.get(p.educator_id);
+      if (userId) {
+        personalityMap.set(userId, p);
+      }
+    });
     
     // Group program mappings by user_id
     const programMappingsMap = new Map();
@@ -537,7 +545,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         mataPelajaranLainnya: '', // This would be in notes or additional field
         
         // Availability
-        statusMenerimaSiswa: availability?.availability_status || '',
+        statusMenerimaSiswa: availability?.availability_status === 'aktif' ? 'yes' : 'no',
         available_schedule: availability?.available_schedule || [],
         teaching_methods: availability?.teaching_methods || [],
         hourly_rate: availability?.hourly_rate || 0,
@@ -548,6 +556,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         alamatTitikLokasi: availability?.teaching_center_location || '',
         location_notes: availability?.location_notes || '',
         catatanAvailability: availability?.availability_notes || '',
+        
+        // DEBUG: Add raw availability data for troubleshooting
+        _debug_availability_full: availability || {},
+        _debug_schedule: {
+          raw_availability_status: availability?.availability_status,
+          raw_hourly_rate: availability?.hourly_rate,
+          raw_max_new: availability?.max_new_students_per_week,
+          raw_max_total: availability?.max_total_students,
+          raw_radius: availability?.teaching_radius_km,
+          has_availability: !!availability
+        },
         
         // Transportation & Location Coordinates
         transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
@@ -563,6 +582,16 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         techSavviness: preferences?.tech_savviness_level || '',
         gmeetExperience: preferences?.gmeet_experience_level || '',
         presensiUpdateCapability: preferences?.attendance_update_capability || '',
+        
+        // DEBUG: Add raw preferences data for troubleshooting
+        _debug_preferences_full: preferences || {},
+        _debug_group_class: {
+          raw_value: preferences?.group_class_willingness,
+          is_null: preferences?.group_class_willingness === null,
+          is_empty: preferences?.group_class_willingness === '',
+          type: typeof preferences?.group_class_willingness,
+          has_preferences: !!preferences
+        },
         
         // Personality
         tutorPersonalityType: personality?.personality_type || '',

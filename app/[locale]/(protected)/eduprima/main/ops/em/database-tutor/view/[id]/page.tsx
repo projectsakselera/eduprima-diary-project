@@ -240,6 +240,26 @@ export default function ViewTutorPage() {
         if (result.success && result.data) {
           const tutor = result.data.find((t: TutorData) => t.id === tutorId);
           if (tutor) {
+            console.log('🔍 TUTOR DETAIL - Raw data received:', tutor);
+            console.log('🎯 PERSONALITY CHECK:', {
+              teachingPatienceLevel: tutor.teachingPatienceLevel,
+              studentMotivationAbility: tutor.studentMotivationAbility,
+              scheduleFlexibilityLevel: tutor.scheduleFlexibilityLevel
+            });
+            console.log('🎯 PREFERENCES CHECK:', {
+              specialNeedsCapable: tutor.specialNeedsCapable,
+              groupClassWilling: tutor.groupClassWilling,
+              onlineTeachingCapable: tutor.onlineTeachingCapable
+            });
+                    console.log('📅 AVAILABILITY CHECK:', {
+          statusMenerimaSiswa: tutor.statusMenerimaSiswa,
+          hourly_rate: tutor.hourly_rate,
+          maksimalSiswaBaru: tutor.maksimalSiswaBaru,
+          maksimalTotalSiswa: tutor.maksimalTotalSiswa,
+          teaching_radius_km: tutor.teaching_radius_km,
+          available_schedule: tutor.available_schedule,
+          _debug_schedule: tutor._debug_schedule
+        });
             setTutorData(tutor);
           } else {
             setError('Tutor not found');
@@ -1509,8 +1529,8 @@ export default function ViewTutorPage() {
 
                   {/* Transportation & Location */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Transportation Methods */}
-                    {tutorData.transportasiTutor && Array.isArray(tutorData.transportasiTutor) && tutorData.transportasiTutor.length > 0 && (
+                    {/* Transportation Methods - HIDDEN per user request */}
+                    {false && tutorData.transportasiTutor && Array.isArray(tutorData.transportasiTutor) && tutorData.transportasiTutor.length > 0 && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="text-lg flex items-center gap-2">
@@ -1673,124 +1693,9 @@ export default function ViewTutorPage() {
                     </Card>
                   )}
 
-                  {/* Capabilities */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Icon icon="ph:laptop" className="h-5 w-5 text-purple-600" />
-                          Technology & Online Teaching
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Online Teaching</span>
-                          <Badge className={cn(
-                            tutorData.onlineTeachingCapable === 'yes' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          )}>
-                            {tutorData.onlineTeachingCapable === 'yes' ? 'Capable' : 'Not Capable'}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Tech Savviness</span>
-                          <span className="text-sm">{tutorData.techSavviness || '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Google Meet Experience</span>
-                          <span className="text-sm">{tutorData.gmeetExperience || '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Attendance Update Capability</span>
-                          <span className="text-sm">{tutorData.presensiUpdateCapability || '-'}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
 
-                    {/* Teaching Personality */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Icon icon="ph:smiley" className="h-5 w-5 text-orange-600" />
-                          Teaching Personality
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Patience Level</span>
-                          <span className="text-sm">{tutorData.teachingPatienceLevel || '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Motivation Ability</span>
-                          <span className="text-sm">{tutorData.studentMotivationAbility || '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Schedule Flexibility</span>
-                          <span className="text-sm">{tutorData.scheduleFlexibilityLevel || '-'}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
 
-                  {/* Teaching Capabilities */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Icon icon="ph:hand-heart" className="h-5 w-5 text-rose-600" />
-                          Special Needs & Group Classes
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Special Needs Capable</span>
-                          <Badge className={cn(
-                            tutorData.specialNeedsCapable === 'yes' 
-                              ? 'bg-green-100 text-green-800' 
-                              : tutorData.specialNeedsCapable === 'no'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          )}>
-                            {tutorData.specialNeedsCapable === 'yes' ? 'Yes' : tutorData.specialNeedsCapable === 'no' ? 'No' : 'Not Specified'}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium text-gray-500">Group Class Willing</span>
-                          <Badge className={cn(
-                            tutorData.groupClassWilling === 'yes' 
-                              ? 'bg-green-100 text-green-800' 
-                              : tutorData.groupClassWilling === 'no'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          )}>
-                            {tutorData.groupClassWilling === 'yes' ? 'Yes' : tutorData.groupClassWilling === 'no' ? 'No' : 'Not Specified'}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
 
-                  {/* Personality Types */}
-                  {tutorData.tutorPersonalityType && Array.isArray(tutorData.tutorPersonalityType) && tutorData.tutorPersonalityType.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Icon icon="ph:heart" className="h-5 w-5 text-pink-600" />
-                          Personality Types
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {tutorData.tutorPersonalityType.map((type, index) => (
-                            <Badge key={index} className="bg-pink-100 text-pink-800 border-pink-200">
-                              {type}
-                            </Badge>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
                 </TabsContent>
 
                 {/* Banking Tab */}
@@ -1993,6 +1898,112 @@ export default function ViewTutorPage() {
                       </CardContent>
                     </Card>
                   )}
+                </TabsContent>
+
+                {/* Preferences Tab */}
+                <TabsContent value="preferences" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Technology & Online Teaching */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Icon icon="ph:computer-tower" className="h-5 w-5 text-purple-600" />
+                          Technology & Online Teaching
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Online Teaching</span>
+                          <Badge className={cn(
+                            tutorData.onlineTeachingCapable === 'yes' 
+                              ? 'bg-green-100 text-green-800' 
+                              : tutorData.onlineTeachingCapable === 'basic'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-red-100 text-red-800'
+                          )}>
+                            {tutorData.onlineTeachingCapable === 'yes' ? 'Capable' : 
+                             tutorData.onlineTeachingCapable === 'basic' ? 'Basic' : 'Not Capable'}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Tech Savviness</span>
+                          <span className="text-sm">{tutorData.techSavviness || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Google Meet Experience</span>
+                          <span className="text-sm">{tutorData.gmeetExperience || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Attendance Update Capability</span>
+                          <span className="text-sm">{tutorData.presensiUpdateCapability || '-'}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Teaching Personality */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Icon icon="ph:smiley" className="h-5 w-5 text-orange-600" />
+                          Teaching Personality
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Patience Level</span>
+                          <span className="text-sm">{tutorData.teachingPatienceLevel || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Motivation Ability</span>
+                          <span className="text-sm">{tutorData.studentMotivationAbility || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Schedule Flexibility</span>
+                          <span className="text-sm">{tutorData.scheduleFlexibilityLevel || '-'}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Special Needs & Group Classes */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Icon icon="ph:heart" className="h-5 w-5 text-pink-600" />
+                        Special Needs & Group Classes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Special Needs Capable</span>
+                          <Badge className={cn(
+                            tutorData.specialNeedsCapable === 'yes' 
+                              ? 'bg-green-100 text-green-800' 
+                              : tutorData.specialNeedsCapable === 'tidak' || tutorData.specialNeedsCapable === 'no'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          )}>
+                            {tutorData.specialNeedsCapable === 'yes' ? 'Yes' : 
+                             tutorData.specialNeedsCapable === 'tidak' || tutorData.specialNeedsCapable === 'no' ? 'No' : 'Not Specified'}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Group Class Willing</span>
+                          <Badge className={cn(
+                            tutorData.groupClassWilling === 'yes' 
+                              ? 'bg-green-100 text-green-800' 
+                              : tutorData.groupClassWilling === 'tidak' || tutorData.groupClassWilling === 'no'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          )}>
+                            {tutorData.groupClassWilling === 'yes' ? 'Yes' : 
+                             tutorData.groupClassWilling === 'tidak' || tutorData.groupClassWilling === 'no' ? 'No' : 'Not Specified'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 {/* Closing tabs and cards */}
