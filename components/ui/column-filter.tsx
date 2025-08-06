@@ -20,6 +20,7 @@ interface ColumnFilterProps {
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   error?: string;
+  isStatusColumn?: boolean; // New prop to identify status columns
 }
 
 export default function ColumnFilter({
@@ -32,12 +33,102 @@ export default function ColumnFilter({
   totalCount = 0,
   className,
   onClick,
-  error
+  error,
+  isStatusColumn = false
 }: ColumnFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSelected, setTempSelected] = useState<string[]>(selectedValues);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Get status color and style for tutor status and availability status
+  const getStatusStyle = (status: string) => {
+    if (!isStatusColumn) return null;
+    
+    const statusLower = status?.toLowerCase() || '';
+    
+    // Handle availability status (statusMenerimaSiswa)
+    if (column === 'statusMenerimaSiswa') {
+      switch (statusLower) {
+        case 'available':
+          return {
+            backgroundColor: '#10b981', // green-500
+            color: '#ffffff',
+            text: 'AVAILABLE'
+          };
+        case 'limited':
+          return {
+            backgroundColor: '#f59e0b', // amber-500
+            color: '#ffffff',
+            text: 'LIMITED'
+          };
+        case 'unavailable':
+          return {
+            backgroundColor: '#ef4444', // red-500
+            color: '#ffffff',
+            text: 'UNAVAILABLE'
+          };
+        case 'leave':
+          return {
+            backgroundColor: '#6b7280', // gray-500
+            color: '#ffffff',
+            text: 'LEAVE'
+          };
+        default:
+          return {
+            backgroundColor: '#9ca3af', // gray-400
+            color: '#ffffff',
+            text: status?.toUpperCase() || 'UNKNOWN'
+          };
+      }
+    }
+    
+    // Handle tutor status (status_tutor)
+    switch (statusLower) {
+      case 'active':
+        return {
+          backgroundColor: '#10b981', // green-500
+          color: '#ffffff',
+          text: 'ACTIVE'
+        };
+      case 'inactive':
+        return {
+          backgroundColor: '#6b7280', // gray-500
+          color: '#ffffff',
+          text: 'INACTIVE'
+        };
+      case 'pending':
+        return {
+          backgroundColor: '#f59e0b', // amber-500
+          color: '#ffffff',
+          text: 'PENDING'
+        };
+      case 'registration':
+        return {
+          backgroundColor: '#3b82f6', // blue-500
+          color: '#ffffff',
+          text: 'REGISTRATION'
+        };
+      case 'suspended':
+        return {
+          backgroundColor: '#ef4444', // red-500
+          color: '#ffffff',
+          text: 'SUSPENDED'
+        };
+      case 'verified':
+        return {
+          backgroundColor: '#059669', // emerald-600
+          color: '#ffffff',
+          text: 'VERIFIED'
+        };
+      default:
+        return {
+          backgroundColor: '#9ca3af', // gray-400
+          color: '#ffffff',
+          text: status?.toUpperCase() || 'UNKNOWN'
+        };
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -250,10 +341,29 @@ export default function ColumnFilter({
                       />
                       <label 
                         htmlFor={`${column}-${value}`}
-                        className="text-sm cursor-pointer flex-1 truncate"
+                        className="text-sm cursor-pointer flex-1 truncate flex items-center"
                         title={value}
                       >
-                        {value || '(Empty)'}
+                        {isStatusColumn && value ? (
+                          (() => {
+                            const statusStyle = getStatusStyle(value);
+                            return statusStyle ? (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
+                                style={{
+                                  backgroundColor: statusStyle.backgroundColor,
+                                  color: statusStyle.color
+                                }}
+                              >
+                                {statusStyle.text}
+                              </span>
+                            ) : (
+                              value || '(Empty)'
+                            );
+                          })()
+                        ) : (
+                          value || '(Empty)'
+                        )}
                       </label>
                     </div>
                   ))}

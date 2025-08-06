@@ -556,15 +556,16 @@ export default function AddTutorPage() {
       // Map Indonesian form values to English database values
       const getAvailabilityStatus = (status: string) => {
         switch (status) {
-          case 'aktif': return 'active';
-          case 'terbatas': return 'limited';
-          case 'tidak_aktif': return 'inactive';
-          default: return 'active'; // fallback
+          case 'available': return 'available';
+          case 'limited': return 'limited';
+          case 'unavailable': return 'unavailable';
+          case 'leave': return 'leave';
+          default: return 'available'; // fallback
         }
       };
 
       const availabilityConfigData = {
-        availability_status: getAvailabilityStatus(formData.statusMenerimaSiswa || 'aktif'),
+        availability_status: getAvailabilityStatus(formData.statusMenerimaSiswa || 'available'),
         max_new_students_per_week: formData.maksimalSiswaBaru || null,
         max_total_students: formData.maksimalTotalSiswa || null,
         target_student_ages: formData.usiaTargetSiswa || [],

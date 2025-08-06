@@ -2148,9 +2148,10 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Pilih status ketersediaan...',
           options: [
-            { value: 'aktif', label: '🟢 AKTIF - Menerima siswa baru' },
-            { value: 'terbatas', label: '🟡 TERBATAS - Hanya menerima 1-2 siswa baru' },
-            { value: 'tidak_aktif', label: '🔴 TIDAK AKTIF - Tidak menerima siswa baru sementara' }
+            { value: 'available', label: '🟢 AVAILABLE - Menerima siswa baru' },
+            { value: 'limited', label: '🟡 LIMITED - Hanya menerima 1-2 siswa baru' },
+            { value: 'unavailable', label: '🔴 UNAVAILABLE - Tidak menerima siswa baru sementara' },
+            { value: 'leave', label: '⚫ LEAVE - Sedang cuti/tidak tersedia' }
           ],
           helperText: 'Status ini akan menentukan apakah tutor bisa menerima siswa baru atau tidak.',
           icon: 'ph:toggle-left',

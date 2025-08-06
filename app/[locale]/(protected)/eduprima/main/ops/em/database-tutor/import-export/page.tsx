@@ -158,7 +158,14 @@ export default function ImportExportPage() {
       { name: 'transportasiTutor', label: 'Transportasi Mengajar', type: 'checkbox', required: false, multiple: true },
       { name: 'alamatTitikLokasi', label: 'Titik Pusat Area Target Mengajar', type: 'textarea', required: false },
       { name: 'location_notes', label: 'Preferensi Area Mengajar (Opsional)', type: 'textarea', required: false },
-      { name: 'statusMenerimaSiswa', label: 'Status Availability', type: 'select', required: false },
+      { name: 'statusMenerimaSiswa', label: 'Status Availability', type: 'select', required: false, 
+        options: [
+          { value: 'available', label: 'available' },
+          { value: 'limited', label: 'limited' },
+          { value: 'unavailable', label: 'unavailable' },
+          { value: 'leave', label: 'leave' }
+        ]
+      },
       { name: 'available_schedule', label: 'Jadwal Mingguan Tersedia', type: 'checkbox', required: false },
       { name: 'teaching_methods', label: 'Metode Pengajaran', type: 'checkbox', required: false },
       { name: 'hourly_rate', label: 'Ekspektasi Fee Minimal Per Jam', type: 'number', required: false, min: 25000, max: 1000000 },
@@ -1839,7 +1846,26 @@ export default function ImportExportPage() {
           
           const availabilityConfigData = {
             educator_id: educatorId,
-            availability_status: record.mappedData.statusMenerimaSiswa === 'aktif' || record.mappedData.statusMenerimaSiswa === 'yes' ? 'aktif' : 'tidak_aktif',
+            availability_status: (() => {
+              const status = record.mappedData.statusMenerimaSiswa?.toLowerCase() || '';
+              switch (status) {
+                case 'available': return 'available';
+                case 'limited': return 'limited';
+                case 'unavailable': return 'unavailable';
+                case 'leave': return 'leave';
+                // Legacy support for old values
+                case 'aktif': 
+                case 'yes': 
+                  return 'available';
+                case 'tidak_aktif': 
+                case 'no': 
+                  return 'unavailable';
+                case 'terbatas':
+                  return 'limited';
+                default: 
+                  return 'unavailable';
+              }
+            })(),
             available_schedule: record.mappedData.available_schedule || [],
             teaching_methods: record.mappedData.teaching_methods || [],
             hourly_rate: record.mappedData.hourly_rate ? parseInt(record.mappedData.hourly_rate) : null,
@@ -2140,7 +2166,15 @@ export default function ImportExportPage() {
           'Radius Area Mengajar (KM)': availability?.teaching_radius_km || '',
           'Alamat Titik Lokasi': availability?.teaching_center_location || '',
           'Catatan Lokasi': availability?.location_notes || '',
-          'Status Availability': availability?.availability_status === 'aktif' ? 'aktif' : 'tidak_aktif',
+          'Status Availability': (() => {
+            switch (availability?.availability_status) {
+              case 'available': return 'available';
+              case 'limited': return 'limited';
+              case 'unavailable': return 'unavailable';
+              case 'leave': return 'leave';
+              default: return 'unavailable';
+            }
+          })(),
           'Jadwal Mingguan Tersedia': Array.isArray(availability?.available_schedule) ? availability.available_schedule.join('; ') : '',
           'Metode Pengajaran': Array.isArray(availability?.teaching_methods) ? availability.teaching_methods.join('; ') : '',
           'Ekspektasi Fee Minimal Per Jam': availability?.hourly_rate || '',

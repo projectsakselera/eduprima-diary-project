@@ -85,7 +85,7 @@ const COLUMN_MAPPING: Record<string, {
     source: 'static',
     field: 'statusMenerimaSiswa',
     type: 'select',
-    staticValues: ['available', 'busy', 'full', 'inactive', 'vacation']
+    staticValues: ['available', 'limited', 'unavailable', 'leave']
   },
   'available_schedule': {
     source: 'static',

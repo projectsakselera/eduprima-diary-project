@@ -1323,6 +1323,94 @@ export default function ViewAllTutorsPage() {
     };
   }, [handleKeyDown]);
 
+  // Get status color and style for tutor status
+  const getStatusStyle = (status: string) => {
+    const statusLower = status?.toLowerCase() || '';
+    
+    switch (statusLower) {
+      case 'active':
+        return {
+          backgroundColor: '#10b981', // green-500
+          color: '#ffffff',
+          text: 'ACTIVE'
+        };
+      case 'inactive':
+        return {
+          backgroundColor: '#6b7280', // gray-500
+          color: '#ffffff',
+          text: 'INACTIVE'
+        };
+      case 'pending':
+        return {
+          backgroundColor: '#f59e0b', // amber-500
+          color: '#ffffff',
+          text: 'PENDING'
+        };
+      case 'registration':
+        return {
+          backgroundColor: '#3b82f6', // blue-500
+          color: '#ffffff',
+          text: 'REGISTRATION'
+        };
+      case 'suspended':
+        return {
+          backgroundColor: '#ef4444', // red-500
+          color: '#ffffff',
+          text: 'SUSPENDED'
+        };
+      case 'verified':
+        return {
+          backgroundColor: '#059669', // emerald-600
+          color: '#ffffff',
+          text: 'VERIFIED'
+        };
+      default:
+        return {
+          backgroundColor: '#9ca3af', // gray-400
+          color: '#ffffff',
+          text: status?.toUpperCase() || 'UNKNOWN'
+        };
+    }
+  };
+
+  // Get availability status color and style for status menerima siswa
+  const getAvailabilityStatusStyle = (status: string) => {
+    const statusLower = status?.toLowerCase() || '';
+    
+    switch (statusLower) {
+      case 'available':
+        return {
+          backgroundColor: '#10b981', // green-500
+          color: '#ffffff',
+          text: 'AVAILABLE'
+        };
+      case 'limited':
+        return {
+          backgroundColor: '#f59e0b', // amber-500
+          color: '#ffffff',
+          text: 'LIMITED'
+        };
+      case 'unavailable':
+        return {
+          backgroundColor: '#ef4444', // red-500
+          color: '#ffffff',
+          text: 'UNAVAILABLE'
+        };
+      case 'leave':
+        return {
+          backgroundColor: '#6b7280', // gray-500
+          color: '#ffffff',
+          text: 'LEAVE'
+        };
+      default:
+        return {
+          backgroundColor: '#9ca3af', // gray-400
+          color: '#ffffff',
+          text: status?.toUpperCase() || 'UNKNOWN'
+        };
+    }
+  };
+
   // Format cell value based on column type
   const formatCellValue = (value: any, column: Column): string => {
     if (value === null || value === undefined || value === '') {
@@ -1823,6 +1911,7 @@ export default function ViewAllTutorsPage() {
                                   onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
                                   isLoading={loadingColumnValues[column.key] || false}
                                   error={columnValuesErrors[column.key]}
+                                  isStatusColumn={column.key === 'status_tutor' || column.key === 'statusMenerimaSiswa'}
                                   onClick={(e) => {
                                     console.log(`🔍 Column filter clicked for: ${column.key}`);
                                     fetchColumnValues(column.key);
@@ -1944,6 +2033,44 @@ export default function ViewAllTutorsPage() {
                                 type
                               })}
                             />
+                          ) : column.key === 'status_tutor' ? (
+                            // Special rendering for status tutor with colored badges
+                            (() => {
+                              const statusStyle = getStatusStyle(tutor[column.key]);
+                              return (
+                                <div className="flex justify-center">
+                                  <span
+                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
+                                    style={{
+                                      backgroundColor: statusStyle.backgroundColor,
+                                      color: statusStyle.color
+                                    }}
+                                    title={formatCellValue(tutor[column.key], column)}
+                                  >
+                                    {statusStyle.text}
+                                  </span>
+                                </div>
+                              );
+                            })()
+                          ) : column.key === 'statusMenerimaSiswa' ? (
+                            // Special rendering for status menerima siswa with colored badges
+                            (() => {
+                              const statusStyle = getAvailabilityStatusStyle(tutor[column.key]);
+                              return (
+                                <div className="flex justify-center">
+                                  <span
+                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[90px]"
+                                    style={{
+                                      backgroundColor: statusStyle.backgroundColor,
+                                      color: statusStyle.color
+                                    }}
+                                    title={formatCellValue(tutor[column.key], column)}
+                                  >
+                                    {statusStyle.text}
+                                  </span>
+                                </div>
+                              );
+                            })()
                           ) : (
                             <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
                               {formatCellValue(tutor[column.key], column)}

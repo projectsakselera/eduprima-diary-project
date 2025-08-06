@@ -576,8 +576,16 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         })(),
         mataPelajaranLainnya: '', // This would be in notes or additional field
         
-        // Availability
-        statusMenerimaSiswa: availability?.availability_status === 'aktif' ? 'yes' : 'no',
+        // Availability - Map from database values to display values
+        statusMenerimaSiswa: (() => {
+          switch (availability?.availability_status) {
+            case 'available': return 'available';
+            case 'limited': return 'limited'; 
+            case 'unavailable': return 'unavailable';
+            case 'leave': return 'leave';
+            default: return 'unavailable'; // fallback
+          }
+        })(),
         available_schedule: availability?.available_schedule || [],
         teaching_methods: availability?.teaching_methods || [],
         hourly_rate: availability?.hourly_rate || 0,

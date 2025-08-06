@@ -214,6 +214,61 @@ interface TutorData {
   updated_at: string;
 }
 
+// Utility function to get status badge color and style
+const getStatusStyle = (status: string) => {
+  const statusLower = status?.toLowerCase() || '';
+  
+  switch (statusLower) {
+    case 'active':
+      return {
+        className: 'bg-green-500 text-white border-green-600',
+        style: { backgroundColor: '#10b981', color: '#ffffff' },
+        text: 'ACTIVE'
+      };
+    case 'inactive':
+      return {
+        className: 'bg-gray-500 text-white border-gray-600',
+        style: { backgroundColor: '#6b7280', color: '#ffffff' },
+        text: 'INACTIVE'
+      };
+    case 'pending':
+      return {
+        className: 'bg-amber-500 text-white border-amber-600',
+        style: { backgroundColor: '#f59e0b', color: '#ffffff' },
+        text: 'PENDING'
+      };
+    case 'registration':
+      return {
+        className: 'bg-blue-500 text-white border-blue-600',
+        style: { backgroundColor: '#3b82f6', color: '#ffffff' },
+        text: 'REGISTRATION'
+      };
+    case 'suspended':
+      return {
+        className: 'bg-red-500 text-white border-red-600',
+        style: { backgroundColor: '#ef4444', color: '#ffffff' },
+        text: 'SUSPENDED'
+      };
+    case 'verified':
+      return {
+        className: 'bg-emerald-600 text-white border-emerald-700',
+        style: { backgroundColor: '#059669', color: '#ffffff' },
+        text: 'VERIFIED'
+      };
+    default:
+      return {
+        className: 'bg-gray-400 text-white border-gray-500',
+        style: { backgroundColor: '#9ca3af', color: '#ffffff' },
+        text: status?.toUpperCase() || 'UNKNOWN'
+      };
+  }
+};
+
+// Legacy function for backward compatibility
+const getStatusBadgeColor = (status: string) => {
+  return getStatusStyle(status).className;
+};
+
 export default function ViewTutorPage() {
   const router = useRouter();
   const params = useParams();
@@ -636,9 +691,17 @@ export default function ViewTutorPage() {
                     </div>
                     
                     {/* Status Badge */}
-                    <Badge className={cn("text-sm font-medium", getStatusBadgeColor(tutorData.status_tutor))}>
-                      {tutorData.status_tutor || 'Unknown'}
-                    </Badge>
+                    {(() => {
+                      const statusStyle = getStatusStyle(tutorData.status_tutor);
+                      return (
+                        <span
+                          className="px-3 py-1 rounded-full text-sm font-semibold text-center min-w-[100px] border"
+                          style={statusStyle.style}
+                        >
+                          {statusStyle.text}
+                        </span>
+                      );
+                    })()}
                   </div>
                   
                   {/* Quick Stats */}
@@ -1513,13 +1576,42 @@ export default function ViewTutorPage() {
                       <CardContent className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium text-gray-500">Accepting Students</span>
-                          <Badge className={cn(
-                            tutorData.statusMenerimaSiswa === 'yes' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          )}>
-                            {tutorData.statusMenerimaSiswa === 'yes' ? 'Yes' : 'No'}
-                          </Badge>
+                          {(() => {
+                            const status = tutorData.statusMenerimaSiswa?.toLowerCase();
+                            
+                            switch (status) {
+                              case 'available':
+                                return (
+                                  <Badge className="bg-green-100 text-green-800">
+                                    Available
+                                  </Badge>
+                                );
+                              case 'limited':
+                                return (
+                                  <Badge className="bg-amber-100 text-amber-800">
+                                    Limited
+                                  </Badge>
+                                );
+                              case 'unavailable':
+                                return (
+                                  <Badge className="bg-red-100 text-red-800">
+                                    Unavailable
+                                  </Badge>
+                                );
+                              case 'leave':
+                                return (
+                                  <Badge className="bg-gray-100 text-gray-800">
+                                    On Leave
+                                  </Badge>
+                                );
+                              default:
+                                return (
+                                  <Badge className="bg-gray-100 text-gray-800">
+                                    Unknown
+                                  </Badge>
+                                );
+                            }
+                          })()}
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm font-medium text-gray-500">Hourly Rate</span>
