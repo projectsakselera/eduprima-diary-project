@@ -2157,6 +2157,44 @@ export default function ViewTutorPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Icon icon="ph:phone" className="h-5 w-5 text-green-600" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-gray-500">Email</span>
+                <span className="text-sm text-right max-w-[200px] truncate" title={tutorData.email}>
+                  {tutorData.email || '-'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-gray-500">Phone 1</span>
+                <span className="text-sm">{tutorData.noHp1 || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-gray-500">Phone 2</span>
+                <span className="text-sm">{tutorData.noHp2 || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-gray-500">Social Media 1</span>
+                <span className="text-sm text-right max-w-[200px] truncate" title={tutorData.socialMedia1}>
+                  {tutorData.socialMedia1 || '-'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-gray-500">Social Media 2</span>
+                <span className="text-sm text-right max-w-[200px] truncate" title={tutorData.socialMedia2}>
+                  {tutorData.socialMedia2 || '-'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Quick Actions */}
           <Card>
             <CardHeader>

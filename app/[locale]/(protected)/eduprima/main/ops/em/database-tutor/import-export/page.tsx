@@ -421,7 +421,23 @@ export default function ImportExportPage() {
             // Specific fixes for program field
             field.name === 'selectedPrograms' ? 'Program/Mata Pelajaran yang Diajarkan' : null,
             field.name === 'selectedPrograms' ? 'Program Mata Pelajaran yang Diajarkan' : null,
-            field.name === 'selectedPrograms' ? 'Mata Pelajaran yang Diajarkan' : null
+            field.name === 'selectedPrograms' ? 'Mata Pelajaran yang Diajarkan' : null,
+            // Specific fixes for status availability field
+            field.name === 'statusMenerimaSiswa' ? 'Status Availability' : null,
+            field.name === 'statusMenerimaSiswa' ? 'StatusAvailability' : null,
+            field.name === 'statusMenerimaSiswa' ? 'Status_Availability' : null,
+            field.name === 'statusMenerimaSiswa' ? 'status_availability' : null,
+            field.name === 'statusMenerimaSiswa' ? 'Availability Status' : null,
+            field.name === 'statusMenerimaSiswa' ? 'AvailabilityStatus' : null,
+            // Specific fixes for social media fields
+            field.name === 'socialMedia1' ? 'Link Media Sosial 1 (Opsional)' : null,
+            field.name === 'socialMedia1' ? 'Link Media Sosial 1' : null,
+            field.name === 'socialMedia1' ? 'Link Social Media 1' : null,
+            field.name === 'socialMedia1' ? 'Social Media 1' : null,
+            field.name === 'socialMedia2' ? 'Link Media Sosial 2 (Opsional)' : null,
+            field.name === 'socialMedia2' ? 'Link Media Sosial 2' : null,
+            field.name === 'socialMedia2' ? 'Link Social Media 2' : null,
+            field.name === 'socialMedia2' ? 'Social Media 2' : null
           ].filter(col => col !== null); // Remove null entries
         
         let sourceValue = undefined;
@@ -436,9 +452,9 @@ export default function ImportExportPage() {
           }
         }
         
-        // DEBUG: Special logging for selectedPrograms field
-        if (field.name === 'selectedPrograms') {
-          console.log(`🔍 DEBUG selectedPrograms mapping:`, {
+        // DEBUG: Special logging for selectedPrograms, statusMenerimaSiswa, and social media fields
+        if (field.name === 'selectedPrograms' || field.name === 'statusMenerimaSiswa' || field.name === 'socialMedia1' || field.name === 'socialMedia2') {
+          console.log(`🔍 DEBUG ${field.name} mapping:`, {
             fieldName: field.name,
             fieldLabel: field.label,
             availableColumns: Object.keys(row),
@@ -1460,6 +1476,8 @@ export default function ImportExportPage() {
           mobile_phone_2: record.mappedData.noHp2 ? formatPhoneNumber(record.mappedData.noHp2) : null,
           headline: record.mappedData.headline || null,
           bio: record.mappedData.deskripsiDiri || null,
+          social_media_1: record.mappedData.socialMedia1 || null,
+          social_media_2: record.mappedData.socialMedia2 || null,
           education_level: record.mappedData.statusAkademik || null,
           university: record.mappedData.namaUniversitas || null,
           major: record.mappedData.jurusan || null,
@@ -1847,7 +1865,16 @@ export default function ImportExportPage() {
           const availabilityConfigData = {
             educator_id: educatorId,
             availability_status: (() => {
-              const status = record.mappedData.statusMenerimaSiswa?.toLowerCase() || '';
+              const rawStatus = record.mappedData.statusMenerimaSiswa;
+              const status = rawStatus?.toLowerCase() || '';
+              
+              console.log(`📅 DEBUG availability_status mapping:`, {
+                rowNumber: record.rowNumber,
+                rawStatus: rawStatus,
+                normalizedStatus: status,
+                mappedData: record.mappedData
+              });
+              
               switch (status) {
                 case 'available': return 'available';
                 case 'limited': return 'limited';
@@ -1863,6 +1890,7 @@ export default function ImportExportPage() {
                 case 'terbatas':
                   return 'limited';
                 default: 
+                  console.warn(`📅 Unknown status "${rawStatus}", defaulting to unavailable`);
                   return 'unavailable';
               }
             })(),

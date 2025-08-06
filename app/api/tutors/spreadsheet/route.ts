@@ -370,7 +370,33 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     });
 
     const bankingMap = new Map(bankingResult.data?.map(b => [educatorIdToUserIdMap.get(b.educator_id), b]) || []);
-    const availabilityMap = new Map(availabilityResult.data?.map(a => [educatorIdToUserIdMap.get(a.educator_id), a]) || []);
+    // Debug educator ID mapping first
+    console.log('🔗 DEBUG educator ID mapping:', {
+      educatorDetailsCount: educatorDetailsResult.data?.length || 0,
+      educatorIdToUserIdMapSize: educatorIdToUserIdMap.size,
+      sampleEducatorMapping: Array.from(educatorIdToUserIdMap.entries()).slice(0, 3)
+    });
+    
+    const availabilityMap = new Map();
+    availabilityResult.data?.forEach(a => {
+      const userId = educatorIdToUserIdMap.get(a.educator_id);
+      console.log(`📅 Availability mapping: educator_id ${a.educator_id} → user_id ${userId}`, {
+        availability_status: a.availability_status,
+        hasUserMapping: !!userId
+      });
+      if (userId) {
+        availabilityMap.set(userId, a);
+      }
+    });
+    
+    console.log('📅 DEBUG availability data:', {
+      availabilityCount: availabilityResult.data?.length || 0,
+      sampleData: availabilityResult.data?.slice(0, 3),
+      mapSize: availabilityMap.size,
+      mappedUserIds: Array.from(availabilityMap.keys()).slice(0, 5),
+      userIds: userIds.slice(0, 5),
+      availabilityError: availabilityResult.error
+    });
     const preferencesMap = new Map(preferencesResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
     
     // 🔧 FIX: Create personality map with error handling
@@ -578,13 +604,35 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         
         // Availability - Map from database values to display values
         statusMenerimaSiswa: (() => {
-          switch (availability?.availability_status) {
-            case 'available': return 'available';
-            case 'limited': return 'limited'; 
-            case 'unavailable': return 'unavailable';
-            case 'leave': return 'leave';
-            default: return 'unavailable'; // fallback
-          }
+          const status = availability?.availability_status;
+          const result = (() => {
+            switch (status) {
+              case 'available': return 'available';
+              case 'limited': return 'limited'; 
+              case 'unavailable': return 'unavailable';
+              case 'leave': return 'leave';
+              default: 
+                // If no availability data found, try to infer from other data
+                // For newly imported users, default to available if they have educator details
+                if (educatorDetails && !availability) {
+                  console.log(`📅 No availability data for user ${user.id}, defaulting to available for new import`);
+                  return 'available';
+                }
+                return 'unavailable'; // fallback
+            }
+          })();
+          
+          console.log(`📅 User ${user.id} availability mapping:`, {
+            hasAvailability: !!availability,
+            availabilityObject: availability,
+            rawStatus: status,
+            mappedStatus: result,
+            educatorId: educatorDetails?.id,
+            availabilityInMap: availabilityMap.has(user.id),
+            isNewImport: educatorDetails && !availability
+          });
+          
+          return result;
         })(),
         available_schedule: availability?.available_schedule || [],
         teaching_methods: availability?.teaching_methods || [],
