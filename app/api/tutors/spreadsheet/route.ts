@@ -259,6 +259,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       preferencesResult,
       personalityResult,
       programMappingsResult,
+      additionalSubjectsResult,
       documentsResult,
       provincesResult,
       citiesResult,
@@ -317,6 +318,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       // Program mappings (via educator_id)
       supabase
         .from('t_315_06_01_tutor_program_mappings')
+        .select('*'),
+        
+      // Additional subjects (for CSV imported program names)
+      supabase
+        .from('t_315_07_01_tutor_additional_subjects')
         .select('*'),
       
       // Documents
@@ -387,6 +393,18 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         programMappingsMap.get(userId).push(pm.program_id);
       }
     });
+    
+    // Group additional subjects by user_id
+    const additionalSubjectsMap = new Map();
+    additionalSubjectsResult.data?.forEach(sub => {
+      const userId = educatorIdToUserIdMap.get(sub.educator_id);
+      if (userId) {
+        if (!additionalSubjectsMap.has(userId)) {
+          additionalSubjectsMap.set(userId, []);
+        }
+        additionalSubjectsMap.get(userId).push(sub.subject_name);
+      }
+    });
 
     // Group documents by user_id and type
     const documentsMap = new Map();
@@ -407,8 +425,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     
     console.log('🗺️ Master data loaded:', {
       provinces: provincesMap.size,
-      cities: citiesMap.size, 
-      programs: programsMap.size
+      cities: citiesMap.size,
+      programs: programsMap.size,
+      programMappings: programMappingsMap.size,
+      additionalSubjects: additionalSubjectsMap.size
     });
     
     // Debug: Sample lookups
@@ -538,10 +558,22 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         prestasiNonAkademik: educatorDetails?.non_academic_achievements || '',
         sertifikasiPelatihan: educatorDetails?.certifications_training || '',
         
-        // Programs & Subjects (with lookups to program names)
-        selectedPrograms: programMappings.map((programId: string) => 
-          programsMap.get(programId) || programId
-        ),
+        // Programs & Subjects (with lookups to program names + additional subjects)
+        selectedPrograms: (() => {
+          const programs = programMappings.map((programId: string) => 
+            programsMap.get(programId) || programId
+          );
+          const additionalSubjects = additionalSubjectsMap.get(user.id) || [];
+          const allPrograms = [...programs, ...additionalSubjects];
+          
+          console.log(`👤 User ${user.id} programs:`, {
+            mappingIds: programMappings,
+            resolvedNames: programs,
+            additionalSubjects: additionalSubjects,
+            totalPrograms: allPrograms.length
+          });
+          return allPrograms;
+        })(),
         mataPelajaranLainnya: '', // This would be in notes or additional field
         
         // Availability

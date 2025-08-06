@@ -222,8 +222,47 @@ export default function ViewTutorPage() {
   const [tutorData, setTutorData] = useState<TutorData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [programsLookup, setProgramsLookup] = useState<Record<string, string>>({});
 
 
+
+  // Fetch programs lookup data
+  useEffect(() => {
+    const fetchProgramsData = async () => {
+      try {
+        console.log('🔄 Fetching programs lookup data...');
+        const response = await fetch('/api/programs/lookup');
+        const result = await response.json();
+        
+        console.log('📚 Programs lookup API response:', result);
+        
+        if (result.success && result.lookup) {
+          setProgramsLookup(result.lookup);
+          console.log('✅ Programs lookup loaded:', Object.keys(result.lookup).length, 'programs');
+        } else {
+          console.error('❌ Failed to load programs lookup:', result.error || 'Unknown error');
+          
+          // Fallback: try the old API
+          console.log('🔄 Trying fallback API...');
+          const fallbackResponse = await fetch('/api/subjects/programs');
+          const fallbackResult = await fallbackResponse.json();
+          
+          if (fallbackResult.programs && Array.isArray(fallbackResult.programs)) {
+            const lookup: Record<string, string> = {};
+            fallbackResult.programs.forEach((program: any) => {
+              lookup[program.id] = program.program_name_local || program.program_name || program.id;
+            });
+            setProgramsLookup(lookup);
+            console.log('✅ Fallback programs lookup created:', Object.keys(lookup).length, 'programs');
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error fetching programs lookup:', err);
+      }
+    };
+
+    fetchProgramsData();
+  }, []);
 
   useEffect(() => {
     const fetchTutorData = async () => {
@@ -1193,14 +1232,25 @@ export default function ViewTutorPage() {
                     <CardContent>
                       {tutorData.selectedPrograms && Array.isArray(tutorData.selectedPrograms) && tutorData.selectedPrograms.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                          {tutorData.selectedPrograms.map((program, index) => (
-                            <Badge key={index} className="bg-purple-100 text-purple-800 border-purple-200">
-                              {program}
-                            </Badge>
-                          ))}
+                          {tutorData.selectedPrograms.map((programId, index) => {
+                            const displayName = programsLookup[programId] || programId;
+                            console.log(`🎯 Displaying program ${index + 1}:`, { programId, displayName, hasLookup: !!programsLookup[programId] });
+                            return (
+                              <Badge key={index} className="bg-purple-100 text-purple-800 border-purple-200">
+                                {displayName}
+                              </Badge>
+                            );
+                          })}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No programs selected</p>
+                        <div>
+                          <p className="text-sm text-gray-500">No programs selected</p>
+                          {tutorData.selectedPrograms && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Debug: selectedPrograms = {JSON.stringify(tutorData.selectedPrograms)}
+                            </p>
+                          )}
+                        </div>
                       )}
                       
                       {tutorData.mataPelajaranLainnya && (

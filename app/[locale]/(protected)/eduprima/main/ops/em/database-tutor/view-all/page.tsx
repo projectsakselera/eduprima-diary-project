@@ -646,6 +646,7 @@ export default function ViewAllTutorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState(''); // Separate input state for debouncing
   const [isSearching, setIsSearching] = useState(false); // Loading state for search only
+  const [programsLookup, setProgramsLookup] = useState<Record<string, string>>({});
 
   // 🚀 PAGINATION STATE - Advanced pagination system
   const [currentPage, setCurrentPage] = useState(1);
@@ -875,6 +876,30 @@ export default function ViewAllTutorsPage() {
   };
 
 
+
+  // Fetch programs lookup data
+  useEffect(() => {
+    const fetchProgramsData = async () => {
+      try {
+        console.log('🔄 Fetching programs lookup data for view-all...');
+        const response = await fetch('/api/programs/lookup');
+        const result = await response.json();
+        
+        console.log('📚 Programs lookup API response (view-all):', result);
+        
+        if (result.success && result.lookup) {
+          setProgramsLookup(result.lookup);
+          console.log('✅ Programs lookup loaded (view-all):', Object.keys(result.lookup).length, 'programs');
+        } else {
+          console.error('❌ Failed to load programs lookup (view-all):', result.error || 'Unknown error');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching programs lookup (view-all):', err);
+      }
+    };
+
+    fetchProgramsData();
+  }, []);
 
   // Initialize visible columns (show essential columns by default)
   useEffect(() => {
@@ -1310,7 +1335,14 @@ export default function ViewAllTutorsPage() {
 
     switch (column.type) {
       case 'array':
-        return Array.isArray(value) ? value.join(', ') : String(value);
+        if (Array.isArray(value)) {
+          // Special handling for selectedPrograms to show names instead of IDs
+          if (column.key === 'selectedPrograms') {
+            return value.map(id => programsLookup[id] || id).join(', ');
+          }
+          return value.join(', ');
+        }
+        return String(value);
       case 'boolean':
         return value ? '✓' : '✗';
       case 'date':
