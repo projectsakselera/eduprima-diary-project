@@ -285,6 +285,12 @@ const FileCell: React.FC<FileCellProps> = ({ value, filename, tutorName, onPrevi
     return `File - ${tutorName}`;
   };
 
+  const getProxyUrl = (url: string) => {
+    if (!url) return '';
+    const cleanUrl = url.replace(/^@?https?:\/\/[^\/]+\//, '');
+    return `/api/files/${cleanUrl}`;
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent cell selection
     onPreview(value, getFileTitle(filename, tutorName), filename);
@@ -295,6 +301,62 @@ const FileCell: React.FC<FileCellProps> = ({ value, filename, tutorName, onPrevi
     window.open(value, '_blank');
   };
 
+  // Special handling for profile photo - show thumbnail directly
+  if (filename === 'fotoProfil') {
+    return (
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="relative">
+          <img 
+            src={getProxyUrl(value)} 
+            alt={`Foto profil ${tutorName}`}
+            className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleClick}
+            onError={(e) => {
+              // Log error for debugging
+              const target = e.target as HTMLImageElement;
+              console.error('❌ Image load failed:', {
+                src: target.src,
+                originalValue: value,
+                proxyUrl: getProxyUrl(value)
+              });
+              
+              // Fallback to icon if image fails to load
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = `
+                  <div class="w-8 h-8 rounded-full bg-red-100 border border-red-300 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors" title="Image failed to load">
+                    <span class="text-xs">❌</span>
+                  </div>
+                `;
+                parent.onclick = (e) => {
+                  e.stopPropagation();
+                  onPreview(value, getFileTitle(filename, tutorName), filename);
+                };
+              }
+            }}
+            title={`${tutorName} - Click to enlarge`}
+          />
+          {/* Small indicator for Cloudflare R2 */}
+          <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full border border-white" title="Cloudflare R2 Storage" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <button
+            onClick={handleClick}
+            className="text-xs text-primary hover:text-primary/80 hover:underline text-left truncate max-w-[60px]"
+            title={`Preview ${getFileLabel(filename)} - ${tutorName}`}
+          >
+            {getFileLabel(filename)}
+          </button>
+          <div className="text-[10px] text-muted-foreground">
+            Click to enlarge
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For other file types, show the original layout
   return (
     <div className="flex items-center gap-1 min-w-0">
       <span className="text-sm">{getFileIcon(filename)}</span>
@@ -507,7 +569,7 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'updated_at', label: 'Diupdate', width: 160, type: 'date', category: 'System & Management' },
   
   // Identitas Dasar - Personal Information 
-  { key: 'fotoProfil', label: 'Foto Profil', width: 120, type: 'file', category: 'Identitas Dasar' },
+  { key: 'fotoProfil', label: 'Foto Profil', width: 100, type: 'file', category: 'Identitas Dasar' },
   { key: 'namaLengkap', label: 'Nama Lengkap', width: 180, type: 'text', category: 'Identitas Dasar', required: true },
   { key: 'namaPanggilan', label: 'Nama Panggilan', width: 140, type: 'text', category: 'Identitas Dasar' },
   { key: 'tanggalLahir', label: 'Tanggal Lahir', width: 130, type: 'date', category: 'Identitas Dasar' },
@@ -2073,14 +2135,14 @@ export default function ViewAllTutorsPage() {
               <div className="p-4 max-h-[80vh] overflow-auto">
                 {previewModal.type === 'fotoProfil' ? (
                   <img 
-                    src={previewModal.url} 
+                    src={getProxyUrl(previewModal.url)} 
                     alt={previewModal.title}
                     className="max-w-full h-auto rounded-lg mx-auto"
                     style={{ maxHeight: '70vh' }}
                   />
                 ) : (
                   <iframe
-                    src={previewModal.url}
+                    src={getProxyUrl(previewModal.url)}
                     className="w-full h-[70vh] border rounded-lg"
                     title={previewModal.title}
                   />

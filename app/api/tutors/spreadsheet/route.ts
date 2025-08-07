@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { convertTutorFileUrls } from '@/lib/url-converter';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -597,14 +598,16 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       };
     });
 
-    console.log(`✅ Successfully processed ${completeTutorData.length} complete tutor records`);
+    // 🔄 Convert Supabase Storage URLs to Cloudflare R2 URLs
+    const convertedTutorData = completeTutorData.map(tutor => convertTutorFileUrls(tutor));
+    console.log(`✅ Successfully processed ${convertedTutorData.length} complete tutor records with URL conversion`);
 
     // 🚀 COLUMN FILTERING: Apply filters if provided
-    let filteredData = completeTutorData;
-    const originalCount = completeTutorData.length;
+    let filteredData = convertedTutorData;
+    const originalCount = convertedTutorData.length;
     
     if (Object.keys(columnFilters).length > 0) {
-      filteredData = completeTutorData.filter(tutor => {
+      filteredData = convertedTutorData.filter(tutor => {
         return Object.entries(columnFilters).every(([column, values]) => {
           if (values.length === 0) return true; // No filter applied
           
