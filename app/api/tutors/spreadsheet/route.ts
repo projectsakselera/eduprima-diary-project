@@ -202,7 +202,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
 
     // 🚀 PERFORMANCE FIX: Server-side search query
     let userQuery = supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select(`
         id,
         user_code,
@@ -268,7 +268,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     ] = await Promise.all([
       // User profiles
       supabase
-        .from('t_310_01_02_user_profiles')
+        .from('user_profiles')
         .select('*')
         .in('user_id', userIds),
       
@@ -286,13 +286,13 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Educator details
       supabase
-        .from('t_315_01_01_educator_details')
+        .from('educator_details')
         .select('*')
         .in('user_id', userIds),
       
       // Tutor management
       supabase
-        .from('t_315_02_01_tutor_management')
+        .from('tutor_management')
         .select('*')
         .in('user_id', userIds),
       
@@ -328,7 +328,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Documents
       supabase
-        .from('t_460_03_01_document_storage')
+        .from('document_storage')
         .select('*')
         .in('user_id', userIds),
       

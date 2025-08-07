@@ -585,7 +585,7 @@ export default function FieldMappingPage() {
       ]
     },
     {
-      table: 't_460_03_01_document_storage',
+      table: 'document_storage',
       columns: [
         { name: 'id', type: 'uuid', nullable: false },
         { name: 'user_id', type: 'uuid', nullable: false },

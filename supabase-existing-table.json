@@ -144,7 +144,7 @@
     "columns": "id, id, educator_id, period_start, period_end, total_sessions, total_amount, net_amount, request_status, submitted_at, updated_at, created_at, admin_notes, tutor_notes, selected_bank_account_id, payout_id, processed_at, processed_by, rejection_reason, rejected_at, rejected_by, approved_at, approved_by, validated_at, validated_by, submitted_at, previous_request_id, request_number_in_month, validation_notes, validation_status, request_status, estimated_net_amount, admin_fee, tax_amount, deduction_amount, total_gross_amount, bonus_amount, base_amount, total_hours, selected_session_ids, total_sessions, month_year, period_end, period_start, request_type, entity_id, tutor_id"
   },
   {
-    "table_name": "t_460_03_01_document_storage",
+    "table_name": "document_storage",
     "columns": "uploaded_by, upload_status, storage_path, file_name, created_at, updated_at, uploaded_at, verification_notes, verified_at, verified_by, verification_status, file_url, mime_type, file_size, stored_filename, original_filename, document_type, user_id, id"
   }
 ]

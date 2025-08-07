@@ -10,14 +10,14 @@
 NextAuth.js (Authentication) + Supabase (Database + Storage)
 ├── User authentication via NextAuth + user_universal table
 ├── File storage via Supabase Storage (bucket: eduprimadiary)
-├── Database integration via t_460_03_01_document_storage
+├── Database integration via document_storage
 └── RLS policies for security
 ```
 
 ### **Key Components**
 - **Authentication**: NextAuth.js with real user data from `t_310_01_01_users_universal`
 - **Storage**: Supabase Storage with `eduprimadiary` bucket
-- **Database**: Document tracking via `t_460_03_01_document_storage` table
+- **Database**: Document tracking via `document_storage` table
 - **Security**: Row Level Security (RLS) policies
 
 ---
@@ -54,8 +54,8 @@ FOR SELECT USING (bucket_id = 'eduprimadiary');
 
 #### **Document Storage Table**
 ```sql
--- t_460_03_01_document_storage
-CREATE TABLE t_460_03_01_document_storage (
+-- document_storage
+CREATE TABLE document_storage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES t_310_01_01_users_universal(id), -- ✅ WORKING
   document_type VARCHAR(50),
@@ -98,7 +98,7 @@ const { data: urlData } = adminSupabase.storage
 ```javascript
 // Insert document record
 const { data: dbData, error: dbError } = await supabase
-  .from('t_460_03_01_document_storage')
+  .from('document_storage')
   .insert([{
     user_id: authenticatedUserId, // From NextAuth session
     document_type: 'profile_photo',
@@ -238,7 +238,7 @@ FOR INSERT WITH CHECK (bucket_id = 'eduprimadiary');
 - [x] ✅ Environment variables configured
 - [x] ✅ Supabase bucket created (`eduprimadiary`)
 - [x] ✅ RLS policies applied
-- [x] ✅ Database table created (`t_460_03_01_document_storage`)
+- [x] ✅ Database table created (`document_storage`)
 - [x] ✅ File upload tested and working
 - [x] ✅ Authentication integration verified
 - [x] ✅ Error handling implemented

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Test 1: Basic connection
     console.log('🔍 Testing basic connection...');
     const { data: connectionTest, error: connectionError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('count')
       .limit(1);
 
@@ -44,14 +44,14 @@ export async function GET(request: NextRequest) {
 
     // Test 2: Count users
     const { count: userCount, error: countError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('*', { count: 'exact', head: true });
 
     console.log('👥 User count:', userCount);
 
     // Test 3: Get first user (if any)
     const { data: firstUser, error: userError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('id, email, user_code')
       .limit(1)
       .single();

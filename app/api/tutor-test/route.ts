@@ -47,7 +47,7 @@ export async function GET() {
 
     // Test 2: Try different possible table names (focus on existing ones)
     const possibleTableNames = [
-      't_310_01_01_users_universal', // Known existing table
+      'users_universal', // Known existing table
       'users',
       'profiles',
       // Only try these if they exist in the database
@@ -83,7 +83,7 @@ export async function GET() {
     // Test 3: Test with users table (which we know exists)
     try {
       const { data, error } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select('*')
         .limit(3);
 

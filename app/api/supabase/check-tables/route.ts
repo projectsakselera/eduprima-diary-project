@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       
       // Fallback: try to get tables using a different approach
       const { data: fallbackTables, error: fallbackError } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select('*')
         .limit(1)
       
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         success: true,
         tables: [
           {
-            name: 't_310_01_01_users_universal',
+            name: 'users_universal',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'email', data_type: 'text', is_nullable: 'NO' },
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_310_01_02_user_profiles',
+            name: 'user_profiles',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_01_01_educator_details',
+            name: 'educator_details',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_02_01_tutor_management',
+            name: 'tutor_management',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -285,7 +285,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_460_03_01_document_storage',
+            name: 'document_storage',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },

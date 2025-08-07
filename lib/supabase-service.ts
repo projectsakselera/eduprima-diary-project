@@ -132,7 +132,7 @@ export class SupabaseTutorService {
 
       // Now get users with those role IDs
       const { data: users, error: usersError } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select('*')
         .in('primary_role_id', roleIds)
         .eq('user_status', 'active');
@@ -154,7 +154,7 @@ export class SupabaseTutorService {
 
       // Fetch user profiles
       const { data: profiles, error: profilesError } = await supabase
-        .from('t_310_01_02_user_profiles')
+        .from('user_profiles')
         .select('*')
         .in('user_id', userIds);
 
@@ -165,7 +165,7 @@ export class SupabaseTutorService {
 
       // Fetch educator details
       const { data: educatorDetails, error: educatorError } = await supabase
-        .from('t_315_01_01_educator_details')
+        .from('educator_details')
         .select('*')
         .in('user_id', userIds);
 
@@ -253,32 +253,32 @@ export class SupabaseTutorService {
       
       // Test users_universal table
       const { data: usersTest, error: usersError } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select('id')
         .limit(1);
         
       if (!usersError) {
-        tablesAccessible.push('t_310_01_01_users_universal');
+        tablesAccessible.push('users_universal');
       }
       
       // Test user_profiles table
       const { data: profilesTest, error: profilesError } = await supabase
-        .from('t_310_01_02_user_profiles')
+        .from('user_profiles')
         .select('id')
         .limit(1);
         
       if (!profilesError) {
-        tablesAccessible.push('t_310_01_02_user_profiles');
+        tablesAccessible.push('user_profiles');
       }
 
       // Test educator_details table
       const { data: educatorTest, error: educatorError } = await supabase
-        .from('t_315_01_01_educator_details')
+        .from('educator_details')
         .select('id')
         .limit(1);
         
       if (!educatorError) {
-        tablesAccessible.push('t_315_01_01_educator_details');
+        tablesAccessible.push('educator_details');
       }
       
       return {

@@ -46,34 +46,34 @@ export async function GET(request: NextRequest) {
 
     // Search in users and profiles with lightweight fields only
     const { data: searchResults, error } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select(`
         id,
         email,
-        t_310_01_02_user_profiles!inner (
+        user_profiles!inner (
           full_name,
           nick_name,
           headline,
           profile_photo_url,
           mobile_phone
         ),
-        t_315_01_01_educator_details!inner (
+        educator_details!inner (
           educator_registration_number,
           academic_status,
           university_s1_name
         ),
-        t_315_02_01_tutor_management!inner (
+        tutor_management!inner (
           status_tutor,
           approval_level
         )
       `)
       .or(`
-        t_310_01_02_user_profiles.full_name.ilike.%${query}%,
-        t_310_01_02_user_profiles.nick_name.ilike.%${query}%,
+        user_profiles.full_name.ilike.%${query}%,
+        user_profiles.nick_name.ilike.%${query}%,
         email.ilike.%${query}%,
-        t_315_01_01_educator_details.educator_registration_number.ilike.%${query}%
+        educator_details.educator_registration_number.ilike.%${query}%
       `)
-      .eq('t_315_02_01_tutor_management.status_tutor', 'active')
+      .eq('tutor_management.status_tutor', 'active')
       .limit(limit);
 
     if (error) {
@@ -105,16 +105,16 @@ export async function GET(request: NextRequest) {
     // Format lightweight results
     const results: SearchResult[] = searchResults?.map((user: any) => ({
       id: user.id,
-      trn: user.t_315_01_01_educator_details[0]?.educator_registration_number || '',
-      namaLengkap: user.t_310_01_02_user_profiles[0]?.full_name || '',
-      namaPanggilan: user.t_310_01_02_user_profiles[0]?.nick_name || '',
+      trn: user.educator_details[0]?.educator_registration_number || '',
+      namaLengkap: user.user_profiles[0]?.full_name || '',
+      namaPanggilan: user.user_profiles[0]?.nick_name || '',
       email: user.email || '',
-      noHp1: user.t_310_01_02_user_profiles[0]?.mobile_phone || '',
-      fotoProfil: user.t_310_01_02_user_profiles[0]?.profile_photo_url || null,
-      status_tutor: user.t_315_02_01_tutor_management[0]?.status_tutor || '',
-      headline: user.t_310_01_02_user_profiles[0]?.headline || '',
-      statusAkademik: user.t_315_01_01_educator_details[0]?.academic_status || '',
-      namaUniversitas: user.t_315_01_01_educator_details[0]?.university_s1_name || '',
+      noHp1: user.user_profiles[0]?.mobile_phone || '',
+      fotoProfil: user.user_profiles[0]?.profile_photo_url || null,
+      status_tutor: user.tutor_management[0]?.status_tutor || '',
+      headline: user.user_profiles[0]?.headline || '',
+      statusAkademik: user.educator_details[0]?.academic_status || '',
+      namaUniversitas: user.educator_details[0]?.university_s1_name || '',
       selectedPrograms: programsMap.get(user.id) || []
     })) || [];
 

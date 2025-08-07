@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Update document storage record in database
         const updateResult = await adminSupabase
-          .from('t_460_03_01_document_storage')
+          .from('document_storage')
           .update({
             file_url: uploadResult.url,
             stored_filename: fileName,

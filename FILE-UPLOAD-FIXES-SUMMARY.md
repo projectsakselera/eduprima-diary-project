@@ -86,7 +86,7 @@ const userId = authenticatedUserId; // From NextAuth session
 
 // ✅ Proper document storage records
 const { data: dbData, error: dbError } = await supabase
-  .from('t_460_03_01_document_storage')
+  .from('document_storage')
   .insert([{
     user_id: userId, // ✅ Real foreign key
     document_type: 'profile_photo',
@@ -180,7 +180,7 @@ const { data: dbData, error: dbError } = await supabase
 
 ### **Regular Checks**
 - ✅ **Storage usage**: Monitor `eduprimadiary` bucket growth
-- ✅ **Database integrity**: Check `t_460_03_01_document_storage` records
+- ✅ **Database integrity**: Check `document_storage` records
 - ✅ **Authentication flow**: Verify NextAuth sessions working
 - ✅ **File accessibility**: Test public URL generation
 

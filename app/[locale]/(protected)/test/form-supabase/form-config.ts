@@ -1,5 +1,5 @@
 export interface EducatorTestFormData {
-  // From t_310_01_01_users_universal
+  // From users_universal
   email: string;
   phone: string;
   

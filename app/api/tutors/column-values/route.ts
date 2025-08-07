@@ -156,7 +156,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
     // For database-sourced values, we need to query the appropriate table
     if (columnConfig.source === 'users') {
       const { data, error } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');
@@ -198,7 +198,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
     if (columnConfig.source === 'educator') {
       const { data, error } = await supabase
-        .from('t_315_01_01_educator_details')
+        .from('educator_details')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');

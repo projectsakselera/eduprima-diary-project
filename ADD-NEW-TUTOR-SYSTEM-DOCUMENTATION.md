@@ -130,7 +130,7 @@ INSERT INTO t_460_02_06_tutor_personality_traits (user_id, trait_type, ...)
 ### **Document Storage Integration**
 ```sql
 -- File metadata tracking
-INSERT INTO t_460_03_01_document_storage (
+INSERT INTO document_storage (
   user_id,           -- Tutor's user ID (NOT admin's)
   document_type,     -- 'profile_photo', 'identity_document', etc.
   original_filename, -- Original file name
@@ -154,7 +154,7 @@ INSERT INTO t_460_03_01_document_storage (
 - **Structure**: `{user_id}/filename.ext`
 
 **2. Metadata Storage** 📊
-- **Location**: PostgreSQL table `t_460_03_01_document_storage`
+- **Location**: PostgreSQL table `document_storage`
 - **Purpose**: Tracking, verification, access control
 - **Integration**: Links to user profiles
 
@@ -439,7 +439,7 @@ Navigate to: /eduprima/main/ops/em/matchmaking/database-tutor/storage-test
 SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC LIMIT 5;
 
 -- Check document storage
-SELECT user_id, document_type, file_url FROM t_460_03_01_document_storage ORDER BY created_at DESC LIMIT 10;
+SELECT user_id, document_type, file_url FROM document_storage ORDER BY created_at DESC LIMIT 10;
 ```
 
 ---

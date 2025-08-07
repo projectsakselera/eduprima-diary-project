@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = createAdminSupabaseClient()
     
     const { data: users, error } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('*')
       .order('created_at', { ascending: false })
     

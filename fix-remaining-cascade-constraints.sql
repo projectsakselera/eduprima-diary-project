@@ -45,9 +45,9 @@ ADD CONSTRAINT fk_additional_subjects_approved_by
 FOREIGN KEY (approved_by) REFERENCES t_310_01_01_users_universal(id) 
 ON DELETE SET NULL;
 
--- 5. Fix t_460_03_01_document_storage.verified_by
+-- 5. Fix document_storage.verified_by
 -- This should be SET NULL (keep document record but remove admin reference)
-ALTER TABLE t_460_03_01_document_storage
+ALTER TABLE document_storage
 DROP CONSTRAINT IF EXISTS fk_document_storage_verified_by CASCADE,
 ADD CONSTRAINT fk_document_storage_verified_by 
 FOREIGN KEY (verified_by) REFERENCES t_310_01_01_users_universal(id) 

@@ -66,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // Get user from universal table with role information
           const { data: user, error: userError } = await supabase
-            .from('t_310_01_01_users_universal')
+            .from('users_universal')
             .select(`
               id,
               email,

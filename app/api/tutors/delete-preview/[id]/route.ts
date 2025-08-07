@@ -31,7 +31,7 @@ export async function GET(
 
     // First, check if user exists
     const { data: userCheck, error: userCheckError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('id, email')
       .eq('id', userId)
       .single();
@@ -102,7 +102,7 @@ async function createManualPreview(userId: string) {
   try {
     // User core data
     const { data: userData, error: userError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('id, email')
       .eq('id', userId)
       .single();
@@ -120,7 +120,7 @@ async function createManualPreview(userId: string) {
 
     // User profiles
     const { count: profileCount } = await supabase
-      .from('t_310_01_02_user_profiles')
+      .from('user_profiles')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
@@ -162,7 +162,7 @@ async function createManualPreview(userId: string) {
 
     // Educator details
     const { data: educatorData, count: educatorCount } = await supabase
-      .from('t_315_01_01_educator_details')
+      .from('educator_details')
       .select('id', { count: 'exact' })
       .eq('user_id', userId);
 
@@ -251,7 +251,7 @@ async function createManualPreview(userId: string) {
 
     // Tutor management
     const { count: managementCount } = await supabase
-      .from('t_315_02_01_tutor_management')
+      .from('tutor_management')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
@@ -265,7 +265,7 @@ async function createManualPreview(userId: string) {
 
     // Document storage
     const { count: documentCount } = await supabase
-      .from('t_460_03_01_document_storage')
+      .from('document_storage')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 

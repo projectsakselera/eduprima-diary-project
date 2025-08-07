@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest) {
 
     // Update user profile in Supabase
     const { data, error } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .update(updateData)
       .eq('email', email)
       .eq('user_status', 'active')
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
     const supabase = createAdminSupabaseClient();
     
     const { data, error } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('*')
       .eq('email', session.user.email)
       .eq('user_status', 'active')

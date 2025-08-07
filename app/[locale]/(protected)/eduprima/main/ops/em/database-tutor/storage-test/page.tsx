@@ -321,7 +321,7 @@ export default function StorageTestPage() {
     try {
       // Test table access
       const { data, error } = await supabase
-        .from('t_460_03_01_document_storage')
+        .from('document_storage')
         .select('count', { count: 'exact', head: true });
 
       if (error) {

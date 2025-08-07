@@ -94,7 +94,7 @@ bucket-name/
 - ✅ **Authentication Check** dengan NextAuth
 - ✅ **Multiple File Upload** dalam satu request
 - ✅ **File Type Mapping** (profile_photo, identity_document, dll)
-- ✅ **Database Integration** (update `t_460_03_01_document_storage`)
+- ✅ **Database Integration** (update `document_storage`)
 - ✅ **Metadata Storage** (user-id, file-type, timestamp)
 - ✅ **Progress Tracking** dan error reporting
 
@@ -151,7 +151,7 @@ if (signedUrl.success) {
 
 ### Database Changes
 
-Tidak ada perubahan skema database. Table `t_460_03_01_document_storage` tetap sama, hanya `file_url` yang sekarang menunjuk ke R2 URLs instead of Supabase URLs.
+Tidak ada perubahan skema database. Table `document_storage` tetap sama, hanya `file_url` yang sekarang menunjuk ke R2 URLs instead of Supabase URLs.
 
 ### File URLs
 

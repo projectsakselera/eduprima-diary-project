@@ -9,7 +9,7 @@ t_310_01_01_users_universal (ROOT)
 ├─🔴 CASCADE → t_310_01_03_user_addresses  
 ├─🔴 CASCADE → t_380_01_01_user_demographics
 ├─🔴 CASCADE → t_315_02_01_tutor_management
-├─🔴 CASCADE → t_460_03_01_document_storage
+├─🔴 CASCADE → document_storage
 │
 └─🔴 CASCADE → t_315_01_01_educator_details
               │
@@ -36,7 +36,7 @@ mermaidgraph TD
     G --> M[Auto-delete additional_subjects]
 3. Table-by-Table CASCADE Documentation
 3.1 Primary User Tables
-TableParentFK ColumnOn DeleteDescriptiont_310_01_02_user_profilesusers_universaluser_idCASCADEPersonal profile datat_310_01_03_user_addressesusers_universaluser_idCASCADEAll user addressest_380_01_01_user_demographicsusers_universaluser_idCASCADEDemographic informationt_315_02_01_tutor_managementusers_universaluser_idCASCADETutor status & approvalt_460_03_01_document_storageusers_universaluser_idCASCADEUploaded documents
+TableParentFK ColumnOn DeleteDescriptiont_310_01_02_user_profilesusers_universaluser_idCASCADEPersonal profile datat_310_01_03_user_addressesusers_universaluser_idCASCADEAll user addressest_380_01_01_user_demographicsusers_universaluser_idCASCADEDemographic informationt_315_02_01_tutor_managementusers_universaluser_idCASCADETutor status & approvaldocument_storageusers_universaluser_idCASCADEUploaded documents
 3.2 Educator-Specific Tables
 TableParentFK ColumnOn DeleteDescriptiont_315_01_01_educator_detailsusers_universaluser_idCASCADEMain educator profilet_315_03_01_tutor_availability_configeducator_detailseducator_idCASCADESchedule & availabilityt_315_04_01_tutor_teaching_preferenceseducator_detailseducator_idCASCADETeaching style preferencest_315_05_01_tutor_personality_traitseducator_detailseducator_idCASCADEPersonality profilet_315_06_01_tutor_program_mappingseducator_detailseducator_idCASCADESubject/program mappingst_460_02_04_educator_banking_infoeducator_detailseducator_idCASCADEBanking informationt_315_07_01_tutor_additional_subjectseducator_detailseducator_idCASCADECustom subjects
 4. Implementation SQL Scripts
@@ -130,7 +130,7 @@ BEGIN
     UNION ALL
     
     SELECT 'document_storage', COUNT(*), 'Documents'
-    FROM t_460_03_01_document_storage WHERE user_id = p_user_id
+    FROM document_storage WHERE user_id = p_user_id
     
     ORDER BY 
         CASE 

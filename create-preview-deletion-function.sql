@@ -89,7 +89,7 @@ BEGIN
     UNION ALL
     
     SELECT 'document_storage', COUNT(*), 'Documents'
-    FROM t_460_03_01_document_storage WHERE user_id = p_user_id;
+    FROM document_storage WHERE user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
 

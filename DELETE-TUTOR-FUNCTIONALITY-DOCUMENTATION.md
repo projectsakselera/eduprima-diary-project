@@ -106,7 +106,7 @@ All foreign key relationships properly configured:
 - `t_315_02_01_tutor_management.status_changed_by` → SET NULL
 - `t_315_06_01_tutor_program_mappings.mapped_by` → SET NULL
 - `t_315_07_01_tutor_additional_subjects.approved_by` → SET NULL
-- `t_460_03_01_document_storage.verified_by` → SET NULL
+- `document_storage.verified_by` → SET NULL
 
 ### **2. Automatic Backup System**
 

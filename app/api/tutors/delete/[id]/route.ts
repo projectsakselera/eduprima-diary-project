@@ -25,7 +25,7 @@ export async function DELETE(
 
     // Step 1: Verify user exists and get basic info
     const { data: userData, error: userError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('id, email, user_code')
       .eq('id', userId)
       .single();
@@ -61,7 +61,7 @@ export async function DELETE(
     // Step 4: Perform CASCADE DELETE
     // Due to CASCADE constraints, deleting from users_universal will auto-delete all related records
     const { error: deleteError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .delete()
       .eq('id', userId);
 
@@ -91,7 +91,7 @@ export async function DELETE(
 
     // Step 5: Verify deletion was successful
     const { data: verifyData, error: verifyError } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('id')
       .eq('id', userId)
       .single();
@@ -141,7 +141,7 @@ async function createBackupBeforeDelete(userId: string) {
   try {
     // Get user email for backup
     const { data: userData } = await supabase
-      .from('t_310_01_01_users_universal')
+      .from('users_universal')
       .select('email')
       .eq('id', userId)
       .single();
@@ -164,12 +164,12 @@ async function createBackupBeforeDelete(userId: string) {
 
     // Gather all user data
     const [userResult, profileResult, educatorResult, addressResult, demoResult, docResult] = await Promise.all([
-      supabase.from('t_310_01_01_users_universal').select('*').eq('id', userId).single(),
+      supabase.from('users_universal').select('*').eq('id', userId).single(),
       supabase.from('t_310_01_02_user_profiles').select('*').eq('user_id', userId).single(),
-      supabase.from('t_315_01_01_educator_details').select('*').eq('user_id', userId).single(),
+      supabase.from('educator_details').select('*').eq('user_id', userId).single(),
       supabase.from('t_310_01_03_user_addresses').select('*').eq('user_id', userId),
       supabase.from('t_380_01_01_user_demographics').select('*').eq('user_id', userId).single(),
-      supabase.from('t_460_03_01_document_storage').select('*').eq('user_id', userId)
+      supabase.from('document_storage').select('*').eq('user_id', userId)
     ]);
 
     backupData.backup_data.users_universal = userResult.data;

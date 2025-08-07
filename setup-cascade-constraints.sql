@@ -74,7 +74,7 @@ FOREIGN KEY (user_id) REFERENCES t_310_01_01_users_universal(id)
 ON DELETE CASCADE;
 
 -- 5. document_storage
-ALTER TABLE t_460_03_01_document_storage
+ALTER TABLE document_storage
 DROP CONSTRAINT IF EXISTS fk_document_storage_user_id CASCADE,
 ADD CONSTRAINT fk_document_storage_user_id 
 FOREIGN KEY (user_id) REFERENCES t_310_01_01_users_universal(id) 

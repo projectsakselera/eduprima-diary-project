@@ -970,7 +970,7 @@ export default function AddTutorPage() {
       if (documentStorageData.length > 0) {
         console.log('Step 3m: Inserting to document_storage...');
         const documentsResult = await supabase
-          ?.from('t_460_03_01_document_storage')
+          ?.from('document_storage')
           .insert(documentStorageData.map(doc => ({ ...doc, user_id: userId })));
 
         if (documentsResult?.error) {
