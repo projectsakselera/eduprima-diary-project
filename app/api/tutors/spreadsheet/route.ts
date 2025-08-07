@@ -260,6 +260,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       preferencesResult,
       personalityResult,
       programMappingsResult,
+      additionalSubjectsResult,
       documentsResult,
       provincesResult,
       citiesResult,
@@ -319,6 +320,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       supabase
         .from('t_315_06_01_tutor_program_mappings')
         .select('*'),
+        
+      // Additional subjects (for CSV imported program names)
+      supabase
+        .from('t_315_07_01_tutor_additional_subjects')
+        .select('*'),
       
       // Documents
       supabase
@@ -365,9 +371,43 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     });
 
     const bankingMap = new Map(bankingResult.data?.map(b => [educatorIdToUserIdMap.get(b.educator_id), b]) || []);
-    const availabilityMap = new Map(availabilityResult.data?.map(a => [educatorIdToUserIdMap.get(a.educator_id), a]) || []);
+    // Debug educator ID mapping first
+    console.log('🔗 DEBUG educator ID mapping:', {
+      educatorDetailsCount: educatorDetailsResult.data?.length || 0,
+      educatorIdToUserIdMapSize: educatorIdToUserIdMap.size,
+      sampleEducatorMapping: Array.from(educatorIdToUserIdMap.entries()).slice(0, 3)
+    });
+    
+    const availabilityMap = new Map();
+    availabilityResult.data?.forEach(a => {
+      const userId = educatorIdToUserIdMap.get(a.educator_id);
+      console.log(`📅 Availability mapping: educator_id ${a.educator_id} → user_id ${userId}`, {
+        availability_status: a.availability_status,
+        hasUserMapping: !!userId
+      });
+      if (userId) {
+        availabilityMap.set(userId, a);
+      }
+    });
+    
+    console.log('📅 DEBUG availability data:', {
+      availabilityCount: availabilityResult.data?.length || 0,
+      sampleData: availabilityResult.data?.slice(0, 3),
+      mapSize: availabilityMap.size,
+      mappedUserIds: Array.from(availabilityMap.keys()).slice(0, 5),
+      userIds: userIds.slice(0, 5),
+      availabilityError: availabilityResult.error
+    });
     const preferencesMap = new Map(preferencesResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
-    const personalityMap = new Map(personalityResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
+    
+    // 🔧 FIX: Create personality map with error handling
+    const personalityMap = new Map();
+    personalityResult.data?.forEach(p => {
+      const userId = educatorIdToUserIdMap.get(p.educator_id);
+      if (userId) {
+        personalityMap.set(userId, p);
+      }
+    });
     
     // Group program mappings by user_id
     const programMappingsMap = new Map();
@@ -378,6 +418,18 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           programMappingsMap.set(userId, []);
         }
         programMappingsMap.get(userId).push(pm.program_id);
+      }
+    });
+    
+    // Group additional subjects by user_id
+    const additionalSubjectsMap = new Map();
+    additionalSubjectsResult.data?.forEach(sub => {
+      const userId = educatorIdToUserIdMap.get(sub.educator_id);
+      if (userId) {
+        if (!additionalSubjectsMap.has(userId)) {
+          additionalSubjectsMap.set(userId, []);
+        }
+        additionalSubjectsMap.get(userId).push(sub.subject_name);
       }
     });
 
@@ -400,8 +452,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     
     console.log('🗺️ Master data loaded:', {
       provinces: provincesMap.size,
-      cities: citiesMap.size, 
-      programs: programsMap.size
+      cities: citiesMap.size,
+      programs: programsMap.size,
+      programMappings: programMappingsMap.size,
+      additionalSubjects: additionalSubjectsMap.size
     });
     
     // Debug: Sample lookups
@@ -531,14 +585,56 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         prestasiNonAkademik: educatorDetails?.non_academic_achievements || '',
         sertifikasiPelatihan: educatorDetails?.certifications_training || '',
         
-        // Programs & Subjects (with lookups to program names)
-        selectedPrograms: programMappings.map((programId: string) => 
-          programsMap.get(programId) || programId
-        ),
+        // Programs & Subjects (with lookups to program names + additional subjects)
+        selectedPrograms: (() => {
+          const programs = programMappings.map((programId: string) => 
+            programsMap.get(programId) || programId
+          );
+          const additionalSubjects = additionalSubjectsMap.get(user.id) || [];
+          const allPrograms = [...programs, ...additionalSubjects];
+          
+          console.log(`👤 User ${user.id} programs:`, {
+            mappingIds: programMappings,
+            resolvedNames: programs,
+            additionalSubjects: additionalSubjects,
+            totalPrograms: allPrograms.length
+          });
+          return allPrograms;
+        })(),
         mataPelajaranLainnya: '', // This would be in notes or additional field
         
-        // Availability
-        statusMenerimaSiswa: availability?.availability_status || '',
+        // Availability - Map from database values to display values
+        statusMenerimaSiswa: (() => {
+          const status = availability?.availability_status;
+          const result = (() => {
+            switch (status) {
+              case 'available': return 'available';
+              case 'limited': return 'limited'; 
+              case 'unavailable': return 'unavailable';
+              case 'leave': return 'leave';
+              default: 
+                // If no availability data found, try to infer from other data
+                // For newly imported users, default to available if they have educator details
+                if (educatorDetails && !availability) {
+                  console.log(`📅 No availability data for user ${user.id}, defaulting to available for new import`);
+                  return 'available';
+                }
+                return 'unavailable'; // fallback
+            }
+          })();
+          
+          console.log(`📅 User ${user.id} availability mapping:`, {
+            hasAvailability: !!availability,
+            availabilityObject: availability,
+            rawStatus: status,
+            mappedStatus: result,
+            educatorId: educatorDetails?.id,
+            availabilityInMap: availabilityMap.has(user.id),
+            isNewImport: educatorDetails && !availability
+          });
+          
+          return result;
+        })(),
         available_schedule: availability?.available_schedule || [],
         teaching_methods: availability?.teaching_methods || [],
         hourly_rate: availability?.hourly_rate || 0,
@@ -549,6 +645,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         alamatTitikLokasi: availability?.teaching_center_location || '',
         location_notes: availability?.location_notes || '',
         catatanAvailability: availability?.availability_notes || '',
+        
+        // DEBUG: Add raw availability data for troubleshooting
+        _debug_availability_full: availability || {},
+        _debug_schedule: {
+          raw_availability_status: availability?.availability_status,
+          raw_hourly_rate: availability?.hourly_rate,
+          raw_max_new: availability?.max_new_students_per_week,
+          raw_max_total: availability?.max_total_students,
+          raw_radius: availability?.teaching_radius_km,
+          has_availability: !!availability
+        },
         
         // Transportation & Location Coordinates
         transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
@@ -564,6 +671,16 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         techSavviness: preferences?.tech_savviness_level || '',
         gmeetExperience: preferences?.gmeet_experience_level || '',
         presensiUpdateCapability: preferences?.attendance_update_capability || '',
+        
+        // DEBUG: Add raw preferences data for troubleshooting
+        _debug_preferences_full: preferences || {},
+        _debug_group_class: {
+          raw_value: preferences?.group_class_willingness,
+          is_null: preferences?.group_class_willingness === null,
+          is_empty: preferences?.group_class_willingness === '',
+          type: typeof preferences?.group_class_willingness,
+          has_preferences: !!preferences
+        },
         
         // Personality
         tutorPersonalityType: personality?.personality_type || '',
