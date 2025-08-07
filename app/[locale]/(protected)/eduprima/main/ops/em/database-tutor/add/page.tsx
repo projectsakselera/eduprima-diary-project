@@ -213,9 +213,8 @@ export default function AddTutorPage() {
       
       // Try different possible table names
       const possibleTableNames = [
-        't_340_01_01_roles',
-        'roles', 
         'user_roles',
+        'roles', 
         'system_roles'
       ];
       
@@ -335,7 +334,7 @@ export default function AddTutorPage() {
       }
 
       const testResult = await supabase
-        ?.from('t_310_01_01_users_universal')
+        ?.from('users_universal')
         .select('count', { count: 'exact', head: true });
       const { data: testData, error: testError } = testResult || { data: null, error: null };
       
@@ -414,7 +413,7 @@ export default function AddTutorPage() {
         graduation_year: formData.tahunLulus || null,
         gpa: formData.ipk || null, // ✅ Add: gpa ada di user_profiles
         
-        // ✅ REMOVED: availability_schedule - dipindah ke t_315_03_01_tutor_availability_config
+        // ✅ REMOVED: availability_schedule - dipindah ke tutor_availability_config
         
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -459,12 +458,12 @@ export default function AddTutorPage() {
         updated_at: new Date().toISOString()
       };
       
-      // 2d. Prepare educator_details data (will need user_id from step 3)  
-      const educatorDetailsData = {
-        // ✅ REMOVED: tarif_per_jam, metode_pengajaran, jadwal_tersedia - dipindah ke t_315_03_01_tutor_availability_config
+      // 2d. Prepare tutor_details data (will need user_id from step 3)  
+      const tutorDetailsData = {
+        // ✅ REMOVED: tarif_per_jam, metode_pengajaran, jadwal_tersedia - dipindah ke tutor_availability_config
         
-        // Educator Registration Number - Pass null jika kosong, trigger akan generate
-        educator_registration_number: trn, // Pass null jika kosong, database akan generate
+        // Tutor Registration Number - Pass null jika kosong, trigger akan generate
+        tutor_registration_number: trn, // Pass null jika kosong, database akan generate
         
         // Professional Information - gunakan nama kolom yang benar
         academic_status: formData.statusAkademik, // ✅ Fix: status_akademik → academic_status
@@ -531,11 +530,11 @@ export default function AddTutorPage() {
         
         // ✅ REMOVED: semua field JSONB dipindah ke tabel terpisah
         // - achievements → masih di sini (sudah ada di database)
-        // - subjects_taught → dipindah ke t_315_06_01_tutor_program_mappings  
-        // - teaching_details → dipindah ke t_315_04_01_tutor_teaching_preferences
-        // - tech_capability → dipindah ke t_315_04_01_tutor_teaching_preferences
-        // - personality_profile → dipindah ke t_315_05_01_tutor_personality_traits
-        // - location & availability → dipindah ke t_315_03_01_tutor_availability_config
+        // - subjects_taught → dipindah ke tutor_program_mappings  
+        // - teaching_details → dipindah ke tutor_teaching_preferences
+        // - tech_capability → dipindah ke tutor_teaching_preferences
+        // - personality_profile → dipindah ke tutor_personality_traits
+        // - location & availability → dipindah ke tutor_availability_config
         
         // Achievements & Credentials (tetap di sini karena ada di database)
         academic_achievements: formData.prestasiAkademik || null,
@@ -747,7 +746,7 @@ export default function AddTutorPage() {
       console.log('📝 Creating new tutor user with data:', usersUniversalData);
       
       const userCreationResult = await supabase
-        ?.from('t_310_01_01_users_universal')
+        ?.from('users_universal')
         .insert([usersUniversalData])
         .select('id, email, user_code')
         .single();
@@ -783,7 +782,7 @@ export default function AddTutorPage() {
       // Step 3b: Insert to user_profiles
 
       const profileResult = await supabase
-        ?.from('t_310_01_02_user_profiles')
+        ?.from('user_profiles')
         .insert([{ ...userProfilesData, user_id: userId }])
         .select('id')
         .single();
@@ -799,7 +798,7 @@ export default function AddTutorPage() {
       if (formData.agama) {
 
         const demographicsResult = await supabase
-          ?.from('t_380_01_01_user_demographics')
+          ?.from('user_demographics')
           .insert([{ ...userDemographicsData, user_id: userId }])
           .select('id')
           .single();
@@ -815,7 +814,7 @@ export default function AddTutorPage() {
       // Step 3d: Insert domicile address
 
       const domicileResult = await supabase
-        ?.from('t_310_01_03_user_addresses')
+        ?.from('user_addresses')
         .insert([{ ...domicileAddressData, user_id: userId }])
         .select('id')
         .single();
@@ -831,7 +830,7 @@ export default function AddTutorPage() {
       if (ktpAddressData) {
 
         const ktpResult = await supabase
-          ?.from('t_310_01_03_user_addresses')
+          ?.from('user_addresses')
           .insert([{ ...ktpAddressData, user_id: userId }])
           .select('id')
           .single();
@@ -844,27 +843,27 @@ export default function AddTutorPage() {
 
       }
 
-      // Step 3f: Insert to educator_details
+      // Step 3f: Insert to tutor_details
 
-      const educatorResult = await supabase
-        ?.from('t_315_01_01_educator_details')
-        .insert([{ ...educatorDetailsData, user_id: userId }])
-        .select('id, educator_registration_number')
+      const tutorResult = await supabase
+        ?.from('tutor_details')
+        .insert([{ ...tutorDetailsData, user_id: userId }])
+        .select('id, tutor_registration_number')
         .single();
 
-      if (educatorResult?.error) {
-        console.error('Error inserting to educator_details:', educatorResult.error);
-        throw new Error(`Failed to create educator details: ${educatorResult.error.message}`);
+      if (tutorResult?.error) {
+        console.error('Error inserting to tutor_details:', tutorResult.error);
+        throw new Error(`Failed to create tutor details: ${tutorResult.error.message}`);
       }
 
-      const generatedTRN = educatorResult?.data?.educator_registration_number;
-      console.log('✅ Educator details created with ID:', educatorResult?.data?.id);
+      const generatedTRN = tutorResult?.data?.tutor_registration_number;
+      console.log('✅ Tutor details created with ID:', tutorResult?.data?.id);
       console.log('✅ Generated TRN:', generatedTRN);
 
       // Step 3g: Insert to tutor_management (NEW TABLE)
       console.log('Step 3g: Inserting to tutor_management...');
       const managementResult = await supabase
-        ?.from('t_315_02_01_tutor_management')
+        ?.from('tutor_management')
         .insert([{ ...tutorManagementData, user_id: userId }])
         .select('id')
         .single();
@@ -876,29 +875,29 @@ export default function AddTutorPage() {
 
       console.log('✅ Tutor management created with ID:', managementResult?.data?.id);
 
-      // Step 3h: Insert educator banking information (if provided)
-      console.log('Step 3h: Inserting educator banking information...');
+      // Step 3h: Insert tutor banking information (if provided)
+      console.log('Step 3h: Inserting tutor banking information...');
       
-      // Use the educator ID from the previous educator_details insert
-      const educatorId = educatorResult?.data?.id;
-      if (!educatorId) {
-        throw new Error('Failed to get educator ID from educator_details');
+      // Use the tutor ID from the previous tutor_details insert
+      const tutorId = tutorResult?.data?.id;
+      if (!tutorId) {
+        throw new Error('Failed to get tutor ID from tutor_details');
       }
 
-      console.log('✅ Using educator ID for banking:', educatorId);
+      console.log('✅ Using tutor ID for banking:', tutorId);
 
-      // Insert banking info linked to educator - only if bank was selected
+      // Insert banking info linked to tutor - only if bank was selected
       let bankingResult = null;
       if (bankingData) {
         bankingResult = await supabase
-          ?.from('t_460_02_04_educator_banking_info')
-          .insert([{ ...bankingData, educator_id: educatorId }])
+          ?.from('tutor_banking_info')
+          .insert([{ ...bankingData, tutor_id: tutorId }])
           .select('id')
           .single();
 
         if (bankingResult?.error) {
-          console.error('Error inserting educator banking info:', bankingResult.error);
-          throw new Error(`Failed to create educator banking information: ${bankingResult.error.message}`);
+          console.error('Error inserting tutor banking info:', bankingResult.error);
+          throw new Error(`Failed to create tutor banking information: ${bankingResult.error.message}`);
         }
 
         console.log('✅ Educator banking information created with ID:', bankingResult?.data?.id);
@@ -909,8 +908,8 @@ export default function AddTutorPage() {
       // Step 3i: Insert to tutor_availability_config (NEW TABLE)
       console.log('Step 3i: Inserting to tutor_availability_config...');
       const availabilityResult = await supabase
-        ?.from('t_315_03_01_tutor_availability_config')
-        .insert([{ ...availabilityConfigData, educator_id: educatorId }])
+        ?.from('tutor_availability_config')
+        .insert([{ ...availabilityConfigData, tutor_id: tutorId }])
         .select('id')
         .single();
 
@@ -924,8 +923,8 @@ export default function AddTutorPage() {
       // Step 3j: Insert to tutor_teaching_preferences (NEW TABLE)
       console.log('Step 3j: Inserting to tutor_teaching_preferences...');
       const preferencesResult = await supabase
-        ?.from('t_315_04_01_tutor_teaching_preferences')
-        .insert([{ ...teachingPreferencesData, educator_id: educatorId }])
+        ?.from('tutor_teaching_preferences')
+        .insert([{ ...teachingPreferencesData, tutor_id: tutorId }])
         .select('id')
         .single();
 
@@ -939,8 +938,8 @@ export default function AddTutorPage() {
       // Step 3k: Insert to tutor_personality_traits (NEW TABLE)
       console.log('Step 3k: Inserting to tutor_personality_traits...');
       const personalityResult = await supabase
-        ?.from('t_315_05_01_tutor_personality_traits')
-        .insert([{ ...personalityTraitsData, educator_id: educatorId }])
+        ?.from('tutor_personality_traits')
+        .insert([{ ...personalityTraitsData, tutor_id: tutorId }])
         .select('id')
         .single();
 
@@ -955,8 +954,8 @@ export default function AddTutorPage() {
       if (programMappingsData.length > 0) {
         console.log('Step 3l: Inserting to tutor_program_mappings...');
         const mappingsResult = await supabase
-          ?.from('t_315_06_01_tutor_program_mappings')
-          .insert(programMappingsData.map(mapping => ({ ...mapping, educator_id: educatorId })));
+          ?.from('tutor_program_mappings')
+          .insert(programMappingsData.map(mapping => ({ ...mapping, tutor_id: tutorId })));
 
         if (mappingsResult?.error) {
           console.error('Error inserting to tutor_program_mappings:', mappingsResult.error);
@@ -986,7 +985,7 @@ export default function AddTutorPage() {
       // Return the main user data for reference
       const insertedData = {
         user_id: userId,
-        educator_id: educatorId,
+        tutor_id: tutorId,
         trn: generatedTRN || trn,
         email: formData.email,
         name: formData.namaLengkap,

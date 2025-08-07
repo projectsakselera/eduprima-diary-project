@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const supabase = createServerSupabaseClient();
     
     let query = supabase
-      .from('villages') // New dedicated villages table
+      .from('location_villages') // Updated table name per mapping guide
       .select('id, village_code, village_name, village_local_name, village_type, district_id, postal_code')
       .eq('is_active', true)
       .order('village_name');

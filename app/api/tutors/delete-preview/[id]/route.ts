@@ -181,7 +181,7 @@ async function createManualPreview(userId: string) {
         const { count: availabilityCount } = await supabase
           .from('tutor_availability_config')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', educatorId);
 
         if (availabilityCount && availabilityCount > 0) {
           preview.push({
@@ -195,7 +195,7 @@ async function createManualPreview(userId: string) {
         const { count: preferencesCount } = await supabase
           .from('tutor_teaching_preferences')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', educatorId);
 
         if (preferencesCount && preferencesCount > 0) {
           preview.push({
@@ -209,7 +209,7 @@ async function createManualPreview(userId: string) {
         const { count: personalityCount } = await supabase
           .from('tutor_personality_traits')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', educatorId);
 
         if (personalityCount && personalityCount > 0) {
           preview.push({
@@ -223,7 +223,7 @@ async function createManualPreview(userId: string) {
         const { count: programCount } = await supabase
           .from('tutor_program_mappings')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', educatorId);
 
         if (programCount && programCount > 0) {
           preview.push({
@@ -235,13 +235,13 @@ async function createManualPreview(userId: string) {
 
         // Banking info
         const { count: bankingCount } = await supabase
-          .from('educator_banking_info')
+          .from('tutor_banking_info')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', educatorId);
 
         if (bankingCount && bankingCount > 0) {
           preview.push({
-            table_name: 'educator_banking_info',
+            table_name: 'tutor_banking_info',
             records_affected: bankingCount,
             data_type: 'Banking Information'
           });

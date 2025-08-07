@@ -1,0 +1,394 @@
+## Catatan Migration ⚠️
+
+### **RESOLVED ISSUES** ✅:
+
+1. **Districts Table**: ✅ Tabel `location_districts` sudah dikembalikan dengan struktur lengkap
+
+2. **Domains Table**: ✅ Confirmed tidak diperlukan lagi (dihapus dengan sengaja)
+
+3. **Field Mapping**: Perhatikan perubahan `educator_id` → `tutor_id` di semua tabel terkait
+
+4. **Payout Requests Simplification**: Tabel `finance_payout_requests` disederhanakan drastis dari ~40 kolom menjadi 9 kolom. Pastikan tidak ada data penting yang hilang
+
+5. **Reference Integrity**: ✅ Semua referensi `district_id` sekarang valid setelah tabel districts dikembalikan
+
+### **Migration Steps**:
+
+1. **Backup Data**: Backup semua data dari schema lama sebelum migration
+2. **Create New Schema**: Buat tabel dengan nama baru sesuai mapping
+3. **Restore Districts**: Kembalikan tabel `location_districts` jika masih diperlukan  
+4. **Data Transfer**: Migrasikan data dengan mapping field yang sesuai
+5. **Update Application**: Update semua query dan model di aplikasi
+6. **Recreate Indexes**: Buat ulang semua index dengan nama tabel baru
+7. **Test Thoroughly**: Test semua fitur untuk memastikan tidak ada yang rusak
+
+### **Post-Migration Validation**:
+- Verifikasi semua foreign key relationships
+- Pastikan tidak ada orphaned records
+- Test semua query aplikasi
+- Validasi data integrity constraints# Panduan Mapping Schema Database Lama ke Baru
+
+## Overview
+Dokumen ini menyediakan mapping dari skema database lama (dengan prefix numerik) ke skema baru yang lebih sederhana dalam penamaan.
+
+## 1. Foundational & System Tables
+
+### Corporate Entities
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `Foundations_corporate_entities` | `corporate_entities` |
+
+**Kolom yang sama:** `feature_flags`, `id`, `entity_code`, `configuration_settings`, `updated_by`, `created_by`, `entity_name`, `entity_type`, `parent_entity_id`, `entity_status`, `business_focus`, `target_market`, `geographic_scope`, `launch_date`, `hierarchy_level`, `hierarchy_path`, `sort_order`, `updated_at`, `created_at`
+
+---
+
+## 2. Location/Geographic Tables
+
+### Countries
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_01_countries` | `location_countries` |
+
+**Kolom yang sama:** `capital_city`, `government_type`, `ease_of_business_rank`, `business_environment`, `timezone_primary`, `internet_tld`, `phone_code`, `text_direction`, `writing_systems`, `common_languages`, `independence_date`, `currency_code`, `currency_name`, `currency_symbol`, `updated_at`, `created_at`, `official_languages`, `id`, `country_name`, `country_code`, `country_local_name`, `continent`, `region`, `subregion`
+
+### Provinces
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_02_province` | `location_province` |
+
+**Kolom yang sama:** `admin_level`, `statistics`, `coordinates`, `special_status`, `economic_zone`, `demographic_classification`, `is_border_area`, `is_rural`, `is_urban`, `timezone_override`, `postal_code_prefix`, `updated_at`, `created_at`, `parent_region_id`, `population_estimate`, `area_sq_km`, `capital_city`, `region_type`, `region_local_name`, `region_name`, `region_code`, `country_id`, `id`
+
+### Cities
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_03_cities` | `location_cities` |
+
+**Kolom yang sama:** `updated_at`, `city_type`, `population_density`, `population_estimate`, `id`, `area_sq_km`, `elevation_meters`, `longitude`, `latitude`, `city_local_name`, `city_name`, `city_code`, `province_id`, `country_id`, `economic_importance`, `business_district`, `education_hub`, `technology_center`, `created_at`
+
+### Districts
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_04_districts` | `location_districts` |
+
+**Kolom yang sama:** `district_local_name`, `updated_at`, `created_at`, `is_active`, `area_sq_km`, `longitude`, `latitude`, `postal_code_prefix`, `district_name`, `district_code`, `city_id`, `id`
+
+**Status:** ✅ **RESTORED** - Tabel sudah dikembalikan dengan struktur yang sama
+
+### Villages
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_05_villages` | `location_villages` |
+
+**Kolom yang sama:** `village_name`, `village_code`, `is_active`, `district_id`, `id`, `updated_at`, `created_at`, `population_estimate`, `area_sq_km`, `longitude`, `latitude`, `postal_code`, `village_type`, `village_local_name`
+
+### Street Addresses
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_01_06_street_addresses` | `location_street_addresses` |
+
+**Kolom yang sama:** `floor_number`, `street_number`, `street_type`, `street_local_name`, `street_name`, `region_id`, `country_id`, `id`, `updated_by`, `created_by`, `updated_at`, `created_at`, `search_keywords`, `additional_info`, `verification_source`, `verified_date`, `is_verified`, `is_primary_address`, `address_type`, `landmark`, `sub_neighborhood`, `neighborhood`, `elevation_meters`, `longitude`, `latitude`, `postal_district`, `postal_code`, `unit_number`, `building_name`
+
+---
+
+## 3. Financial Tables
+
+### Banks Indonesia
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_120_02_01_banks_indonesia` | `finance_banks_indonesia` |
+
+**Kolom yang sama:** `display_order`, `is_active`, `bank_category`, `swift_code`, `bank_code`, `id`, `country_id`, `bank_name`, `popular_bank_name`, `updated_at`, `created_at`
+
+### Payout Requests
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_460_02_05_payout_requests` | `finance_payout_requests` |
+
+**Mapping kolom:**
+- Tabel lama memiliki kolom yang sangat banyak dan kompleks
+- Tabel baru hanya memiliki: `total_amount`, `tutor_id`, `period_start`, `period_end`, `total_sessions`, `request_status`, `submitted_at`, `net_amount`, `id`
+- **Catatan:** Tabel baru lebih sederhana, banyak kolom detail dari tabel lama tidak digunakan
+
+---
+
+## 4. Program/Course Tables
+
+### Program Main Categories
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_01_01_program_main_categories` | `program_main_categories` |
+
+**Kolom yang sama:** `main_name`, `updated_at`, `main_code`, `id`, `description`, `is_active`, `main_name_local`
+
+### Program Sub Categories
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_01_02_program_sub_categories` | `program_sub_categories` |
+
+**Kolom yang sama:** `grade_levels`, `id`, `main_id`, `sub_code`, `sub_name`, `sub_name_local`, `difficulty_level`, `description`, `is_active`
+
+### Program Types
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_02_01_program_types` | `program_types` |
+
+**Kolom yang sama:** `is_active`, `duration_type`, `type_name_local`, `type_name`, `type_code`, `subcategory_id`, `id`
+
+### Programs Catalog
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_02_02_programs_catalog` | `programs_unit` |
+
+**Kolom yang sama:** `prerequisites`, `description`, `ideal_class_size_max`, `ideal_class_size_min`, `ideal_total_sessions`, `ideal_session_duration_minutes`, `target_age_max`, `target_age_min`, `subject_focus`, `grade_level`, `program_name_short`, `program_name_local`, `program_name`, `program_code`, `program_type_id`, `subcategory_id`, `id`, `is_active`, `simple_category`, `updated_at`, `popularity`
+
+### Program Category Mappings
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_03_01_program_category_mappings` | `program_category_mappings` |
+
+**Kolom yang sama:** `updated_at`, `created_at`, `notes`, `mapped_by`, `mapped_at`, `relevance_score`, `weight`, `is_primary_category`, `sub_category_id`, `main_category_id`, `program_id`, `id`
+
+### Program Popularity Levels
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_02_05_m_popularity_levels` | `program_popularity_levels` |
+
+**Kolom yang sama:** `updated_at`, `id`, `code`, `label`, `description`, `sort_order`, `is_active`, `created_at`
+
+### Program Simple Categories
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_210_02_07_m_simple_categories` | `program_simple_categories` |
+
+**Kolom yang sama:** `icon`, `color_hex`, `sort_order`, `is_active`, `id`, `code`, `label`, `description`
+
+---
+
+## 5. User Management Tables
+
+### Users Universal
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_310_01_01_users_universal` | `users_universal` |
+
+**Kolom yang sama:** `email_verified`, `password_hash`, `password_salt`, `two_factor_enabled`, `two_factor_secret`, `user_status`, `account_type`, `primary_entity_id`, `associated_entities`, `primary_city_id`, `primary_country`, `timezone`, `last_login_at`, `last_activity_at`, `login_count`, `failed_login_attempts`, `locked_until`, `terms_accepted_at`, `privacy_accepted_at`, `marketing_consent`, `created_at`, `updated_at`, `created_by`, `updated_by`, `primary_role_id`, `id`, `user_code`, `email`, `phone`, `phone_verified`
+
+### User Profiles
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_310_01_02_user_profiles` | `user_profiles` |
+
+**Kolom yang sama:** Semua kolom identik (sangat banyak kolom - lebih dari 50 kolom)
+
+### User Addresses
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_310_01_03_user_addresses` | `user_addresses` |
+
+**Kolom yang sama:** `city_id`, `id`, `user_id`, `address_type`, `address_label`, `province_id`, `district_id`, `village_id`, `district_name`, `village_name`, `street_address`, `postal_code`, `landmark`, `notes`, `is_primary`, `is_verified`, `verified_at`, `verified_by`, `created_at`, `updated_at`, `is_same_as_domicile`
+
+### Emergency Contacts
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_310_02_01_emergency_contacts` | `tutor_contacts` |
+
+**Kolom yang sama:** `relationship`, `user_id`, `contact_name`, `id`, `updated_at`, `created_at`, `is_primary`, `phone_number`
+
+### User Demographics
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_380_01_01_user_demographics` | `user_demographics` |
+
+**Kolom yang sama:** `religion`, `preferred_communication_time`, `communication_language_preference`, `updated_at`, `created_at`, `marital_status`, `parent_occupation`, `parent_education_level`, `socioeconomic_status`, `ethnicity`, `religious_practice_level`, `user_id`, `id`
+
+---
+
+## 6. Tutor/Educator Tables
+
+### Educator Details
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_01_01_educator_details` | `tutor_details` |
+
+**Perubahan field:**
+- `educator_registration_number` → `tutor_registration_number`
+- Kolom lainnya sama
+
+### Educator Sequences
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_01_02_educator_sequences` | `tutor_sequences` |
+
+**Kolom yang sama:** `country_year`, `current_sequence`, `id`, `updated_at`
+
+### Tutor Management
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_02_01_tutor_management` | `tutor_management` |
+
+**Kolom yang sama:** `approval_level`, `status_tutor`, `user_id`, `id`, `last_status_change`, `recruitment_stage_history`, `additional_screening`, `staff_notes`, `education_verification_status`, `identity_verification_status`, `updated_at`, `created_at`, `status_changed_by`
+
+### Tutor Availability Config
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_03_01_tutor_availability_config` | `tutor_availability_config` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Teaching Preferences
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_04_01_tutor_teaching_preferences` | `tutor_teaching_preferences` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Personality Traits
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_05_01_tutor_personality_traits` | `tutor_personality_traits` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Program Mappings
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_06_01_tutor_program_mappings` | `tutor_program_mappings` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Additional Subjects
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_315_07_01_tutor_additional_subjects` | `tutor_additional_subjects` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Banking Info
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_460_02_04_educator_banking_info` | `tutor_banking_info` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- Kolom lainnya sama
+
+### Tutor Sessions
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_460_02_04_educator_sessions` | `tutor_sessions` |
+
+**Perubahan field:**
+- `educator_id` → `tutor_id`
+- `student_id` tetap sama
+- Kolom lainnya sama
+
+---
+
+## 7. Role & Permission Tables
+
+### Roles
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_340_01_01_roles` | `user_roles` |
+
+**Kolom yang sama:** `role_description`, `created_at`, `role_name`, `role_code`, `id`
+
+### Permissions
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_340_01_03_permissions` | `user_permissions` |
+
+**Kolom yang sama:** `created_at`, `action`, `permission_name`, `permission_code`, `id`, `resource`
+
+### Role Permissions
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `t_340_01_04_role_permissions` | `user_role_user_permissions_mapping` |
+
+**Kolom yang sama:** `id`, `role_id`, `created_at`, `permission_id`
+
+---
+
+## 8. Common Tables
+
+### Document Storage
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `document_storage` | `document_storage` |
+
+**Kolom yang sama:** Tidak ada perubahan - semua kolom identik
+
+### Spatial Reference System
+| **Tabel Lama** | **Tabel Baru** |
+|---|---|
+| `spatial_ref_sys` | `spatial_ref_sys` |
+
+**Kolom yang sama:** `auth_srid`, `srtext`, `proj4text`, `srid`, `auth_name`
+
+---
+
+## 9. ⚠️ **RESOLVED ISSUES** 
+
+### A. Tables yang Sudah Dikembalikan:
+1. **`t_120_01_04_districts`** → **`location_districts`** ✅ **RESTORED**
+   - **Status**: Sudah dikembalikan dengan struktur lengkap
+   - **Hierarki geografis**: Kembali normal dan lengkap
+   - **Referential integrity**: `location_villages.district_id` sekarang valid
+
+### B. Tables yang Memang Dihapus (Confirmed):
+1. **`domains`** - Tabel domain/bidang studi memang tidak diperlukan lagi
+   - **Reason**: Fitur domain pembelajaran sudah tidak digunakan
+
+### C. Struktur Geografis - ✅ **FIXED**:
+
+**Hierarki Geografis LAMA:** 
+```
+Countries → Provinces → Cities → Districts → Villages → Streets
+```
+
+**Hierarki Geografis BARU:** 
+```
+Countries → Provinces → Cities → Districts → Villages → Streets
+                                     ✅ (Restored!)
+```
+
+**✅ DATA INTEGRITY**: Semua referensi `district_id` sekarang valid setelah tabel `location_districts` dikembalikan.
+
+---
+
+## Rangkuman Perubahan Utama
+
+### 1. **Penamaan Tabel**
+- **Lama**: Menggunakan prefix numerik seperti `t_120_01_01_`, `t_210_02_01_`, dll.
+- **Baru**: Menggunakan nama yang lebih deskriptif dengan underscore seperti `location_countries`, `program_main_categories`, dll.
+
+### 2. **Penamaan Field/Kolom**
+- **Educator → Tutor**: Semua field `educator_id` berubah menjadi `tutor_id`
+- Kolom lainnya sebagian besar tetap sama
+
+### 3. **Simplifikasi**
+- Tabel `finance_payout_requests` disederhanakan dari puluhan kolom menjadi hanya 9 kolom essential
+- Beberapa tabel detail dihilangkan
+
+### 4. **Konsistensi**
+- Penamaan menjadi lebih konsisten dan mudah dipahami
+- Grouping yang lebih jelas berdasarkan domain (location_, program_, tutor_, etc.)
+
+---
+
+## Catatan Migration
+
+1. **Field Mapping**: Sebagian besar kolom tidak berubah nama, hanya nama tabel saja
+2. **Data Consistency**: Pastikan referensi foreign key diupdate sesuai dengan nama tabel baru
+3. **Application Code**: Update semua query dan model di aplikasi untuk menggunakan nama tabel baru
+4. **Indexes**: Recreate indexes dengan nama tabel yang baru

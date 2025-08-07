@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50;
 
     let query = supabase
-      .from('banks_indonesia')
+      .from('finance_banks_indonesia')
       .select(`
         id,
         bank_name,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     console.log('🏦 Creating new bank:', popular_bank_name);
 
     const { data: newBank, error } = await supabase
-      .from('banks_indonesia')
+      .from('finance_banks_indonesia')
       .insert({
         country_id,
         bank_name,
