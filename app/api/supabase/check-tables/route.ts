@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_310_01_03_user_addresses',
+            name: 'user_addresses',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_03_01_tutor_availability_config',
+            name: 'tutor_availability_config',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_04_01_tutor_teaching_preferences',
+            name: 'tutor_teaching_preferences',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_05_01_tutor_personality_traits',
+            name: 'tutor_personality_traits',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_06_01_tutor_program_mappings',
+            name: 'tutor_program_mappings',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_315_07_01_tutor_additional_subjects',
+            name: 'tutor_additional_subjects',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -243,7 +243,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_380_01_01_user_demographics',
+            name: 'user_demographics',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },
@@ -261,7 +261,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 't_460_02_04_educator_banking_info',
+            name: 'educator_banking_info',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'educator_id', data_type: 'uuid', is_nullable: 'NO' },

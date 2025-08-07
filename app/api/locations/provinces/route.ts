@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = createServerSupabaseClient();
     
     const { data: provinces, error } = await supabase
-      .from('t_120_01_02_province')
+      .from('provinces')
       .select('id, region_code, region_name, region_local_name, capital_city')
       .eq('admin_level', 1) // Province level
       .order('region_name');

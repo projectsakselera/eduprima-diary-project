@@ -14,26 +14,26 @@ export async function GET(request: Request) {
     const supabase = createServerSupabaseClient();
     
     let query = supabase
-      .from('t_210_02_02_programs_catalog')
+      .from('programs_catalog')
       .select(`
         *,
-        subcategory:t_210_01_02_program_sub_categories!inner(
+        subcategory:program_sub_categories!inner(
           id,
           sub_name,
           sub_name_local,
-          main_category:t_210_01_01_program_main_categories!inner(
+          main_category:program_main_categories!inner(
             id,
             main_code,
             main_name,
             main_name_local
           )
         ),
-        program_type:t_210_02_01_program_types(
+        program_type:program_types(
           id,
           type_name,
           type_name_local
         ),
-        simple_category_info:t_210_02_07_m_simple_categories!simple_category(
+        simple_category_info:simple_categories!simple_category(
           id,
           code,
           label,

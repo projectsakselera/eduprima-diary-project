@@ -184,7 +184,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
 
     // First get all roles that match tutor/educator
     const { data: roleData, error: roleError } = await supabase
-      .from('t_340_01_01_roles')
+      .from('roles')
       .select('id')
       .or('role_name.ilike.%tutor%,role_name.ilike.%educator%');
     
@@ -213,7 +213,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         created_at,
         updated_at,
         primary_role_id,
-        t_340_01_01_roles!inner(role_name, role_code)
+        roles!inner(role_name, role_code)
       `, { count: 'exact' })
       .in('primary_role_id', roleIds);
 
@@ -274,13 +274,13 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Demographics
       supabase
-        .from('t_380_01_01_user_demographics')
+        .from('user_demographics')
         .select('*')
         .in('user_id', userIds),
       
       // Addresses
       supabase
-        .from('t_310_01_03_user_addresses')
+        .from('user_addresses')
         .select('*')
         .in('user_id', userIds),
       
@@ -298,32 +298,32 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Banking info (via educator_id)
       supabase
-        .from('t_460_02_04_educator_banking_info')
+        .from('educator_banking_info')
         .select('*'),
       
       // Availability config (via educator_id)
       supabase
-        .from('t_315_03_01_tutor_availability_config')
+        .from('tutor_availability_config')
         .select('*'),
       
       // Teaching preferences (via educator_id)
       supabase
-        .from('t_315_04_01_tutor_teaching_preferences')
+        .from('tutor_teaching_preferences')
         .select('*'),
       
       // Personality traits (via educator_id)
       supabase
-        .from('t_315_05_01_tutor_personality_traits')
+        .from('tutor_personality_traits')
         .select('*'),
       
       // Program mappings (via educator_id)
       supabase
-        .from('t_315_06_01_tutor_program_mappings')
+        .from('tutor_program_mappings')
         .select('*'),
         
       // Additional subjects (for CSV imported program names)
       supabase
-        .from('t_315_07_01_tutor_additional_subjects')
+        .from('tutor_additional_subjects')
         .select('*'),
       
       // Documents
@@ -334,17 +334,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Master Data - Provinces
       supabase
-        .from('t_120_01_02_province')
+        .from('provinces')
         .select('id, region_name'),
       
       // Master Data - Cities  
       supabase
-        .from('t_120_01_03_cities')
+        .from('cities')
         .select('id, city_name'),
         
       // Master Data - Programs
       supabase
-        .from('t_210_02_02_programs_catalog')
+        .from('programs_catalog')
         .select('id, program_name_local, program_name')
     ]);
 

@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = createServerSupabaseClient();
     
     const { data: simpleCategories, error } = await supabase
-      .from('t_210_02_07_m_simple_categories')
+      .from('simple_categories')
       .select('*')
       .eq('is_active', true)
       .order('id');

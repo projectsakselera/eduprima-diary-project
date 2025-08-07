@@ -165,10 +165,10 @@ async function createBackupBeforeDelete(userId: string) {
     // Gather all user data
     const [userResult, profileResult, educatorResult, addressResult, demoResult, docResult] = await Promise.all([
       supabase.from('users_universal').select('*').eq('id', userId).single(),
-      supabase.from('t_310_01_02_user_profiles').select('*').eq('user_id', userId).single(),
+      supabase.from('user_profiles').select('*').eq('user_id', userId).single(),
       supabase.from('educator_details').select('*').eq('user_id', userId).single(),
-      supabase.from('t_310_01_03_user_addresses').select('*').eq('user_id', userId),
-      supabase.from('t_380_01_01_user_demographics').select('*').eq('user_id', userId).single(),
+      supabase.from('user_addresses').select('*').eq('user_id', userId),
+      supabase.from('user_demographics').select('*').eq('user_id', userId).single(),
       supabase.from('document_storage').select('*').eq('user_id', userId)
     ]);
 

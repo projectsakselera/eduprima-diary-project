@@ -177,7 +177,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
     if (columnConfig.source === 'profiles') {
       const { data, error } = await supabase
-        .from('t_310_01_02_user_profiles')
+        .from('user_profiles')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');
@@ -221,7 +221,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
     // For addresses
     if (columnConfig.source === 'addresses') {
       const { data, error } = await supabase
-        .from('t_310_01_03_user_addresses')
+        .from('user_addresses')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');

@@ -134,7 +134,7 @@ async function createManualPreview(userId: string) {
 
     // User addresses
     const { count: addressCount } = await supabase
-      .from('t_310_01_03_user_addresses')
+      .from('user_addresses')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
@@ -148,7 +148,7 @@ async function createManualPreview(userId: string) {
 
     // User demographics
     const { count: demoCount } = await supabase
-      .from('t_380_01_01_user_demographics')
+      .from('user_demographics')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
@@ -179,7 +179,7 @@ async function createManualPreview(userId: string) {
       if (educatorId) {
         // Availability config
         const { count: availabilityCount } = await supabase
-          .from('t_315_03_01_tutor_availability_config')
+          .from('tutor_availability_config')
           .select('*', { count: 'exact', head: true })
           .eq('educator_id', educatorId);
 
@@ -193,7 +193,7 @@ async function createManualPreview(userId: string) {
 
         // Teaching preferences
         const { count: preferencesCount } = await supabase
-          .from('t_315_04_01_tutor_teaching_preferences')
+          .from('tutor_teaching_preferences')
           .select('*', { count: 'exact', head: true })
           .eq('educator_id', educatorId);
 
@@ -207,7 +207,7 @@ async function createManualPreview(userId: string) {
 
         // Personality traits
         const { count: personalityCount } = await supabase
-          .from('t_315_05_01_tutor_personality_traits')
+          .from('tutor_personality_traits')
           .select('*', { count: 'exact', head: true })
           .eq('educator_id', educatorId);
 
@@ -221,7 +221,7 @@ async function createManualPreview(userId: string) {
 
         // Program mappings
         const { count: programCount } = await supabase
-          .from('t_315_06_01_tutor_program_mappings')
+          .from('tutor_program_mappings')
           .select('*', { count: 'exact', head: true })
           .eq('educator_id', educatorId);
 
@@ -235,7 +235,7 @@ async function createManualPreview(userId: string) {
 
         // Banking info
         const { count: bankingCount } = await supabase
-          .from('t_460_02_04_educator_banking_info')
+          .from('educator_banking_info')
           .select('*', { count: 'exact', head: true })
           .eq('educator_id', educatorId);
 

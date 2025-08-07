@@ -84,10 +84,10 @@ export async function GET(request: NextRequest) {
     // Get program mappings for found tutors (lightweight)
     const tutorIds = searchResults?.map(user => user.id) || [];
     const { data: programMappings } = await supabase
-      .from('t_315_06_01_tutor_program_mappings')
+      .from('tutor_program_mappings')
       .select(`
         educator_id,
-        t_210_02_02_programs_catalog!inner (
+        programs_catalog!inner (
           program_name
         )
       `)
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       if (!programsMap.has(mapping.educator_id)) {
         programsMap.set(mapping.educator_id, []);
       }
-      programsMap.get(mapping.educator_id).push(mapping.t_210_02_02_programs_catalog.program_name);
+      programsMap.get(mapping.educator_id).push(mapping.programs_catalog.program_name);
     });
 
     // Format lightweight results

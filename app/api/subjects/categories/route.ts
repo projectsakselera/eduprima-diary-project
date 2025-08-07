@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = createServerSupabaseClient();
     
     const { data: categories, error } = await supabase
-      .from('t_210_01_01_program_main_categories')
+      .from('program_main_categories')
       .select('*')
       .eq('is_active', true)
       .order('main_name_local');
