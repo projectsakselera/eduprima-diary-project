@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase-admin';
+import { r2Client } from '@/lib/cloudflare-r2';
 import { auth } from '@/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📤 API: Starting tutor file upload...');
+    console.log('📤 API: Starting tutor file upload to Cloudflare R2...');
     
     // 🔐 Add minimal auth check - TIDAK MENGUBAH LOGIC UPLOAD SAMA SEKALI
     const session = await auth();
@@ -25,10 +26,10 @@ export async function POST(request: NextRequest) {
     
     console.log('📁 Received files:', files.length, 'for user:', userId);
     
-    // Create admin client
+    // Create admin client for database updates
     const adminSupabase = createAdminSupabaseClient();
     
-    // Upload files
+    // Upload files to Cloudflare R2
     const uploadResults = [];
     
     for (let i = 0; i < files.length; i++) {
@@ -40,50 +41,59 @@ export async function POST(request: NextRequest) {
       const fileExt = file.name.split('.').pop();
       let fileName = '';
       
+      // Use better folder structure for R2
       switch (fileType) {
         case 'profile_photo':
-          fileName = `${userId}/foto-profil.${fileExt}`;
+          fileName = `tutors/${userId}/foto-profil.${fileExt}`;
           break;
         case 'identity_document':
-          fileName = `${userId}/identitas.${fileExt}`;
+          fileName = `tutors/${userId}/identitas.${fileExt}`;
           break;
         case 'education_document':
-          fileName = `${userId}/pendidikan.${fileExt}`;
+          fileName = `tutors/${userId}/pendidikan.${fileExt}`;
           break;
         case 'certificate_document':
-          fileName = `${userId}/sertifikat.${fileExt}`;
+          fileName = `tutors/${userId}/sertifikat.${fileExt}`;
           break;
         default:
-          fileName = `${userId}/${fileType}.${fileExt}`;
+          fileName = `tutors/${userId}/${fileType}.${fileExt}`;
       }
       
-      console.log(`📤 Uploading ${fileType}:`, fileName);
+      console.log(`📤 Uploading ${fileType} to R2:`, fileName);
       
-      const uploadResult = await adminSupabase.storage
-        .from('eduprimadiary')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      // Convert File to Buffer for R2 upload
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
       
-      if (uploadResult.error) {
-        console.error(`❌ Upload failed for ${fileType}:`, uploadResult.error);
+      // Upload to Cloudflare R2
+      const uploadResult = await r2Client.uploadFile(
+        fileName, 
+        buffer, 
+        file.type,
+        {
+          cacheControl: 'public, max-age=31536000', // 1 year cache
+          metadata: {
+            'user-id': userId,
+            'file-type': fileType,
+            'original-name': file.name,
+            'upload-timestamp': new Date().toISOString()
+          }
+        }
+      );
+      
+      if (!uploadResult.success) {
+        console.error(`❌ R2 Upload failed for ${fileType}:`, uploadResult.error);
         uploadResults.push({
           fileType,
           success: false,
-          error: uploadResult.error.message
+          error: uploadResult.error
         });
       } else {
-        // Get public URL
-        const { data: urlData } = adminSupabase.storage
-          .from('eduprimadiary')
-          .getPublicUrl(fileName);
-        
-        // Update document storage record
+        // Update document storage record in database
         const updateResult = await adminSupabase
           .from('t_460_03_01_document_storage')
           .update({
-            file_url: urlData.publicUrl,
+            file_url: uploadResult.url,
             stored_filename: fileName,
             file_size: file.size,
             updated_at: new Date().toISOString()
@@ -95,18 +105,20 @@ export async function POST(request: NextRequest) {
           fileType,
           success: true,
           fileName,
-          publicUrl: urlData.publicUrl,
-          dbUpdateSuccess: !updateResult.error
+          publicUrl: uploadResult.url,
+          dbUpdateSuccess: !updateResult.error,
+          etag: uploadResult.etag,
+          storage: 'cloudflare-r2'
         });
         
-        console.log(`✅ Upload success for ${fileType}:`, urlData.publicUrl);
+        console.log(`✅ R2 Upload success for ${fileType}:`, uploadResult.url);
       }
     }
     
     return NextResponse.json({
       success: true,
       results: uploadResults,
-      message: `Uploaded ${uploadResults.filter(r => r.success).length}/${uploadResults.length} files`
+      message: `Uploaded ${uploadResults.filter(r => r.success).length}/${uploadResults.length} files to Cloudflare R2`
     });
     
   } catch (error) {

@@ -929,18 +929,24 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
       case 'file':
         // Special handling for profile photo with optimization
         if (field.name === 'fotoProfil') {
-          console.log('🖼️ Rendering OptimizedImageUpload for fotoProfil');
+          console.log('🖼️ Rendering OptimizedImageUpload for fotoProfil (Cloudflare R2 Storage)');
           return (
-            <OptimizedImageUpload
-              onImageSelect={(file) => handleChange(file)}
-              maxSizeMB={2}
-              maxWidthOrHeight={800}
-              quality={0.8}
-              placeholder="Upload foto profil"
-              disabled={disabled}
-              error={error || (fileError ?? undefined)}
-              currentValue={filePreview ?? undefined}
-            />
+            <div className="space-y-2">
+              <OptimizedImageUpload
+                onImageSelect={(file) => handleChange(file)}
+                maxSizeMB={2}
+                maxWidthOrHeight={800}
+                quality={0.8}
+                placeholder="Upload foto profil"
+                disabled={disabled}
+                error={error || (fileError ?? undefined)}
+                currentValue={filePreview ?? undefined}
+              />
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <Icon icon="ph:cloud" className="h-3 w-3 text-blue-500" />
+                <span>Powered by Cloudflare R2 Storage</span>
+              </div>
+            </div>
           );
         }
         
@@ -964,10 +970,14 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               />
               
               {/* File upload guidelines */}
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-2 text-xs text-muted-foreground space-y-1">
                 <div className="flex items-center space-x-4">
                   <span>📁 Max 5MB</span>
                   <span>📄 JPG, PNG, PDF</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Icon icon="ph:cloud" className="h-3 w-3 text-blue-500" />
+                  <span>Powered by Cloudflare R2 Storage</span>
                 </div>
               </div>
             </div>
