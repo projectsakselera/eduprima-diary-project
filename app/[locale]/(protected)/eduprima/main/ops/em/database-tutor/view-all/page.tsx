@@ -30,6 +30,13 @@ import ColumnFilter from "@/components/ui/column-filter";
 import TutorDeleteConfirmationDialog from "@/components/tutor-delete-confirmation-dialog";
 import { toast } from "react-hot-toast";
 
+// Utility function for converting R2 URLs to proxy URLs
+const getProxyUrl = (url: string) => {
+  if (!url) return '';
+  const cleanUrl = url.replace(/^@?https?:\/\/[^\/]+\//, '');
+  return `/api/files/${cleanUrl}`;
+};
+
 // Column Manager Component - Simple & User-Friendly
 interface ColumnManagerProps {
   columns: Column[];
@@ -283,12 +290,6 @@ const FileCell: React.FC<FileCellProps> = ({ value, filename, tutorName, onPrevi
     if (filename === 'dokumenPendidikan') return `Dokumen Pendidikan - ${tutorName}`;
     if (filename === 'dokumenSertifikat') return `Dokumen Sertifikat - ${tutorName}`;
     return `File - ${tutorName}`;
-  };
-
-  const getProxyUrl = (url: string) => {
-    if (!url) return '';
-    const cleanUrl = url.replace(/^@?https?:\/\/[^\/]+\//, '');
-    return `/api/files/${cleanUrl}`;
   };
 
   const handleClick = (e: React.MouseEvent) => {
