@@ -1324,7 +1324,7 @@ export default function ImportExportPage() {
     let tutorRoleId = null;
     
     try {
-      const possibleTableNames = ['t_340_01_01_roles', 'roles', 'user_roles', 'system_roles'];
+      const possibleTableNames = ['user_roles', 'roles', 'system_roles', 't_340_01_01_roles'];
       
       for (const tableName of possibleTableNames) {
         const testResult = await supabase
@@ -1445,7 +1445,7 @@ export default function ImportExportPage() {
         console.log(`📝 Creating user with data:`, usersUniversalData);
 
         const userResult = await supabase
-          .from('t_310_01_01_users_universal')
+          .from('users_universal')
           .insert([usersUniversalData])
           .select('id, email, user_code')
           .single();
@@ -1488,7 +1488,7 @@ export default function ImportExportPage() {
         };
 
         const profileResult = await supabase
-          .from('t_310_01_02_user_profiles')
+          .from('user_profiles')
           .insert([userProfilesData])
           .select('id')
           .single();
@@ -1504,8 +1504,8 @@ export default function ImportExportPage() {
         // ===== STEP 4: Insert to educator_details (simplified) =====
         const educatorDetailsData = {
           user_id: userId,
-          // Educator Registration Number - Pass null jika kosong, trigger akan generate
-          educator_registration_number: trn, // Pass null jika kosong, database akan generate
+          // Tutor Registration Number - Pass null jika kosong, trigger akan generate
+          tutor_registration_number: trn, // Pass null jika kosong, database akan generate
           academic_status: record.mappedData.statusAkademik || null,
           university_s1_name: record.mappedData.namaUniversitas || null,
           faculty: record.mappedData.fakultas || null,
@@ -1521,9 +1521,9 @@ export default function ImportExportPage() {
         };
 
         const educatorResult = await supabase
-          .from('t_315_01_01_educator_details')
+          .from('tutor_details')
           .insert([educatorDetailsData])
-          .select('id, educator_registration_number')
+          .select('id, tutor_registration_number')
           .single();
 
         let generatedTRN = null;
@@ -1533,27 +1533,27 @@ export default function ImportExportPage() {
           console.warn('⚠️ Continuing without educator details');
         } else {
           educatorId = educatorResult.data?.id;
-          generatedTRN = educatorResult.data?.educator_registration_number;
+          generatedTRN = educatorResult.data?.tutor_registration_number;
           console.log(`✅ Educator details created for user ${userId}`);
           console.log(`✅ Generated ERN: ${generatedTRN}`);
         }
 
         // ===== STEP 5: Insert banking information (if provided) =====
         if (educatorId && record.mappedData.namaBank) {
-          console.log(`🏦 Creating banking info for educator ${educatorId}...`);
+          console.log(`🏦 Creating banking info for tutor ${educatorId}...`);
           
           // Get bank name from bank ID (similar to add form)
           let bankName = 'Bank Indonesia'; // Default fallback
           try {
             if (record.mappedData.namaBank) {
               const bankResult = await supabase
-                ?.from('t_120_02_01_banks_indonesia')
-                .select('name, local_name')
+                ?.from('finance_banks_indonesia')
+                .select('bank_name, popular_bank_name')
                 .eq('id', record.mappedData.namaBank)
                 .single();
               
               if (bankResult?.data) {
-                bankName = bankResult.data.local_name || bankResult.data.name || bankName;
+                bankName = bankResult.data.popular_bank_name || bankResult.data.bank_name || bankName;
               }
             }
           } catch (bankError) {
@@ -1561,7 +1561,7 @@ export default function ImportExportPage() {
           }
 
           const bankingData = {
-            educator_id: educatorId,
+            tutor_id: educatorId,
             bank_id: record.mappedData.namaBank, // UUID from fuzzy matching
             bank_name: bankName,
             account_holder_name: record.mappedData.namaNasabah || record.mappedData.namaLengkap || '',
@@ -1575,7 +1575,7 @@ export default function ImportExportPage() {
           };
 
           const bankingResult = await supabase
-            ?.from('t_460_02_04_educator_banking_info')
+            ?.from('tutor_banking_info')
             .insert([bankingData])
             .select('id')
             .single();
@@ -1584,7 +1584,7 @@ export default function ImportExportPage() {
             console.error(`❌ Banking info failed for row ${record.rowNumber}:`, bankingResult.error);
             console.warn('⚠️ Continuing without banking info');
           } else {
-            console.log(`✅ Banking info created for educator ${educatorId}`);
+            console.log(`✅ Banking info created for tutor ${educatorId}`);
           }
         }
 
@@ -1613,7 +1613,7 @@ export default function ImportExportPage() {
           console.log(`🏠 Address data to insert:`, addressData);
 
           const addressResult = await supabase
-            ?.from('t_310_01_03_user_addresses') // CORRECT TABLE NAME
+            ?.from('user_addresses')
             .insert([addressData])
             .select('id');
 
@@ -1628,7 +1628,7 @@ export default function ImportExportPage() {
 
         // ===== STEP 7: Insert program mappings (subjects/lessons) =====
         if (educatorId && record.mappedData.selectedPrograms) {
-          console.log(`📚 Processing programs for educator ${educatorId}...`);
+          console.log(`📚 Processing programs for tutor ${educatorId}...`);
           console.log(`📚 Raw selectedPrograms:`, record.mappedData.selectedPrograms);
           console.log(`📚 Type of selectedPrograms:`, typeof record.mappedData.selectedPrograms);
           console.log(`📚 Is array:`, Array.isArray(record.mappedData.selectedPrograms));
@@ -1699,7 +1699,7 @@ export default function ImportExportPage() {
             
             // Only create mappings for valid UUIDs
             const programMappingsData = validUUIDs.map((programId: string) => ({
-              educator_id: educatorId,
+              tutor_id: educatorId,
               program_id: programId, // UUID from fuzzy matching
               proficiency_level: 'intermediate', // Default value
               years_of_experience: 1, // Default value  
@@ -1714,7 +1714,7 @@ export default function ImportExportPage() {
             if (programNames.length > 0) {
               console.log(`📝 Storing ${programNames.length} program names in additional subjects table`);
               const additionalSubjectsData = programNames.map((programName: string) => ({
-                educator_id: educatorId,
+                tutor_id: educatorId,
                 subject_name: programName,
                 subject_description: `Imported from CSV: ${programName}`,
                 target_level: 'all',
@@ -1726,7 +1726,7 @@ export default function ImportExportPage() {
               }));
               
               const additionalSubjectsResult = await supabase
-                ?.from('t_315_07_01_tutor_additional_subjects')
+                ?.from('tutor_additional_subjects')
                 .insert(additionalSubjectsData)
                 .select('id');
                 
@@ -1741,11 +1741,11 @@ export default function ImportExportPage() {
             if (programMappingsData.length > 0) {
               console.log(`📚 Final data to insert (${programMappingsData.length} records):`);
               programMappingsData.forEach((data: any, index: number) => {
-                console.log(`  ${index + 1}. Program ID: ${data.program_id}, Educator ID: ${data.educator_id}`);
+                console.log(`  ${index + 1}. Program ID: ${data.program_id}, Tutor ID: ${data.tutor_id}`);
               });
 
               const mappingsResult = await supabase
-                ?.from('t_315_06_01_tutor_program_mappings')
+                ?.from('tutor_program_mappings')
                 .insert(programMappingsData)
                 .select('id, program_id');
 
@@ -1755,11 +1755,11 @@ export default function ImportExportPage() {
                 console.error('Failed data:', programMappingsData);
                 console.warn('⚠️ Continuing without program mappings');
               } else {
-                console.log(`✅ Program mappings created for educator ${educatorId}: ${programMappingsData.length} programs`);
+                console.log(`✅ Program mappings created for tutor ${educatorId}: ${programMappingsData.length} programs`);
                 console.log('Created mappings:', mappingsResult.data);
               }
             } else {
-              console.log(`ℹ️ No valid program UUIDs to insert for educator ${educatorId}`);
+              console.log(`ℹ️ No valid program UUIDs to insert for tutor ${educatorId}`);
             }
           }
         } else {
@@ -1768,10 +1768,10 @@ export default function ImportExportPage() {
 
         // ===== STEP 8A: Insert teaching preferences (MISSING TABLE!) =====
         if (educatorId) {
-          console.log(`🎯 Creating teaching preferences for educator ${educatorId}...`);
+          console.log(`🎯 Creating teaching preferences for tutor ${educatorId}...`);
           
           const teachingPreferencesData = {
-            educator_id: educatorId,
+            tutor_id: educatorId,
             teaching_styles: record.mappedData.teachingMethods ? [record.mappedData.teachingMethods] : [],
             student_level_preferences: record.mappedData.studentLevelPreferences ? [record.mappedData.studentLevelPreferences] : [],
             tech_savviness_level: record.mappedData.techSavviness || null,
@@ -1802,25 +1802,25 @@ export default function ImportExportPage() {
           });
 
           const preferencesResult = await supabase
-            ?.from('t_315_04_01_tutor_teaching_preferences')
+            ?.from('tutor_teaching_preferences')
             .insert([teachingPreferencesData])
             .select('id')
             .single();
 
           if (preferencesResult?.error) {
-            console.error(`❌ Failed to create teaching preferences for educator ${educatorId}:`, preferencesResult.error);
+            console.error(`❌ Failed to create teaching preferences for tutor ${educatorId}:`, preferencesResult.error);
             console.warn('⚠️ Continuing without teaching preferences');
           } else {
-            console.log(`✅ Teaching preferences created for educator ${educatorId}:`, preferencesResult.data?.id);
+            console.log(`✅ Teaching preferences created for tutor ${educatorId}:`, preferencesResult.data?.id);
           }
         }
 
         // ===== STEP 8B: Insert personality traits (MISSING TABLE!) =====
         if (educatorId) {
-          console.log(`💫 Creating personality traits for educator ${educatorId}...`);
+          console.log(`💫 Creating personality traits for tutor ${educatorId}...`);
           
           const personalityTraitsData = {
-            educator_id: educatorId,
+            tutor_id: educatorId,
             teaching_patience_level: record.mappedData.teachingPatienceLevel || null,
             student_motivation_ability: record.mappedData.studentMotivationAbility || null,
             schedule_flexibility_level: record.mappedData.scheduleFlexibilityLevel || null,
@@ -1843,27 +1843,27 @@ export default function ImportExportPage() {
           });
 
           const personalityResult = await supabase
-            ?.from('t_315_05_01_tutor_personality_traits')
+            ?.from('tutor_personality_traits')
             .insert([personalityTraitsData])
             .select('id')
             .single();
 
           if (personalityResult?.error) {
-            console.error(`❌ Failed to create personality traits for educator ${educatorId}:`, personalityResult.error);
+            console.error(`❌ Failed to create personality traits for tutor ${educatorId}:`, personalityResult.error);
             console.error(`❌ FULL ERROR DETAILS:`, JSON.stringify(personalityResult.error, null, 2));
             console.warn('⚠️ Continuing without personality traits');
           } else {
-            console.log(`✅ Personality traits created for educator ${educatorId}:`, personalityResult.data?.id);
+            console.log(`✅ Personality traits created for tutor ${educatorId}:`, personalityResult.data?.id);
             console.log(`✅ PERSONALITY DATA CREATED:`, JSON.stringify(personalityResult.data, null, 2));
           }
         }
 
         // ===== STEP 8C: Insert availability config (MISSING TABLE!) =====
         if (educatorId) {
-          console.log(`📅 Creating availability config for educator ${educatorId}...`);
+          console.log(`📅 Creating availability config for tutor ${educatorId}...`);
           
           const availabilityConfigData = {
-            educator_id: educatorId,
+            tutor_id: educatorId,
             availability_status: (() => {
               const rawStatus = record.mappedData.statusMenerimaSiswa;
               const status = rawStatus?.toLowerCase() || '';
@@ -1924,17 +1924,17 @@ export default function ImportExportPage() {
           });
 
           const availabilityResult = await supabase
-            ?.from('t_315_03_01_tutor_availability_config')
+            ?.from('tutor_availability_config')
             .insert([availabilityConfigData])
             .select('id')
             .single();
 
           if (availabilityResult?.error) {
-            console.error(`❌ Failed to create availability config for educator ${educatorId}:`, availabilityResult.error);
+            console.error(`❌ Failed to create availability config for tutor ${educatorId}:`, availabilityResult.error);
             console.error(`❌ FULL AVAILABILITY ERROR DETAILS:`, JSON.stringify(availabilityResult.error, null, 2));
             console.warn('⚠️ Continuing without availability config');
           } else {
-            console.log(`✅ Availability config created for educator ${educatorId}:`, availabilityResult.data?.id);
+            console.log(`✅ Availability config created for tutor ${educatorId}:`, availabilityResult.data?.id);
             console.log(`✅ AVAILABILITY DATA CREATED:`, JSON.stringify(availabilityResult.data, null, 2));
           }
         }
@@ -1977,7 +1977,7 @@ export default function ImportExportPage() {
           });
 
           const managementResult = await supabase
-            ?.from('t_315_02_01_tutor_management')
+            ?.from('tutor_management')
             .insert([tutorManagementData])
             .select('id')
             .single();
@@ -1992,7 +1992,7 @@ export default function ImportExportPage() {
           }
         }
         
-        console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, Educator ID: ${educatorId}, ERN: ${generatedTRN || trn || 'Not generated'}`);
+        console.log(`✅ Successfully processed row ${record.rowNumber} - User ID: ${userId}, Tutor ID: ${educatorId}, ERN: ${generatedTRN || trn || 'Not generated'}`);
         successCount++;
       } catch (error) {
         console.error(`❌ Full error details for row ${record.rowNumber}:`, error);
@@ -2081,7 +2081,7 @@ export default function ImportExportPage() {
       console.log('🔍 Finding tutor role ID...');
       
       const { data: rolesData, error: roleError } = await supabase
-        .from('t_340_01_01_roles')
+        .from('user_roles')
         .select('*');
 
       if (roleError) {
@@ -2089,7 +2089,7 @@ export default function ImportExportPage() {
         throw new Error(`Failed to fetch roles: ${roleError.message}`);
       }
 
-      console.log('✅ Found roles in table: t_340_01_01_roles');
+      console.log('✅ Found roles in table: user_roles');
       
       const tutorRole = rolesData?.find(role => role.role_name?.toLowerCase() === 'tutor');
       
@@ -2102,18 +2102,18 @@ export default function ImportExportPage() {
 
       // 📊 Comprehensive export query with JOINs
       const { data, error } = await supabase
-        .from('t_310_01_01_users_universal')
+        .from('users_universal')
         .select(`
           *,
-          user_profiles:t_310_02_01_user_profiles(*),
-          educator_details:t_315_01_01_educator_details(*),
-          tutor_management:t_315_02_01_tutor_management(*),
-          availability_config:t_315_03_01_tutor_availability_config(*),
-          teaching_preferences:t_315_04_01_tutor_teaching_preferences(*),
-          personality_traits:t_315_05_01_tutor_personality_traits(*),
-          banking_info:t_315_06_01_educator_banking_info(*),
-          program_mappings:t_315_07_01_tutor_program_mappings(*),
-          addresses:t_310_03_01_addresses(*)
+          user_profiles(*),
+          tutor_details(*),
+          tutor_management(*),
+          tutor_availability_config(*),
+          tutor_teaching_preferences(*),
+          tutor_personality_traits(*),
+          tutor_banking_info(*),
+          tutor_program_mappings(*),
+          user_addresses(*)
         `)
         .eq('primary_role_id', tutorRoleId)
         .order('created_at', { ascending: false });
@@ -2139,18 +2139,19 @@ export default function ImportExportPage() {
       
       const transformedData = data.map(user => {
         const profile = Array.isArray(user.user_profiles) ? user.user_profiles[0] : user.user_profiles;
-        const educator = Array.isArray(user.educator_details) ? user.educator_details[0] : user.educator_details;
+        const educator = Array.isArray(user.tutor_details) ? user.tutor_details[0] : user.tutor_details;
         const management = Array.isArray(user.tutor_management) ? user.tutor_management[0] : user.tutor_management;
-        const availability = Array.isArray(user.availability_config) ? user.availability_config[0] : user.availability_config;
-        const preferences = Array.isArray(user.teaching_preferences) ? user.teaching_preferences[0] : user.teaching_preferences;
-        const personality = Array.isArray(user.personality_traits) ? user.personality_traits[0] : user.personality_traits;
-        const banking = Array.isArray(user.banking_info) ? user.banking_info[0] : user.banking_info;
-        const addresses = Array.isArray(user.addresses) ? user.addresses : [];
+        const availability = Array.isArray(user.tutor_availability_config) ? user.tutor_availability_config[0] : user.tutor_availability_config;
+        const preferences = Array.isArray(user.tutor_teaching_preferences) ? user.tutor_teaching_preferences[0] : user.tutor_teaching_preferences;
+        const personality = Array.isArray(user.tutor_personality_traits) ? user.tutor_personality_traits[0] : user.tutor_personality_traits;
+        const banking = Array.isArray(user.tutor_banking_info) ? user.tutor_banking_info[0] : user.tutor_banking_info;
+        const addresses = Array.isArray(user.user_addresses) ? user.user_addresses : [];
         const domicileAddress = addresses.find((addr: any) => addr.address_type === 'domicile');
 
         return {
           // System & Status (FROM TUTOR_MANAGEMENT)
           'Status Tutor': management?.status_tutor || 'registration',
+          'ERN (Educator Registration Number)': educator?.tutor_registration_number || '',
           'Level Approval': management?.approval_level || 'junior',
           'Catatan Staff': management?.staff_notes || '',
           

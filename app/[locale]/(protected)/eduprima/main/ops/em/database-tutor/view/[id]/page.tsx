@@ -1916,6 +1916,18 @@ export default function ViewTutorPage() {
                             </Badge>
                           )}
                         </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-500">Transcript Document</span>
+                          {tutorData.transkripNilai ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              Available
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-800">
+                              Optional
+                            </Badge>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
 

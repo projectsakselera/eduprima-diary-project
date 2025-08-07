@@ -198,7 +198,7 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
     if (columnConfig.source === 'educator') {
       const { data, error } = await supabase
-        .from('educator_details')
+        .from('tutor_details')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');

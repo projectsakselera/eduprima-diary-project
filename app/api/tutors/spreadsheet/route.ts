@@ -334,17 +334,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Master Data - Provinces
       supabase
-        .from('provinces')
+        .from('location_province')
         .select('id, region_name'),
       
       // Master Data - Cities  
       supabase
-        .from('cities')
+        .from('location_cities')
         .select('id, city_name'),
         
       // Master Data - Programs
       supabase
-        .from('programs_catalog')
+        .from('programs_unit')
         .select('id, program_name_local, program_name')
     ]);
 
@@ -522,6 +522,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         motivasiMenjadiTutor: profile?.motivation_as_tutor || '',
         socialMedia1: profile?.social_media_1 || '',
         socialMedia2: profile?.social_media_2 || '',
+        languagesMastered: profile?.languages_mastered || [],
+        preferredLanguage: profile?.preferred_language || '',
+        whatsappNumber: profile?.whatsapp_number || profile?.mobile_phone || '',
         
         // Address - Domisili (with lookups to master tables)
         provinsiDomisili: provincesMap.get(domicileAddr.province_id) || domicileAddr.province_id || '',
@@ -550,12 +553,12 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         namaUniversitas: tutorDetails?.university_s1_name || '',
         fakultas: tutorDetails?.faculty || '',
         jurusan: tutorDetails?.major_s1 || '',
+        jurusanSMKDetail: tutorDetails?.vocational_school_detail || extractFromEducationHistory(tutorDetails?.education_history, 'smk', 'major_detail') || '',
         ipk: profile?.gpa || 0,
         tahunMasuk: tutorDetails?.entry_year?.toString() || '',
         tahunLulus: profile?.graduation_year?.toString() || '',
         namaSMA: tutorDetails?.high_school || '',
         jurusanSMA: extractFromEducationHistory(tutorDetails?.education_history, 'sma', 'major') || '',
-        jurusanSMKDetail: extractFromEducationHistory(tutorDetails?.education_history, 'smk', 'major_detail') || extractFromEducationHistory(tutorDetails?.education_history, 'sma', 'major_detail') || '',
         tahunLulusSMA: tutorDetails?.high_school_graduation_year?.toString() || '',
         
         // Education Documents
@@ -646,6 +649,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         location_notes: availability?.location_notes || '',
         catatanAvailability: availability?.availability_notes || '',
         
+        // Transportation & Location Coordinates
+        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
+        titikLokasiLat: availability?.teaching_center_lat || null,
+        titikLokasiLng: availability?.teaching_center_lng || null,
+        
         // DEBUG: Add raw availability data for troubleshooting
         _debug_availability_full: availability || {},
         _debug_schedule: {
@@ -656,11 +664,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           raw_radius: availability?.teaching_radius_km,
           has_availability: !!availability
         },
-        
-        // Transportation & Location Coordinates
-        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
-        titikLokasiLat: availability?.teaching_center_lat || null,
-        titikLokasiLng: availability?.teaching_center_lng || null,
         
         // Teaching Preferences
         teachingMethods: preferences?.teaching_styles || [],
@@ -690,7 +693,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         scheduleFlexibilityLevel: personality?.schedule_flexibility_level?.toString() || '',
         
         // Emergency Contact
-        whatsappNumber: profile?.whatsapp_number || profile?.mobile_phone || '',
         emergencyContactName: profile?.emergency_contact_name || '',
         emergencyContactRelationship: profile?.emergency_contact_relationship || '',
         emergencyContactPhone: profile?.emergency_contact_phone || '',

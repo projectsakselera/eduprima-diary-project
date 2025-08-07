@@ -403,6 +403,9 @@ interface TutorSpreadsheetData {
   motivasiMenjadiTutor: string;
   socialMedia1: string;
   socialMedia2: string;
+  languagesMastered: string[];
+  preferredLanguage: string;
+  whatsappNumber: string;
 
   
   // Address - Domisili
@@ -432,8 +435,8 @@ interface TutorSpreadsheetData {
   namaUniversitas: string;
   fakultas: string;
   jurusan: string;
-
-  ipk: string;
+  jurusanSMKDetail: string;
+  ipk: number;
   tahunMasuk: string;
   tahunLulus: string;
   namaSMA: string;
@@ -464,6 +467,10 @@ interface TutorSpreadsheetData {
   teaching_radius_km: number;
   alamatTitikLokasi: string;
   location_notes: string;
+  catatanAvailability: string;
+  transportasiTutor: string[];
+  titikLokasiLat: number | null;
+  titikLokasiLng: number | null;
   
   // Teaching Preferences
   teachingMethods: string[];
@@ -525,6 +532,8 @@ interface TutorSpreadsheetData {
   dokumenIdentitas: string | null;
   dokumenPendidikan: string | null;
   dokumenSertifikat: string | null;
+  transkripNilai: string | null;
+  sertifikatKeahlian: string | null;
   
   // Document Verification
   status_verifikasi_identitas: string;
@@ -586,6 +595,9 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'motivasiMenjadiTutor', label: 'Motivasi', width: 300, type: 'text', category: 'Profil & Motivasi' },
   { key: 'socialMedia1', label: 'Social Media 1', width: 200, type: 'text', category: 'Profil & Motivasi' },
   { key: 'socialMedia2', label: 'Social Media 2', width: 200, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'languagesMastered', label: 'Bahasa Dikuasai', width: 200, type: 'array', category: 'Profil & Motivasi' },
+  { key: 'preferredLanguage', label: 'Bahasa Preferensi', width: 150, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'whatsappNumber', label: 'WhatsApp', width: 140, type: 'phone', category: 'Profil & Motivasi' },
   
   
   // Identitas Dasar - Alamat Domisili
@@ -619,7 +631,8 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'namaUniversitas', label: 'Universitas', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'fakultas', label: 'Fakultas', width: 150, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'jurusan', label: 'Jurusan', width: 150, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'ipk', label: 'IPK', width: 80, type: 'text', category: 'Pendidikan & Pengalaman' },
+  { key: 'jurusanSMKDetail', label: 'Jurusan SMK Detail', width: 180, type: 'text', category: 'Pendidikan & Pengalaman' },
+  { key: 'ipk', label: 'IPK', width: 80, type: 'number', category: 'Pendidikan & Pengalaman' },
   { key: 'tahunMasuk', label: 'Tahun Masuk', width: 120, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'tahunLulus', label: 'Tahun Lulus', width: 120, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'namaSMA', label: 'Nama SMA', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
@@ -661,6 +674,10 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'teaching_radius_km', label: 'Radius Mengajar (km)', width: 160, type: 'number', category: 'Ketersediaan & Preferensi' },
   { key: 'alamatTitikLokasi', label: 'Titik Lokasi', width: 300, type: 'text', category: 'Ketersediaan & Preferensi' },
   { key: 'location_notes', label: 'Catatan Lokasi', width: 200, type: 'text', category: 'Ketersediaan & Preferensi' },
+  { key: 'catatanAvailability', label: 'Catatan Ketersediaan', width: 200, type: 'text', category: 'Ketersediaan & Preferensi' },
+  { key: 'transportasiTutor', label: 'Transportasi Tutor', width: 180, type: 'array', category: 'Ketersediaan & Preferensi' },
+  { key: 'titikLokasiLat', label: 'Titik Lokasi Lat', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
+  { key: 'titikLokasiLng', label: 'Titik Lokasi Lng', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
   { key: 'transportation_method', label: 'Metode Transportasi', width: 180, type: 'text', category: 'Ketersediaan & Preferensi' },
   { key: 'teaching_center_lat', label: 'Koordinat Lat', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
   { key: 'teaching_center_lng', label: 'Koordinat Lng', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
@@ -693,6 +710,8 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'dokumenIdentitas', label: 'Dokumen Identitas', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'dokumenPendidikan', label: 'Dokumen Pendidikan', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'dokumenSertifikat', label: 'Dokumen Sertifikat', width: 150, type: 'file', category: 'Upload Dokumen' },
+  { key: 'transkripNilai', label: 'Transkrip Nilai', width: 150, type: 'file', category: 'Upload Dokumen' },
+  { key: 'sertifikatKeahlian', label: 'Sertifikat Keahlian', width: 150, type: 'file', category: 'Upload Dokumen' },
   
   // Upload Dokumen - Verifikasi
   { key: 'status_verifikasi_identitas', label: 'Verifikasi Identitas', width: 150, type: 'select', category: 'Upload Dokumen' },
@@ -725,7 +744,13 @@ export default function ViewAllTutorsPage() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{key: keyof TutorSpreadsheetData; direction: 'asc' | 'desc'} | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const [visibleColumns, setVisibleColumns] = useState<Set<keyof TutorSpreadsheetData>>(new Set());
+  const [visibleColumns, setVisibleColumns] = useState<Set<keyof TutorSpreadsheetData>>(new Set([
+    // Essential columns - always visible by default
+    'trn', 'namaLengkap', 'email', 'status_tutor', 'approval_level',
+    'jenisKelamin', 'agama', 'statusAkademik', 'statusMenerimaSiswa',
+    'hourly_rate', 'provinsiDomisili', 'kotaKabupatenDomisili',
+    'fotoProfil', 'noHp1', 'created_at'
+  ]));
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [isResizing, setIsResizing] = useState<{column: string; startX: number; startWidth: number} | null>(null);
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
