@@ -3,22 +3,22 @@
 Dokumentasi ini menjelaskan struktur CASCADE DELETE untuk sistem manajemen tutor EduPrima. CASCADE diimplementasikan untuk memastikan data integrity dan mencegah orphaned data saat menghapus user.
 2. CASCADE Architecture
 2.1 Visual Structure
-t_310_01_01_users_universal (ROOT)
+users_universal (ROOT)
 │
-├─🔴 CASCADE → t_310_01_02_user_profiles
-├─🔴 CASCADE → t_310_01_03_user_addresses  
-├─🔴 CASCADE → t_380_01_01_user_demographics
-├─🔴 CASCADE → t_315_02_01_tutor_management
+├─🔴 CASCADE → user_profiles
+├─🔴 CASCADE → user_addresses  
+├─🔴 CASCADE → user_demographics
+├─🔴 CASCADE → tutor_management
 ├─🔴 CASCADE → document_storage
 │
-└─🔴 CASCADE → t_315_01_01_educator_details
+└─🔴 CASCADE → tutor_details
               │
-              ├─🔴 CASCADE → t_315_03_01_tutor_availability_config
-              ├─🔴 CASCADE → t_315_04_01_tutor_teaching_preferences
-              ├─🔴 CASCADE → t_315_05_01_tutor_personality_traits
-              ├─🔴 CASCADE → t_315_06_01_tutor_program_mappings
-              ├─🔴 CASCADE → t_460_02_04_educator_banking_info
-              └─🔴 CASCADE → t_315_07_01_tutor_additional_subjects
+              ├─🔴 CASCADE → tutor_availability_config
+              ├─🔴 CASCADE → tutor_teaching_preferences
+              ├─🔴 CASCADE → tutor_personality_traits
+              ├─🔴 CASCADE → tutor_program_mappings
+              ├─🔴 CASCADE → tutor_banking_info
+              └─🔴 CASCADE → tutor_additional_subjects
 2.2 Deletion Flow
 mermaidgraph TD
     A[Delete users_universal] --> B[Auto-delete user_profiles]
@@ -36,9 +36,9 @@ mermaidgraph TD
     G --> M[Auto-delete additional_subjects]
 3. Table-by-Table CASCADE Documentation
 3.1 Primary User Tables
-TableParentFK ColumnOn DeleteDescriptiont_310_01_02_user_profilesusers_universaluser_idCASCADEPersonal profile datat_310_01_03_user_addressesusers_universaluser_idCASCADEAll user addressest_380_01_01_user_demographicsusers_universaluser_idCASCADEDemographic informationt_315_02_01_tutor_managementusers_universaluser_idCASCADETutor status & approvaldocument_storageusers_universaluser_idCASCADEUploaded documents
+TableParentFK ColumnOn DeleteDescriptionuser_profilesusers_universaluser_idCASCADEPersonal profile datauser_addressesusers_universaluser_idCASCADEAll user addressesuser_demographicsusers_universaluser_idCASCADEDemographic informationtutor_managementusers_universaluser_idCASCADETutor status & approvaldocument_storageusers_universaluser_idCASCADEUploaded documents
 3.2 Educator-Specific Tables
-TableParentFK ColumnOn DeleteDescriptiont_315_01_01_educator_detailsusers_universaluser_idCASCADEMain educator profilet_315_03_01_tutor_availability_configeducator_detailseducator_idCASCADESchedule & availabilityt_315_04_01_tutor_teaching_preferenceseducator_detailseducator_idCASCADETeaching style preferencest_315_05_01_tutor_personality_traitseducator_detailseducator_idCASCADEPersonality profilet_315_06_01_tutor_program_mappingseducator_detailseducator_idCASCADESubject/program mappingst_460_02_04_educator_banking_infoeducator_detailseducator_idCASCADEBanking informationt_315_07_01_tutor_additional_subjectseducator_detailseducator_idCASCADECustom subjects
+TableParentFK ColumnOn DeleteDescriptiontutor_detailsusers_universaluser_idCASCADEMain tutor profiletutor_availability_configtutor_detailstutor_idCASCADESchedule & availabilitytutor_teaching_preferencestutor_detailstutor_idCASCADETeaching style preferencestutor_personality_traitstutor_detailstutor_idCASCADEPersonality profiletutor_program_mappingstutor_detailstutor_idCASCADESubject/program mappingstutor_banking_infotutor_detailstutor_idCASCADEBanking informationtutor_additional_subjectstutor_detailstutor_idCASCADECustom subjects
 4. Implementation SQL Scripts
 4.1 Check Current CASCADE Status
 sql-- Check all CASCADE relationships
@@ -62,8 +62,8 @@ FROM
 WHERE tc.constraint_type = 'FOREIGN KEY'
     AND tc.table_schema = 'public'
     AND (
-        ccu.table_name = 't_310_01_01_users_universal'
-        OR ccu.table_name = 't_315_01_01_educator_details'
+        ccu.table_name = 'users_universal'
+        OR ccu.table_name = 'tutor_details'
     )
 ORDER BY parent_table, child_table;
 4.2 Create CASCADE Constraints
@@ -82,50 +82,50 @@ BEGIN
     RETURN QUERY
     -- User core data
     SELECT 'users_universal'::TEXT, COUNT(*), 'User Account'::TEXT
-    FROM t_310_01_01_users_universal WHERE id = p_user_id
+    FROM users_universal WHERE id = p_user_id
     
     UNION ALL
     
     SELECT 'user_profiles', COUNT(*), 'Personal Profile'
-    FROM t_310_01_02_user_profiles WHERE user_id = p_user_id
+    FROM user_profiles WHERE user_id = p_user_id
     
     UNION ALL
     
     SELECT 'user_addresses', COUNT(*), 'Addresses'
-    FROM t_310_01_03_user_addresses WHERE user_id = p_user_id
+    FROM user_addresses WHERE user_id = p_user_id
     
     UNION ALL
     
     SELECT 'user_demographics', COUNT(*), 'Demographics'
-    FROM t_380_01_01_user_demographics WHERE user_id = p_user_id
+    FROM user_demographics WHERE user_id = p_user_id
     
     UNION ALL
     
-    -- Educator data
-    SELECT 'educator_details', COUNT(*), 'Educator Profile'
-    FROM t_315_01_01_educator_details WHERE user_id = p_user_id
+    -- Tutor data
+    SELECT 'tutor_details', COUNT(*), 'Tutor Profile'
+    FROM tutor_details WHERE user_id = p_user_id
     
     UNION ALL
     
-    -- Educator sub-tables (via educator_id)
+    -- Tutor sub-tables (via tutor_id)
     SELECT 'availability_config', COUNT(*), 'Schedule Config'
-    FROM t_315_03_01_tutor_availability_config tac
-    JOIN t_315_01_01_educator_details ed ON tac.educator_id = ed.id
-    WHERE ed.user_id = p_user_id
+    FROM tutor_availability_config tac
+    JOIN tutor_details td ON tac.tutor_id = td.id
+    WHERE td.user_id = p_user_id
     
     UNION ALL
     
     SELECT 'teaching_preferences', COUNT(*), 'Teaching Preferences'
-    FROM t_315_04_01_tutor_teaching_preferences tp
-    JOIN t_315_01_01_educator_details ed ON tp.educator_id = ed.id
-    WHERE ed.user_id = p_user_id
+    FROM tutor_teaching_preferences tp
+    JOIN tutor_details td ON tp.tutor_id = td.id
+    WHERE td.user_id = p_user_id
     
     UNION ALL
     
     SELECT 'program_mappings', COUNT(*), 'Subject Mappings'
-    FROM t_315_06_01_tutor_program_mappings pm
-    JOIN t_315_01_01_educator_details ed ON pm.educator_id = ed.id
-    WHERE ed.user_id = p_user_id
+    FROM tutor_program_mappings pm
+    JOIN tutor_details td ON pm.tutor_id = td.id
+    WHERE td.user_id = p_user_id
     
     UNION ALL
     
@@ -150,7 +150,7 @@ BEGIN;
     SELECT * FROM preview_user_deletion('test-user-id');
     
     -- Delete
-    DELETE FROM t_310_01_01_users_universal WHERE id = 'test-user-id';
+    DELETE FROM users_universal WHERE id = 'test-user-id';
     
     -- Check after (should all be 0)
     SELECT * FROM preview_user_deletion('test-user-id');
@@ -170,7 +170,7 @@ BEGIN
     
     -- Get user email
     SELECT email INTO v_user_email 
-    FROM t_310_01_01_users_universal 
+    FROM users_universal 
     WHERE id = p_user_id;
     
     -- Create backup record
@@ -186,9 +186,9 @@ BEGIN
         v_user_email,
         NOW(),
         jsonb_build_object(
-            'users_universal', (SELECT row_to_json(u) FROM t_310_01_01_users_universal u WHERE id = p_user_id),
-            'user_profiles', (SELECT row_to_json(p) FROM t_310_01_02_user_profiles p WHERE user_id = p_user_id),
-            'educator_details', (SELECT row_to_json(e) FROM t_315_01_01_educator_details e WHERE user_id = p_user_id)
+            'users_universal', (SELECT row_to_json(u) FROM users_universal u WHERE id = p_user_id),
+            'user_profiles', (SELECT row_to_json(p) FROM user_profiles p WHERE user_id = p_user_id),
+            'tutor_details', (SELECT row_to_json(t) FROM tutor_details t WHERE user_id = p_user_id)
         )
     );
     
@@ -206,9 +206,9 @@ WITH orphan_summary AS (
     SELECT 
         'user_profiles' as table_name,
         COUNT(*) as orphan_count
-    FROM t_310_01_02_user_profiles p
+    FROM user_profiles p
     WHERE NOT EXISTS (
-        SELECT 1 FROM t_310_01_01_users_universal u 
+        SELECT 1 FROM users_universal u 
         WHERE u.id = p.user_id
     )
     
@@ -217,9 +217,9 @@ WITH orphan_summary AS (
     SELECT 
         'user_addresses',
         COUNT(*)
-    FROM t_310_01_03_user_addresses a
+    FROM user_addresses a
     WHERE NOT EXISTS (
-        SELECT 1 FROM t_310_01_01_users_universal u 
+        SELECT 1 FROM users_universal u 
         WHERE u.id = a.user_id
     )
     
@@ -260,22 +260,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tr_log_user_deletion
-BEFORE DELETE ON t_310_01_01_users_universal
+BEFORE DELETE ON users_universal
 FOR EACH ROW EXECUTE FUNCTION log_user_deletion();
 9. Emergency Procedures
 9.1 Disable CASCADE Temporarily
 sql-- In case of issues, disable CASCADE
-ALTER TABLE t_310_01_02_user_profiles
+ALTER TABLE user_profiles
 DROP CONSTRAINT fk_user_profiles_user_id,
 ADD CONSTRAINT fk_user_profiles_user_id 
-FOREIGN KEY (user_id) REFERENCES t_310_01_01_users_universal(id) 
+FOREIGN KEY (user_id) REFERENCES users_universal(id) 
 ON DELETE RESTRICT; -- Changed from CASCADE
 9.2 Re-enable CASCADE
 sql-- Re-enable after fixing issues
-ALTER TABLE t_310_01_02_user_profiles
+ALTER TABLE user_profiles
 DROP CONSTRAINT fk_user_profiles_user_id,
 ADD CONSTRAINT fk_user_profiles_user_id 
-FOREIGN KEY (user_id) REFERENCES t_310_01_01_users_universal(id) 
+FOREIGN KEY (user_id) REFERENCES users_universal(id) 
 ON DELETE CASCADE;
 10. Future Enhancements
 10.1 Planned: Soft Delete Implementation

@@ -33,7 +33,7 @@
   },
   {
     "trigger_name": "tr_countries_updated_at",
-    "table_name": "t_120_01_01_countries",
+    "table_name": "location_countries",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -41,7 +41,7 @@
   },
   {
     "trigger_name": "tr_cities_updated_at",
-    "table_name": "t_120_01_03_cities",
+    "table_name": "location_cities",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -49,7 +49,7 @@
   },
   {
     "trigger_name": "tr_banks_indonesia_updated_at",
-    "table_name": "t_120_02_01_banks_indonesia",
+    "table_name": "finance_banks_indonesia",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_banks_timestamp()",
@@ -81,7 +81,7 @@
   },
   {
     "trigger_name": "tr_main_categories_updated_at",
-    "table_name": "t_210_01_01_program_main_categories",
+    "table_name": "program_main_categories",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -89,7 +89,7 @@
   },
   {
     "trigger_name": "tr_sub_categories_updated_at",
-    "table_name": "t_210_01_02_program_sub_categories",
+    "table_name": "program_sub_categories",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -97,7 +97,7 @@
   },
   {
     "trigger_name": "tr_types_updated_at",
-    "table_name": "t_210_02_01_program_types",
+    "table_name": "program_types",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -105,7 +105,7 @@
   },
   {
     "trigger_name": "tr_programs_updated_at",
-    "table_name": "t_210_02_02_programs_catalog",
+    "table_name": "programs_unit",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -145,7 +145,7 @@
   },
   {
     "trigger_name": "tr_users_updated_at",
-    "table_name": "t_310_01_01_users_universal",
+    "table_name": "users_universal",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -153,7 +153,7 @@
   },
   {
     "trigger_name": "tr_profiles_updated_at",
-    "table_name": "t_310_01_02_user_profiles",
+    "table_name": "user_profiles",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp()",
@@ -169,18 +169,18 @@
   },
   {
     "trigger_name": "handle_tutor_details_updated_at",
-    "table_name": "t_315_01_01_educator_details",
+    "table_name": "tutor_details",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION moddatetime('updated_at')",
     "schema_name": "public"
   },
   {
-    "trigger_name": "tr_educator_registration_number",
-    "table_name": "t_315_01_01_educator_details",
+    "trigger_name": "tr_tutor_registration_number",
+    "table_name": "tutor_details",
     "action_timing": "BEFORE",
     "event": "INSERT",
-    "executes_function": "EXECUTE FUNCTION set_educator_registration_number()",
+    "executes_function": "EXECUTE FUNCTION set_tutor_registration_number()",
     "schema_name": "public"
   },
   {
@@ -233,7 +233,7 @@
   },
   {
     "trigger_name": "tr_tutor_sessions_updated_at",
-    "table_name": "t_460_02_04_tutor_sessions",
+    "table_name": "tutor_sessions",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp_tutor_sessions()",
@@ -241,7 +241,7 @@
   },
   {
     "trigger_name": "tr_payout_requests_updated_at",
-    "table_name": "t_460_02_05_payout_requests",
+    "table_name": "finance_payout_requests",
     "action_timing": "BEFORE",
     "event": "UPDATE",
     "executes_function": "EXECUTE FUNCTION update_timestamp_payout_requests()",
@@ -249,7 +249,7 @@
   },
   {
     "trigger_name": "tr_update_payout_frequency",
-    "table_name": "t_460_02_05_payout_requests",
+    "table_name": "finance_payout_requests",
     "action_timing": "BEFORE",
     "event": "INSERT",
     "executes_function": "EXECUTE FUNCTION update_payout_request_frequency()",

@@ -377,7 +377,6 @@ export default function AddTutorPage() {
         nick_name: formData.namaPanggilan || null, // ✅ nick_name untuk nama panggilan
         date_of_birth: formData.tanggalLahir || null,
         gender: formData.jenisKelamin || null,
-        nationality: 'IDN', // Default Indonesia
         national_id: null, // KTP field not available in form
         country_code: 'ID', // Indonesia
         
@@ -478,51 +477,9 @@ export default function AddTutorPage() {
         high_school: formData.namaSMA || null, // ✅ Add: high_school column
         high_school_graduation_year: formData.tahunLulusSMA ? parseInt(formData.tahunLulusSMA) : null, // ✅ Add: high_school_graduation_year
         
-        // Education History - Store as JSONB
-        education_history: [
-          // University/College Education
-          ...(formData.statusAkademik && ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(formData.statusAkademik) ? [{
-            level: formData.statusAkademik,
-            institution_name: formData.namaUniversitas,
-            faculty: formData.fakultas,
-            major: formData.jurusan,
-            accreditation: null, // Removed akreditasiJurusan field
-            gpa: formData.ipk,
-            entry_year: formData.tahunMasuk ? parseInt(formData.tahunMasuk) : null,
-            graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,
-            status: formData.statusAkademik?.includes('lulusan') ? 'graduated' : 'ongoing'
-          }] : []),
-          // S1 Education for S2/S3 students
-          ...(formData.statusAkademik && ['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik) && formData.namaUniversitasS1 ? [{
-            level: 'university_s1',
-            institution_name: formData.namaUniversitasS1,
-            faculty: formData.fakultasS1,
-            major: formData.jurusanS1,
-            status: 'graduated'
-          }] : []),
-          // High School Education
-          ...(formData.statusAkademik && formData.statusAkademik !== 'lainnya' && formData.namaSMA ? [{
-            level: 'sma',
-            institution_name: formData.namaSMA,
-            major: formData.jurusanSMA === 'SMK' ? formData.jurusanSMKDetail : formData.jurusanSMA,
-            graduation_year: formData.tahunLulusSMA ? parseInt(formData.tahunLulusSMA) : null,
-            status: 'graduated'
-          }] : []),
-          // Alternative Learning Background
-          ...(formData.statusAkademik === 'lainnya' && formData.namaInstitusi ? [{
-            level: 'alternative',
-            institution_name: formData.namaInstitusi,
-            field_of_expertise: formData.bidangKeahlian,
-            learning_experience: formData.pengalamanBelajar,
-            status: 'completed'
-          }] : [])
-        ].filter(Boolean),
-        
         // Teaching Experience - gunakan nama kolom yang benar
         teaching_experience: formData.pengalamanMengajar, // ✅ Fix: pengalaman_mengajar → teaching_experience
-        other_experience: formData.pengalamanLainRelevan || null, // ✅ Add: other_experience field
         other_skills: formData.keahlianLainnya || null, // ✅ Add: other_skills field
-        reason_for_teaching: formData.motivasi || null, // ✅ Add: reason_for_teaching dari legacy motivasi field
         special_skills: formData.keahlianSpesialisasi, // ✅ Fix: keahlian_spesialisasi → special_skills
         
         // Teaching Service Options - Map from teaching methods
