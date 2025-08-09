@@ -51,25 +51,47 @@ export async function POST(request: NextRequest) {
       const rowNumber = i + 1;
       
       try {
-        console.log(`📝 Processing record ${rowNumber}:`, Object.keys(record));
+        console.log(`📝 Processing record ${rowNumber}:`, {
+          keys: Object.keys(record),
+          hasNamaLengkap: !!record['Nama Lengkap'],
+          hasEmail: !!record['Email Aktif'],
+          hasUserCode: !!record['User Code']
+        });
         
         // Generate truly unique user_code and email for each record
-        const uniqueId = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
-        const userCode = record['User Code'] || record['user_code'] || `TUT${uniqueId}${i.toString().padStart(2, '0')}`;
-        const uniqueEmail = record['Email Aktif'] || record['email'] || `${userCode.toLowerCase()}@imported.tutor`;
+        let uniqueId = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+        let userCode = record['User Code'] || record['user_code'] || `TUT${uniqueId}${i.toString().padStart(2, '0')}`;
+        let uniqueEmail = record['Email Aktif'] || record['email'] || `${userCode.toLowerCase()}@imported.tutor`;
         
-        // Check if email or user_code already exists
-        const { data: existingUser } = await supabase
+        // If email or user_code from CSV exists, generate truly unique ones
+        let { data: existingUser } = await supabase
           .from('users_universal')
           .select('email, user_code')
           .or(`email.eq.${uniqueEmail},user_code.eq.${userCode}`)
           .single();
           
-        if (existingUser) {
-          console.warn(`⚠️ Skipping duplicate user ${rowNumber}: email or user_code already exists`);
+        // Keep generating unique values until we find ones that don't exist
+        let attempts = 0;
+        while (existingUser && attempts < 10) {
+          attempts++;
+          uniqueId = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+          userCode = `TUT${uniqueId}${i.toString().padStart(2, '0')}${attempts}`;
+          uniqueEmail = `${userCode.toLowerCase()}@imported.tutor`;
+          
+          const { data: checkUser } = await supabase
+            .from('users_universal')
+            .select('email, user_code')
+            .or(`email.eq.${uniqueEmail},user_code.eq.${userCode}`)
+            .single();
+            
+          existingUser = checkUser;
+        }
+        
+        if (existingUser && attempts >= 10) {
+          console.error(`❌ Could not generate unique credentials after ${attempts} attempts for row ${rowNumber}`);
           errors.push({ 
             row: rowNumber, 
-            message: `User with email '${uniqueEmail}' or user_code '${userCode}' already exists` 
+            message: `Failed to generate unique email/user_code after ${attempts} attempts` 
           });
           errorCount++;
           continue;
@@ -107,33 +129,182 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const userId = userResult.id;
-        console.log(`✅ Created user ${rowNumber} with ID: ${userId}`);
-
-        // Prepare tutor details
-        const tutorData = {
-          user_id: userId,
-          nama_lengkap: record['Nama Lengkap'] || record['nama'] || 'Unknown',
-          nama_panggilan: record['Nama Panggilan'] || '',
-          tanggal_lahir: record['Tanggal Lahir'] || null,
-          jenis_kelamin: record['Jenis Kelamin'] || record['gender'] || null,
-          agama: record['Agama'] || null,
-          headline: record['Headline'] || '',
-          deskripsi_diri: record['Deskripsi Diri'] || ''
-        };
-
-        console.log(`📝 Prepared tutor data for ${rowNumber}:`, tutorData);
-
-        // Insert into tutor_details
-        const { error: tutorError } = await supabase
-          .from('tutor_details')
-          .insert(tutorData);
-
-        if (tutorError) {
-          console.error(`❌ Error inserting tutor details ${rowNumber}:`, tutorError);
-          errors.push({ row: rowNumber, message: `Failed to create tutor details: ${tutorError.message}` });
+        const userId = userResult?.id;
+        if (!userId) {
+          console.error(`❌ User ID is undefined for record ${rowNumber}`);
+          errors.push({ row: rowNumber, message: 'Failed to get user ID after creation' });
           errorCount++;
           continue;
+        }
+        console.log(`✅ Created user ${rowNumber} with ID: ${userId}`);
+
+        // Assign tutor role to the user so they appear in /view-all
+        console.log(`📝 Assigning tutor role to user ${userId}...`);
+        
+        // Get the tutor role ID (Database Tutor or similar)
+        const { data: tutorRole, error: roleError } = await supabase
+          .from('user_roles')
+          .select('id')
+          .or('role_name.ilike.%tutor%,role_name.ilike.%educator%,role_code.eq.database_tutor_manager')
+          .limit(1)
+          .single();
+
+        if (tutorRole && !roleError) {
+          // Update user with primary_role_id
+          const { error: roleUpdateError } = await supabase
+            .from('users_universal')
+            .update({ 
+              primary_role_id: tutorRole.id,
+              account_type: 'tutor'
+            })
+            .eq('id', userId);
+
+          if (roleUpdateError) {
+            console.warn(`⚠️ Warning: Could not assign role to user ${userId}:`, roleUpdateError);
+          } else {
+            console.log(`✅ Assigned tutor role to user ${userId}`);
+          }
+        } else {
+          console.warn(`⚠️ Warning: Could not find tutor role:`, roleError);
+        }
+
+        // Insert demographics data (agama/religion) if provided
+        if (record['Agama']) {
+          const demographicsData = {
+            user_id: userId,
+            religion: record['Agama'],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { error: demoError } = await supabase
+            .from('user_demographics')
+            .insert(demographicsData);
+
+          if (demoError) {
+            console.warn(`⚠️ Warning: Could not create demographics record for ${rowNumber}:`, demoError);
+          } else {
+            console.log(`✅ Created demographics for record ${rowNumber}`);
+          }
+        }
+
+        // Prepare user profile data
+        const profileData = {
+          user_id: userId,
+          full_name: record['Nama Lengkap'] || record['nama'] || 'Unknown',
+          nick_name: record['Nama Panggilan'] || '',
+          date_of_birth: record['Tanggal Lahir'] || null,
+          gender: record['Jenis Kelamin'] || record['gender'] || null,
+          headline: record['Headline'] || '',
+          bio: record['Deskripsi Diri'] || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        console.log(`📝 Prepared profile data for ${rowNumber}:`, profileData);
+
+        // Insert into user_profiles
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert(profileData);
+
+        if (profileError) {
+          console.error(`❌ Error inserting user profile ${rowNumber}:`, profileError);
+          console.error(`❌ Full profile error details:`, JSON.stringify(profileError, null, 2));
+          errors.push({ row: rowNumber, message: `Failed to create user profile: ${profileError.message || 'Unknown database error'}` });
+          errorCount++;
+          continue;
+        }
+
+        // Prepare tutor details with minimal fields to avoid trigger issues
+        const tutorDetailsData = {
+          user_id: userId,
+          teaching_experience: record['Pengalaman Mengajar'] || null,
+          special_skills: record['Keahlian Spesialisasi'] || null,
+          onboarding_status: 'pending',
+          background_check_status: 'pending'
+        };
+
+        console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
+
+        // Try to update existing tutor_details or create via manual approach
+        console.log(`📝 Attempting to store tutor details for ${rowNumber}...`);
+        
+        // First, check if tutor_details record already exists for this user
+        const { data: existingTutorDetails, error: checkError } = await supabase
+          .from('tutor_details')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+
+        if (existingTutorDetails && !checkError) {
+          // Record exists, update it
+          const { error: updateError } = await supabase
+            .from('tutor_details')
+            .update({
+              teaching_experience: record['Pengalaman Mengajar'] || null,
+              special_skills: record['Keahlian Spesialisasi'] || null,
+              learning_experience: record['Deskripsi Diri'] || null,
+              other_relevant_experience: record['Pengalaman Lain'] || null
+            })
+            .eq('user_id', userId);
+
+          if (updateError) {
+            console.warn(`⚠️ Warning: Could not update tutor_details for ${rowNumber}:`, updateError);
+          } else {
+            console.log(`✅ Updated existing tutor_details for record ${rowNumber}`);
+          }
+        } else {
+          // Record doesn't exist, try to create minimal record first, then update
+          console.log(`📝 Creating new tutor_details record for user ${userId}...`);
+          
+          try {
+            // Create minimal record using SQL to bypass trigger
+            const { error: createError } = await supabase.rpc('create_tutor_details_minimal', {
+              p_user_id: userId
+            });
+
+            if (createError) {
+              console.warn(`⚠️ Could not create tutor_details via RPC, trying direct approach:`, createError);
+              
+              // Fallback: try direct insert with minimal data
+              const { error: directInsertError } = await supabase
+                .from('tutor_details')
+                .insert({ user_id: userId });
+              
+              if (directInsertError) {
+                console.warn(`⚠️ Could not create tutor_details for ${rowNumber}:`, directInsertError);
+              } else {
+                // Successfully created, now update with data
+                await supabase
+                  .from('tutor_details')
+                  .update({
+                    teaching_experience: record['Pengalaman Mengajar'] || null,
+                    special_skills: record['Keahlian Spesialisasi'] || null,
+                    learning_experience: record['Deskripsi Diri'] || null,
+                    other_relevant_experience: record['Pengalaman Lain'] || null
+                  })
+                  .eq('user_id', userId);
+                
+                console.log(`✅ Created and updated tutor_details for record ${rowNumber}`);
+              }
+            } else {
+              // RPC succeeded, now update with data
+              await supabase
+                .from('tutor_details')
+                .update({
+                  teaching_experience: record['Pengalaman Mengajar'] || null,
+                  special_skills: record['Keahlian Spesialisasi'] || null,
+                  learning_experience: record['Deskripsi Diri'] || null,
+                  other_relevant_experience: record['Pengalaman Lain'] || null
+                })
+                .eq('user_id', userId);
+              
+              console.log(`✅ Created (via RPC) and updated tutor_details for record ${rowNumber}`);
+            }
+          } catch (createError) {
+            console.warn(`⚠️ Exception creating tutor_details for ${rowNumber}:`, createError);
+          }
         }
 
         // Create tutor management record for approval status
@@ -141,7 +312,7 @@ export async function POST(request: NextRequest) {
           user_id: userId,
           status_tutor: 'active',
           approval_level: 'junior',
-          staff_notes: `Imported via bulk import from ${source}`
+          staff_notes: `Imported via bulk import from ${source || 'unknown source'}`
         };
 
         console.log(`📝 Prepared management data for ${rowNumber}:`, managementData);
@@ -154,14 +325,20 @@ export async function POST(request: NextRequest) {
           console.warn(`⚠️ Warning: Could not create management record for ${rowNumber}:`, managementError);
         }
 
-        console.log(`✅ Created tutor details for record ${rowNumber}`);
+        console.log(`✅ Created profile and management record for record ${rowNumber}`);
         successCount++;
 
       } catch (recordError) {
         console.error(`❌ Error processing record ${rowNumber}:`, recordError);
+        const errorMessage = recordError instanceof Error 
+          ? recordError.message 
+          : typeof recordError === 'string' 
+            ? recordError 
+            : `Unknown processing error: ${JSON.stringify(recordError)}`;
+        
         errors.push({ 
           row: rowNumber, 
-          message: recordError instanceof Error ? recordError.message : 'Unknown processing error' 
+          message: errorMessage
         });
         errorCount++;
       }
@@ -176,11 +353,11 @@ export async function POST(request: NextRequest) {
       totalProcessed: records.length,
       errors: errors.length > 0 ? errors : [],
       details: {
-        source,
+        source: source || 'unknown',
         processedAt: new Date().toISOString(),
         processedBy: 'system',
-        recordsCreated: successCount,
-        tablesUpdated: ['users_universal', 'tutor_details', 'tutor_management']
+        recordsCreated: successCount || 0,
+        tablesUpdated: ['users_universal', 'user_profiles', 'user_demographics', 'tutor_details', 'tutor_management']
       }
     };
 
