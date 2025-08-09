@@ -197,6 +197,12 @@ export async function POST(request: NextRequest) {
           gender: record['Jenis Kelamin'] || record['gender'] || null,
           headline: record['Headline'] || '',
           bio: record['Deskripsi Diri'] || '',
+          // Education data
+          education_level: record['Status Akademik'] || null,
+          university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+          major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
+          graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
+          gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -227,6 +233,59 @@ export async function POST(request: NextRequest) {
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
 
+        // Insert address data if provided
+        console.log(`📝 Creating address records for user ${userId}...`);
+        
+        // Create domicile address
+        if (record['Provinsi Domisili'] || record['Kota/Kabupaten Domisili'] || record['Alamat Lengkap Domisili']) {
+          const domicileAddressData = {
+            user_id: userId,
+            address_type: 'domicile',
+            address_label: 'Alamat Domisili',
+            street_address: record['Alamat Lengkap Domisili'] || null,
+            postal_code: record['Kode Pos Domisili'] || null,
+            is_primary: true,
+            is_verified: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { error: domicileError } = await supabase
+            .from('user_addresses')
+            .insert(domicileAddressData);
+
+          if (domicileError) {
+            console.warn(`⚠️ Warning: Could not create domicile address for ${rowNumber}:`, domicileError);
+          } else {
+            console.log(`✅ Created domicile address for record ${rowNumber}`);
+          }
+        }
+
+        // Create KTP address if different from domicile
+        if (record['Alamat Sama Dengan KTP'] !== 'true' && (record['Provinsi KTP'] || record['Kota/Kabupaten KTP'] || record['Alamat Lengkap KTP'])) {
+          const ktpAddressData = {
+            user_id: userId,
+            address_type: 'ktp',
+            address_label: 'Alamat KTP',
+            street_address: record['Alamat Lengkap KTP'] || null,
+            postal_code: record['Kode Pos KTP'] || null,
+            is_primary: false,
+            is_verified: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { error: ktpError } = await supabase
+            .from('user_addresses')
+            .insert(ktpAddressData);
+
+          if (ktpError) {
+            console.warn(`⚠️ Warning: Could not create KTP address for ${rowNumber}:`, ktpError);
+          } else {
+            console.log(`✅ Created KTP address for record ${rowNumber}`);
+          }
+        }
+
         // Try to update existing tutor_details or create via manual approach
         console.log(`📝 Attempting to store tutor details for ${rowNumber}...`);
         
@@ -244,8 +303,17 @@ export async function POST(request: NextRequest) {
             .update({
               teaching_experience: record['Pengalaman Mengajar'] || null,
               special_skills: record['Keahlian Spesialisasi'] || null,
+              other_skills: record['Keahlian Lainnya'] || null,
               learning_experience: record['Deskripsi Diri'] || null,
-              other_relevant_experience: record['Pengalaman Lain'] || null
+              other_relevant_experience: record['Pengalaman Lain'] || null,
+              academic_achievements: record['Prestasi Akademik'] || null,
+              non_academic_achievements: record['Prestasi Non-Akademik'] || null,
+              // Education data in tutor_details
+              academic_status: record['Status Akademik'] || null,
+              university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+              faculty_s1: record['Fakultas S1'] || null,
+              major_s1: record['Jurusan S1'] || null,
+              entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
             })
             .eq('user_id', userId);
 
@@ -281,8 +349,17 @@ export async function POST(request: NextRequest) {
                   .update({
                     teaching_experience: record['Pengalaman Mengajar'] || null,
                     special_skills: record['Keahlian Spesialisasi'] || null,
+                    other_skills: record['Keahlian Lainnya'] || null,
                     learning_experience: record['Deskripsi Diri'] || null,
-                    other_relevant_experience: record['Pengalaman Lain'] || null
+                    other_relevant_experience: record['Pengalaman Lain'] || null,
+                    academic_achievements: record['Prestasi Akademik'] || null,
+                    non_academic_achievements: record['Prestasi Non-Akademik'] || null,
+                    // Education data in tutor_details
+                    academic_status: record['Status Akademik'] || null,
+                    university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                    faculty_s1: record['Fakultas S1'] || null,
+                    major_s1: record['Jurusan S1'] || null,
+                    entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
                   })
                   .eq('user_id', userId);
                 
@@ -295,8 +372,17 @@ export async function POST(request: NextRequest) {
                 .update({
                   teaching_experience: record['Pengalaman Mengajar'] || null,
                   special_skills: record['Keahlian Spesialisasi'] || null,
+                  other_skills: record['Keahlian Lainnya'] || null,
                   learning_experience: record['Deskripsi Diri'] || null,
-                  other_relevant_experience: record['Pengalaman Lain'] || null
+                  other_relevant_experience: record['Pengalaman Lain'] || null,
+                  academic_achievements: record['Prestasi Akademik'] || null,
+                  non_academic_achievements: record['Prestasi Non-Akademik'] || null,
+                  // Education data in tutor_details
+                  academic_status: record['Status Akademik'] || null,
+                  university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                  faculty_s1: record['Fakultas S1'] || null,
+                  major_s1: record['Jurusan S1'] || null,
+                  entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
                 })
                 .eq('user_id', userId);
               
@@ -357,7 +443,7 @@ export async function POST(request: NextRequest) {
         processedAt: new Date().toISOString(),
         processedBy: 'system',
         recordsCreated: successCount || 0,
-        tablesUpdated: ['users_universal', 'user_profiles', 'user_demographics', 'tutor_details', 'tutor_management']
+        tablesUpdated: ['users_universal', 'user_profiles', 'user_demographics', 'user_addresses', 'tutor_details', 'tutor_management']
       }
     };
 
