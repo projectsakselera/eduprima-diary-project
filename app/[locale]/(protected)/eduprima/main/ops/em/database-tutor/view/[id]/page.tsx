@@ -1672,7 +1672,7 @@ export default function ViewTutorPage() {
                   {/* Transportation & Location */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Transportation Methods - HIDDEN per user request */}
-                    {false && tutorData.transportasiTutor && Array.isArray(tutorData.transportasiTutor) && tutorData.transportasiTutor.length > 0 && (
+                    {false && tutorData?.transportasiTutor && Array.isArray(tutorData?.transportasiTutor) && (tutorData?.transportasiTutor?.length || 0) > 0 && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="text-lg flex items-center gap-2">
@@ -1682,7 +1682,7 @@ export default function ViewTutorPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="flex flex-wrap gap-2">
-                            {tutorData.transportasiTutor.map((method, index) => (
+                            {tutorData?.transportasiTutor?.map((method, index) => (
                               <Badge key={index} className="bg-blue-100 text-blue-800 border-blue-200">
                                 {method}
                               </Badge>
