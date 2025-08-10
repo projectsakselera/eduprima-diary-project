@@ -18,11 +18,14 @@
 - **Tables**: Lean version with only form-relevant columns ✅
 - **Constraints**: PK, FK, UNIQUE, CHECK constraints defined ✅
 
-### ⚠️ **PENDING - Form Add Side**
-- **Monolithic Structure**: Still 6,540 lines across 3 files
-- **Client-side DB writes**: Security risk (using anon key)
+### ⚠️ **PENDING - Form Add Side (CRITICAL FINDINGS)**
+- **Monolithic Structure**: 6,540 lines across 3 files (CONFIRMED)
+- **Client-side DB writes**: 12+ tables directly written from client (SECURITY RISK)
+- **Complex Business Logic**: Role detection, fallback systems, dynamic validation
+- **Password Security**: Client-side password generation from birth date (EXPOSED)
+- **No atomic operations**: Race conditions possible in TRN generation
 - **No component extraction**: All logic in single page
-- **No hooks**: Direct API calls in components
+- **No hooks**: Direct Supabase calls in components
 - **No type safety**: Missing shared TypeScript types
 
 ---
@@ -134,18 +137,83 @@ mataPelajaranLainnya?: string → tutor_additional_subjects.subject_name
 
 ---
 
+## 🔍 **ACTUAL CODE ANALYSIS (January 2025)**
+
+### **📊 FORM COMPLEXITY BREAKDOWN**
+
+#### **Multi-Step System (9 Steps):**
+1. **System & Status** - Staff settings & role management
+2. **Personal Info** - Data pribadi + foto profil  
+3. **Address Info** - Domisili & KTP (Google Maps integration)
+4. **Banking Info** - Rekening bank dengan validasi
+5. **Education Info** - Riwayat pendidikan lengkap
+6. **Professional Profile** - Pengalaman & keahlian
+7. **Achievements** - Prestasi & sertifikasi
+8. **Subjects** - Program/mata pelajaran (AI-assisted)
+9. **Availability** - Ketersediaan & lokasi mengajar
+
+#### **Advanced Features Found:**
+- **Dynamic Role Detection** (Lines 254-326): Complex fallback system
+- **Auto-Password Generation** (Lines 68-83): Birth date → ddmmyy format
+- **Phone Formatting** (Lines 41-60): +62 standardization
+- **Account Sanitization** (Lines 62-66): Banking validation
+- **Section-based UI** (Lines 1639-1686): Mobile-responsive cards
+- **Progress Tracking** (Lines 1604-1606): Multi-step progress bar
+
+#### **Security Layers (Existing):**
+- **Admin Authentication** (Lines 198-207): Staff login required
+- **Role Authorization** (Lines 254-326): Dynamic role checking
+- **Table Access Verification** (Lines 211-246): RLS policy testing
+
+#### **Database Operations (12+ Tables):**
+```typescript
+// Client-side writes to:
+- users_universal (main user data)
+- user_profiles (personal info)  
+- user_addresses (domicile + KTP)
+- user_demographics (religion, etc.)
+- tutor_details (main tutor profile)
+- tutor_management (status & approval)
+- tutor_availability_config (schedule & rates)
+- tutor_teaching_preferences (teaching style)
+- tutor_personality_traits (personality)
+- tutor_program_mappings (subject mappings)
+- tutor_banking_info (bank account)
+- document_storage (file uploads)
+```
+
+---
+
 ## 🚨 **CURRENT ISSUES (Need Immediate Fix)**
 
-### **1. Security Issues**
+### **1. Security Issues - CRITICAL FINDINGS**
 ```typescript
-// ❌ CURRENT: Client-side database writes
+// ❌ CURRENT: Multiple client-side database writes CONFIRMED
 const supabase = createClient(supabaseUrl, supabaseKey);
-await supabase.from('users_universal').insert([userData]);
+
+// Line 337-800+: Direct client operations
+await supabase?.from('users_universal').insert([usersUniversalData]);
+await supabase?.from('user_profiles').insert([profileData]);
+await supabase?.from('user_addresses').insert([addressData]);
+await supabase?.from('tutor_details').insert([tutorDetailsData]);
+await supabase?.from('tutor_management').insert([managementData]);
+// ... 12+ more tables
+
+// ❌ PASSWORD GENERATION: Client-side (Line 68-83)
+const generatePasswordFromBirthDate = (birthDate: string): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}${month}${year}`; // ddmmyy format
+};
+
+// ❌ TRN GENERATION: No atomic sequence handling
+// Risk: Race conditions, duplicate TRNs
 
 // ✅ SHOULD BE: Supabase Edge Functions
 // supabase/functions/create-tutor/index.ts
 export async function createTutor(data: TutorFormData) {
-  // Server-side validation + DB writes
+  // Server-side validation + atomic DB writes + secure password
 }
 ```
 
