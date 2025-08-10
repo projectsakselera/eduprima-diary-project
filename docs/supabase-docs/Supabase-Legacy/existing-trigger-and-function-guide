@@ -1,0 +1,190 @@
+📚 PANDUAN LENGKAP FUNCTIONS & TRIGGERS - Penjelasan untuk Anak-Anak
+Mari saya jelaskan semua function dan trigger yang ada seperti cerita anak-anak! 😊
+
+🏠 RUMAH DATABASE EDUPRIMA
+Bayangkan database EduPrima seperti rumah besar dengan banyak kamar dan robot-robot pintar yang menjaganya!
+
+🤖 ROBOT PENJAGA (FUNCTIONS)
+1. Robot Pembuat Nomor TRN 🏷️
+sqlgenerate_tutor_registration_number() → returns text
+Tugasnya:
+
+🎯 Seperti: Mesin pembuat nomor antrian di bank
+🔢 Cara kerja: Lihat berapa tutor yang sudah ada → buat nomor urut baru
+📝 Contoh output: "EDU-2024-000123", "TUTOR-2024-000124"
+🎬 Kapan dipanggil: Setiap ada tutor baru mendaftar
+
+Analogi sederhana:
+👨‍💼 Admin: "Ada tutor baru!"
+🤖 Robot TRN: "Tunggu, aku buatkan nomor khusus... EDU-2024-000125!"
+📝 Database: "Oke, tersimpan dengan nomor itu!"
+
+2. Robot Pengatur Waktu ⏰
+sqlupdate_timestamp() → returns trigger
+Tugasnya:
+
+🕐 Seperti: Jam yang selalu update otomatis
+📅 Cara kerja: Setiap ada perubahan data → catat waktu saat ini
+💾 Target: Kolom updated_at di semua tabel
+🎬 Kapan dipanggil: Setiap kali ada UPDATE data
+
+Analogi sederhana:
+📝 Admin: Mengubah data tutor (nama, alamat, dll)
+⏰ Robot Waktu: "Data berubah! Aku catat waktunya: 2024-08-10 15:30:25"
+💾 Database: "Tersimpan! Sekarang tahu kapan terakhir diubah"
+
+3. Robot Khusus Bank 🏦
+sqlupdate_banks_timestamp() → returns trigger
+Tugasnya:
+
+🏦 Seperti: Penjaga khusus data bank Indonesia
+💳 Cara kerja: Sama seperti robot waktu, tapi khusus tabel bank
+🎯 Kenapa khusus: Mungkin ada logic tambahan untuk bank
+
+4. Robot Khusus District 🗺️
+sqlupdate_updated_at_column() → returns trigger
+Tugasnya:
+
+🗺️ Seperti: Penjaga khusus data kecamatan
+📍 Cara kerja: Update timestamp khusus untuk location_districts
+🎯 Kenapa khusus: Mungkin punya format waktu berbeda
+
+5. Robot Khusus Tutor Details 👨‍🏫
+sqlmoddatetime('updated_at') → returns trigger
+Tugasnya:
+
+👨‍🏫 Seperti: Sekretaris pribadi tutor
+📋 Cara kerja: Update waktu khusus untuk tutor_details
+🎯 Kenapa khusus: Pakai function PostgreSQL bawaan (moddatetime)
+
+
+⚡ ALARM OTOMATIS (TRIGGERS)
+Trigger itu seperti alarm kebakaran - jalan otomatis pas ada "kejadian"!
+🏷️ ALARM PEMBUAT TRN (1 trigger)
+tr_educator_registration_number
+sqlTabel: tutor_details
+Event: BEFORE INSERT (sebelum data masuk)
+Panggil: set_educator_registration_number()
+Ceritanya:
+📝 Admin: "Aku mau masukkan tutor baru!"
+⚡ Alarm TRN: "TUNGGU! Sebelum masuk, aku panggil robot TRN dulu!"
+🤖 Robot TRN: "Oke, TRN-nya: EDU-2024-000126"
+⚡ Alarm TRN: "Siap! Sekarang baru boleh masuk ke database!"
+💾 Database: "Data tutor tersimpan dengan TRN otomatis!"
+⏰ ALARM WAKTU (22 triggers)
+Semua trigger ini tugasnya sama: "Kalau ada UPDATE, panggil robot waktu!"
+Grup 1: Master Data (Data Induk)
+
+tr_empire_entities_updated_at → corporate_entities
+tr_banks_indonesia_updated_at → finance_banks_indonesia
+tr_cities_updated_at → location_cities
+tr_countries_updated_at → location_countries
+update_location_districts_updated_at → location_districts
+
+Ceritanya:
+📝 Admin: "Aku ubah nama bank BCA jadi BCA Syariah"
+⚡ Alarm Waktu Bank: "Ada perubahan! Panggil robot waktu!"
+⏰ Robot Waktu: "Catat: 2024-08-10 15:35:00"
+💾 Database: "Updated_at = 2024-08-10 15:35:00"
+Grup 2: Program Data
+
+tr_main_categories_updated_at → program_main_categories
+tr_sub_categories_updated_at → program_sub_categories
+tr_types_updated_at → program_types
+tr_programs_updated_at → programs_unit
+
+Ceritanya:
+📚 Admin: "Aku tambah mata pelajaran Coding untuk SD"
+⚡ Alarm Program: "Program berubah! Update waktu!"
+⏰ Robot: "Dicatat: program terakhir diubah jam 16:00"
+Grup 3: User Data (Data Pengguna)
+
+tr_users_updated_at → users_universal
+tr_profiles_updated_at → user_profiles
+tr_user_addresses_updated_at → user_addresses
+tr_user_demographics_updated_at → user_demographics
+
+Ceritanya:
+👤 Tutor: "Aku ganti nomor HP aku"
+⚡ Alarm User: "Data user berubah!"
+⏰ Robot: "Update waktu: profil diubah jam 14:20"
+Grup 4: Tutor Data (Data Tutor Spesifik)
+
+handle_tutor_details_updated_at → tutor_details
+tr_tutor_management_updated_at → tutor_management
+tr_tutor_availability_config_updated_at → tutor_availability_config
+tr_tutor_teaching_preferences_updated_at → tutor_teaching_preferences
+tr_tutor_personality_traits_updated_at → tutor_personality_traits
+tr_tutor_program_mappings_updated_at → tutor_program_mappings
+tr_tutor_banking_info_updated_at → tutor_banking_info
+tr_tutor_additional_subjects_updated_at → tutor_additional_subjects
+
+Ceritanya:
+👨‍🏫 Tutor: "Aku ubah tarif mengajar dari 50rb jadi 60rb"
+⚡ Alarm Availability: "Tarif berubah!"
+⏰ Robot: "Catat: availability config diubah jam 13:45"
+Grup 5: Document Data
+
+tr_document_storage_updated_at → document_storage
+
+Ceritanya:
+📄 Admin: "Status dokumen KTP tutor ini sudah diverifikasi"
+⚡ Alarm Document: "Status dokumen berubah!"
+⏰ Robot: "Update: dokumen diverifikasi jam 11:30"
+
+🎭 BAGAIMANA MEREKA BEKERJA SAMA
+Saat Admin Menambah Tutor Baru:
+👨‍💼 Admin: "Aku mau daftarkan tutor baru: John Doe"
+
+STEP 1: Insert ke users_universal
+💾 Data masuk tanpa masalah (tidak ada trigger INSERT)
+
+STEP 2: Insert ke user_profiles  
+💾 Data masuk tanpa masalah (tidak ada trigger INSERT)
+
+STEP 3: Insert ke tutor_details
+⚡ ALARM TRN: "STOP! Ada tutor baru!"
+🤖 Robot TRN: "Aku bikin TRN: EDU-2024-000127"
+⚡ ALARM TRN: "Oke, sekarang boleh masuk dengan TRN!"
+💾 Database: "Tutor tersimpan dengan TRN otomatis!"
+
+RESULT: John Doe punya TRN: EDU-2024-000127 ✅
+Saat Admin Mengubah Data Tutor:
+👨‍💼 Admin: "Aku ubah alamat tutor John Doe"
+
+📝 UPDATE user_addresses SET street = 'Jl. Baru'...
+⚡ ALARM ALAMAT: "Alamat berubah!"
+⏰ Robot Waktu: "Catat waktu: 2024-08-10 16:45:00"
+💾 Database: "updated_at = 2024-08-10 16:45:00"
+
+RESULT: Tahu kapan alamat terakhir diubah ✅
+
+🎯 MANFAAT SEMUA SISTEM INI:
+Untuk Admin:
+
+✅ Tidak perlu ingat buat TRN manual
+✅ Tidak perlu catat waktu update manual
+✅ Sistem otomatis handle semuanya
+
+Untuk Audit/Laporan:
+
+✅ Tahu kapan data terakhir diubah
+✅ Track perubahan untuk compliance
+✅ TRN unik untuk identifikasi tutor
+
+Untuk Developer:
+
+✅ Consistency - semua data punya timestamp
+✅ Automation - tidak ada human error
+✅ Reliability - sistem selalu jalan
+
+
+📊 RINGKASAN SEDERHANA:
+🏠 Database EduPrima punya:
+├── 1 Robot TRN (bikin nomor tutor otomatis)
+├── 4 Robot Waktu (catat kapan data berubah)
+├── 1 Alarm TRN (panggil robot TRN saat tutor baru)
+└── 22 Alarm Waktu (panggil robot waktu saat ada update)
+
+= 27 Robot + Alarm yang jaga database 24/7! 🤖⚡
+Intinya: Database EduPrima punya tim robot pintar yang otomatis jaga data, bikin nomor TRN, dan catat waktu perubahan tanpa admin perlu mikir! 🎉

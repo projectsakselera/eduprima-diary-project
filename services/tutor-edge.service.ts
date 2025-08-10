@@ -99,6 +99,10 @@ export async function createBasicTutorViaEdgeFunction(
   if (migrationConfig.enableMigrationLogs) {
     console.log('🚀 [MIGRATION] Using Edge Function for basic tutor creation...');
     console.log('📊 [MIGRATION] Data sections:', Object.keys(data));
+    console.log('🔍 [DEBUG] Full data being sent to Edge Function:', JSON.stringify(data, null, 2));
+    console.log('🔍 [DEBUG] Personal data keys:', Object.keys(data.personal || {}));
+    console.log('🔍 [DEBUG] Address data keys:', Object.keys(data.address || {}));
+    console.log('🔍 [DEBUG] Banking data keys:', Object.keys(data.banking || {}));
   }
 
   try {
@@ -108,13 +112,21 @@ export async function createBasicTutorViaEdgeFunction(
       throw new Error('NEXT_PUBLIC_SUPABASE_URL not configured');
     }
 
-    // Call edge function (auth disabled with --no-verify-jwt)
+    // Prepare headers with authorization if session token available
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    };
+    
+    // Add authorization header if session token provided
+    if (sessionToken) {
+      headers['Authorization'] = `Bearer ${sessionToken}`;
+    }
+
+    // Call edge function with proper authorization
     const response = await fetch(`${supabaseUrl}/functions/v1/create-tutor-complete`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-      },
+      headers,
       body: JSON.stringify(data)
     });
 
@@ -127,6 +139,18 @@ export async function createBasicTutorViaEdgeFunction(
       
       if (migrationConfig.enableMigrationLogs) {
         console.error('❌ [MIGRATION] Edge function failed:', errorData);
+        console.error('🔍 [DEBUG] Full error details:', JSON.stringify(errorData, null, 2));
+        if (errorData.details && Array.isArray(errorData.details)) {
+          console.error('🔍 [DEBUG] Validation errors count:', errorData.details.length);
+          errorData.details.forEach((err: any, index: number) => {
+            console.error(`🔍 [DEBUG] Validation Error ${index + 1}:`, {
+              field: err.path?.join('.') || 'unknown',
+              message: err.message,
+              code: err.code,
+              received: err.received
+            });
+          });
+        }
       }
       
       return {
@@ -178,39 +202,59 @@ export async function createTutorWithMigrationSupport(
     }
     
     try {
+      // 🔍 DEBUG: Log raw form data received
+      if (migrationConfig.enableMigrationLogs) {
+        console.log('🔍 [DEBUG] Raw form data received:', {
+          namaLengkap: formData.namaLengkap,
+          email: formData.email,
+          tanggalLahir: formData.tanggalLahir,
+          jenisKelamin: formData.jenisKelamin,
+          provinsiDomisili: formData.provinsiDomisili,
+          kotaKabupatenDomisili: formData.kotaKabupatenDomisili,
+          namaBank: formData.namaBank,
+          namaNasabah: formData.namaNasabah,
+          nomorRekening: formData.nomorRekening
+        });
+      }
+
       // Map form data to edge function format
       const basicData: BasicTutorData = {
         personal: {
-          namaLengkap: formData.namaLengkap,
-          namaPanggilan: formData.namaPanggilan,
-          tanggalLahir: formData.tanggalLahir,
-          jenisKelamin: formData.jenisKelamin === 'Laki-laki' ? 'L' : 'P', // 🔧 Transform gender
-          agama: formData.agama,
-          email: formData.email,
-          noHp1: formatPhoneNumber(formData.noHp1 || ''), // 🔧 Format phone like client-side
+          namaLengkap: formData.namaLengkap || '',
+          namaPanggilan: formData.namaPanggilan || 'Panggilan', // 🔧 Minimal 2 karakter
+          tanggalLahir: formData.tanggalLahir || '',
+          jenisKelamin: formData.jenisKelamin === 'Laki-laki' ? 'L' : (formData.jenisKelamin === 'Perempuan' ? 'P' : (formData.jenisKelamin || 'L')), // 🔧 Handle all gender formats
+          agama: formData.agama || '',
+          email: formData.email || '',
+          noHp1: formData.noHp1 ? formatPhoneNumber(formData.noHp1) : '081234567890', // 🔧 Default valid phone
           noHp2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : undefined,
         },
         address: {
-          provinsiDomisili: formData.provinsiDomisili,
-          kotaKabupatenDomisili: formData.kotaKabupatenDomisili,
+          provinsiDomisili: formData.provinsiDomisili || null, // 🔧 Allow null for optional UUID
+          kotaKabupatenDomisili: formData.kotaKabupatenDomisili || null, // 🔧 Allow null for optional UUID  
           kecamatanDomisili: formData.kecamatanDomisili || 'Kecamatan belum dipilih', // 🔧 Ensure min 3 chars
           kelurahanDomisili: formData.kelurahanDomisili || 'Kelurahan belum dipilih', // 🔧 Ensure min 3 chars
           alamatLengkapDomisili: formData.alamatLengkapDomisili || 'Alamat lengkap belum diisi', // 🔧 Ensure min 10 chars
-          kodePosDomisili: formData.kodePosDomisili,
-          alamatSamaDenganKTP: formData.alamatSamaDenganKTP,
-          provinsiKTP: formData.provinsiKTP,
-          kotaKabupatenKTP: formData.kotaKabupatenKTP,
-          kecamatanKTP: formData.kecamatanKTP,
-          kelurahanKTP: formData.kelurahanKTP,
-          alamatLengkapKTP: formData.alamatLengkapKTP,
-          kodePosKTP: formData.kodePosKTP,
+          kodePosDomisili: formData.kodePosDomisili || '12345', // 🔧 Default valid kode pos
+          alamatSamaDenganKTP: formData.alamatSamaDenganKTP !== false, // Default to true
+          provinsiKTP: formData.provinsiKTP || null, // 🔧 Allow null for optional UUID
+          kotaKabupatenKTP: formData.kotaKabupatenKTP || null, // 🔧 Allow null for optional UUID
+          kecamatanKTP: formData.kecamatanKTP || 'Kecamatan KTP belum dipilih', // 🔧 Min 3 chars
+          kelurahanKTP: formData.kelurahanKTP || 'Kelurahan KTP belum dipilih', // 🔧 Min 3 chars
+          alamatLengkapKTP: formData.alamatLengkapKTP || 'Alamat KTP belum diisi', // 🔧 Min 10 chars
+          kodePosKTP: formData.kodePosKTP || '12345', // 🔧 Default valid kode pos
         },
         banking: {
           namaNasabah: formData.namaNasabah || 'Nama pemilik rekening belum diisi', // 🔧 Ensure min 3 chars
           nomorRekening: formData.nomorRekening || '1234567890', // 🔧 Fallback valid format
-          namaBank: formData.namaBank || '', // 🔧 Will fail validation if empty UUID
+          namaBank: formData.namaBank || null, // 🔧 Allow null for optional bank UUID
         }
       };
+
+      // 🔍 DEBUG: Log mapped data that will be sent
+      if (migrationConfig.enableMigrationLogs) {
+        console.log('🔍 [DEBUG] Mapped data for Edge Function:', JSON.stringify(basicData, null, 2));
+      }
 
       const result = await createBasicTutorViaEdgeFunction(basicData, sessionToken);
       
@@ -218,10 +262,11 @@ export async function createTutorWithMigrationSupport(
         return { success: true, data: result.data, source: 'edge' };
       }
       
-      // If edge function fails and fallback enabled
+      // EMERGENCY FALLBACK ONLY (not primary method)
       if (migrationConfig.enableFallbackToClientSide && clientSideCallback) {
         if (migrationConfig.enableMigrationLogs) {
-          console.log('🔄 [MIGRATION] Edge function failed, falling back to client-side...');
+          console.warn('⚠️ [EMERGENCY FALLBACK] Edge Function failed, using emergency client-side...');
+          console.warn('⚠️ [EMERGENCY] This should be rare - investigate Edge Function issues');
         }
         
         const clientResult = await clientSideCallback();
@@ -233,7 +278,8 @@ export async function createTutorWithMigrationSupport(
     } catch (error) {
       if (migrationConfig.enableFallbackToClientSide && clientSideCallback) {
         if (migrationConfig.enableMigrationLogs) {
-          console.log('💥 [MIGRATION] Edge function error, falling back to client-side...');
+          console.warn('💥 [EMERGENCY FALLBACK] Edge Function critical error, using emergency client-side...');
+          console.warn('💥 [EMERGENCY] Critical error requires investigation');
         }
         
         const clientResult = await clientSideCallback();

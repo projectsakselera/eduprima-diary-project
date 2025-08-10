@@ -79,3 +79,4 @@ SELECT generate_tutor_registration_number() as sample_trn_3;
 
 -- Check sequences table
 SELECT * FROM tutor_sequences;
+
