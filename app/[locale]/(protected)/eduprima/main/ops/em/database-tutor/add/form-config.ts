@@ -1263,8 +1263,8 @@ export const tutorFormConfig: FormConfig = {
           name: 'trn',
           label: 'ERN (Educator Registration Number)',
           type: 'text',
-          placeholder: 'Kosongkan untuk auto-generate: ID2500000, ID2500007, ...',
-          helperText: 'Akan dibuat otomatis jika kosong. Format: CountryCode-Year-Sequential (kelipatan 7)',
+          placeholder: 'Kosongkan untuk auto-generate: ID2500001, ID2500002, ...',
+          helperText: 'Akan dibuat otomatis jika kosong. Format: ID + 2-digit year + 5-digit sequential (ID2500014)',
           icon: 'ph:identification-card',
           size: 'lg'
         },

@@ -468,7 +468,6 @@ async function createTutorComplete(supabase: any, validatedData: any) {
         onboarding_status: 'pending_profile',
         background_check_status: 'not_started',
         teaching_experience: professional?.pengalamanMengajar,
-        special_skills: professional?.keahlianLainnya,
         average_rating: 0.00,
         total_teaching_hours: 0,
         // 🔧 EDUCATION FIELDS MOVED TO user_profiles table
@@ -483,7 +482,7 @@ async function createTutorComplete(supabase: any, validatedData: any) {
         expertise_field: alternativeLearning?.bidangKeahlian,
         learning_experience: alternativeLearning?.pengalamanBelajar,
         // Professional fields
-        special_skills: professional?.keahlianSpesialisasi,
+        special_skills: professional?.keahlianSpesialisasi, // 🔧 Keahlian Spesialisasi → special_skills
         other_skills: professional?.keahlianLainnya,
         other_relevant_experience: professional?.pengalamanLainRelevan,
         academic_achievements: professional?.prestasiAkademik,

@@ -503,14 +503,17 @@ export default function AddTutorPage() {
               .eq('country_year', countryYear);
           }
           
-          // Format: ID-2025-0014, ID-2025-0021, ID-2025-0028, etc.
-          const formattedSequence = nextSequence.toString().padStart(4, '0');
-          return `${countryYear}-${formattedSequence}`;
+          // 🎯 NEW FORMAT: ID2500014 (ID + 2-digit year + 5-digit sequence)
+          const yearShort = new Date().getFullYear().toString().slice(-2); // Get last 2 digits: "25"
+          const formattedSequence = nextSequence.toString().padStart(5, '0'); // 5-digit: "00014"
+          return `ID${yearShort}${formattedSequence}`;
           
         } catch (error) {
           console.error('Error generating TRN:', error);
           // Fallback to timestamp-based if sequence fails
-          return `ID-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+          // 🎯 NEW FORMAT fallback: ID2500014
+          const yearShort = new Date().getFullYear().toString().slice(-2);
+          return `ID${yearShort}${Date.now().toString().slice(-5)}`;
         }
       };
 
