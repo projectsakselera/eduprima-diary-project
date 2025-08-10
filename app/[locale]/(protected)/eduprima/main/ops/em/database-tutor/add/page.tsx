@@ -26,6 +26,8 @@ import {
 import DynamicFormField from './form-field';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import { migrationConfig } from '@/config';
+import { createTutorWithMigrationSupport, type BasicTutorData } from '@/services/tutor-edge.service';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -380,20 +382,17 @@ export default function AddTutorPage() {
         nick_name: formData.namaPanggilan || null, // ✅ nick_name untuk nama panggilan
         date_of_birth: formData.tanggalLahir || null,
         gender: formData.jenisKelamin || null,
-        national_id: null, // KTP field not available in form
-        country_code: 'ID', // Indonesia
+        // national_id: null, // Field temporarily removed to avoid schema errors
+        // country_code: Schema inconsistent - removing to avoid errors
         
-        // Address fields
-        address_line1: formData.alamatLengkapDomisili || null,
-        city: formData.kotaKabupatenDomisili || null,
-        state_province: formData.provinsiDomisili || null,
-        postal_code: formData.kodePosDomisili || null,
+        // Note: Address fields removed - should be handled by user_addresses table
+        // street_address will be handled separately in user_addresses table
         
         // Phone numbers with +62 formatting  
         mobile_phone: formatPhoneNumber(formData.noHp1 || ''),
         mobile_phone_2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : null,
         
-        // ✅ Emergency contact - fields exist in user_profiles
+        // Emergency contact fields - testing cautiously
         emergency_contact_name: formData.emergencyContactName || null,
         emergency_contact_relationship: formData.emergencyContactRelationship || null,
         emergency_contact_phone: formData.emergencyContactPhone || null,
@@ -401,19 +400,16 @@ export default function AddTutorPage() {
         // PROFIL & VALUE PROPOSITION fields
         headline: formData.headline || null, // ✅ Fix: job_title → headline
         bio: formData.deskripsiDiri || null, // ✅ bio field exists
-        social_media_1: formData.socialMedia1 || null, // ✅ Fix: gunakan nama kolom yang benar
-        social_media_2: formData.socialMedia2 || null, // ✅ Fix: gunakan nama kolom yang benar
-        whatsapp_number: formatPhoneNumber(formData.noHp1 || ''), // ✅ Use main WhatsApp number from identity section
-        languages_mastered: ['id'], // ✅ Default to Indonesian only since we removed language selection
-        motivation_as_tutor: formData.motivasiMenjadiTutor || null, // ✅ Add: motivation_as_tutor field
-        preferred_language: 'id', // ✅ Default to Indonesian
+        social_media_1: formData.socialMedia1 || null,
+        social_media_2: formData.socialMedia2 || null,
+        motivation_as_tutor: formData.motivasiMenjadiTutor || null,
         
         // Education fields  
         education_level: formData.statusAkademik || null,
         university: formData.namaUniversitas || null,
         major: formData.jurusan || null,
-        graduation_year: formData.tahunLulus || null,
-        gpa: formData.ipk || null, // ✅ Add: gpa ada di user_profiles
+        graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,
+        gpa: formData.ipk ? parseFloat(formData.ipk) : null, // ✅ Fix: convert string to number untuk numeric field
         
         // ✅ REMOVED: availability_schedule - dipindah ke tutor_availability_config
         
@@ -768,18 +764,129 @@ export default function AddTutorPage() {
       
       // Step 3: Relational Database Insertion
 
-      // ✅ CREATE NEW TUTOR USER (not using authenticated admin user)
-      console.log('📝 Creating new tutor user with data:', usersUniversalData);
+      // 🔄 MIGRATION PHASE 1: Hybrid user creation (Edge Function + Client-side fallback)
+      console.log('📊 [MIGRATION] Starting Phase 1 - User Creation');
+      console.log('⚙️ [MIGRATION] Edge Function enabled:', migrationConfig.useEdgeFunctionForUserCreation);
       
-      const userCreationResult = await supabase
-        ?.from('users_universal')
-        .insert([usersUniversalData])
-        .select('id, email, user_code')
-        .single();
+      let newTutorUser: any = null;
+      let userCreationError: any = null;
+      let migrationSource = 'unknown';
 
-      const newTutorUser = userCreationResult?.data;
-      const userCreationError = userCreationResult?.error;
+      // 🚀 TRY EDGE FUNCTION FIRST (if enabled)
+      if (migrationConfig.useEdgeFunctionForUserCreation) {
+        console.log('🎯 [MIGRATION] Attempting edge function user creation...');
+        console.log('📋 [DEBUG] Form data sample:', {
+          provinsi: formData.provinsiDomisili,
+          kota: formData.kotaKabupatenDomisili, 
+          bank: formData.namaBank,
+          tanggalLahir: formData.tanggalLahir,
+          jenisKelamin: formData.jenisKelamin
+        });
+        
+        const basicTutorData: BasicTutorData = {
+          personal: {
+            namaLengkap: formData.namaLengkap || '',
+            namaPanggilan: formData.namaPanggilan,
+            tanggalLahir: formData.tanggalLahir || '',
+            jenisKelamin: formData.jenisKelamin === 'Laki-laki' ? 'L' : 'P', // 🔧 Transform: "Laki-laki" → "L", "Perempuan" → "P"
+            agama: formData.agama,
+            email: formData.email || '',
+            noHp1: formatPhoneNumber(formData.noHp1 || ''), // 🔧 Format phone for edge function
+            noHp2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : undefined, // 🔧 Format phone for edge function
+          },
+          address: {
+            provinsiDomisili: formData.provinsiDomisili || '',
+            kotaKabupatenDomisili: formData.kotaKabupatenDomisili || '',
+            kecamatanDomisili: formData.kecamatanDomisili || '',
+            kelurahanDomisili: formData.kelurahanDomisili || '',
+            alamatLengkapDomisili: formData.alamatLengkapDomisili || '',
+            kodePosDomisili: formData.kodePosDomisili,
+            alamatSamaDenganKTP: formData.alamatSamaDenganKTP,
+            provinsiKTP: formData.provinsiKTP,
+            kotaKabupatenKTP: formData.kotaKabupatenKTP,
+            kecamatanKTP: formData.kecamatanKTP,
+            kelurahanKTP: formData.kelurahanKTP,
+            alamatLengkapKTP: formData.alamatLengkapKTP,
+            kodePosKTP: formData.kodePosKTP,
+          },
+          banking: {
+            namaNasabah: formData.namaNasabah || '',
+            nomorRekening: formData.nomorRekening || '',
+            namaBank: formData.namaBank || '',
+          }
+        };
 
+        try {
+                      const edgeResult = await createTutorWithMigrationSupport(
+              formData,
+              undefined, // No auth token needed - edge function handles internally
+              async () => {
+              // Client-side fallback function (current implementation)
+              console.log('📝 [FALLBACK] Creating new tutor user with data:', usersUniversalData);
+              
+              const userCreationResult = await supabase
+                ?.from('users_universal')
+                .insert([usersUniversalData])
+                .select('id, email, user_code')
+                .single();
+
+              return userCreationResult;
+            }
+          );
+
+          if (edgeResult.success) {
+            console.log('✅ [MIGRATION] User creation successful via:', edgeResult.source);
+            
+            if (edgeResult.source === 'edge') {
+              // Edge function success - map response to expected format
+              newTutorUser = {
+                id: edgeResult.data?.user_id,
+                email: edgeResult.data?.email,
+                user_code: edgeResult.data?.user_code
+              };
+              migrationSource = 'edge_function';
+              console.log('🚀 [MIGRATION] Edge function returned:', newTutorUser);
+            } else {
+              // Client-side fallback success
+              newTutorUser = edgeResult.data?.data;
+              userCreationError = edgeResult.data?.error;
+              migrationSource = 'client_side_fallback';
+              console.log('🔄 [MIGRATION] Client-side fallback used');
+            }
+          } else {
+            userCreationError = new Error(edgeResult.error || 'Migration failed');
+            migrationSource = 'failed';
+          }
+          
+        } catch (migrationError) {
+          console.error('💥 [MIGRATION] Migration attempt failed:', migrationError);
+          userCreationError = migrationError;
+          migrationSource = 'error';
+        }
+      } else {
+        // 📝 FALLBACK: Original client-side implementation
+        console.log('📝 [MIGRATION] Using original client-side user creation');
+        console.log('📝 Creating new tutor user with data:', usersUniversalData);
+        
+        const userCreationResult = await supabase
+          ?.from('users_universal')
+          .insert([usersUniversalData])
+          .select('id, email, user_code')
+          .single();
+
+        newTutorUser = userCreationResult?.data;
+        userCreationError = userCreationResult?.error;
+        migrationSource = 'client_side_original';
+      }
+
+      // Log migration result
+      console.log('📊 [MIGRATION] Phase 1 Result:', {
+        source: migrationSource,
+        success: !userCreationError,
+        user_id: newTutorUser?.id
+      });
+
+      // Handle errors regardless of migration source
       if (userCreationError) {
         console.error('❌ Failed to create new tutor user:', userCreationError);
         

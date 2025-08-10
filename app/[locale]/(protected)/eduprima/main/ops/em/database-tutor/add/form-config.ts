@@ -199,7 +199,7 @@ export interface TutorFormData {
   sertifikasiPelatihan?: string;
   
   // Teaching Configuration (legacy) - sertifikasi removed, use sertifikasiPelatihan instead
-  hourly_rate: number;
+  hourly_rate?: number;
   teaching_methods: string[];
   available_schedule: string[];
   
@@ -2188,12 +2188,12 @@ export const tutorFormConfig: FormConfig = {
           name: 'hourly_rate',
           label: 'Ekspektasi Fee Minimal Per Jam',
           type: 'number',
-          required: true,
+          required: false,
           placeholder: '75000',
           min: 25000,
           max: 1000000,
           step: 5000,
-          helperText: 'Ekspektasi fee minimal mengajar per jam dalam Rupiah. Minimal Rp 25.000, maksimal Rp 1.000.000.',
+          helperText: 'Ekspektasi fee minimal mengajar per jam dalam Rupiah (opsional). Minimal Rp 25.000, maksimal Rp 1.000.000.',
           icon: 'ph:money',
           size: 'lg'
         },
@@ -2719,7 +2719,7 @@ export const defaultFormData: Partial<TutorFormData> = {
   prestasiNonAkademik: '',
   sertifikasiPelatihan: '',
   // sertifikasi: removed - use sertifikasiPelatihan instead
-  hourly_rate: 0,
+  hourly_rate: undefined,
   teaching_methods: [],
   available_schedule: [],
   motivasi: '',
