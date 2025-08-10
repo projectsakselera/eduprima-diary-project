@@ -25,7 +25,7 @@ export function isCloudflareR2Url(url: string | null): boolean {
   // Check for R2 patterns
   return url.includes('.r2.cloudflarestorage.com') ||
          url.includes('.r2.dev') ||
-         (process.env.CLOUDFLARE_R2_PUBLIC_URL && url.startsWith(process.env.CLOUDFLARE_R2_PUBLIC_URL));
+         (!!process.env.CLOUDFLARE_R2_PUBLIC_URL && url.startsWith(process.env.CLOUDFLARE_R2_PUBLIC_URL));
 }
 
 /**

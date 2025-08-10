@@ -11,7 +11,7 @@ import { Icon } from "@/components/ui/icon";
 import { CollapseMenuButton2 } from "../common/collapse-menu-button2";
 import TeamSwitcher from "../common/team-switcher";
 import SearchBar from "../common/search-bar";
-import { getLangDir } from "rtl-detect";
+import { getLangDir } from '@/lib/direction-utils';
 import { cn } from "@/lib/utils";
 const SidebarNav = ({ menuList }: { menuList: Group[] }) => {
   const [config, setConfig] = useConfig();

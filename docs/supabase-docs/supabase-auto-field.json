@@ -1,0 +1,134 @@
+[
+    {
+      "table_name": "document_storage",
+      "column_name": "created_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "document_storage",
+      "column_name": "id",
+      "column_default": "gen_random_uuid()",
+      "generation_type": "AUTO UUID"
+    },
+    {
+      "table_name": "document_storage",
+      "column_name": "updated_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "document_storage",
+      "column_name": "uploaded_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "document_storage",
+      "column_name": "verified_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "tutor_details",
+      "column_name": "created_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "tutor_details",
+      "column_name": "id",
+      "column_default": "gen_random_uuid()",
+      "generation_type": "AUTO UUID"
+    },
+    {
+      "table_name": "tutor_details",
+      "column_name": "tutor_registration_number",
+      "column_default": null,
+      "generation_type": "AUTO TRN"
+    },
+    {
+      "table_name": "tutor_details",
+      "column_name": "updated_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "tutor_management",
+      "column_name": "created_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "tutor_management",
+      "column_name": "id",
+      "column_default": "gen_random_uuid()",
+      "generation_type": "AUTO UUID"
+    },
+    {
+      "table_name": "tutor_management",
+      "column_name": "updated_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "user_profiles",
+      "column_name": "created_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "user_profiles",
+      "column_name": "id",
+      "column_default": "uuid_generate_v4()",
+      "generation_type": "AUTO UUID"
+    },
+    {
+      "table_name": "user_profiles",
+      "column_name": "updated_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "created_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "id",
+      "column_default": "uuid_generate_v4()",
+      "generation_type": "AUTO UUID"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "last_activity_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "last_login_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "privacy_accepted_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "terms_accepted_at",
+      "column_default": null,
+      "generation_type": "AUTO TIMESTAMP"
+    },
+    {
+      "table_name": "users_universal",
+      "column_name": "updated_at",
+      "column_default": "now()",
+      "generation_type": "AUTO TIMESTAMP"
+    }
+  ]

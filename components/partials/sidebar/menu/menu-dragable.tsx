@@ -45,7 +45,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation'
-import { getLangDir } from 'rtl-detect';
+import { getLangDir } from '@/lib/direction-utils';
 
 export function MenuDragAble() {
     const t = useTranslations("Menu")

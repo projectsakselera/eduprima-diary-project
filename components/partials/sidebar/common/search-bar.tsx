@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/input-group";
 import { Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+// Removed framer-motion dependency
 import {
     HoverCard,
     HoverCardContent,
@@ -24,24 +24,16 @@ const SearchBar = () => {
 
 
     return (
-        <AnimatePresence>
-            <motion.div
-                key={(config.collapsed && !hovered) ? "collapsed" : "expanded"}
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-
-            >
-                {(config.collapsed && !hovered) ? <CollapsedSearchBar /> :
-                    <InputGroup merged >
-                        <InputGroupText className='bg-transparent dark:border-secondary dark:group-focus-within:border-secondary'>
-                            <Search className=' h-4 w-4 dark:text-white' />
-                        </InputGroupText>
-                        <Input type="text" placeholder="Search Menu..." className='bg-transparent  dark:border-secondary dark:placeholder-white/80 dark:focus:border-secondary dark:text-white' />
-                    </InputGroup>
-                }
-            </motion.div>
-        </AnimatePresence>
+        <div className="transition-transform duration-200 ease-out">
+            {(config.collapsed && !hovered) ? <CollapsedSearchBar /> :
+                <InputGroup merged >
+                    <InputGroupText className='bg-transparent dark:border-secondary dark:group-focus-within:border-secondary'>
+                        <Search className=' h-4 w-4 dark:text-white' />
+                    </InputGroupText>
+                    <Input type="text" placeholder="Search Menu..." className='bg-transparent  dark:border-secondary dark:placeholder-white/80 dark:focus:border-secondary dark:text-white' />
+                </InputGroup>
+            }
+        </div>
 
     )
 }

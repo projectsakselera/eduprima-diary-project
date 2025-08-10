@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useConfig } from "@/hooks/use-config";
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { getLangDir } from 'rtl-detect';
+import { getLangDir } from '@/lib/direction-utils';
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { useMobileMenuConfig } from "@/hooks/use-mobile-menu";

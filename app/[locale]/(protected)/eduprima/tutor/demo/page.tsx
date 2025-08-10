@@ -113,31 +113,31 @@ export default function TutorDemoPage() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Mobile-first responsive design</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Progress tracking dengan percentage</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Section-based field organization</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Priority-based completion guidance</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Interactive cards dengan status indicators</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Support section untuk bantuan</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="success" className="shrink-0">✓</Badge>
+              <Badge className="shrink-0 bg-green-100 text-green-800">✓</Badge>
               <span className="text-sm">Integration dengan navigation menu</span>
             </div>
           </div>

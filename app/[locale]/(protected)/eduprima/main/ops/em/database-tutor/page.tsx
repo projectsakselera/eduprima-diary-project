@@ -467,7 +467,7 @@ export default function DatabaseTutorPage() {
                       </TableCell>
                       <TableCell>
                         <Badge className="border border-border bg-background font-mono text-xs">
-                          {tutor.educator_registration_number || tutor.user_code || 'N/A'}
+                          {tutor.tutor_registration_number || tutor.user_code || 'N/A'}
                         </Badge>
                       </TableCell>
                       <TableCell>

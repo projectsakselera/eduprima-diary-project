@@ -182,8 +182,7 @@ const ProfileCompletionCard = ({ section }: { section: ProfileSection }) => {
             </div>
           </div>
           <Badge 
-            variant={section.isComplete ? "success" : section.isRequired ? "warning" : "secondary"}
-            className="text-xs px-2 py-1"
+            className={`text-xs px-2 py-1 ${section.isComplete ? "bg-green-100 text-green-800" : section.isRequired ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
           >
             {section.isComplete ? "Lengkap" : section.isRequired ? "Wajib" : "Opsional"}
           </Badge>
@@ -268,7 +267,7 @@ export default function TutorProfilePage() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Kelengkapan Profile</span>
-                  <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
+                  <Badge className="bg-primary-foreground/20 text-primary-foreground">
                     {tutorStatus.completionPercentage}%
                   </Badge>
                 </div>

@@ -21,7 +21,7 @@ import SearchBar from '@/components/partials/sidebar/common/search-bar'
 import TeamSwitcher from '../common/team-switcher'
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation'
-import { getLangDir } from 'rtl-detect';
+import { getLangDir } from '@/lib/direction-utils';
 import Logo from '@/components/logo';
 import SidebarHoverToggle from '@/components/partials/sidebar/sidebar-hover-toggle';
 import { useMenuHoverConfig } from '@/hooks/use-menu-hover';

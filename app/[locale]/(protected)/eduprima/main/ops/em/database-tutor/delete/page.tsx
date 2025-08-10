@@ -21,7 +21,7 @@ interface DeletePreview {
 export default function DeleteTutorPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const userId = searchParams.get('id')
+  const userId = searchParams?.get('id')
   
   const [tutorInfo, setTutorInfo] = useState<TutorInfo | null>(null)
   const [deletePreview, setDeletePreview] = useState<DeletePreview[]>([])

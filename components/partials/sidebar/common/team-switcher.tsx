@@ -29,7 +29,7 @@ import {
 
 import { useConfig } from "@/hooks/use-config";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { motion } from "framer-motion";
+// Removed framer-motion dependency
 import { useMenuHoverConfig } from "@/hooks/use-menu-hover";
 import { useRouter, usePathname, useParams } from "next/navigation";
 
@@ -85,12 +85,8 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
 
                 <PopoverTrigger asChild>
 
-                    <motion.div
-                        key={(config.collapsed && !hovered) ? "collapsed" : "expanded"}
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
+                    <div className="transition-transform duration-200 ease-out hover:scale-105">
+
                         {(config.collapsed && !hovered) ? <Button
                             variant="outline"
                             color="secondary"
@@ -145,7 +141,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                                 </div>
                             </div>
                         </Button>}
-                    </motion.div>
+                    </div>
 
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0">

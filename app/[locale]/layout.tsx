@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 const nunito = Nunito({ subsets: ["latin"] });
 // language
-import { getLangDir } from "rtl-detect";
+import { getLangDir } from '@/lib/direction-utils';
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import DirectionProvider from "@/providers/direction-provider";
