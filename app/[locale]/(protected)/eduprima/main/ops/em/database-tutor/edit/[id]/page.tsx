@@ -557,11 +557,11 @@ export default function EditTutorPage() {
         setIsUploadingPhoto(false);
       }
     } else {
-      setFormData(prev => ({
-        ...prev,
+    setFormData(prev => ({
+      ...prev,
         [name]: file,
         [`${name}Preview`]: null
-      }));
+    }));
     }
   };
 
@@ -937,8 +937,8 @@ export default function EditTutorPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                       <Label htmlFor="provinsiDomisili">Province</Label>
                       <Select value={formData.provinsiDomisili} onValueChange={(value) => handleInputChange('provinsiDomisili', value)}>
                         <SelectTrigger>
@@ -952,8 +952,8 @@ export default function EditTutorPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
+              </div>
+              <div className="space-y-2">
                       <Label htmlFor="kotaKabupatenDomisili">City/Regency</Label>
                       <Select value={formData.kotaKabupatenDomisili} onValueChange={(value) => handleInputChange('kotaKabupatenDomisili', value)} disabled={!formData.provinsiDomisili}>
                         <SelectTrigger>
@@ -967,7 +967,7 @@ export default function EditTutorPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
+              </div>
                     <div className="space-y-2">
                       <Label htmlFor="kecamatanDomisili">District</Label>
                       <Input id="kecamatanDomisili" value={formData.kecamatanDomisili} onChange={(e) => handleInputChange('kecamatanDomisili', e.target.value)} placeholder="Enter district name" />
