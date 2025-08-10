@@ -6,10 +6,11 @@ export async function GET() {
     const supabase = createServerSupabaseClient();
     
     const { data: simpleCategories, error } = await supabase
-      .from('simple_categories')
-      .select('*')
+      .from('program_simple_categories')
+      .select('id, code, label, description, icon, color_hex, sort_order, is_active')
       .eq('is_active', true)
-      .order('id');
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true });
 
     if (error) {
       console.error('Database error:', error);
