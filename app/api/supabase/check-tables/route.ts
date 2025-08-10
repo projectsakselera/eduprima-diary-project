@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            name: 'educator_details',
+            name: 'tutor_details',
             columns: [
               { column_name: 'id', data_type: 'uuid', is_nullable: 'NO' },
               { column_name: 'user_id', data_type: 'uuid', is_nullable: 'NO' },

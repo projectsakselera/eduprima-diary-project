@@ -184,7 +184,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
 
     // First get all roles that match tutor/educator
     const { data: roleData, error: roleError } = await supabase
-      .from('roles')
+      .from('user_roles')
       .select('id')
       .or('role_name.ilike.%tutor%,role_name.ilike.%educator%');
     
@@ -213,7 +213,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         created_at,
         updated_at,
         primary_role_id,
-        roles!inner(role_name, role_code)
+        user_roles!inner(role_name, role_code)
       `, { count: 'exact' })
       .in('primary_role_id', roleIds);
 
@@ -253,7 +253,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       profilesResult,
       demographicsResult,
       addressesResult,
-      educatorDetailsResult,
+      tutorDetailsResult,
       managementResult,
       bankingResult,
       availabilityResult,
@@ -284,9 +284,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .select('*')
         .in('user_id', userIds),
       
-      // Educator details
+      // Tutor details
       supabase
-        .from('educator_details')
+        .from('tutor_details')
         .select('*')
         .in('user_id', userIds),
       
@@ -296,9 +296,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .select('*')
         .in('user_id', userIds),
       
-      // Banking info (via educator_id)
+      // Banking info (via tutor_id)
       supabase
-        .from('educator_banking_info')
+        .from('tutor_banking_info')
         .select('*'),
       
       // Availability config (via educator_id)
@@ -334,17 +334,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // Master Data - Provinces
       supabase
-        .from('provinces')
+        .from('location_province')
         .select('id, region_name'),
       
       // Master Data - Cities  
       supabase
-        .from('cities')
+        .from('location_cities')
         .select('id, city_name'),
         
       // Master Data - Programs
       supabase
-        .from('programs_catalog')
+        .from('programs_unit')
         .select('id, program_name_local, program_name')
     ]);
 
@@ -361,27 +361,27 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       addressesMap.get(addr.user_id)[addr.address_type] = addr;
     });
 
-    const educatorDetailsMap = new Map(educatorDetailsResult.data?.map(ed => [ed.user_id, ed]) || []);
+    const tutorDetailsMap = new Map(tutorDetailsResult.data?.map(td => [td.user_id, td]) || []);
     const managementMap = new Map(managementResult.data?.map(tm => [tm.user_id, tm]) || []);
     
-    // Create educator_id to user_id mapping
-    const educatorIdToUserIdMap = new Map();
-    educatorDetailsResult.data?.forEach(ed => {
-      educatorIdToUserIdMap.set(ed.id, ed.user_id);
+    // Create tutor_id to user_id mapping
+    const tutorIdToUserIdMap = new Map();
+    tutorDetailsResult.data?.forEach(td => {
+      tutorIdToUserIdMap.set(td.id, td.user_id);
     });
 
-    const bankingMap = new Map(bankingResult.data?.map(b => [educatorIdToUserIdMap.get(b.educator_id), b]) || []);
-    // Debug educator ID mapping first
-    console.log('🔗 DEBUG educator ID mapping:', {
-      educatorDetailsCount: educatorDetailsResult.data?.length || 0,
-      educatorIdToUserIdMapSize: educatorIdToUserIdMap.size,
-      sampleEducatorMapping: Array.from(educatorIdToUserIdMap.entries()).slice(0, 3)
+    const bankingMap = new Map(bankingResult.data?.map(b => [tutorIdToUserIdMap.get(b.tutor_id), b]) || []);
+    // Debug tutor ID mapping first
+    console.log('🔗 DEBUG tutor ID mapping:', {
+      tutorDetailsCount: tutorDetailsResult.data?.length || 0,
+      tutorIdToUserIdMapSize: tutorIdToUserIdMap.size,
+      sampleTutorMapping: Array.from(tutorIdToUserIdMap.entries()).slice(0, 3)
     });
     
     const availabilityMap = new Map();
     availabilityResult.data?.forEach(a => {
-      const userId = educatorIdToUserIdMap.get(a.educator_id);
-      console.log(`📅 Availability mapping: educator_id ${a.educator_id} → user_id ${userId}`, {
+      const userId = tutorIdToUserIdMap.get(a.tutor_id);
+      console.log(`📅 Availability mapping: tutor_id ${a.tutor_id} → user_id ${userId}`, {
         availability_status: a.availability_status,
         hasUserMapping: !!userId
       });
@@ -398,12 +398,12 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       userIds: userIds.slice(0, 5),
       availabilityError: availabilityResult.error
     });
-    const preferencesMap = new Map(preferencesResult.data?.map(p => [educatorIdToUserIdMap.get(p.educator_id), p]) || []);
+    const preferencesMap = new Map(preferencesResult.data?.map(p => [tutorIdToUserIdMap.get(p.tutor_id), p]) || []);
     
     // 🔧 FIX: Create personality map with error handling
     const personalityMap = new Map();
     personalityResult.data?.forEach(p => {
-      const userId = educatorIdToUserIdMap.get(p.educator_id);
+      const userId = tutorIdToUserIdMap.get(p.tutor_id);
       if (userId) {
         personalityMap.set(userId, p);
       }
@@ -412,7 +412,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // Group program mappings by user_id
     const programMappingsMap = new Map();
     programMappingsResult.data?.forEach(pm => {
-      const userId = educatorIdToUserIdMap.get(pm.educator_id);
+      const userId = tutorIdToUserIdMap.get(pm.tutor_id);
       if (userId) {
         if (!programMappingsMap.has(userId)) {
           programMappingsMap.set(userId, []);
@@ -424,7 +424,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // Group additional subjects by user_id
     const additionalSubjectsMap = new Map();
     additionalSubjectsResult.data?.forEach(sub => {
-      const userId = educatorIdToUserIdMap.get(sub.educator_id);
+      const userId = tutorIdToUserIdMap.get(sub.tutor_id);
       if (userId) {
         if (!additionalSubjectsMap.has(userId)) {
           additionalSubjectsMap.set(userId, []);
@@ -485,7 +485,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       const profile = profilesMap.get(user.id);
       const demographics = demographicsMap.get(user.id);
       const addresses = addressesMap.get(user.id) || {};
-      const educatorDetails = educatorDetailsMap.get(user.id);
+      const tutorDetails = tutorDetailsMap.get(user.id);
       const management = managementMap.get(user.id);
       const banking = bankingMap.get(user.id);
       const availability = availabilityMap.get(user.id);
@@ -500,7 +500,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       return {
         // System & Status
         id: user.id,
-        trn: educatorDetails?.educator_registration_number || user.user_code || '',
+        trn: tutorDetails?.tutor_registration_number || user.user_code || '',
         status_tutor: management?.status_tutor || '',
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',
@@ -522,6 +522,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         motivasiMenjadiTutor: profile?.motivation_as_tutor || '',
         socialMedia1: profile?.social_media_1 || '',
         socialMedia2: profile?.social_media_2 || '',
+        languagesMastered: profile?.languages_mastered || [],
+        preferredLanguage: profile?.preferred_language || '',
+        whatsappNumber: profile?.whatsapp_number || profile?.mobile_phone || '',
         
         // Address - Domisili (with lookups to master tables)
         provinsiDomisili: provincesMap.get(domicileAddr.province_id) || domicileAddr.province_id || '',
@@ -546,44 +549,44 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         namaBank: banking?.bank_name || '',
         
         // Education
-        statusAkademik: educatorDetails?.academic_status || '',
-        namaUniversitas: educatorDetails?.university_s1_name || '',
-        fakultas: educatorDetails?.faculty || '',
-        jurusan: educatorDetails?.major_s1 || '',
+        statusAkademik: tutorDetails?.academic_status || '',
+        namaUniversitas: tutorDetails?.university_s1_name || '',
+        fakultas: tutorDetails?.faculty || '',
+        jurusan: tutorDetails?.major_s1 || '',
+        jurusanSMKDetail: tutorDetails?.vocational_school_detail || extractFromEducationHistory(tutorDetails?.education_history, 'smk', 'major_detail') || '',
         ipk: profile?.gpa || 0,
-        tahunMasuk: educatorDetails?.entry_year?.toString() || '',
+        tahunMasuk: tutorDetails?.entry_year?.toString() || '',
         tahunLulus: profile?.graduation_year?.toString() || '',
-        namaSMA: educatorDetails?.high_school || '',
-        jurusanSMA: extractFromEducationHistory(educatorDetails?.education_history, 'sma', 'major') || '',
-        jurusanSMKDetail: extractFromEducationHistory(educatorDetails?.education_history, 'smk', 'major_detail') || extractFromEducationHistory(educatorDetails?.education_history, 'sma', 'major_detail') || '',
-        tahunLulusSMA: educatorDetails?.high_school_graduation_year?.toString() || '',
+        namaSMA: tutorDetails?.high_school || '',
+        jurusanSMA: extractFromEducationHistory(tutorDetails?.education_history, 'sma', 'major') || '',
+        tahunLulusSMA: tutorDetails?.high_school_graduation_year?.toString() || '',
         
         // Education Documents
         transkripNilai: documents.transcript_document?.file_url || null,
         sertifikatKeahlian: documents.skill_certificate?.file_url || null,
         
         // Education - Middle School
-        namaSMP: extractFromEducationHistory(educatorDetails?.education_history, 'smp', 'institution_name') || '',
-        tahunLulusSMP: extractFromEducationHistory(educatorDetails?.education_history, 'smp', 'graduation_year')?.toString() || '',
+        namaSMP: extractFromEducationHistory(tutorDetails?.education_history, 'smp', 'institution_name') || '',
+        tahunLulusSMP: extractFromEducationHistory(tutorDetails?.education_history, 'smp', 'graduation_year')?.toString() || '',
         
         // Education - S1 Background (for S2 students)
-        namaUniversitasS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'institution_name') || '',
-        fakultasS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'faculty') || '',
-        jurusanS1: extractFromEducationHistory(educatorDetails?.education_history, 'university_s1', 'major') || '',
+        namaUniversitasS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'institution_name') || '',
+        fakultasS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'faculty') || '',
+        jurusanS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'major') || '',
         
         // Education - Alternative Learning
-        namaInstitusi: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'institution_name') || '',
-        bidangKeahlian: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'field_of_expertise') || '',
-        pengalamanBelajar: extractFromEducationHistory(educatorDetails?.education_history, 'alternative', 'learning_experience') || '',
+        namaInstitusi: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'institution_name') || '',
+        bidangKeahlian: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'field_of_expertise') || '',
+        pengalamanBelajar: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'learning_experience') || '',
         
         // Professional Profile
-        keahlianSpesialisasi: educatorDetails?.special_skills || '',
-        keahlianLainnya: educatorDetails?.other_skills || '',
-        pengalamanMengajar: educatorDetails?.teaching_experience || '',
-        pengalamanLainRelevan: educatorDetails?.other_experience || '',
-        prestasiAkademik: educatorDetails?.academic_achievements || '',
-        prestasiNonAkademik: educatorDetails?.non_academic_achievements || '',
-        sertifikasiPelatihan: educatorDetails?.certifications_training || '',
+        keahlianSpesialisasi: tutorDetails?.special_skills || '',
+        keahlianLainnya: tutorDetails?.other_skills || '',
+        pengalamanMengajar: tutorDetails?.teaching_experience || '',
+        pengalamanLainRelevan: tutorDetails?.other_experience || '',
+        prestasiAkademik: tutorDetails?.academic_achievements || '',
+        prestasiNonAkademik: tutorDetails?.non_academic_achievements || '',
+        sertifikasiPelatihan: tutorDetails?.certifications_training || '',
         
         // Programs & Subjects (with lookups to program names + additional subjects)
         selectedPrograms: (() => {
@@ -614,8 +617,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
               case 'leave': return 'leave';
               default: 
                 // If no availability data found, try to infer from other data
-                // For newly imported users, default to available if they have educator details
-                if (educatorDetails && !availability) {
+                // For newly imported users, default to available if they have tutor details
+                if (tutorDetails && !availability) {
                   console.log(`📅 No availability data for user ${user.id}, defaulting to available for new import`);
                   return 'available';
                 }
@@ -628,9 +631,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
             availabilityObject: availability,
             rawStatus: status,
             mappedStatus: result,
-            educatorId: educatorDetails?.id,
+            tutorId: tutorDetails?.id,
             availabilityInMap: availabilityMap.has(user.id),
-            isNewImport: educatorDetails && !availability
+            isNewImport: tutorDetails && !availability
           });
           
           return result;
@@ -646,6 +649,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         location_notes: availability?.location_notes || '',
         catatanAvailability: availability?.availability_notes || '',
         
+        // Transportation & Location Coordinates
+        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
+        titikLokasiLat: availability?.teaching_center_lat || null,
+        titikLokasiLng: availability?.teaching_center_lng || null,
+        
         // DEBUG: Add raw availability data for troubleshooting
         _debug_availability_full: availability || {},
         _debug_schedule: {
@@ -656,11 +664,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           raw_radius: availability?.teaching_radius_km,
           has_availability: !!availability
         },
-        
-        // Transportation & Location Coordinates
-        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
-        titikLokasiLat: availability?.teaching_center_lat || null,
-        titikLokasiLng: availability?.teaching_center_lng || null,
         
         // Teaching Preferences
         teachingMethods: preferences?.teaching_styles || [],
@@ -690,7 +693,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         scheduleFlexibilityLevel: personality?.schedule_flexibility_level?.toString() || '',
         
         // Emergency Contact
-        whatsappNumber: profile?.whatsapp_number || profile?.mobile_phone || '',
         emergencyContactName: profile?.emergency_contact_name || '',
         emergencyContactRelationship: profile?.emergency_contact_relationship || '',
         emergencyContactPhone: profile?.emergency_contact_phone || '',

@@ -59,18 +59,18 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeClassName = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'active':
-        return 'default';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'inactive':
-        return 'secondary';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'pending':
-        return 'outline';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'suspended':
-        return 'destructive';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'secondary';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -132,7 +132,7 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
                     <Shield className="h-4 w-4 text-gray-500" />
                     <div>
                       <div className="text-sm text-gray-500">Status</div>
-                      <Badge variant={getStatusBadgeVariant(tutor.status_tutor)}>
+                      <Badge className={getStatusBadgeClassName(tutor.status_tutor)}>
                         {tutor.status_tutor}
                       </Badge>
                     </div>
@@ -156,7 +156,7 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
                     <span className="text-gray-600">Menganalisis data yang akan terhapus...</span>
                   </div>
                 ) : previewError ? (
-                  <Alert variant="destructive">
+                  <Alert className="border-red-200 bg-red-50">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
                       Error menganalisis data: {previewError}
@@ -181,7 +181,7 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
                               {item.data_type}
                             </div>
                           </div>
-                          <Badge variant="outline" className="font-mono">
+                          <Badge className="font-mono border-gray-200 bg-gray-50 text-gray-700">
                             {item.records_affected} record(s)
                           </Badge>
                         </div>
@@ -197,7 +197,7 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
             </Card>
 
             {/* Warning Alert */}
-            <Alert variant="destructive">
+            <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 <strong>Peringatan:</strong> Tindakan ini akan menghapus semua data tutor secara permanen termasuk:
@@ -218,10 +218,9 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
             Batal
           </Button>
           <Button
-            variant="destructive"
             onClick={handleConfirm}
             disabled={isDeleting || isLoading || !tutor}
-            className="flex-1"
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
           >
             {isDeleting ? (
               <>

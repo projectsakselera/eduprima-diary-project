@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const supabase = createServerSupabaseClient();
     
     let query = supabase
-      .from('cities')
+      .from('location_cities')
       .select('id, city_code, city_name, city_local_name, province_id')
       .order('city_name');
     

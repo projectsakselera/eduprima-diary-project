@@ -3,10 +3,7 @@ declare module 'dayjs' {
   export default dayjs;
 }
 
-declare module 'framer-motion' {
-  export const motion: any;
-  export const AnimatePresence: any;
-}
+// Removed framer-motion module declarations
 
 declare module '*.png' {
   const value: string;

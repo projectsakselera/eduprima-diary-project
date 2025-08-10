@@ -39,10 +39,10 @@ export interface SupabaseUserProfile {
   created_at: string;
 }
 
-export interface SupabaseEducatorDetails {
+export interface SupabaseTutorDetails {
   id: string;
   user_id: string;
-  educator_registration_number?: string;
+  tutor_registration_number?: string;
   onboarding_status: string;
   background_check_status: string;
   bio_summary?: string;
@@ -82,8 +82,8 @@ export interface CombinedTutorData {
   bio?: string;
   profile_photo_url?: string;
   
-  // Educator specific
-  educator_registration_number?: string;
+  // Tutor specific
+  tutor_registration_number?: string;
   onboarding_status: string;
   background_check_status: string;
   bio_summary?: string;
@@ -118,9 +118,9 @@ export class SupabaseTutorService {
 
       // First, get role UUIDs for educators/tutors
       const { data: roles, error: rolesError } = await supabase
-        .from('t_340_01_01_roles')
-        .select('id, name')
-        .in('name', ['educator', 'tutor']);
+        .from('user_roles')
+        .select('id, role_name')
+        .in('role_name', ['educator', 'tutor']);
 
       if (rolesError || !roles || roles.length === 0) {
         console.error('❌ Error fetching roles:', rolesError);
@@ -163,23 +163,23 @@ export class SupabaseTutorService {
         return { data: null, error: profilesError.message, count: 0 };
       }
 
-      // Fetch educator details
-      const { data: educatorDetails, error: educatorError } = await supabase
-        .from('educator_details')
+      // Fetch tutor details
+      const { data: tutorDetails, error: tutorError } = await supabase
+        .from('tutor_details')
         .select('*')
         .in('user_id', userIds);
 
-      if (educatorError) {
-        console.error('❌ Error fetching educator details:', educatorError);
-        return { data: null, error: educatorError.message, count: 0 };
+      if (tutorError) {
+        console.error('❌ Error fetching tutor details:', tutorError);
+        return { data: null, error: tutorError.message, count: 0 };
       }
 
-      console.log(`✅ Found ${profiles?.length || 0} profiles and ${educatorDetails?.length || 0} educator details`);
+      console.log(`✅ Found ${profiles?.length || 0} profiles and ${tutorDetails?.length || 0} tutor details`);
 
       // Combine data
       const combinedData: CombinedTutorData[] = users.map(user => {
         const profile = profiles?.find(p => p.user_id === user.id);
-        const educator = educatorDetails?.find(e => e.user_id === user.id);
+        const tutor = tutorDetails?.find(e => e.user_id === user.id);
 
         return {
           // User info
@@ -202,22 +202,22 @@ export class SupabaseTutorService {
           bio: profile?.bio,
           profile_photo_url: profile?.profile_photo_url,
           
-          // Educator info
-          educator_registration_number: educator?.educator_registration_number,
-          onboarding_status: educator?.onboarding_status || 'pending_profile',
-          background_check_status: educator?.background_check_status || 'not_started',
-          bio_summary: educator?.bio_summary,
-          teaching_philosophy: educator?.teaching_philosophy,
-          teaching_experience: educator?.teaching_experience,
-          achievements: educator?.achievements,
-          special_skills: educator?.special_skills,
-          teaching_service_options: educator?.teaching_service_options || [],
-          service_areas: educator?.service_areas,
-          personality_tags: educator?.personality_tags || [],
-          average_rating: educator?.average_rating || 0,
-          total_teaching_hours: educator?.total_teaching_hours || 0,
-          cancellation_rate: educator?.cancellation_rate || 0,
-          is_top_educator: educator?.is_top_educator || false,
+          // Tutor info
+          tutor_registration_number: tutor?.tutor_registration_number,
+          onboarding_status: tutor?.onboarding_status || 'pending_profile',
+          background_check_status: tutor?.background_check_status || 'not_started',
+          bio_summary: tutor?.bio_summary,
+          teaching_philosophy: tutor?.teaching_philosophy,
+          teaching_experience: tutor?.teaching_experience,
+          achievements: tutor?.achievements,
+          special_skills: tutor?.special_skills,
+          teaching_service_options: tutor?.teaching_service_options || [],
+          service_areas: tutor?.service_areas,
+          personality_tags: tutor?.personality_tags || [],
+          average_rating: tutor?.average_rating || 0,
+          total_teaching_hours: tutor?.total_teaching_hours || 0,
+          cancellation_rate: tutor?.cancellation_rate || 0,
+          is_top_educator: tutor?.is_top_educator || false,
           
           // Timestamps
           created_at: user.created_at || new Date().toISOString()
@@ -271,14 +271,14 @@ export class SupabaseTutorService {
         tablesAccessible.push('user_profiles');
       }
 
-      // Test educator_details table
-      const { data: educatorTest, error: educatorError } = await supabase
-        .from('educator_details')
+      // Test tutor_details table
+      const { data: tutorTest, error: tutorError } = await supabase
+        .from('tutor_details')
         .select('id')
         .limit(1);
         
-      if (!educatorError) {
-        tablesAccessible.push('educator_details');
+      if (!tutorError) {
+        tablesAccessible.push('tutor_details');
       }
       
       return {

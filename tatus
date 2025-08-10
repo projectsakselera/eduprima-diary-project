@@ -1,2 +1,0 @@
-[33m7a5c689[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m ✅ COMPLETE IMPORT FIX: Fuzzy matching + Smart auto-accept + Complete data persistence
-[33mdefc201[m feat: Major database tutor system improvements - Fixed TRN generation, column mismatches, view-all completeness, and master data lookups

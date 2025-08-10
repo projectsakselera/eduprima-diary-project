@@ -155,7 +155,7 @@ async function createBackupBeforeDelete(userId: string) {
       backup_data: {
         users_universal: null as any,
         user_profiles: null as any,
-        educator_details: null as any,
+        tutor_details: null as any,
         addresses: null as any,
         demographics: null as any,
         documents: null as any
@@ -163,10 +163,10 @@ async function createBackupBeforeDelete(userId: string) {
     };
 
     // Gather all user data
-    const [userResult, profileResult, educatorResult, addressResult, demoResult, docResult] = await Promise.all([
+    const [userResult, profileResult, tutorResult, addressResult, demoResult, docResult] = await Promise.all([
       supabase.from('users_universal').select('*').eq('id', userId).single(),
       supabase.from('user_profiles').select('*').eq('user_id', userId).single(),
-      supabase.from('educator_details').select('*').eq('user_id', userId).single(),
+      supabase.from('tutor_details').select('*').eq('user_id', userId).single(),
       supabase.from('user_addresses').select('*').eq('user_id', userId),
       supabase.from('user_demographics').select('*').eq('user_id', userId).single(),
       supabase.from('document_storage').select('*').eq('user_id', userId)
@@ -174,7 +174,7 @@ async function createBackupBeforeDelete(userId: string) {
 
     backupData.backup_data.users_universal = userResult.data;
     backupData.backup_data.user_profiles = profileResult.data;
-    backupData.backup_data.educator_details = educatorResult.data;
+    backupData.backup_data.tutor_details = tutorResult.data;
     backupData.backup_data.addresses = addressResult.data;
     backupData.backup_data.demographics = demoResult.data;
     backupData.backup_data.documents = docResult.data;

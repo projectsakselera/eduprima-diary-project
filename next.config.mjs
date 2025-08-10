@@ -1,15 +1,12 @@
 import createNextIntlPlugin from "next-intl/plugin";
-import nextra from "nextra";
+// import nextra from "nextra"; // Temporarily disabled
 import withPWAInit from "@ducanh2912/next-pwa";
 
 /** @type {import('next').NextConfig} */
 
 const withNextIntl = createNextIntlPlugin();
 
-const withNextra = nextra({
-  theme: "nextra-theme-docs",
-  themeConfig: "./theme.config.tsx",
-});
+// const withNextra = nextra(); // Temporarily disabled
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -54,4 +51,4 @@ const nextConfig = {
   },
 };
 
-export default withPWA(withNextIntl(withNextra(nextConfig)));
+export default withPWA(withNextIntl(nextConfig)); // Removed withNextra temporarily

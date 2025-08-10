@@ -7,7 +7,7 @@ export async function GET() {
     const supabase = createServerSupabaseClient();
     
     const { data: programs, error } = await supabase
-      .from('programs_catalog')
+      .from('programs_unit')
       .select('id, program_name, program_name_local, program_code, subject_focus')
       .eq('is_active', true)
       .order('program_name_local');

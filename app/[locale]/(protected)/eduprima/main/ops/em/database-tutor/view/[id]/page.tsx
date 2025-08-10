@@ -1672,7 +1672,7 @@ export default function ViewTutorPage() {
                   {/* Transportation & Location */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Transportation Methods - HIDDEN per user request */}
-                    {false && tutorData.transportasiTutor && Array.isArray(tutorData.transportasiTutor) && tutorData.transportasiTutor.length > 0 && (
+                    {false && tutorData?.transportasiTutor && Array.isArray(tutorData?.transportasiTutor) && (tutorData?.transportasiTutor?.length || 0) > 0 && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="text-lg flex items-center gap-2">
@@ -1682,7 +1682,7 @@ export default function ViewTutorPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="flex flex-wrap gap-2">
-                            {tutorData.transportasiTutor.map((method, index) => (
+                            {tutorData?.transportasiTutor?.map((method, index) => (
                               <Badge key={index} className="bg-blue-100 text-blue-800 border-blue-200">
                                 {method}
                               </Badge>
@@ -1907,6 +1907,18 @@ export default function ViewTutorPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-500">Certificate Document</span>
                           {tutorData.dokumenSertifikat ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              Available
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-800">
+                              Optional
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-500">Transcript Document</span>
+                          {tutorData.transkripNilai ? (
                             <Badge className="bg-green-100 text-green-800">
                               Available
                             </Badge>

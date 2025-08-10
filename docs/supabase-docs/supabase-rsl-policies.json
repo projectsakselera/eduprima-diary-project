@@ -1,0 +1,87 @@
+[
+    {
+      "schemaname": "public",
+      "tablename": "document_storage",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_additional_subjects",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_availability_config",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_banking_info",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_details",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_management",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_personality_traits",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_program_mappings",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_sequences",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tutor_teaching_preferences",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_addresses",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_demographics",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_permissions",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_profiles",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_role_user_permissions_mapping",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_roles",
+      "rls_enabled": false
+    },
+    {
+      "schemaname": "public",
+      "tablename": "users_universal",
+      "rls_enabled": false
+    }
+  ]

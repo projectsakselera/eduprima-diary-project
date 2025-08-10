@@ -89,17 +89,40 @@ export async function POST(request: NextRequest) {
           error: uploadResult.error
         });
       } else {
-        // Update document storage record in database
+        // Update or insert document storage record in database (upsert behavior)
         const updateResult = await adminSupabase
           .from('document_storage')
           .update({
             file_url: uploadResult.url,
             stored_filename: fileName,
             file_size: file.size,
+            upload_status: 'uploaded',
             updated_at: new Date().toISOString()
           })
           .eq('user_id', userId)
           .eq('document_type', fileType);
+
+        // If no row was updated, insert a new record
+        if (!updateResult.error && (updateResult.count === 0 || (Array.isArray(updateResult.data) && updateResult.data.length === 0))) {
+          await adminSupabase
+            .from('document_storage')
+            .insert({
+              user_id: userId,
+              document_type: fileType,
+              original_filename: file.name,
+              stored_filename: fileName,
+              file_size: file.size,
+              mime_type: file.type,
+              file_url: uploadResult.url,
+              storage_path: fileName,
+              upload_status: 'uploaded',
+              verification_status: 'pending',
+              uploaded_at: new Date().toISOString(),
+              uploaded_by: session.user.id ?? null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+        }
         
         uploadResults.push({
           fileType,

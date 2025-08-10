@@ -75,7 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password_hash,
               account_type,
               primary_role_id,
-              t_340_01_01_roles!primary_role_id (
+              user_roles!primary_role_id (
                 role_code,
                 role_name,
                 role_description
@@ -106,7 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.log('✅ NextAuth - Login successful for:', email)
 
           // Map role_code to authorization system  
-          const roleCode = user.t_340_01_01_roles?.role_code
+          const roleCode = user.user_roles?.role_code
           let mappedRole = roleCode
           
           // Map roles for backward compatibility with existing auth system
@@ -133,7 +133,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             user_code: user.user_code,
             account_type: user.account_type,
             role: mappedRole || 'user',
-            role_name: user.t_340_01_01_roles?.role_name || 'User',
+            role_name: user.user_roles?.role_name || 'User',
             primaryRole: roleCode,
             accountType: user.account_type,
             userCode: user.user_code

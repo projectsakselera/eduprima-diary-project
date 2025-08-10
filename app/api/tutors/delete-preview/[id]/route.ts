@@ -160,28 +160,28 @@ async function createManualPreview(userId: string) {
       });
     }
 
-    // Educator details
-    const { data: educatorData, count: educatorCount } = await supabase
-      .from('educator_details')
+    // Tutor details
+    const { data: tutorData, count: tutorCount } = await supabase
+      .from('tutor_details')
       .select('id', { count: 'exact' })
       .eq('user_id', userId);
 
-    if (educatorCount && educatorCount > 0) {
+    if (tutorCount && tutorCount > 0) {
       preview.push({
-        table_name: 'educator_details',
-        records_affected: educatorCount,
-        data_type: 'Educator Profile'
+        table_name: 'tutor_details',
+        records_affected: tutorCount,
+        data_type: 'Tutor Profile'
       });
 
-      // Get educator ID for sub-tables
-      const educatorId = educatorData?.[0]?.id;
+      // Get tutor ID for sub-tables
+      const tutorId = tutorData?.[0]?.id;
 
-      if (educatorId) {
+      if (tutorId) {
         // Availability config
         const { count: availabilityCount } = await supabase
           .from('tutor_availability_config')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', tutorId);
 
         if (availabilityCount && availabilityCount > 0) {
           preview.push({
@@ -195,7 +195,7 @@ async function createManualPreview(userId: string) {
         const { count: preferencesCount } = await supabase
           .from('tutor_teaching_preferences')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', tutorId);
 
         if (preferencesCount && preferencesCount > 0) {
           preview.push({
@@ -209,7 +209,7 @@ async function createManualPreview(userId: string) {
         const { count: personalityCount } = await supabase
           .from('tutor_personality_traits')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', tutorId);
 
         if (personalityCount && personalityCount > 0) {
           preview.push({
@@ -223,7 +223,7 @@ async function createManualPreview(userId: string) {
         const { count: programCount } = await supabase
           .from('tutor_program_mappings')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', tutorId);
 
         if (programCount && programCount > 0) {
           preview.push({
@@ -235,13 +235,13 @@ async function createManualPreview(userId: string) {
 
         // Banking info
         const { count: bankingCount } = await supabase
-          .from('educator_banking_info')
+          .from('tutor_banking_info')
           .select('*', { count: 'exact', head: true })
-          .eq('educator_id', educatorId);
+          .eq('tutor_id', tutorId);
 
         if (bankingCount && bankingCount > 0) {
           preview.push({
-            table_name: 'educator_banking_info',
+            table_name: 'tutor_banking_info',
             records_affected: bankingCount,
             data_type: 'Banking Information'
           });

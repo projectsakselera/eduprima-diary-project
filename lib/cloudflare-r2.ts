@@ -21,41 +21,51 @@ interface SignedUrlResult {
 }
 
 class CloudflareR2Client {
-  private client: S3Client;
-  private bucketName: string;
-  private publicUrl: string;
+  private client?: S3Client;
+  private bucketName?: string;
+  private publicUrl?: string;
+  private initError?: string;
 
   constructor() {
-    // Validate required environment variables
-    if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID) {
-      throw new Error('CLOUDFLARE_R2_ACCESS_KEY_ID environment variable is required');
-    }
-    if (!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY) {
-      throw new Error('CLOUDFLARE_R2_SECRET_ACCESS_KEY environment variable is required');
-    }
-    if (!process.env.CLOUDFLARE_R2_BUCKET_NAME) {
-      throw new Error('CLOUDFLARE_R2_BUCKET_NAME environment variable is required');
-    }
-    if (!process.env.CLOUDFLARE_R2_ENDPOINT) {
-      throw new Error('CLOUDFLARE_R2_ENDPOINT environment variable is required');
-    }
-    if (!process.env.CLOUDFLARE_R2_PUBLIC_URL) {
-      throw new Error('CLOUDFLARE_R2_PUBLIC_URL environment variable is required');
-    }
+    // Lazy initialization - don't throw on import, only when actually used
+  }
 
-    this.client = new S3Client({
-      region: 'auto', // Cloudflare R2 uses 'auto' region
-      endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-      },
-      // Force path style for R2 compatibility
-      forcePathStyle: true,
-    });
-    
-    this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
-    this.publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+  private initialize() {
+    if (this.client) return; // Already initialized
+    if (this.initError) throw new Error(this.initError); // Previous init failed
+
+    try {
+      // Validate required environment variables
+      const required = [
+        'CLOUDFLARE_R2_ACCESS_KEY_ID',
+        'CLOUDFLARE_R2_SECRET_ACCESS_KEY', 
+        'CLOUDFLARE_R2_BUCKET_NAME',
+        'CLOUDFLARE_R2_ENDPOINT',
+        'CLOUDFLARE_R2_PUBLIC_URL'
+      ];
+
+      const missing = required.filter(key => !process.env[key]);
+      if (missing.length > 0) {
+        throw new Error(`Missing required R2 environment variables: ${missing.join(', ')}`);
+      }
+
+      this.client = new S3Client({
+        region: 'auto', // Cloudflare R2 uses 'auto' region
+        endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+        credentials: {
+          accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+        },
+        // Force path style for R2 compatibility
+        forcePathStyle: true,
+      });
+      
+      this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+      this.publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+    } catch (error) {
+      this.initError = error instanceof Error ? error.message : 'R2 initialization failed';
+      throw error;
+    }
   }
 
   /**
@@ -75,6 +85,7 @@ class CloudflareR2Client {
     }
   ): Promise<UploadResult> {
     try {
+      this.initialize();
       console.log(`🔄 R2: Uploading file to key: ${key}`);
       
       // Determine content type
@@ -87,7 +98,7 @@ class CloudflareR2Client {
       }
 
       const command = new PutObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: this.bucketName!,
         Key: key,
         Body: file,
         ContentType: finalContentType,
@@ -95,7 +106,7 @@ class CloudflareR2Client {
         Metadata: options?.metadata || {},
       });
 
-      const result = await this.client.send(command);
+      const result = await this.client!.send(command);
       const publicUrl = this.getPublicUrl(key);
       
       console.log(`✅ R2: Upload successful for key: ${key}`);
@@ -122,14 +133,15 @@ class CloudflareR2Client {
    */
   async deleteFile(key: string): Promise<DeleteResult> {
     try {
+      this.initialize();
       console.log(`🗑️ R2: Deleting file with key: ${key}`);
       
       const command = new DeleteObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: this.bucketName!,
         Key: key,
       });
 
-      await this.client.send(command);
+      await this.client!.send(command);
       console.log(`✅ R2: Delete successful for key: ${key}`);
       
       return { success: true };
@@ -149,14 +161,15 @@ class CloudflareR2Client {
    */
   async getSignedUrl(key: string, expiresIn: number = 3600): Promise<SignedUrlResult> {
     try {
+      this.initialize();
       console.log(`🔐 R2: Generating signed URL for key: ${key}, expires in: ${expiresIn}s`);
       
       const command = new GetObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: this.bucketName!,
         Key: key,
       });
 
-      const signedUrl = await getSignedUrl(this.client, command, { expiresIn });
+      const signedUrl = await getSignedUrl(this.client!, command, { expiresIn });
       console.log(`✅ R2: Signed URL generated for key: ${key}`);
       
       return { success: true, url: signedUrl };
@@ -174,9 +187,10 @@ class CloudflareR2Client {
    * @param key - The file path/key
    */
   getPublicUrl(key: string): string {
+    this.initialize();
     // Remove leading slash if present to avoid double slashes
     const cleanKey = key.startsWith('/') ? key.slice(1) : key;
-    return `${this.publicUrl}/${cleanKey}`;
+    return `${this.publicUrl!}/${cleanKey}`;
   }
 
   /**

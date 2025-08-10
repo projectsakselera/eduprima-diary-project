@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useConfig } from "@/hooks/use-config";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Icon } from "@/components/ui/icon";
-import { motion } from 'framer-motion';
+// Removed framer-motion dependency
 
 
 export function SidebarToggle() {
@@ -25,25 +25,13 @@ export function SidebarToggle() {
                 variant="ghost"
                 size="icon" >
                 {config.subMenu ? (
-                    <motion.div
-                        key={config.subMenu ? 'collapsed' : 'expanded'}
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -20, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
+                    <div className="transition-all duration-200 ease-out animate-in slide-in-from-left-4 fade-in">
                         <Icon icon="heroicons:arrow-small-right-solid" className="h-6 w-6" />
-                    </motion.div>
+                    </div>
                 ) : (
-                    <motion.div
-                        key={config.subMenu ? 'collapsed' : 'expanded'}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
+                    <div className="transition-all duration-200 ease-out animate-in zoom-in-75 fade-in">
                         <Icon icon="heroicons:bars-3-bottom-left-solid" className="h-6 w-6" />
-                    </motion.div>
+                    </div>
                 )}
             </Button>
 
@@ -58,25 +46,13 @@ export function SidebarToggle() {
             size="icon"
         >
             {collapsed ? (
-                <motion.div
-                    key={collapsed ? 'collapsed' : 'expanded'}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -20, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
+                <div className="transition-all duration-200 ease-out animate-in slide-in-from-left-4 fade-in">
                     <Icon icon="heroicons:arrow-small-right-solid" className="h-6 w-6" />
-                </motion.div>
+                </div>
             ) : (
-                <motion.div
-                    key={collapsed ? 'collapsed' : 'expanded'}
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
+                <div className="transition-all duration-200 ease-out animate-in zoom-in-75 fade-in">
                     <Icon icon="heroicons:bars-3-bottom-left-solid" className="h-6 w-6" />
-                </motion.div>
+                </div>
             )}
         </Button>
 

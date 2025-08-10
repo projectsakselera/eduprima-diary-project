@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
           profile_photo_url,
           mobile_phone
         ),
-        educator_details!inner (
-          educator_registration_number,
+        tutor_details!inner (
+          tutor_registration_number,
           academic_status,
           university_s1_name
         ),
@@ -67,12 +67,7 @@ export async function GET(request: NextRequest) {
           approval_level
         )
       `)
-      .or(`
-        user_profiles.full_name.ilike.%${query}%,
-        user_profiles.nick_name.ilike.%${query}%,
-        email.ilike.%${query}%,
-        educator_details.educator_registration_number.ilike.%${query}%
-      `)
+      .or(`user_profiles.full_name.ilike.*${query}*,user_profiles.nick_name.ilike.*${query}*,email.ilike.*${query}*`)
       .eq('tutor_management.status_tutor', 'active')
       .limit(limit);
 
@@ -86,26 +81,26 @@ export async function GET(request: NextRequest) {
     const { data: programMappings } = await supabase
       .from('tutor_program_mappings')
       .select(`
-        educator_id,
+        tutor_id,
         programs_catalog!inner (
           program_name
         )
       `)
-      .in('educator_id', tutorIds);
+      .in('tutor_id', tutorIds);
 
     // Group programs by tutor
     const programsMap = new Map();
     programMappings?.forEach((mapping: any) => {
-      if (!programsMap.has(mapping.educator_id)) {
-        programsMap.set(mapping.educator_id, []);
+      if (!programsMap.has(mapping.tutor_id)) {
+        programsMap.set(mapping.tutor_id, []);
       }
-      programsMap.get(mapping.educator_id).push(mapping.programs_catalog.program_name);
+      programsMap.get(mapping.tutor_id).push(mapping.programs_catalog.program_name);
     });
 
     // Format lightweight results
     const results: SearchResult[] = searchResults?.map((user: any) => ({
       id: user.id,
-      trn: user.educator_details[0]?.educator_registration_number || '',
+      trn: user.tutor_details[0]?.tutor_registration_number || '',
       namaLengkap: user.user_profiles[0]?.full_name || '',
       namaPanggilan: user.user_profiles[0]?.nick_name || '',
       email: user.email || '',
@@ -113,8 +108,8 @@ export async function GET(request: NextRequest) {
       fotoProfil: user.user_profiles[0]?.profile_photo_url || null,
       status_tutor: user.tutor_management[0]?.status_tutor || '',
       headline: user.user_profiles[0]?.headline || '',
-      statusAkademik: user.educator_details[0]?.academic_status || '',
-      namaUniversitas: user.educator_details[0]?.university_s1_name || '',
+      statusAkademik: user.tutor_details[0]?.academic_status || '',
+      namaUniversitas: user.tutor_details[0]?.university_s1_name || '',
       selectedPrograms: programsMap.get(user.id) || []
     })) || [];
 
