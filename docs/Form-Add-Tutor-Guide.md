@@ -465,6 +465,200 @@ export function TutorFormErrorBoundary({ children }: { children: React.ReactNode
 
 ---
 
+## 🔥 **EDGE FUNCTIONS MIGRATION PLAN**
+
+### **📋 OVERVIEW**
+Migrasi dari client-side database writes ke Supabase Edge Functions untuk security dan performance.
+
+### **🎯 OBJECTIVES**
+- **Security**: Move sensitive operations to server-side
+- **Performance**: Reduce client bundle size
+- **Maintainability**: Centralized business logic
+- **Scalability**: Auto-scaling serverless functions
+
+### **📊 MIGRATION SCOPE**
+
+#### **✅ FUNCTIONS TO MIGRATE:**
+1. **create-tutor** - Main tutor creation with transaction
+2. **generate-trn** - Atomic TRN generation
+3. **validate-tutor** - Input validation
+4. **upload-documents** - File upload handling
+
+#### **❌ FUNCTIONS TO KEEP (Client-side):**
+1. **Location APIs** - Read-only data
+2. **Program APIs** - Read-only data
+3. **Bank APIs** - Read-only data
+
+### **🔄 MIGRATION STEPS**
+
+#### **Phase 1: Setup (Day 1-2)**
+```bash
+# Install tools
+npm install -g supabase
+supabase login
+supabase init
+
+# Create functions
+supabase functions new create-tutor
+supabase functions new generate-trn
+supabase functions new validate-tutor
+```
+
+#### **Phase 2: Implementation (Day 3-5)**
+```typescript
+// Edge Function structure
+supabase/functions/create-tutor/
+├── index.ts          // Main function
+├── types.ts          // TypeScript types
+├── validation.ts     // Zod schemas
+└── database.ts       // DB operations
+```
+
+#### **Phase 3: Testing (Day 6-7)**
+```bash
+# Local testing
+supabase functions serve
+
+# Deploy
+supabase functions deploy create-tutor
+supabase functions deploy generate-trn
+```
+
+#### **Phase 4: Integration (Day 8-10)**
+```typescript
+// Update form to use Edge Functions
+const createTutor = async (data) => {
+  const response = await fetch('/functions/v1/create-tutor', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+  return response.json();
+};
+```
+
+### **📁 FILE STRUCTURE**
+
+#### **Edge Functions:**
+```
+supabase/functions/
+├── create-tutor/
+│   ├── index.ts
+│   ├── types.ts
+│   ├── validation.ts
+│   └── database.ts
+├── generate-trn/
+│   └── index.ts
+└── validate-tutor/
+    └── index.ts
+```
+
+#### **Frontend Updates:**
+```
+components/tutor/add/
+├── PersonalTab.tsx
+├── AddressTab.tsx
+├── EducationTab.tsx
+├── ProgramsTab.tsx
+├── AvailabilityTab.tsx
+└── DocumentsTab.tsx
+
+hooks/
+├── useTutor.ts
+├── useLocations.ts
+└── usePrograms.ts
+
+services/
+├── tutors.ts
+├── programs.ts
+└── locations.ts
+```
+
+### **🔐 SECURITY IMPROVEMENTS**
+
+#### **Before (Client-side):**
+```typescript
+// ❌ SECURITY RISK
+const supabase = createClient(url, anonKey);
+await supabase.from('users_universal').insert(data);
+```
+
+#### **After (Edge Functions):**
+```typescript
+// ✅ SECURE
+const response = await fetch('/functions/v1/create-tutor', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${sessionToken}` },
+  body: JSON.stringify(data)
+});
+```
+
+### **📈 PERFORMANCE BENEFITS**
+
+#### **Bundle Size Reduction:**
+- **Before**: 6,540 lines in 3 files
+- **After**: ~2,000 lines distributed across components
+- **Reduction**: ~70% smaller main bundle
+
+#### **Security Enhancement:**
+- **Before**: Client-side DB writes with anon key
+- **After**: Server-side operations with service role
+- **Improvement**: 100% secure database operations
+
+### **🎯 SUCCESS CRITERIA**
+
+#### **Functional:**
+- [ ] All tutor creation via Edge Functions
+- [ ] No client-side database writes
+- [ ] Proper error handling and validation
+- [ ] File uploads working correctly
+
+#### **Performance:**
+- [ ] Form load time < 2 seconds
+- [ ] Edge Function response < 500ms
+- [ ] Bundle size reduction > 50%
+- [ ] No build errors
+
+#### **Security:**
+- [ ] Zero client-side DB operations
+- [ ] Proper input validation
+- [ ] Secure file uploads
+- [ ] Role-based access control
+
+### **⚠️ RISKS & MITIGATION**
+
+#### **Risks:**
+1. **Downtime during migration**
+2. **Data loss during transition**
+3. **Function deployment failures**
+
+#### **Mitigation:**
+1. **Gradual migration** - Keep old system running
+2. **Comprehensive testing** - Test all scenarios
+3. **Rollback plan** - Easy revert if issues
+4. **Monitoring** - Track function performance
+
+### **📅 TIMELINE**
+
+| Phase | Duration | Deliverables |
+|-------|----------|--------------|
+| **Setup** | 2 days | Supabase CLI, function structure |
+| **Implementation** | 3 days | Core Edge Functions |
+| **Testing** | 2 days | Local + deployment testing |
+| **Integration** | 3 days | Frontend updates |
+| **Total** | **10 days** | Production ready |
+
+### **🚀 NEXT ACTION**
+
+**Immediate next step:**
+```bash
+npm install -g supabase
+supabase login
+supabase init
+supabase functions new create-tutor
+```
+
+---
+
 ## 📋 **TECHNICAL REQUIREMENTS**
 
 ### **Supabase Edge Functions Setup:**
