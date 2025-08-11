@@ -321,10 +321,32 @@ export function findBestFieldMatches(
   data: Array<{id: string, name: string, local_name?: string | null, alternate_name?: string | null}>,
   type: 'provinces' | 'cities' | 'subjects' | 'banks' | 'categories' = 'cities'
 ): FieldMatch[] {
+  // === NULL/UNDEFINED SAFETY ===
+  if (!searchTerm || typeof searchTerm !== 'string') {
+    console.warn(`⚠️ Invalid searchTerm for ${type}:`, searchTerm);
+    return [];
+  }
+  
+  if (!data || !Array.isArray(data)) {
+    console.warn(`⚠️ Invalid data array for ${type}:`, data);
+    return [];
+  }
+  
   const cleanSearch = searchTerm.toLowerCase().trim();
+  if (!cleanSearch) {
+    console.warn(`⚠️ Empty search term after cleaning for ${type}`);
+    return [];
+  }
+  
   const matches: FieldMatch[] = [];
   
   for (const item of data) {
+    // === ITEM SAFETY CHECKS ===
+    if (!item || !item.name || typeof item.name !== 'string') {
+      console.warn(`⚠️ Invalid item in ${type} data:`, item);
+      continue;
+    }
+    
     const itemName = item.name.toLowerCase();
     const localName = item.local_name?.toLowerCase() || '';
     const alternateName = item.alternate_name?.toLowerCase() || '';
