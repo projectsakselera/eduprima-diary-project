@@ -92,6 +92,11 @@ interface EdgeFunctionRequest {
     nomorRekening: string
     namaBank: string | null
   }
+  // Subjects & Programs (Step 3)
+  subjects?: {
+    selectedPrograms?: string[] // Array of selected program IDs from database
+    mataPelajaranLainnya?: string // Additional subjects not found in the selector
+  }
   // Documents (Step 5)
   documents?: {
     // Document Files (Step 5)
@@ -102,6 +107,56 @@ interface EdgeFunctionRequest {
     // Document Verification Status (Staff only)
     status_verifikasi_identitas?: string // Identity verification status
     status_verifikasi_pendidikan?: string // Education verification status
+  }
+  // Availability & Wilayah (Step 4 - PHASE 1)
+  availability?: {
+    // A. AVAILABILITY & STATUS
+    statusMenerimaSiswa?: string // Availability status
+    available_schedule?: string[] // Weekly schedule array
+    teaching_methods?: string[] // Teaching methods array
+    hourly_rate?: number // Expected hourly rate in Rupiah
+    maksimalSiswaBaru?: number // Max new students per week
+    maksimalTotalSiswa?: number // Max total students
+    usiaTargetSiswa?: string[] // Target student age ranges
+    catatanAvailability?: string // Additional availability notes
+    
+    // B. LOCATION & TRANSPORTATION
+    transportasiTutor?: string[] // Transportation methods
+    alamatTitikLokasi?: string // Teaching center location/address
+    teaching_radius_km?: number // Teaching radius in kilometers
+    location_notes?: string // Location preferences and notes
+    
+    // C. COORDINATES (Optional)
+    titikLokasiLat?: number // Latitude of teaching center
+    titikLokasiLng?: number // Longitude of teaching center
+    
+    // D. EMERGENCY CONTACT (PHASE 3)
+    emergencyContactName?: string // Emergency contact name
+    emergencyContactRelationship?: string // Relationship with emergency contact
+    emergencyContactPhone?: string // Emergency contact phone number
+  }
+  // Teaching Preferences & Personality (Step 4 - PHASE 2)
+  preferences?: {
+    // A. TEACHING PREFERENCES
+    teachingMethods?: string[] // Teaching styles
+    studentLevelPreferences?: string[] // Student level preferences
+    specialNeedsCapable?: string // Special needs capability
+    groupClassWilling?: string // Group class willingness
+    
+    // B. TECHNOLOGY CAPABILITIES
+    onlineTeachingCapable?: string // Online teaching capability
+    techSavviness?: string // Technology savviness
+    gmeetExperience?: string // Google Meet/Zoom experience
+    presensiUpdateCapability?: string // Attendance update capability
+  }
+  // Personality Traits (Step 4 - PHASE 2)
+  personality?: {
+    // PERSONALITY & CHARACTER
+    tutorPersonalityType?: string[] // Personality types
+    communicationStyle?: string[] // Communication styles
+    teachingPatienceLevel?: number // Teaching patience level (1-10)
+    studentMotivationAbility?: number // Student motivation ability (1-10)
+    scheduleFlexibilityLevel?: number // Schedule flexibility level (1-10)
   }
 }
 
@@ -149,6 +204,9 @@ serve(async (req: Request): Promise<Response> => {
     console.log('📍 Address data:', data.address) 
     console.log('🏦 Banking data:', data.banking)
     console.log('📄 Documents data:', data.documents) // Step 5 documents info
+    console.log('🎯 Availability data:', data.availability) // Step 4 availability info
+    console.log('🎨 Preferences data:', data.preferences) // Step 4 teaching preferences info
+    console.log('👤 Personality data:', data.personality) // Step 4 personality traits info
 
     // Basic validation - tanggal lahir required untuk generate password
     const validationErrors: Array<{field: string, message: string}> = []
@@ -415,6 +473,11 @@ serve(async (req: Request): Promise<Response> => {
         graduation_year: toIntOrNull(data.education?.tahunLulus),
         gpa: toFloatOrNull(data.education?.ipk),
         
+        // 🚨 Emergency Contact fields (Step 4 - PHASE 3)
+        emergency_contact_name: data.availability?.emergencyContactName || null,
+        emergency_contact_relationship: data.availability?.emergencyContactRelationship || null,
+        emergency_contact_phone: data.availability?.emergencyContactPhone || null,
+        
         // Profile photo URL (will be updated by upload system)
         profile_photo_url: null,
         
@@ -649,11 +712,154 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
+    // 🎯 Create tutor_availability_config (Step 4 - PHASE 1)
+    if (data.availability) {
+      console.log('🎯 Creating tutor availability configuration...')
+      
+      // Helper function to convert array to proper format for transportation
+      const transportationMethod = data.availability.transportasiTutor && data.availability.transportasiTutor.length > 0 
+        ? data.availability.transportasiTutor.join(',') 
+        : null
+      
+      const availabilityData = {
+        tutor_id: tutorData.id,
+        availability_status: data.availability.statusMenerimaSiswa || 'active',
+        available_schedule: data.availability.available_schedule || [],
+        teaching_methods: data.availability.teaching_methods || [],
+        hourly_rate: data.availability.hourly_rate || 50000, // Default minimum rate
+        max_new_students_per_week: data.availability.maksimalSiswaBaru || null,
+        max_total_students: data.availability.maksimalTotalSiswa || null,
+        target_student_ages: data.availability.usiaTargetSiswa || [],
+        availability_notes: data.availability.catatanAvailability || null,
+        transportation_method: transportationMethod,
+        teaching_center_location: data.availability.alamatTitikLokasi || null,
+        teaching_radius_km: data.availability.teaching_radius_km || null,
+        location_notes: data.availability.location_notes || null,
+        teaching_center_lat: data.availability.titikLokasiLat || null,
+        teaching_center_lng: data.availability.titikLokasiLng || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error: availabilityError } = await supabase
+        .from('tutor_availability_config')
+        .insert([availabilityData])
+      
+      if (availabilityError) {
+        console.error('❌ Failed to create availability config:', availabilityError)
+        // Don't fail the entire operation for availability config
+        console.warn('⚠️ Continuing without availability config - can be added later via admin panel')
+      } else {
+        console.log('✅ Tutor availability configuration created')
+      }
+    } else {
+      console.log('ℹ️ No availability data provided - skipping tutor_availability_config creation')
+    }
+
+    // 🎨 Create tutor_teaching_preferences (Step 4 - PHASE 2)
+    if (data.preferences) {
+      console.log('🎨 Creating tutor teaching preferences...')
+      
+      const preferencesData = {
+        tutor_id: tutorData.id,
+        teaching_styles: data.preferences.teachingMethods || [],
+        student_level_preferences: data.preferences.studentLevelPreferences || [],
+        special_needs_capable: data.preferences.specialNeedsCapable || null,
+        group_class_willing: data.preferences.groupClassWilling || null,
+        online_teaching_capable: data.preferences.onlineTeachingCapable || null,
+        tech_savviness: data.preferences.techSavviness || null,
+        gmeet_experience: data.preferences.gmeetExperience || null,
+        presensi_update_capability: data.preferences.presensiUpdateCapability || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error: preferencesError } = await supabase
+        .from('tutor_teaching_preferences')
+        .insert([preferencesData])
+      
+      if (preferencesError) {
+        console.error('❌ Failed to create teaching preferences:', preferencesError)
+        console.warn('⚠️ Continuing without teaching preferences - can be added later via admin panel')
+      } else {
+        console.log('✅ Tutor teaching preferences created')
+      }
+    } else {
+      console.log('ℹ️ No preferences data provided - skipping tutor_teaching_preferences creation')
+    }
+
+    // 👤 Create tutor_personality_traits (Step 4 - PHASE 2)
+    if (data.personality) {
+      console.log('👤 Creating tutor personality traits...')
+      
+      // Helper function to convert array to comma-separated string
+      const personalityTypeString = data.personality.tutorPersonalityType && data.personality.tutorPersonalityType.length > 0 
+        ? data.personality.tutorPersonalityType.join(',') 
+        : null
+        
+      const communicationStyleString = data.personality.communicationStyle && data.personality.communicationStyle.length > 0
+        ? data.personality.communicationStyle.join(',')
+        : null
+      
+      const personalityData = {
+        tutor_id: tutorData.id,
+        personality_type: personalityTypeString,
+        communication_style: communicationStyleString,
+        teaching_patience_level: data.personality.teachingPatienceLevel || null,
+        student_motivation_ability: data.personality.studentMotivationAbility || null,
+        schedule_flexibility_level: data.personality.scheduleFlexibilityLevel || 5, // Default to 5 if not provided (required field)
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error: personalityError } = await supabase
+        .from('tutor_personality_traits')
+        .insert([personalityData])
+      
+      if (personalityError) {
+        console.error('❌ Failed to create personality traits:', personalityError)
+        console.warn('⚠️ Continuing without personality traits - can be added later via admin panel')
+      } else {
+        console.log('✅ Tutor personality traits created')
+      }
+    } else {
+      console.log('ℹ️ No personality data provided - skipping tutor_personality_traits creation')
+    }
+
+    // 📚 Create tutor_program_mappings (Step 3 - Subjects)
+    if (data.subjects && data.subjects.selectedPrograms && data.subjects.selectedPrograms.length > 0) {
+      console.log('📚 Creating tutor program mappings...')
+      
+      const programMappings = data.subjects.selectedPrograms.map(programId => ({
+        tutor_id: tutorData.id,
+        program_id: programId,
+        proficiency_level: 'intermediate', // Default proficiency level
+        years_of_experience: 1, // Default years of experience
+        certification_status: 'none', // Default certification status
+        additional_notes: data.subjects.mataPelajaranLainnya || null, // Additional subjects notes
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }))
+      
+      const { error: programMappingsError } = await supabase
+        .from('tutor_program_mappings')
+        .insert(programMappings)
+      
+      if (programMappingsError) {
+        console.error('❌ Failed to create program mappings:', programMappingsError)
+        console.warn('⚠️ Continuing without program mappings - can be added later via admin panel')
+      } else {
+        console.log('✅ Tutor program mappings created:', programMappings.length, 'programs')
+      }
+    } else {
+      console.log('ℹ️ No subjects data provided - skipping tutor_program_mappings creation')
+    }
+
     console.log('✅ Edge Function - Tutor created successfully')
     console.log('📊 User ID:', userData.id)
     console.log('📊 Tutor ID:', tutorData.id)
     console.log('🎯 TRN (kelipatan 7):', tutorData.tutor_registration_number)
-    console.log('📋 Tables created: users_universal, tutor_details, tutor_management, user_profiles, user_demographics, user_addresses, tutor_banking_info, document_storage')
+    console.log('📋 Tables created: users_universal, tutor_details, tutor_management, user_profiles, user_demographics, user_addresses, tutor_banking_info, document_storage, tutor_availability_config, tutor_teaching_preferences, tutor_personality_traits, tutor_program_mappings')
 
     // 🔧 FIXED: Match expected response structure from service
     return new Response(
@@ -675,8 +881,12 @@ serve(async (req: Request): Promise<Response> => {
             'user_demographics', 
             'user_addresses', 
             'tutor_banking_info',
-            'document_storage'
-          ] // Complete list of created tables (8 tables total)
+            'document_storage',
+            'tutor_availability_config',
+            'tutor_teaching_preferences',
+            'tutor_personality_traits',
+            'tutor_program_mappings'
+          ] // Complete list of created tables (12 tables total)
         }
       }),
       {

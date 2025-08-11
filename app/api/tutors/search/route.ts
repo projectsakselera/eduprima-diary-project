@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       .from('tutor_program_mappings')
       .select(`
         tutor_id,
-        programs_catalog!inner (
+        programs_unit!inner (
           program_name
         )
       `)
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       if (!programsMap.has(mapping.tutor_id)) {
         programsMap.set(mapping.tutor_id, []);
       }
-      programsMap.get(mapping.tutor_id).push(mapping.programs_catalog.program_name);
+      programsMap.get(mapping.tutor_id).push(mapping.programs_unit.program_name);
     });
 
     // Format lightweight results
