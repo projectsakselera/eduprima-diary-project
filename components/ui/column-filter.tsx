@@ -121,6 +121,12 @@ export default function ColumnFilter({
           color: '#ffffff',
           text: 'VERIFIED'
         };
+      case 'unknown':
+        return {
+          backgroundColor: '#9ca3af', // gray-400
+          color: '#ffffff',
+          text: 'UNKNOWN'
+        };
       default:
         return {
           backgroundColor: '#9ca3af', // gray-400
