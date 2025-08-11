@@ -7,6 +7,172 @@
 import { migrationConfig } from '@/config';
 
 /**
+ * 📄 Upload Step 2 documents (transcript & certificates) to R2 and update document_storage
+ * @param files - Object containing document files
+ * @param userId - User ID to associate the documents with
+ * @returns Promise<{success: boolean, results: any[]}> - Upload results
+ */
+async function uploadStep2DocumentsToR2(
+  files: {
+    transkripNilai?: File | null;
+    sertifikatKeahlian?: File | null;
+  },
+  userId: string
+): Promise<{success: boolean, results: any[]}> {
+  if (migrationConfig.enableMigrationLogs) {
+    console.log('📄 [UPLOAD] Starting Step 2 documents upload for user:', userId);
+    console.log('📄 [UPLOAD] Files to upload:', {
+      transkripNilai: files.transkripNilai ? 'File provided' : 'No file',
+      sertifikatKeahlian: files.sertifikatKeahlian ? 'File provided' : 'No file'
+    });
+  }
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  
+  const fileTypes = [];
+  let fileCount = 0;
+  
+  // Add transcript document if provided
+  if (files.transkripNilai && files.transkripNilai instanceof File) {
+    formData.append('files', files.transkripNilai);
+    formData.append('fileTypes', 'transcript_document');
+    fileTypes.push('transcript_document');
+    fileCount++;
+  }
+  
+  // Add expertise certificate if provided
+  if (files.sertifikatKeahlian && files.sertifikatKeahlian instanceof File) {
+    formData.append('files', files.sertifikatKeahlian);
+    formData.append('fileTypes', 'expertise_certificate');
+    fileTypes.push('expertise_certificate');
+    fileCount++;
+  }
+  
+  // If no files to upload, return success
+  if (fileCount === 0) {
+    if (migrationConfig.enableMigrationLogs) {
+      console.log('📄 [UPLOAD] No Step 2 documents to upload');
+    }
+    return { success: true, results: [] };
+  }
+
+  try {
+    const response = await fetch('/api/upload/tutor-files', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Upload API returned failure');
+    }
+
+    if (migrationConfig.enableMigrationLogs) {
+      console.log('✅ [UPLOAD] Step 2 documents uploaded successfully:', result);
+    }
+
+    return { success: true, results: result.results || [] };
+  } catch (error) {
+    console.error('❌ [UPLOAD] Step 2 documents upload failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * 📄 Upload Step 5 documents (identity, education, certificate) to R2 and update document_storage
+ * @param files - Object containing Step 5 document files
+ * @param userId - User ID to associate the documents with
+ * @returns Promise<{success: boolean, results: any[]}> - Upload results
+ */
+async function uploadStep5DocumentsToR2(
+  files: {
+    dokumenIdentitas?: File | null;
+    dokumenPendidikan?: File | null;
+    dokumenSertifikat?: File | null;
+  },
+  userId: string
+): Promise<{success: boolean, results: any[]}> {
+  if (migrationConfig.enableMigrationLogs) {
+    console.log('📄 [UPLOAD] Starting Step 5 documents upload for user:', userId);
+    console.log('📄 [UPLOAD] Files to upload:', {
+      dokumenIdentitas: files.dokumenIdentitas ? 'File provided' : 'No file',
+      dokumenPendidikan: files.dokumenPendidikan ? 'File provided' : 'No file',
+      dokumenSertifikat: files.dokumenSertifikat ? 'File provided' : 'No file'
+    });
+  }
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  
+  const fileTypes = [];
+  let fileCount = 0;
+  
+  // Add identity document if provided
+  if (files.dokumenIdentitas && files.dokumenIdentitas instanceof File) {
+    formData.append('files', files.dokumenIdentitas);
+    formData.append('fileTypes', 'identity_document');
+    fileTypes.push('identity_document');
+    fileCount++;
+  }
+  
+  // Add education document if provided
+  if (files.dokumenPendidikan && files.dokumenPendidikan instanceof File) {
+    formData.append('files', files.dokumenPendidikan);
+    formData.append('fileTypes', 'education_document');
+    fileTypes.push('education_document');
+    fileCount++;
+  }
+  
+  // Add certificate document if provided
+  if (files.dokumenSertifikat && files.dokumenSertifikat instanceof File) {
+    formData.append('files', files.dokumenSertifikat);
+    formData.append('fileTypes', 'certificate_document');
+    fileTypes.push('certificate_document');
+    fileCount++;
+  }
+  
+  // If no files to upload, return success
+  if (fileCount === 0) {
+    if (migrationConfig.enableMigrationLogs) {
+      console.log('📄 [UPLOAD] No Step 5 documents to upload');
+    }
+    return { success: true, results: [] };
+  }
+
+  try {
+    const response = await fetch('/api/upload/tutor-files', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Upload API returned failure');
+    }
+
+    if (migrationConfig.enableMigrationLogs) {
+      console.log('✅ [UPLOAD] Step 5 documents uploaded successfully:', result);
+    }
+
+    return { success: true, results: result.results || [] };
+  } catch (error) {
+    console.error('❌ [UPLOAD] Step 5 documents upload failed:', error);
+    throw error;
+  }
+}
+
+/**
  * 📸 Upload profile photo to R2 and update user_profiles.profile_photo_url
  * @param file - The profile photo file
  * @param userId - User ID to associate the photo with
@@ -110,14 +276,15 @@ const formatPhoneNumber = (phone: string): string => {
 
 // Types for edge function requests
 export interface BasicTutorData {
-  // System & Status Information (Staff only)
+  // 🔧 STEP 0: System & Status Information (Staff only)
   system: {
     status_tutor?: string;
     approval_level?: string;
     staff_notes?: string;
     additionalScreening?: string[]; // Checklist for additional screening
   };
-  // Personal Information
+  
+  // 👤 STEP 1: Personal Information (Identitas Dasar)
   personal: {
     fotoProfil?: File | string | null; // Profile photo upload
     trn?: string; // Manual TRN input (if provided)
@@ -130,7 +297,8 @@ export interface BasicTutorData {
     noHp1: string;
     noHp2?: string;
   };
-  // Profile & Value Proposition
+  
+  // ✨ STEP 1: Profile & Value Proposition
   profile: {
     headline?: string; // Headline/Tagline Tutor (max 100 chars)
     deskripsiDiri?: string; // Bio/Description
@@ -138,7 +306,54 @@ export interface BasicTutorData {
     socialMedia1?: string; // Instagram/LinkedIn link
     socialMedia2?: string; // YouTube/TikTok link
   };
-  // Address Information
+  
+  // 🎓 STEP 2: Education Information (Pendidikan & Pengalaman)
+  education?: {
+    // A. RIWAYAT PENDIDIKAN
+    statusAkademik?: string; // Current academic status (required in form)
+    
+    // Current Education (University/College)
+    namaUniversitas?: string; // Current university
+    fakultas?: string; // Current faculty
+    jurusan?: string; // Current major
+    tahunMasuk?: string; // Entry year
+    tahunLulus?: string; // Graduation year
+    ipk?: string; // GPA (string for form compatibility)
+    
+    // S1 Education (for S2/S3 students - conditional)
+    namaUniversitasS1?: string; // S1 university name
+    fakultasS1?: string; // S1 faculty
+    jurusanS1?: string; // S1 major
+    
+    // High School Information
+    namaSMA?: string; // High school name
+    jurusanSMA?: string; // High school major
+    tahunLulusSMA?: string; // High school graduation year
+    
+    // Alternative Learning (for statusAkademik = 'lainnya')
+    namaInstitusi?: string; // Institution name
+    bidangKeahlian?: string; // Field of expertise
+    pengalamanBelajar?: string; // Learning experience
+    
+    // B. KEAHLIAN & SPESIALISASI
+    keahlianSpesialisasi?: string; // Special skills/expertise (required in form)
+    keahlianLainnya?: string; // Other skills (optional)
+    
+    // C. PENGALAMAN
+    pengalamanMengajar?: string; // Teaching experience (required in form)
+    pengalamanLainnya?: string; // Other relevant experience (optional)
+    
+    // D. PRESTASI & SERTIFIKASI
+    prestasiAkademik?: string; // Academic achievements (optional)
+    prestasiNonAkademik?: string; // Non-academic achievements (optional)
+    sertifikasiPelatihan?: string; // Certifications & training (optional)
+    
+    // Document Files (Step 2)
+    transkripNilai?: File | string | null; // Transcript document
+    sertifikatKeahlian?: File | string | null; // Expertise certificate (for 'lainnya')
+  };
+  
+  // 📍 STEP 1: Address Information
   address: {
     provinsiDomisili: string | null; // UUID from dropdown
     kotaKabupatenDomisili: string | null; // UUID from dropdown
@@ -154,11 +369,24 @@ export interface BasicTutorData {
     alamatLengkapKTP?: string;
     kodePosKTP?: string;
   };
-  // Banking Information
+  
+  // 🏦 STEP 1: Banking Information
   banking: {
     namaNasabah: string;
     nomorRekening: string;
     namaBank: string | null; // Bank UUID from dropdown
+  };
+  
+  // 📄 STEP 5: Documents (Dokumen Pendukung)
+  documents?: {
+    // Document Files (Step 5)
+    dokumenIdentitas?: File | string | null; // Identity document (KTP/Passport)
+    dokumenPendidikan?: File | string | null; // Education document (Ijazah/Transcript)
+    dokumenSertifikat?: File | string | null; // Certificate document (Optional)
+    
+    // Document Verification Status (Staff only)
+    status_verifikasi_identitas?: string; // Identity verification status
+    status_verifikasi_pendidikan?: string; // Education verification status
   };
 }
 
@@ -172,6 +400,10 @@ export interface EdgeFunctionResponse {
     email: string;
     name: string;
     tables_created: string[];
+    // File upload results (added dynamically)
+    profile_photo_url?: string; // Added after photo upload
+    step2_documents?: any[]; // Added after Step 2 documents upload
+    step5_documents?: any[]; // Added after Step 5 documents upload
   };
   error?: string;
   details?: any;
@@ -295,6 +527,7 @@ export async function createTutorWithMigrationSupport(
       // 🔍 DEBUG: Log raw form data received
       if (migrationConfig.enableMigrationLogs) {
         console.log('🔍 [DEBUG] Raw form data received:', {
+          // Step 1: Personal & Basic Info
           namaLengkap: formData.namaLengkap,
           email: formData.email,
           tanggalLahir: formData.tanggalLahir,
@@ -303,7 +536,21 @@ export async function createTutorWithMigrationSupport(
           kotaKabupatenDomisili: formData.kotaKabupatenDomisili,
           namaBank: formData.namaBank,
           namaNasabah: formData.namaNasabah,
-          nomorRekening: formData.nomorRekening
+          nomorRekening: formData.nomorRekening,
+          
+          // Step 2: Education Info
+          statusAkademik: formData.statusAkademik,
+          namaUniversitas: formData.namaUniversitas,
+          fakultas: formData.fakultas,
+          jurusan: formData.jurusan,
+          tahunLulus: formData.tahunLulus,
+          ipk: formData.ipk,
+          namaSMA: formData.namaSMA,
+          pengalamanMengajar: formData.pengalamanMengajar,
+          keahlianSpesialisasi: formData.keahlianSpesialisasi,
+          prestasiAkademik: formData.prestasiAkademik,
+          transkripNilai: formData.transkripNilai ? 'File provided' : 'No file',
+          sertifikatKeahlian: formData.sertifikatKeahlian ? 'File provided' : 'No file'
         });
       }
 
@@ -337,6 +584,52 @@ export async function createTutorWithMigrationSupport(
           socialMedia1: formData.socialMedia1 || undefined, // Instagram/LinkedIn link
           socialMedia2: formData.socialMedia2 || undefined, // YouTube/TikTok link
         },
+        
+        // 🎓 STEP 2: Education Information (Pendidikan & Pengalaman)
+        education: {
+          // A. RIWAYAT PENDIDIKAN
+          statusAkademik: formData.statusAkademik || undefined,
+          
+          // Current Education (University/College)
+          namaUniversitas: formData.namaUniversitas || undefined,
+          fakultas: formData.fakultas || undefined,
+          jurusan: formData.jurusan || undefined,
+          tahunMasuk: formData.tahunMasuk || undefined,
+          tahunLulus: formData.tahunLulus || undefined,
+          ipk: formData.ipk || undefined,
+          
+          // S1 Education (for S2/S3 students - conditional)
+          namaUniversitasS1: formData.namaUniversitasS1 || undefined,
+          fakultasS1: formData.fakultasS1 || undefined,
+          jurusanS1: formData.jurusanS1 || undefined,
+          
+          // High School Information
+          namaSMA: formData.namaSMA || undefined,
+          jurusanSMA: formData.jurusanSMA || undefined,
+          tahunLulusSMA: formData.tahunLulusSMA || undefined,
+          
+          // Alternative Learning (for statusAkademik = 'lainnya')
+          namaInstitusi: formData.namaInstitusi || undefined,
+          bidangKeahlian: formData.bidangKeahlian || undefined,
+          pengalamanBelajar: formData.pengalamanBelajar || undefined,
+          
+          // B. KEAHLIAN & SPESIALISASI
+          keahlianSpesialisasi: formData.keahlianSpesialisasi || undefined,
+          keahlianLainnya: formData.keahlianLainnya || undefined,
+          
+          // C. PENGALAMAN
+          pengalamanMengajar: formData.pengalamanMengajar || undefined,
+          pengalamanLainnya: formData.pengalamanLainRelevan || undefined, // ✅ Fix: use correct field name
+          
+          // D. PRESTASI & SERTIFIKASI
+          prestasiAkademik: formData.prestasiAkademik || undefined,
+          prestasiNonAkademik: formData.prestasiNonAkademik || undefined,
+          sertifikasiPelatihan: formData.sertifikasiPelatihan || undefined,
+          
+          // Document Files (Step 2)
+          transkripNilai: formData.transkripNilai || null,
+          sertifikatKeahlian: formData.sertifikatKeahlian || null,
+        },
         // Address Information
         address: {
           provinsiDomisili: formData.provinsiDomisili || null, // 🔧 Allow null for optional UUID
@@ -358,12 +651,31 @@ export async function createTutorWithMigrationSupport(
           namaNasabah: formData.namaNasabah || 'Nama pemilik rekening belum diisi', // 🔧 Ensure min 3 chars
           nomorRekening: formData.nomorRekening || '1234567890', // 🔧 Fallback valid format
           namaBank: formData.namaBank || null, // 🔧 Allow null for optional bank UUID
+        },
+        
+        // 📄 STEP 5: Documents (Dokumen Pendukung)
+        documents: {
+          // Document Files (Step 5)
+          dokumenIdentitas: formData.dokumenIdentitas || null,
+          dokumenPendidikan: formData.dokumenPendidikan || null,
+          dokumenSertifikat: formData.dokumenSertifikat || null,
+          
+          // Document Verification Status (Staff only)
+          status_verifikasi_identitas: formData.status_verifikasi_identitas || undefined,
+          status_verifikasi_pendidikan: formData.status_verifikasi_pendidikan || undefined,
         }
       };
 
       // 🔍 DEBUG: Log mapped data that will be sent
       if (migrationConfig.enableMigrationLogs) {
-        console.log('🔍 [DEBUG] Mapped data for Edge Function:', JSON.stringify(basicData, null, 2));
+        console.log('🔍 [DEBUG] Mapped data for Edge Function:');
+        console.log('📊 Personal:', basicData.personal);
+        console.log('✨ Profile:', basicData.profile);
+        console.log('🎓 Education:', basicData.education); // Step 2 education data
+        console.log('📍 Address:', basicData.address);
+        console.log('🏦 Banking:', basicData.banking);
+        console.log('📄 Documents:', basicData.documents); // Step 5 documents data
+        console.log('🔧 System:', basicData.system);
       }
 
       const result = await createBasicTutorViaEdgeFunction(basicData, sessionToken);
@@ -389,6 +701,72 @@ export async function createTutorWithMigrationSupport(
             // Don't fail the entire operation, just log the error
             if (migrationConfig.enableMigrationLogs) {
               console.warn('⚠️ [PHASE 2] User created successfully but photo upload failed. User can upload later.');
+            }
+          }
+        }
+        
+        // 📄 PHASE 3: Upload Step 2 documents if provided
+        const step2Files = {
+          transkripNilai: formData.transkripNilai,
+          sertifikatKeahlian: formData.sertifikatKeahlian
+        };
+        
+        const hasStep2Files = (step2Files.transkripNilai && step2Files.transkripNilai instanceof File) ||
+                             (step2Files.sertifikatKeahlian && step2Files.sertifikatKeahlian instanceof File);
+        
+        if (hasStep2Files && result.data?.user_id) {
+          if (migrationConfig.enableMigrationLogs) {
+            console.log('📄 [PHASE 3] Starting Step 2 documents upload for user:', result.data.user_id);
+          }
+          
+          try {
+            const documentsResult = await uploadStep2DocumentsToR2(step2Files, result.data.user_id);
+            if (migrationConfig.enableMigrationLogs) {
+              console.log('✅ [PHASE 3] Step 2 documents uploaded successfully:', documentsResult);
+            }
+            
+            // Add document upload results to result data
+            result.data.step2_documents = documentsResult.results;
+            
+          } catch (documentsError) {
+            console.error('❌ [PHASE 3] Step 2 documents upload failed:', documentsError);
+            // Don't fail the entire operation, just log the error
+            if (migrationConfig.enableMigrationLogs) {
+              console.warn('⚠️ [PHASE 3] User created successfully but documents upload failed. User can upload later.');
+            }
+          }
+        }
+        
+        // 📄 PHASE 4: Upload Step 5 documents if provided
+        const step5Files = {
+          dokumenIdentitas: formData.dokumenIdentitas,
+          dokumenPendidikan: formData.dokumenPendidikan,
+          dokumenSertifikat: formData.dokumenSertifikat
+        };
+        
+        const hasStep5Files = (step5Files.dokumenIdentitas && step5Files.dokumenIdentitas instanceof File) ||
+                             (step5Files.dokumenPendidikan && step5Files.dokumenPendidikan instanceof File) ||
+                             (step5Files.dokumenSertifikat && step5Files.dokumenSertifikat instanceof File);
+        
+        if (hasStep5Files && result.data?.user_id) {
+          if (migrationConfig.enableMigrationLogs) {
+            console.log('📄 [PHASE 4] Starting Step 5 documents upload for user:', result.data.user_id);
+          }
+          
+          try {
+            const documentsResult = await uploadStep5DocumentsToR2(step5Files, result.data.user_id);
+            if (migrationConfig.enableMigrationLogs) {
+              console.log('✅ [PHASE 4] Step 5 documents uploaded successfully:', documentsResult);
+            }
+            
+            // Add document upload results to result data
+            result.data.step5_documents = documentsResult.results;
+            
+          } catch (documentsError) {
+            console.error('❌ [PHASE 4] Step 5 documents upload failed:', documentsError);
+            // Don't fail the entire operation, just log the error
+            if (migrationConfig.enableMigrationLogs) {
+              console.warn('⚠️ [PHASE 4] User created successfully but Step 5 documents upload failed. User can upload later.');
             }
           }
         }

@@ -1124,7 +1124,6 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
             })}
           >
             {field.label}
-            {field.required && <span className="text-destructive ml-1">*</span>}
           </Label>
         </div>
       )}
