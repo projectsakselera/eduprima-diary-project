@@ -29,6 +29,7 @@
 - **Live Deployment**: ✅ **DEPLOYED & VERIFIED IN PRODUCTION**
 - **Profile Photo Integration**: ✅ **R2 STORAGE + DATABASE SYNC WORKING**
 - **Step 2 Integration**: ✅ **EDUCATION & EXPERIENCE DATA FLOW COMPLETE (January 11, 2025)**
+- **Step 3 & 4 Integration**: ✅ **SUBJECTS (Programs) + AVAILABILITY & LOCATION COMPLETE (January 2025)**
 
 ### ✅ **EDGE FUNCTION - COMPREHENSIVE COVERAGE (Updated January 2025)**
 #### **STEP 1 - IDENTITAS DASAR: FULLY IMPLEMENTED (22 fields across 7 database tables):**
@@ -50,12 +51,19 @@
 - **Achievements & Certifications** (3 fields): prestasiAkademik, prestasiNonAkademik, sertifikasiPelatihan
 - **Document Upload** (2 files): transkripNilai, sertifikatKeahlian
 
-#### **STEP 3+ - ADVANCED FEATURES: PENDING IMPLEMENTATION**
+#### **STEP 3 & 4 - SUBJECTS + AVAILABILITY: FULLY IMPLEMENTED**
 
-**Teaching Configuration (Step 3):**
-- **Teaching Configuration** (15 fields): hourly_rate (optional), teaching_methods, available_schedule, statusMenerimaSiswa, location data
-- **Teaching Preferences** (8 fields): teachingMethods, studentLevelPreferences, onlineTeachingCapable, techSavviness
-- **Personality & Character** (5 fields): tutorPersonalityType, communicationStyle, teachingPatienceLevel
+**Subjects & Programs (Step 3):**
+- Uses `program_main_categories` for categories (no simple categories)
+- Programs fetched from `programs_unit` filtered by main category code
+- Selected programs mapped to `tutor_program_mappings`
+
+**Availability & Location (Step 4):**
+- Availability: `statusMenerimaSiswa`, `available_schedule`, `teaching_methods`, `hourly_rate`, `maksimalSiswaBaru`, `maksimalTotalSiswa`, `usiaTargetSiswa`, `catatanAvailability`
+- Location & Transport: `transportasiTutor`, `alamatTitikLokasi`, `teaching_radius_km`, `location_notes`, `titikLokasiLat`, `titikLokasiLng`
+- Preferences: `teachingMethods`, `studentLevelPreferences`, `specialNeedsCapable`, `groupClassWilling`, `onlineTeachingCapable`, `techSavviness`, `gmeetExperience`, `presensiUpdateCapability`
+- Personality: `tutorPersonalityType`, `communicationStyle`, `teachingPatienceLevel`, `studentMotivationAbility`, `scheduleFlexibilityLevel`
+- Emergency Contact saved in `user_profiles` (emergency_* columns)
 
 **Database Tables Implemented for STEP 1 & STEP 2:**
 - ✅ `users_universal` - User authentication & basic info
@@ -121,11 +129,11 @@ Frontend Form → tutor-edge.service.ts → Edge Function → Database (7 tables
 - File Upload: Profile photo ✅ (R2 + DB sync)
 ```
 
-### **🔧 NEXT STEPS - STEP 3+ IMPLEMENTATION**
+### **🔧 NEXT STEPS - UPDATED IMPLEMENTATION STATUS**
 - ✅ **Step 1 - Identitas Dasar**: COMPLETE (22 fields, 7 tables, profile photo integration)
 - ✅ **Step 2 - Education & Experience**: COMPLETE (25+ fields, 8 tables, document upload)
-- **Step 3 - Teaching Configuration**: Availability, rates, teaching methods, location preferences
-- **Step 4 - Subjects & Programs**: Subject selection with AI assistance
+- **Step 3 - Subjects & Programs**: ✅ Implemented end-to-end (Form → Service → Edge → DB)
+- **Step 4 - Availability & Location**: ✅ Implemented end-to-end (Form → Service → Edge → DB)
 - **Step 5 - Final Review**: Document verification, terms & conditions
 - **Component Cleanup**: Form component optimization (performance)
 - **Error Monitoring**: Enhanced logging for production monitoring
@@ -152,9 +160,9 @@ Frontend Form → tutor-edge.service.ts → Edge Function → Database (7 tables
 | Table | Purpose | Key Columns | Status |
 |-------|---------|-------------|--------|
 | `tutor_availability_config` | Schedule & rates | `availability_status`, `hourly_rate`, `teaching_methods` | ⏳ PENDING |
-| `tutor_teaching_preferences` | Teaching style | `teaching_styles`, `student_level_preferences` | ⏳ PENDING |
-| `tutor_personality_traits` | Personality | `personality_type`, `communication_style` | ⏳ PENDING |
-| `tutor_program_mappings` | Subject mapping | `program_id`, `proficiency_level` | ⏳ PENDING |
+| `tutor_teaching_preferences` | Teaching style & tech | `teaching_styles`, `student_level_preferences`, `special_needs_capable`, `group_class_willing`, `online_teaching_capable`, `tech_savviness`, `gmeet_experience`, `presensi_update_capability` | ✅ COMPLETE |
+| `tutor_personality_traits` | Personality | `personality_type`, `communication_style`, `teaching_patience_level`, `student_motivation_ability`, `schedule_flexibility_level` | ✅ COMPLETE |
+| `tutor_program_mappings` | Subject mapping | `tutor_id`, `program_id`, `proficiency_level`, `years_of_experience`, `certification_status`, `additional_notes` | ✅ COMPLETE |
 
 ### **Master Data Tables:**
 | Table | Purpose | Usage |
@@ -165,8 +173,8 @@ Frontend Form → tutor-edge.service.ts → Edge Function → Database (7 tables
 | `location_districts` | Districts | Address text input |
 | `location_villages` | Villages | Address text input |
 | `finance_banks_indonesia` | Banks | Banking dropdown |
-| `programs_unit` | Programs | Subject selector |
-| `program_main_categories` | Categories | Subject grouping |
+| `programs_unit` | Programs | Subject selector (main source) |
+| `program_main_categories` | Categories | Subject grouping (used by selector) |
 | `program_sub_categories` | Sub-categories | Subject grouping |
 
 ---
@@ -755,21 +763,16 @@ export function TutorFormErrorBoundary({ children }: { children: React.ReactNode
 
 ---
 
-## 🚀 **IMMEDIATE NEXT STEPS (STEP 3+ IMPLEMENTATION)**
+## 🚀 **IMMEDIATE NEXT STEPS (POST STEP 3 & 4)**
 
-### **Phase 1: STEP 3 - Teaching Configuration (Week 1-2)**
-- [ ] **Analyze Step 3 form fields**: Map availability, rates, teaching preferences
-- [ ] **Update Edge Function**: Add Step 3 database table operations
-- [ ] **Update service mapping**: Add Step 3 field mappings
-- [ ] **Test Step 3 integration**: End-to-end testing
-- [ ] **Documentation**: Update mapping guide for Step 3
+### **Stabilization & Testing**
+- [ ] Comprehensive end-to-end testing for Steps 1-5
+- [ ] Error tracking & observability improvements
+- [ ] Performance profiling on program selector and availability UI
 
-### **Phase 2: STEP 4 - Subjects & Programs (Week 3-4)**
-- [ ] **Analyze Step 3 form fields**: Map availability & teaching preferences
-- [ ] **Update Edge Function**: Add Step 3 database table operations
-- [ ] **Update service mapping**: Add Step 3 field mappings
-- [ ] **Test Step 3 integration**: End-to-end testing
-- [ ] **Documentation**: Update mapping guide for Step 3
+### **Componentization & Cleanup**
+- [ ] Extract monolithic form into components per step
+- [ ] Add shared types and schemas enforcement across layers
 
 ### **Phase 3: STEP 4+ - Advanced Features (Week 5-6)**
 - [ ] **Subjects & Programs**: AI-assisted subject selection

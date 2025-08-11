@@ -240,8 +240,8 @@ export default function FieldMappingPage() {
       
       console.log('🔍 Fetching database schema from Supabase...');
       
-      // Call API to get database schema
-      const response = await fetch('/api/supabase/check-tables');
+      // Call API to get database schema - using health API instead
+      const response = await fetch('/api/health');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
