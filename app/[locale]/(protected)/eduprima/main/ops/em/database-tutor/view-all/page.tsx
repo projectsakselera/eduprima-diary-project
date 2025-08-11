@@ -29,6 +29,8 @@ import { useRouter } from "@/components/navigation";
 import ColumnFilter from "@/components/ui/column-filter";
 import TutorDeleteConfirmationDialog from "@/components/tutor-delete-confirmation-dialog";
 import { toast } from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
+import { TutorDatabaseHeader } from '@/components/project/TutorDatabaseHeader';
 
 // Utility function for converting R2 URLs to proxy URLs
 const getProxyUrl = (url: string) => {
@@ -36,6 +38,15 @@ const getProxyUrl = (url: string) => {
   const cleanUrl = url.replace(/^@?https?:\/\/[^\/]+\//, '');
   return `/api/files/${cleanUrl}`;
 };
+
+// Tutor status options used in inline editor
+const TUTOR_STATUS_OPTIONS: Array<
+  'active' | 'inactive' | 'pending' | 'registration' | 'suspended' | 'verified' | 'unknown'
+> = ['active', 'inactive', 'pending', 'registration', 'suspended', 'verified', 'unknown'];
+
+// Fixed row height used to compute minimum table body height
+const ROW_HEIGHT_PX = 45;
+const HEADER_HEIGHT_PX = 48; // approximate header row height for sticky thead
 
 // Column Manager Component - Simple & User-Friendly
 interface ColumnManagerProps {
@@ -125,17 +136,17 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
 
       {/* Dropdown Modal - Responsive */}
       {isOpen && (
-        <div className="absolute top-10 right-0 z-50 w-80 sm:w-96 bg-background border rounded-lg shadow-lg max-h-[70vh]">
+        <div className="dark absolute top-10 right-0 z-[999] w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-lg shadow-lg max-h-[80vh] overflow-y-auto isolate">
           <div className="p-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-sm">Manage Columns</h3>
+              <h3 className="font-medium text-sm text-white">Manage Columns</h3>
               <Button
                 variant="ghost"
                 onClick={() => setIsOpen(false)}
                 className="h-6 w-6 p-0"
               >
-                <Icon icon="ph:x" className="h-4 w-4" />
+                <Icon icon="ph:x" className="h-4 w-4 text-slate-400" />
               </Button>
             </div>
 
@@ -143,18 +154,18 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
 
             {/* Search */}
             <div className="relative mb-4">
-              <Icon icon="ph:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 dark:text-slate-400" />
+              <Icon icon="ph:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Search columns..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-8"
+                className="pl-10 h-8 bg-slate-800 border-slate-700 placeholder:text-slate-400 text-slate-50"
               />
             </div>
 
             {/* Category Filter - Cleaner */}
             <div className="mb-4">
-              <div className="text-xs font-medium text-foreground mb-2">📁 Categories:</div>
+              <div className="text-xs font-medium text-slate-300 mb-2">📁 Categories:</div>
               <div className="max-h-20 overflow-y-auto">
                 <div className="flex flex-wrap gap-1">
                   <Button
@@ -203,15 +214,15 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
             <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 hover:scrollbar-thumb-slate-400">
               <div className="space-y-1">
                 {filteredColumns.map(col => (
-                  <div key={col.key} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded">
+                  <div key={col.key} className="flex items-center space-x-2 p-1 hover:bg-slate-800/50 rounded">
                     <Checkbox
                       checked={visibleColumns.has(col.key)}
                       onCheckedChange={() => onToggleColumn(col.key)}
                       className="h-4 w-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{col.label}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm truncate text-slate-100">{col.label}</div>
+                      <div className="text-xs text-slate-400">
                         {col.category} • {col.type}
                         {col.required && <span className="text-red-500 ml-1">*</span>}
                       </div>
@@ -221,15 +232,15 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
               </div>
 
               {filteredColumns.length === 0 && (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  {searchTerm ? `No columns found for "${searchTerm}"` : 'No columns in this category'}
+                <div className="text-center py-4 text-sm text-slate-400">
+                  {searchTerm ? `No columns found for \"${searchTerm}\" ` : 'No columns in this category'}
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="mt-4 pt-3 border-t">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="mt-4 pt-3 border-t border-slate-700">
+              <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>{visibleColumns.size} of {columns.length} columns visible</span>
                 <Button
                   variant="ghost"
@@ -580,12 +591,12 @@ const SPREADSHEET_COLUMNS: Column[] = [
   
   // Identitas Dasar - Personal Information 
   { key: 'fotoProfil', label: 'Foto Profil', width: 100, type: 'file', category: 'Identitas Dasar' },
-  { key: 'namaLengkap', label: 'Nama Lengkap', width: 180, type: 'text', category: 'Identitas Dasar', required: true },
+  { key: 'namaLengkap', label: 'Nama Lengkap', width: 220, type: 'text', category: 'Identitas Dasar', required: true },
   { key: 'namaPanggilan', label: 'Nama Panggilan', width: 140, type: 'text', category: 'Identitas Dasar' },
   { key: 'tanggalLahir', label: 'Tanggal Lahir', width: 130, type: 'date', category: 'Identitas Dasar' },
   { key: 'jenisKelamin', label: 'Jenis Kelamin', width: 120, type: 'select', category: 'Identitas Dasar' },
   { key: 'agama', label: 'Agama', width: 120, type: 'select', category: 'Identitas Dasar' },
-  { key: 'email', label: 'Email', width: 200, type: 'email', category: 'Identitas Dasar', required: true },
+  { key: 'email', label: 'Email', width: 250, type: 'email', category: 'Identitas Dasar', required: true },
   { key: 'noHp1', label: 'No HP 1', width: 140, type: 'phone', category: 'Identitas Dasar' },
   { key: 'noHp2', label: 'No HP 2', width: 140, type: 'phone', category: 'Identitas Dasar' },
   
@@ -720,6 +731,7 @@ const SPREADSHEET_COLUMNS: Column[] = [
 
 export default function ViewAllTutorsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // State
   const [tutorData, setTutorData] = useState<TutorSpreadsheetData[]>([]);
@@ -730,9 +742,28 @@ export default function ViewAllTutorsPage() {
   const [isSearching, setIsSearching] = useState(false); // Loading state for search only
   const [programsLookup, setProgramsLookup] = useState<Record<string, string>>({});
 
+  // Inline saving state for status update
+  const [savingStatusUserId, setSavingStatusUserId] = useState<string | null>(null);
+  // Bulk status state
+  const [bulkStatus, setBulkStatus] = useState<string>('');
+  const [isBulkSaving, setIsBulkSaving] = useState(false);
+
   // 🚀 PAGINATION STATE - Advanced pagination system
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    // Initialize itemsPerPage from localStorage or searchParams
+    // Access searchParams directly here, it will be defined during client-side hydration
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const rowsParam = urlParams?.get('rows');
+    if (rowsParam) {
+      return parseInt(rowsParam) || 25;
+    }
+    const savedRows = typeof window !== 'undefined' ? localStorage.getItem('tutorViewAll:rowsPerPage') : null;
+    if (savedRows) {
+      return parseInt(savedRows) || 25;
+    }
+    return 25; // Default value
+  });
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   
@@ -765,6 +796,29 @@ export default function ViewAllTutorsPage() {
   const [selectionMode, setSelectionMode] = useState<'single' | 'range' | 'multi'>('single');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   
+  // Calculate sticky column offsets dynamically
+  const stickyColumnOffsets = useMemo(() => {
+    const offsets: Record<string, number> = {};
+    let currentLeftOffset = 0; // Start with 0 for the first fixed-left column
+
+    // Account for the initial checkbox column (fixed sticky left, width 48px for w-12 class)
+    // Its left is 0, subsequent sticky columns start after its width.
+    const checkboxColumnWidth = 48; // Corresponds to w-12 class
+    currentLeftOffset += checkboxColumnWidth; 
+
+    // Iterate through SPREADSHEET_COLUMNS to calculate offsets for other sticky columns
+    for (const column of SPREADSHEET_COLUMNS) {
+      if (column.sticky && visibleColumns.has(column.key)) {
+        offsets[column.key] = currentLeftOffset;
+        currentLeftOffset += (columnWidths[column.key] || column.width); // Use actual width or default
+      }
+    }
+    return offsets;
+  }, [visibleColumns, columnWidths]);
+  
+  // Flag: should the table body be scrollable?
+  const isScrollable = totalRecords > itemsPerPage;
+
   // File preview modal state
   const [previewModal, setPreviewModal] = useState<{
     isOpen: boolean;
@@ -1024,9 +1078,13 @@ export default function ViewAllTutorsPage() {
         url.searchParams.set('search', search.trim());
       }
       
-      // Add column filters
+      // Add column filters (use filter_<column>=comma,separated,values)
       if (Object.keys(columnFilters).length > 0) {
-        url.searchParams.set('filters', JSON.stringify(columnFilters));
+        Object.entries(columnFilters).forEach(([col, values]) => {
+          if (values && values.length > 0) {
+            url.searchParams.set(`filter_${col}`,(values as string[]).join(','));
+          }
+        });
       }
 
       const response = await fetch(url.toString());
@@ -1220,7 +1278,14 @@ export default function ViewAllTutorsPage() {
 
   const handleItemsPerPageChange = (newLimit: number) => {
     setItemsPerPage(newLimit);
-    fetchTutorData(searchTerm, 1, newLimit);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tutorViewAll:rowsPerPage', String(newLimit));
+      // Update URL without full page reload
+      const currentParams = new URLSearchParams(searchParams?.toString() || '');
+      currentParams.set('rows', String(newLimit));
+      router.replace(`?${currentParams.toString()}`, { scroll: false });
+    }
+    fetchTutorData(searchTerm, 1, newLimit); // Reset to page 1 when limit changes
   };
 
   // 🚀 ADVANCED DELETE WITH CASCADE PREVIEW
@@ -1452,12 +1517,105 @@ export default function ViewAllTutorsPage() {
           color: '#ffffff',
           text: 'VERIFIED'
         };
+      case 'unknown':
+        return {
+          backgroundColor: '#9ca3af', // gray-400
+          color: '#ffffff',
+          text: 'UNKNOWN'
+        };
       default:
         return {
           backgroundColor: '#9ca3af', // gray-400
           color: '#ffffff',
           text: status?.toUpperCase() || 'UNKNOWN'
         };
+    }
+  };
+
+  // Save status_tutor change to API and update local state
+  const handleStatusTutorChange = async (userId: string, newStatus: string) => {
+    if (!newStatus) return;
+    try {
+      setSavingStatusUserId(userId);
+      const response = await fetch('/api/tutors/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, status_tutor: newStatus })
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to update status');
+      }
+      // Update local state with latest values from API
+      setTutorData(prev => prev.map(t => (
+        t.id === userId
+          ? {
+              ...t,
+              status_tutor: result.data?.status_tutor ?? newStatus,
+              last_status_change: result.data?.last_status_change ?? t.last_status_change,
+              status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
+              updated_at: result.data?.updated_at ?? t.updated_at,
+            }
+          : t
+      )));
+      toast.success('Status tutor berhasil diperbarui');
+    } catch (error) {
+      console.error('Update status failed:', error);
+      toast.error(`Gagal memperbarui status tutor`);
+    } finally {
+      setSavingStatusUserId(null);
+    }
+  };
+
+  // Bulk update selected rows' status
+  const handleBulkStatusUpdate = async () => {
+    const ids = Array.from(selectedRows);
+    if (ids.length === 0) {
+      toast.error('Tidak ada baris yang dipilih');
+      return;
+    }
+    if (!bulkStatus) {
+      toast.error('Pilih status terlebih dahulu');
+      return;
+    }
+
+    try {
+      setIsBulkSaving(true);
+      console.log('🚀 Bulk status update requested', { count: ids.length, bulkStatus, ids: ids.slice(0, 5) });
+      const response = await fetch('/api/tutors/status/bulk', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: ids, status_tutor: bulkStatus })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        const message = result?.message || `HTTP ${response.status}`;
+        console.error('❌ Bulk update failed:', message, result);
+        toast.error(`Bulk update gagal: ${message}`);
+        return;
+      }
+
+      // Update local state for all affected rows
+      setTutorData(prev => prev.map(t => (
+        selectedRows.has(t.id)
+          ? {
+              ...t,
+              status_tutor: bulkStatus,
+              last_status_change: result.data?.last_status_change_map?.[t.id] ?? t.last_status_change,
+              status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
+              updated_at: result.data?.updated_at_map?.[t.id] ?? t.updated_at,
+            }
+          : t
+      )));
+
+      toast.success(`Berhasil mengubah status ${ids.length} tutor`);
+      setSelectedRows(new Set());
+      setBulkStatus('');
+    } catch (error) {
+      console.error('Bulk update failed:', error);
+      toast.error('Gagal melakukan bulk update');
+    } finally {
+      setIsBulkSaving(false);
     }
   };
 
@@ -1655,122 +1813,68 @@ export default function ViewAllTutorsPage() {
   }
 
   return (
-    <div className="max-w-full mx-auto p-4">
-      {/* Compact Header */}
-      <div className="bg-card rounded-lg shadow-sm border mb-4 p-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Icon icon="ph:table" className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-semibold text-foreground">
-                Tutor Database
-              </h1>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Page {currentPage}/{totalPages} • {totalRecords} records
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Icon-only buttons */}
-            {/* Icon-only buttons with proper size and text override */}
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => fetchTutorData(searchTerm, currentPage, itemsPerPage)}
-              disabled={isLoading || isSearching}
-              className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
-              title="Refresh data"
-            >
-              <Icon 
-                icon={isLoading ? "ph:spinner" : "ph:arrow-clockwise"} 
-                className={cn("h-4 w-4", isLoading && "animate-spin")}
-              />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={exportToCSV}
-              className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
-              title="Export to CSV"
-            >
-              <Icon icon="ph:download" className="h-4 w-4" />
-            </Button>
-            
-            {/* Column Manager */}
-            <ColumnManager 
+    <div className="w-full max-w-none p-4">
+      <TutorDatabaseHeader
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        isLoading={isLoading}
+        isSearching={isSearching}
+        searchTerm={searchTerm}
+        searchInput={searchInput}
+        fetchTutorData={fetchTutorData}
+        itemsPerPage={itemsPerPage}
+        exportToCSV={exportToCSV}
+        columnManager={ <ColumnManager 
               columns={SPREADSHEET_COLUMNS}
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumnVisibility}
               categories={categories}
-            />
-            
-                        <Button
-              size="icon"
-              onClick={() => router.push('/eduprima/main/ops/em/database-tutor/add')}
-              className="bg-primary hover:bg-primary/90 h-8 w-8 text-primary-foreground"
-              title="Add new tutor"
-            >
-              <Icon icon="ph:plus" className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Controls - Compact Row Layout */}
-        <div className="flex items-center gap-3 flex-1 mt-3">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Icon 
-                icon={isSearching ? "ph:spinner" : "ph:magnifying-glass"} 
-                className={cn(
-                  "absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground",
-                  isSearching && "animate-spin"
-                )}
-              />
-              <Input
-                placeholder="Search by name, email, TRN..."
-                value={searchInput}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearchClick();
-                  }
-                }}
-                className="pl-10 pr-8 h-8 text-sm"
-              />
-              {searchInput && (
-                <Button
-                  variant="ghost"
-                  onClick={handleClearSearch}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                >
-                  <Icon icon="ph:x" className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-40 h-8 text-sm">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-        </div>
-      </div>
+            />}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        handleSearchInputChange={handleSearchInputChange}
+        handleSearchClick={handleSearchClick}
+        handleClearSearch={handleClearSearch}
+        categories={categories}
+      />
 
       {/* Status Info Row - Left Aligned */}
       <div className="flex flex-wrap items-center gap-4 mb-4 w-full">
 
             {/* Selected rows indicator */}
             {selectedRows.size > 0 && (
-              <Badge className="bg-primary/10 text-primary">
-                {selectedRows.size} rows selected
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Badge className="bg-primary/10 text-primary">
+                  {selectedRows.size} rows selected
+                </Badge>
+                {/* Bulk status editor */}
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="h-8 w-40">
+                    <SelectValue placeholder="Pilih status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TUTOR_STATUS_OPTIONS.map(opt => (
+                      <SelectItem key={opt} value={opt} className="capitalize">
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-8" disabled={isBulkSaving || !bulkStatus} onClick={handleBulkStatusUpdate}>
+                  {isBulkSaving ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Icon icon="ph:spinner" className="h-4 w-4 animate-spin" />
+                      Menyimpan...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <Icon icon="ph:check-circle" className="h-4 w-4" />
+                      Terapkan
+                    </span>
+                  )}
+                </Button>
+              </div>
             )}
 
             {/* Search status & Results count */}
@@ -1905,7 +2009,16 @@ export default function ViewAllTutorsPage() {
         )}
 
         {/* Spreadsheet */}
-        <div className="bg-card rounded-lg shadow-sm border overflow-hidden">
+        <div
+          className={cn(
+            "bg-card rounded-lg shadow-sm border",
+            isScrollable ? "overflow-auto h-[78vh] md:h-[85vh]" : "overflow-x-auto overflow-y-visible h-auto"
+          )}
+          style={{
+            // Ensure minimum visual height equals at least 10 rows + header so header area doesn't look cut
+            minHeight: `${Math.max(itemsPerPage, 10) * ROW_HEIGHT_PX + HEADER_HEIGHT_PX}px`
+          }}
+        >
           {/* Custom CSS for selection styling */}
           <style jsx>{`
             .cell-selected {
@@ -1930,265 +2043,311 @@ export default function ViewAllTutorsPage() {
             }
           `}</style>
           
-          <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 480px)' }}>
-            <div 
-              ref={spreadsheetRef}
-              className="overflow-auto h-full"
-              onScroll={(e) => {
-                const target = e.target as HTMLDivElement;
-                setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                if (selectedCell || selectionRange.start || selectedCells.size > 0) {
-                  copySelectedCells();
-                }
-              }}
-            >
-              <table className="min-w-full border-collapse">
-                {/* Header */}
-                <thead className="sticky top-0 z-10 bg-muted/50 border-b">
-                  <tr>
-                    {/* Select All Checkbox */}
-                    <th className="w-12 h-10 border border-border bg-muted/50 sticky left-0 z-20 p-2">
+          <div 
+            ref={spreadsheetRef}
+            className={cn(
+              "relative w-full max-w-none",
+              isScrollable ? "overflow-auto h-[78vh] md:h-[85vh]" : "overflow-visible h-auto"
+            )}
+            style={{
+              minHeight: `${Math.max(itemsPerPage, 10) * ROW_HEIGHT_PX + HEADER_HEIGHT_PX}px`
+            }}
+            onScroll={(e) => {
+              const target = e.target as HTMLDivElement;
+              setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              if (selectedCell || selectionRange.start || selectedCells.size > 0) {
+                copySelectedCells();
+              }
+            }}
+          >
+            <table className={cn(
+              "min-w-full border-collapse table-fixed",
+              isScrollable ? "min-h-[calc(100% + 1px)]" : ""
+            )}>
+              {/* Header */}
+              <thead className="sticky top-0 z-20 bg-background border-b">
+                <tr>
+                  {/* Select All Checkbox */}
+                  <th className="w-12 h-10 border border-border bg-background sticky left-0 z-20 p-2">
+                    <div className="flex items-center justify-center h-full">
+                      <Checkbox
+                        checked={selectedRows.size === tutorData.length && tutorData.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                        className="h-4 w-4"
+                      />
+                    </div>
+                  </th>
+                  
+
+
+                  {/* Actions Header */}
+                  <th className="w-20 h-10 border border-border bg-background sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
+                    <Icon icon="ph:gear" className="h-4 w-4 mx-auto" />
+                  </th>
+
+                  {/* Column Headers */}
+                  {filteredColumns.map((column, index) => (
+                    <th
+                      key={column.key}
+                      className={cn(
+                        "h-10 border border-border bg-background text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
+                        column.sticky && "sticky z-20"
+                      )}
+                      style={{ 
+                        width: columnWidths[column.key] || column.width,
+                        left: column.sticky ? stickyColumnOffsets[column.key] : undefined
+                      }}
+                      onClick={() => handleSort(column.key)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-medium truncate">{column.label}</span>
+                          {column.required && (
+                            <span className="text-destructive text-xs">*</span>
+                          )}
+
+                          {/* 🚀 COLUMN FILTER - Advanced filtering like Excel/Google Sheets */}
+                          {filterableColumns.has(column.key) && (
+                            <div className="flex items-center gap-1">
+                              <ColumnFilter
+                                column={column.key}
+                                columnLabel={column.label}
+                                uniqueValues={columnUniqueValues[column.key] || []}
+                                selectedValues={columnFilters[column.key] || []}
+                                onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
+                                isLoading={loadingColumnValues[column.key] || false}
+                                error={columnValuesErrors[column.key]}
+                                isStatusColumn={column.key === 'status_tutor' || column.key === 'statusMenerimaSiswa'}
+                                onClick={(e) => {
+                                  console.log(`🔍 Column filter clicked for: ${column.key}`);
+                                  fetchColumnValues(column.key);
+                                }}
+                              />
+                              {columnValuesErrors[column.key] && (
+                                <span 
+                                  className="text-red-500 text-xs cursor-help" 
+                                  title={`Error loading values: ${columnValuesErrors[column.key]}`}
+                                >
+                                  ⚠️
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center">
+                          {sortConfig?.key === column.key && (
+                            <Icon 
+                              icon={sortConfig.direction === 'asc' ? 'ph:caret-up' : 'ph:caret-down'} 
+                              className="h-3 w-3" 
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              {
+                /* Body */
+              }
+              <tbody 
+                className="bg-card divide-y divide-border"
+                style={{ minHeight: `${Math.max(itemsPerPage, 10) * ROW_HEIGHT_PX}px` }}
+              >
+                {sortedData.map((tutor, rowIndex) => (
+                  <tr
+                    key={tutor.id}
+                    className={cn(
+                      "hover:bg-muted/50 transition-colors",
+                      selectedRows.has(tutor.id) && "bg-primary/10"
+                    )}
+                  >
+                    {/* Select Checkbox */}
+                    <td className="w-12 h-auto py-3 md:py-4 border border-border bg-card sticky left-0 z-10 p-2">
                       <div className="flex items-center justify-center h-full">
                         <Checkbox
-                          checked={selectedRows.size === tutorData.length && tutorData.length > 0}
-                          onCheckedChange={toggleSelectAll}
+                          checked={selectedRows.has(tutor.id)}
+                          onCheckedChange={() => toggleRowSelection(tutor.id)}
                           className="h-4 w-4"
                         />
                       </div>
-                    </th>
+                    </td>
                     
 
 
-                    {/* Actions Header */}
-                    <th className="w-20 h-10 border border-border bg-muted/50 sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
-                      <Icon icon="ph:gear" className="h-4 w-4 mx-auto" />
-                    </th>
+                    {/* Actions Column */}
+                    <td className="w-20 h-auto py-3 md:py-4 border border-border bg-card sticky right-0 z-10 p-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="h-7 w-7 flex items-center justify-center hover:opacity-70 transition-opacity">
+                            <Icon icon="ph:dots-three-vertical" className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => window.open(`/eduprima/main/ops/em/database-tutor/view/${tutor.id}`, '_blank')}
+                          >
+                            <Icon icon="ph:eye" className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => router.push(`/eduprima/main/ops/em/database-tutor/edit/${tutor.id}`)}
+                          >
+                            <Icon icon="ph:pencil" className="mr-2 h-4 w-4" />
+                            Edit Tutor
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteTutor(tutor)}
+                          >
+                            <Icon icon="ph:trash" className="mr-2 h-4 w-4" />
+                            Delete Tutor
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
 
-                    {/* Column Headers */}
-                    {filteredColumns.map((column, index) => (
-                      <th
+                    {/* Data Cells */}
+                    {filteredColumns.map((column, colIndex) => (
+                      <td
                         key={column.key}
                         className={cn(
-                          "h-10 border border-border bg-muted/50 text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
-                          column.sticky && "sticky z-20"
+                          "h-auto py-3 md:py-4 border border-border px-3 text-base cursor-pointer hover:bg-muted/50 text-foreground select-none",
+                          column.sticky && "sticky bg-card z-10",
+                          // Selection styling
+                          isCellSelected(rowIndex, column.key) && "bg-primary/20 ring-1 ring-primary/30",
+                          selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/30 ring-2 ring-primary",
+                          // Special styling for range edges
+                          selectionRange.start?.row === rowIndex && selectionRange.start?.col === column.key && "ring-2 ring-primary",
+                          selectionRange.end?.row === rowIndex && selectionRange.end?.col === column.key && selectionMode === 'range' && "ring-2 ring-primary ring-dashed"
                         )}
-                        style={{ 
+                        style={{
                           width: columnWidths[column.key] || column.width,
-                          left: column.sticky ? (12 + 16 + (index * (columnWidths[column.key] || column.width))) : undefined
+                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto',
+                          left: column.sticky ? stickyColumnOffsets[column.key] : undefined
                         }}
-                        onClick={() => handleSort(column.key)}
+                        onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
+                        onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs font-medium truncate">{column.label}</span>
-                            {column.required && (
-                              <span className="text-destructive text-xs">*</span>
-                            )}
-
-                            {/* 🚀 COLUMN FILTER - Advanced filtering like Excel/Google Sheets */}
-                            {filterableColumns.has(column.key) && (
-                              <div className="flex items-center gap-1">
-                                <ColumnFilter
-                                  column={column.key}
-                                  columnLabel={column.label}
-                                  uniqueValues={columnUniqueValues[column.key] || []}
-                                  selectedValues={columnFilters[column.key] || []}
-                                  onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
-                                  isLoading={loadingColumnValues[column.key] || false}
-                                  error={columnValuesErrors[column.key]}
-                                  isStatusColumn={column.key === 'status_tutor' || column.key === 'statusMenerimaSiswa'}
-                                  onClick={(e) => {
-                                    console.log(`🔍 Column filter clicked for: ${column.key}`);
-                                    fetchColumnValues(column.key);
-                                  }}
-                                />
-                                {columnValuesErrors[column.key] && (
-                                  <span 
-                                    className="text-red-500 text-xs cursor-help" 
-                                    title={`Error loading values: ${columnValuesErrors[column.key]}`}
-                                  >
-                                    ⚠️
-                                  </span>
-                                )}
+                        {column.type === 'file' ? (
+                          <FileCell 
+                            value={tutor[column.key] as string | null} 
+                            filename={column.key}
+                            tutorName={tutor.namaLengkap}
+                                                                        onPreview={(url, title, type) => setPreviewModal({
+                              isOpen: true,
+                              url,
+                              title,
+                              type
+                            })}
+                          />
+                        ) : column.key === 'status_tutor' ? (
+                          // Inline editable status using dropdown menu styled as badge
+                          (() => {
+                            const current = String(tutor[column.key] || '');
+                            const statusStyle = getStatusStyle(current);
+                            return (
+                              <div className="flex justify-center">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                      style={{
+                                        backgroundColor: statusStyle.backgroundColor,
+                                        color: statusStyle.color
+                                      }}
+                                      title="Ubah status tutor"
+                                      disabled={savingStatusUserId === tutor.id}
+                                    >
+                                      {savingStatusUserId === tutor.id ? (
+                                        <span className="inline-flex items-center gap-1">
+                                          <Icon icon="ph:spinner" className="h-3 w-3 animate-spin" />
+                                          Saving
+                                        </span>
+                                      ) : (
+                                        statusStyle.text
+                                      )}
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="center" className="w-40">
+                                    <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {TUTOR_STATUS_OPTIONS.map((opt) => (
+                                      <DropdownMenuItem
+                                        key={opt}
+                                        onClick={() => handleStatusTutorChange(tutor.id, opt)}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <span
+                                          className="inline-block h-2 w-2 rounded-full"
+                                          style={{ backgroundColor: getStatusStyle(opt).backgroundColor }}
+                                        />
+                                        <span className="capitalize">{opt}</span>
+                                        {current === opt && (
+                                          <Icon icon="ph:check" className="ml-auto h-4 w-4 text-primary" />
+                                        )}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
-                            )}
+                            );
+                          })()
+                        ) : column.key === 'statusMenerimaSiswa' ? (
+                          // Special rendering for status menerima siswa with colored badges
+                          (() => {
+                            const statusStyle = getAvailabilityStatusStyle(tutor[column.key]);
+                            return (
+                              <div className="flex justify-center">
+                                <span
+                                  className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[90px]"
+                                  style={{
+                                    backgroundColor: statusStyle.backgroundColor,
+                                    color: statusStyle.color
+                                  }}
+                                  title={formatCellValue(tutor[column.key], column)}
+                                >
+                                  {statusStyle.text}
+                                </span>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <div className="truncate whitespace-nowrap" title={formatCellValue(tutor[column.key], column)}>
+                            {formatCellValue(tutor[column.key], column)}
                           </div>
-                          <div className="flex items-center">
-                            {sortConfig?.key === column.key && (
-                              <Icon 
-                                icon={sortConfig.direction === 'asc' ? 'ph:caret-up' : 'ph:caret-down'} 
-                                className="h-3 w-3" 
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </th>
+                        )}
+                      </td>
                     ))}
                   </tr>
-                </thead>
+                ))}
 
-                {/* Body */}
-                <tbody className="bg-card divide-y divide-border">
-                  {sortedData.map((tutor, rowIndex) => (
-                    <tr
-                      key={tutor.id}
-                      className={cn(
-                        "hover:bg-muted/50 transition-colors",
-                        selectedRows.has(tutor.id) && "bg-primary/10"
-                      )}
-                    >
-                      {/* Select Checkbox */}
-                      <td className="w-12 h-10 border border-border bg-card sticky left-0 z-10 p-2">
-                        <div className="flex items-center justify-center h-full">
-                          <Checkbox
-                            checked={selectedRows.has(tutor.id)}
-                            onCheckedChange={() => toggleRowSelection(tutor.id)}
-                            className="h-4 w-4"
-                          />
+                {/* Empty State */}
+                {sortedData.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={filteredColumns.length + 2} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <Icon icon="ph:table" className="h-12 w-12 text-muted-foreground/50" />
+                        <div className="text-lg font-medium text-muted-foreground">No tutor data found</div>
+                        <div className="text-sm text-muted-foreground/80">
+                          {searchTerm 
+                            ? `No results for "${searchTerm}". Try adjusting your search.`
+                            : 'No tutors in the database. Add some tutors to get started.'
+                          }
                         </div>
-                      </td>
-                      
-
-
-                      {/* Actions Column */}
-                      <td className="w-20 h-10 border border-border bg-card sticky right-0 z-10 p-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="h-7 w-7 flex items-center justify-center hover:opacity-70 transition-opacity">
-                              <Icon icon="ph:dots-three-vertical" className="h-4 w-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => window.open(`/eduprima/main/ops/em/database-tutor/view/${tutor.id}`, '_blank')}
-                            >
-                              <Icon icon="ph:eye" className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => router.push(`/eduprima/main/ops/em/database-tutor/edit/${tutor.id}`)}
-                            >
-                              <Icon icon="ph:pencil" className="mr-2 h-4 w-4" />
-                              Edit Tutor
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteTutor(tutor)}
-                            >
-                              <Icon icon="ph:trash" className="mr-2 h-4 w-4" />
-                              Delete Tutor
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-
-                      {/* Data Cells */}
-                      {filteredColumns.map((column, colIndex) => (
-                        <td
-                          key={column.key}
-                          className={cn(
-                            "h-10 border border-border px-3 text-sm cursor-pointer hover:bg-muted/50 text-foreground select-none",
-                            column.sticky && "sticky bg-card z-10",
-                            // Selection styling
-                            isCellSelected(rowIndex, column.key) && "bg-primary/20 ring-1 ring-primary/30",
-                            selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/30 ring-2 ring-primary",
-                            // Special styling for range edges
-                            selectionRange.start?.row === rowIndex && selectionRange.start?.col === column.key && "ring-2 ring-primary",
-                            selectionRange.end?.row === rowIndex && selectionRange.end?.col === column.key && selectionMode === 'range' && "ring-2 ring-primary ring-dashed"
-                          )}
-                          style={{ 
-                            width: columnWidths[column.key] || column.width,
-                            left: column.sticky ? (12 + 16 + (colIndex * (columnWidths[column.key] || column.width))) : undefined
-                          }}
-                          onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
-                          onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
-                        >
-                          {column.type === 'file' ? (
-                            <FileCell 
-                              value={tutor[column.key] as string | null} 
-                              filename={column.key}
-                              tutorName={tutor.namaLengkap}
-                                                                    onPreview={(url, title, type) => setPreviewModal({
-                                isOpen: true,
-                                url,
-                                title,
-                                type
-                              })}
-                            />
-                          ) : column.key === 'status_tutor' ? (
-                            // Special rendering for status tutor with colored badges
-                            (() => {
-                              const statusStyle = getStatusStyle(tutor[column.key]);
-                              return (
-                                <div className="flex justify-center">
-                                  <span
-                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
-                                    style={{
-                                      backgroundColor: statusStyle.backgroundColor,
-                                      color: statusStyle.color
-                                    }}
-                                    title={formatCellValue(tutor[column.key], column)}
-                                  >
-                                    {statusStyle.text}
-                                  </span>
-                                </div>
-                              );
-                            })()
-                          ) : column.key === 'statusMenerimaSiswa' ? (
-                            // Special rendering for status menerima siswa with colored badges
-                            (() => {
-                              const statusStyle = getAvailabilityStatusStyle(tutor[column.key]);
-                              return (
-                                <div className="flex justify-center">
-                                  <span
-                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[90px]"
-                                    style={{
-                                      backgroundColor: statusStyle.backgroundColor,
-                                      color: statusStyle.color
-                                    }}
-                                    title={formatCellValue(tutor[column.key], column)}
-                                  >
-                                    {statusStyle.text}
-                                  </span>
-                                </div>
-                              );
-                            })()
-                          ) : (
-                            <div className="truncate" title={formatCellValue(tutor[column.key], column)}>
-                              {formatCellValue(tutor[column.key], column)}
-                            </div>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-
-                  {/* Empty State */}
-                  {sortedData.length === 0 && !isLoading && (
-                    <tr>
-                      <td colSpan={filteredColumns.length + 2} className="h-32 text-center">
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                          <Icon icon="ph:table" className="h-12 w-12 text-muted-foreground/50" />
-                          <div className="text-lg font-medium text-muted-foreground">No tutor data found</div>
-                          <div className="text-sm text-muted-foreground/80">
-                            {searchTerm 
-                              ? `No results for "${searchTerm}". Try adjusting your search.`
-                              : 'No tutors in the database. Add some tutors to get started.'
-                            }
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -2224,9 +2383,11 @@ export default function ViewAllTutorsPage() {
                   size="sm"
                   onClick={() => handlePageChange(1)}
                   disabled={currentPage === 1 || isLoading}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="First page"
                 >
-                  <Icon icon="ph:caret-double-left" className="h-4 w-4" />
+                  <Icon icon="ph:arrow-line-left" className="h-4 w-4 text-slate-600 mr-1" />
+                  <span className="text-xs font-medium">First</span>
                 </Button>
                 
                 <Button
@@ -2234,12 +2395,14 @@ export default function ViewAllTutorsPage() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1 || isLoading}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Previous page"
                 >
-                  <Icon icon="ph:caret-left" className="h-4 w-4" />
+                  <Icon icon="ph:arrow-left" className="h-4 w-4 text-slate-600 mr-1" />
+                  <span className="text-xs font-medium">Prev</span>
                 </Button>
                 
-                <span className="px-3 py-1 text-sm bg-muted rounded">
+                <span className="px-3 py-1 text-sm bg-blue-50 border-2 border-blue-200 rounded font-bold text-blue-800">
                   {currentPage} / {totalPages}
                 </span>
                 
@@ -2248,9 +2411,11 @@ export default function ViewAllTutorsPage() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages || isLoading}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Next page"
                 >
-                  <Icon icon="ph:caret-right" className="h-4 w-4" />
+                  <span className="text-xs font-medium">Next</span>
+                  <Icon icon="ph:arrow-right" className="h-4 w-4 text-slate-600 ml-1" />
                 </Button>
                 
                 <Button
@@ -2258,9 +2423,11 @@ export default function ViewAllTutorsPage() {
                   size="sm"
                   onClick={() => handlePageChange(totalPages)}
                   disabled={currentPage === totalPages || isLoading}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Last page"
                 >
-                  <Icon icon="ph:caret-double-right" className="h-4 w-4" />
+                  <span className="text-xs font-medium">Last</span>
+                  <Icon icon="ph:arrow-line-right" className="h-4 w-4 text-slate-600 ml-1" />
                 </Button>
               </div>
             </div>

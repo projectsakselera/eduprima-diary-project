@@ -24,7 +24,7 @@ const COLUMN_MAPPING: Record<string, {
     source: 'static',
     field: 'status_tutor',
     type: 'select',
-    staticValues: ['active', 'inactive', 'pending', 'registration', 'suspended', 'verified']
+    staticValues: ['active', 'inactive', 'pending', 'registration', 'suspended', 'verified', 'unknown']
   },
   'approval_level': {
     source: 'static', 
@@ -132,7 +132,7 @@ const COLUMN_MAPPING: Record<string, {
     field: 'status_verifikasi_pendidikan', 
     type: 'select',
     staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
-  }
+  },
 };
 
 async function getUniqueValuesForColumn(column: string): Promise<string[]> {

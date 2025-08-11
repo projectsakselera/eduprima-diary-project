@@ -180,7 +180,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
   }
 
   try {
-    console.log('🔍 Fetching all tutor data from Supabase...');
+    console.log('🔍 Fetching all tutor data from Supabase with server-side filters...');
 
     // First get all roles that match tutor/educator
     const { data: roleData, error: roleError } = await supabase
@@ -198,6 +198,40 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     if (roleIds.length === 0) {
       console.log('⚠️ No tutor/educator roles found');
       return { data: [], error: null, total: 0 };
+    }
+
+    let userIdsToFilter: string[] | null = null;
+
+    // 🚀 PERFORMANCE UPGRADE: Server-side filtering for related tables
+    const relatedFilters: Record<string, { table: string; column: string }> = {
+        // status_tutor is handled client-side to correctly manage 'unknown' default
+        approval_level: { table: 'tutor_management', column: 'approval_level' }
+    };
+
+    for (const column in relatedFilters) {
+        if (columnFilters[column] && columnFilters[column].length > 0) {
+            const config = relatedFilters[column];
+            const { data: relatedData, error: relatedError } = await supabase
+                .from(config.table)
+                .select('user_id')
+                .in(config.column, columnFilters[column]);
+
+            if (relatedError) {
+                console.error(`❌ Error fetching user_ids for ${column} filter:`, relatedError);
+                continue; // Skip this filter on error
+            }
+
+            const ids = relatedData?.map(m => m.user_id) || [];
+            if (userIdsToFilter === null) {
+                userIdsToFilter = ids;
+            } else {
+                // Intersect with previous results for an "AND" condition
+                userIdsToFilter = userIdsToFilter.filter(id => ids.includes(id));
+            }
+
+            // If the list of IDs is empty at any point, no need to continue.
+            if (userIdsToFilter.length === 0) break;
+        }
     }
 
     // 🚀 PERFORMANCE FIX: Server-side search query
@@ -221,11 +255,20 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     if (search && search.length >= 2) {
       const searchTerm = search.toLowerCase();
       userQuery = userQuery.or(`
-        user_code.ilike.%${searchTerm}%,
-        email.ilike.%${searchTerm}%,
+        user_code.ilike.%${searchTerm}%, 
+        email.ilike.%${searchTerm}%, 
         phone.ilike.%${searchTerm}%
       `);
       console.log(`🔍 Server-side search applied: "${search}"`);
+    }
+
+    // Apply the collected user ID filters
+    if (userIdsToFilter !== null) {
+        if (userIdsToFilter.length === 0) {
+            // If filters result in no users, return empty set immediately
+            return { data: [], error: null, total: 0, filtered: 0 };
+        }
+        userQuery = userQuery.in('id', userIdsToFilter);
     }
 
     // Apply pagination and ordering
@@ -475,7 +518,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     );
     console.log('📊 Documents per user:', 
       Array.from(documentsMap.entries()).map(([userId, docs]) => ({
-        userId: userId.substring(0, 8) + '...',
+        userId: userId.substring(0, 8) + '...', 
         types: Object.keys(docs)
       }))
     );
@@ -501,7 +544,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         // System & Status
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
-        status_tutor: management?.status_tutor || '',
+        status_tutor: management?.status_tutor || 'unknown',
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',
         
@@ -725,9 +768,13 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     let filteredData = convertedTutorData;
     const originalCount = convertedTutorData.length;
     
-    if (Object.keys(columnFilters).length > 0) {
+    // Client-side filters are now only for columns not handled on the server
+    const clientSideFilters = { ...columnFilters };
+    Object.keys(relatedFilters).forEach(f => delete clientSideFilters[f]);
+
+    if (Object.keys(clientSideFilters).length > 0) {
       filteredData = convertedTutorData.filter(tutor => {
-        return Object.entries(columnFilters).every(([column, values]) => {
+        return Object.entries(clientSideFilters).every(([column, values]) => {
           if (values.length === 0) return true; // No filter applied
           
           const tutorValue = tutor[column as keyof CompleteTutorData];
@@ -752,7 +799,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         });
       });
       
-      console.log(`🔍 Column filtering applied: ${originalCount} → ${filteredData.length} records`);
+      console.log(`🔍 Client-side filtering applied: ${originalCount} → ${filteredData.length} records`);
     }
 
     return {
@@ -771,6 +818,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     };
   }
 }
+
 
 // GET endpoint - fetch all tutors for spreadsheet
 export async function GET(request: NextRequest) {
