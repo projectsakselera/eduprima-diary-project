@@ -548,8 +548,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',
         
-        // Personal Info
-        fotoProfil: documents.profile_photo?.file_url || null,
+        // Personal Info  
+        fotoProfil: profile?.profile_photo_url || documents.profile_photo?.file_url || null,
         namaLengkap: profile?.full_name || '',
         namaPanggilan: profile?.nick_name || '',
         tanggalLahir: profile?.date_of_birth || '',
