@@ -30,6 +30,46 @@ interface EdgeFunctionRequest {
     socialMedia1?: string // Instagram/LinkedIn link
     socialMedia2?: string // YouTube/TikTok link
   }
+  // Education Information (Step 2)
+  education?: {
+    // Academic Status & Current Education
+    statusAkademik?: string // Current academic status
+    namaUniversitas?: string // Current university
+    fakultas?: string // Current faculty
+    jurusan?: string // Current major
+    tahunMasuk?: string // Entry year
+    tahunLulus?: string // Graduation year
+    ipk?: string // GPA
+    
+    // S1 Education (for S2/S3 students)
+    namaUniversitasS1?: string // S1 university name
+    fakultasS1?: string // S1 faculty
+    jurusanS1?: string // S1 major
+    
+    // High School Information
+    namaSMA?: string // High school name
+    jurusanSMA?: string // High school major
+    tahunLulusSMA?: string // High school graduation year
+    
+    // Alternative Learning (for statusAkademik = 'lainnya')
+    namaInstitusi?: string // Institution name
+    bidangKeahlian?: string // Field of expertise
+    pengalamanBelajar?: string // Learning experience
+    
+    // Experience & Skills
+    pengalamanMengajar?: string // Teaching experience
+    keahlianSpesialisasi?: string // Special skills
+    keahlianLainnya?: string // Other skills
+    
+    // Achievements & Certifications
+    prestasiAkademik?: string // Academic achievements
+    prestasiNonAkademik?: string // Non-academic achievements
+    sertifikasiPelatihan?: string // Certifications & training
+    
+    // Document Files (Step 2)
+    transkripNilai?: File | string | null // Transcript document
+    sertifikatKeahlian?: File | string | null // Expertise certificate
+  }
   // Address Information
   address: {
     provinsiDomisili: string | null
@@ -51,6 +91,17 @@ interface EdgeFunctionRequest {
     namaNasabah: string
     nomorRekening: string
     namaBank: string | null
+  }
+  // Documents (Step 5)
+  documents?: {
+    // Document Files (Step 5)
+    dokumenIdentitas?: File | string | null // Identity document (KTP/Passport)
+    dokumenPendidikan?: File | string | null // Education document (Ijazah/Transcript)
+    dokumenSertifikat?: File | string | null // Certificate document (Optional)
+    
+    // Document Verification Status (Staff only)
+    status_verifikasi_identitas?: string // Identity verification status
+    status_verifikasi_pendidikan?: string // Education verification status
   }
 }
 
@@ -94,8 +145,10 @@ serve(async (req: Request): Promise<Response> => {
     console.log('⚙️ System data:', data.system)
     console.log('📊 Personal data:', data.personal)
     console.log('✨ Profile data:', data.profile)
+    console.log('🎓 Education data:', data.education) // Step 2 education info
     console.log('📍 Address data:', data.address) 
     console.log('🏦 Banking data:', data.banking)
+    console.log('📄 Documents data:', data.documents) // Step 5 documents info
 
     // Basic validation - tanggal lahir required untuk generate password
     const validationErrors: Array<{field: string, message: string}> = []
@@ -147,6 +200,27 @@ serve(async (req: Request): Promise<Response> => {
     // Hash password using bcrypt (simulate with simple hash for now)
     const autoPassword = generatePasswordFromBirthDate(data.personal.tanggalLahir)
     const passwordHash = `$2b$10$${autoPassword}HashedPasswordSimulation`
+    
+    // 🎓 Helper functions for education data processing
+    const toIntOrNull = (value: any): number | null => {
+      if (!value) return null
+      const num = parseInt(String(value), 10)
+      return Number.isFinite(num) ? num : null
+    }
+    
+    const toFloatOrNull = (value: any): number | null => {
+      if (!value) return null
+      const num = parseFloat(String(value))
+      return Number.isFinite(num) ? num : null
+    }
+    
+    const isS2S3Student = (status?: string): boolean => {
+      return ['mahasiswa_s2', 'lulusan_s2', 'mahasiswa_s3', 'lulusan_s3'].includes(status || '')
+    }
+    
+    const isAlternativeLearning = (status?: string): boolean => {
+      return status === 'lainnya'
+    }
 
     // Get tutor role ID
     const { data: tutorRole, error: roleError } = await supabase
@@ -206,14 +280,50 @@ serve(async (req: Request): Promise<Response> => {
         // Manual TRN if provided (override auto-generation)
         tutor_registration_number: data.personal?.trn || null,
         
-        // 🔧 FIXED: Only include fields that exist in tutor_details table
-        academic_status: '', // Will be populated in Step 2 (Education)
-        teaching_experience: '',
-        other_skills: '',
-        special_skills: '',
-        academic_achievements: '',
-        non_academic_achievements: '',
-        certifications_training: '',
+        // 🎓 STEP 2: Education & Academic Information
+        academic_status: data.education?.statusAkademik || 'unknown',
+        
+        // S1 Education (conditional - for S2/S3 students)
+        university_s1_name: isS2S3Student(data.education?.statusAkademik) 
+          ? (data.education?.namaUniversitasS1 || null) 
+          : null,
+        faculty_s1: isS2S3Student(data.education?.statusAkademik)
+          ? (data.education?.fakultasS1 || null)
+          : (data.education?.fakultas || null), // For other status use current faculty
+        major_s1: isS2S3Student(data.education?.statusAkademik)
+          ? (data.education?.jurusanS1 || null)
+          : null,
+        
+        // High School Information
+        high_school: data.education?.namaSMA || null,
+        high_school_major: data.education?.jurusanSMA || null,
+        high_school_graduation_year: toIntOrNull(data.education?.tahunLulusSMA),
+        
+        // Alternative Learning (for statusAkademik = 'lainnya')
+        alternative_institution_name: isAlternativeLearning(data.education?.statusAkademik)
+          ? (data.education?.namaInstitusi || null)
+          : null,
+        expertise_field: isAlternativeLearning(data.education?.statusAkademik)
+          ? (data.education?.bidangKeahlian || null)
+          : null,
+        learning_experience: isAlternativeLearning(data.education?.statusAkademik)
+          ? (data.education?.pengalamanBelajar || null)
+          : null,
+        
+        // Entry year (for current education)
+        entry_year: toIntOrNull(data.education?.tahunMasuk),
+        
+        // Teaching Experience & Skills
+        teaching_experience: data.education?.pengalamanMengajar || '',
+        other_skills: data.education?.keahlianLainnya || '',
+        special_skills: data.education?.keahlianSpesialisasi || '',
+        
+        // Achievements & Certifications
+        academic_achievements: data.education?.prestasiAkademik || '',
+        non_academic_achievements: data.education?.prestasiNonAkademik || '',
+        certifications_training: data.education?.sertifikasiPelatihan || '',
+        
+        // System fields
         form_agreement_check: true,
         registration_notes_to_admin: `Created via Edge Function${data.system?.additionalScreening?.length ? ` | Additional Screening: ${data.system.additionalScreening.join(', ')}` : ''}`,
         onboarding_status: 'pending',
@@ -256,8 +366,9 @@ serve(async (req: Request): Promise<Response> => {
         recruitment_stage_history: [],
         last_status_change: new Date().toISOString(),
         status_changed_by: null, // Will be set when staff changes status
-        identity_verification_status: 'pending',
-        education_verification_status: 'pending',
+        // 📄 STEP 5: Document verification status (Staff can override)
+        identity_verification_status: data.documents?.status_verifikasi_identitas || 'pending',
+        education_verification_status: data.documents?.status_verifikasi_pendidikan || 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -278,7 +389,7 @@ serve(async (req: Request): Promise<Response> => {
       )
     }
 
-    // Create user_profiles (Personal information)
+    // Create user_profiles (Personal information + Education)
     const { error: profileError } = await supabase
       .from('user_profiles')
       .insert([{
@@ -289,13 +400,24 @@ serve(async (req: Request): Promise<Response> => {
         gender: data.personal.jenisKelamin,
         mobile_phone: data.personal.noHp1,
         mobile_phone_2: data.personal.noHp2 || null,
-        // ✅ FIXED: Profile fields exist in user_profiles schema
+        
+        // ✅ Profile & Value Proposition fields
         headline: data.profile?.headline || '',
         bio: data.profile?.deskripsiDiri || '',
         motivation_as_tutor: data.profile?.motivasiMenjadiTutor || '',
         social_media_1: data.profile?.socialMedia1 || '',
         social_media_2: data.profile?.socialMedia2 || '',
-        profile_photo_url: null, // Will be handled by document upload system
+        
+        // 🎓 Education fields (Step 2) - stored in user_profiles
+        education_level: data.education?.statusAkademik || null,
+        university: data.education?.namaUniversitas || null,
+        major: data.education?.jurusan || null,
+        graduation_year: toIntOrNull(data.education?.tahunLulus),
+        gpa: toFloatOrNull(data.education?.ipk),
+        
+        // Profile photo URL (will be updated by upload system)
+        profile_photo_url: null,
+        
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -426,11 +548,112 @@ serve(async (req: Request): Promise<Response> => {
       )
     }
 
+    // 📄 Create document storage placeholders for Step 2 files (if provided)
+    const documentStorageData: any[] = []
+    
+    // Transcript document (transkripNilai)
+    if (data.education?.transkripNilai) {
+      documentStorageData.push({
+        user_id: userData.id,
+        document_type: 'transcript_document',
+        original_filename: 'transcript_document',
+        stored_filename: 'transcript_document',
+        file_size: 0, // Will be updated by upload API
+        file_url: null, // Will be updated by upload API
+        mime_type: 'application/pdf',
+        verification_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+    
+    // Expertise certificate (sertifikatKeahlian - for statusAkademik = 'lainnya')
+    if (data.education?.sertifikatKeahlian && isAlternativeLearning(data.education?.statusAkademik)) {
+      documentStorageData.push({
+        user_id: userData.id,
+        document_type: 'expertise_certificate',
+        original_filename: 'expertise_certificate',
+        stored_filename: 'expertise_certificate',
+        file_size: 0, // Will be updated by upload API
+        file_url: null, // Will be updated by upload API
+        mime_type: 'application/pdf',
+        verification_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+    
+    // 📄 Create document storage placeholders for Step 5 files (if provided)
+    
+    // Identity document (dokumenIdentitas)
+    if (data.documents?.dokumenIdentitas) {
+      documentStorageData.push({
+        user_id: userData.id,
+        document_type: 'identity_document',
+        original_filename: 'identity_document',
+        stored_filename: 'identity_document',
+        file_size: 0, // Will be updated by upload API
+        file_url: null, // Will be updated by upload API
+        mime_type: 'application/pdf',
+        verification_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+    
+    // Education document (dokumenPendidikan)
+    if (data.documents?.dokumenPendidikan) {
+      documentStorageData.push({
+        user_id: userData.id,
+        document_type: 'education_document',
+        original_filename: 'education_document',
+        stored_filename: 'education_document',
+        file_size: 0, // Will be updated by upload API
+        file_url: null, // Will be updated by upload API
+        mime_type: 'application/pdf',
+        verification_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+    
+    // Certificate document (dokumenSertifikat) - Optional
+    if (data.documents?.dokumenSertifikat) {
+      documentStorageData.push({
+        user_id: userData.id,
+        document_type: 'certificate_document',
+        original_filename: 'certificate_document',
+        stored_filename: 'certificate_document',
+        file_size: 0, // Will be updated by upload API
+        file_url: null, // Will be updated by upload API
+        mime_type: 'application/pdf',
+        verification_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+    
+    // Insert document storage placeholders (if any)
+    if (documentStorageData.length > 0) {
+      console.log(`📄 Creating ${documentStorageData.length} document storage placeholders...`)
+      const { error: documentError } = await supabase
+        .from('document_storage')
+        .insert(documentStorageData)
+      
+      if (documentError) {
+        console.error('❌ Failed to create document storage:', documentError)
+        // Don't fail the entire operation for document placeholders
+        console.warn('⚠️ Continuing without document placeholders - files can still be uploaded via API')
+      } else {
+        console.log('✅ Document storage placeholders created')
+      }
+    }
+
     console.log('✅ Edge Function - Tutor created successfully')
     console.log('📊 User ID:', userData.id)
     console.log('📊 Tutor ID:', tutorData.id)
     console.log('🎯 TRN (kelipatan 7):', tutorData.tutor_registration_number)
-    console.log('📋 Tables created: users_universal, tutor_details, tutor_management, user_profiles, user_demographics, user_addresses, tutor_banking_info')
+    console.log('📋 Tables created: users_universal, tutor_details, tutor_management, user_profiles, user_demographics, user_addresses, tutor_banking_info, document_storage')
 
     // 🔧 FIXED: Match expected response structure from service
     return new Response(
@@ -451,8 +674,9 @@ serve(async (req: Request): Promise<Response> => {
             'user_profiles', 
             'user_demographics', 
             'user_addresses', 
-            'tutor_banking_info'
-          ] // Complete list of created tables
+            'tutor_banking_info',
+            'document_storage'
+          ] // Complete list of created tables (8 tables total)
         }
       }),
       {

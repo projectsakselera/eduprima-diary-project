@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('📁 Received files:', files.length, 'for user:', userId);
+    console.log('📋 File types:', fileTypes);
     
     // Create admin client for database updates
     const adminSupabase = createAdminSupabaseClient();
@@ -54,6 +55,13 @@ export async function POST(request: NextRequest) {
           break;
         case 'certificate_document':
           fileName = `tutors/${userId}/sertifikat.${fileExt}`;
+          break;
+        // 🎓 STEP 2: New document types
+        case 'transcript_document':
+          fileName = `tutors/${userId}/transkrip-nilai.${fileExt}`;
+          break;
+        case 'expertise_certificate':
+          fileName = `tutors/${userId}/sertifikat-keahlian.${fileExt}`;
           break;
         default:
           fileName = `tutors/${userId}/${fileType}.${fileExt}`;
@@ -156,6 +164,22 @@ export async function POST(request: NextRequest) {
         });
         
         console.log(`✅ R2 Upload success for ${fileType}:`, uploadResult.url);
+        
+        // 🎓 Additional logging for Step 2 documents
+        if (fileType === 'transcript_document') {
+          console.log('📜 Transcript document uploaded successfully for tutor:', userId);
+        } else if (fileType === 'expertise_certificate') {
+          console.log('🏆 Expertise certificate uploaded successfully for tutor:', userId);
+        }
+        
+        // 📄 Additional logging for Step 5 documents
+        if (fileType === 'identity_document') {
+          console.log('📄 Identity document uploaded successfully for tutor:', userId);
+        } else if (fileType === 'education_document') {
+          console.log('📄 Education document uploaded successfully for tutor:', userId);
+        } else if (fileType === 'certificate_document') {
+          console.log('📄 Certificate document uploaded successfully for tutor:', userId);
+        }
       }
     }
     

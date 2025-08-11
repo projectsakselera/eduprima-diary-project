@@ -410,6 +410,9 @@ export default function AddTutorPage() {
         graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,
         gpa: formData.ipk ? parseFloat(formData.ipk) : null, // ✅ Fix: convert string to number untuk numeric field
         
+        // ✅ REMOVED: high_school fields moved to tutor_details table
+        // high_school_name and high_school_graduation_year are in tutor_details, not user_profiles
+        
         // ✅ REMOVED: availability_schedule - dipindah ke tutor_availability_config
         
         created_at: new Date().toISOString(),
@@ -477,16 +480,36 @@ export default function AddTutorPage() {
         
         // Professional Information - gunakan nama kolom yang benar
         academic_status: formData.statusAkademik || 'unknown', // ✅ Fix: status_akademik → academic_status + default
-        university_s1_name: formData.namaUniversitas || null, // ✅ Fix: nama_universitas → university_s1_name
-        faculty_s1: formData.fakultas || null, // ✅ Fix: faculty → faculty_s1 for S1
-        major_s1: formData.jurusan || null, // ✅ Fix: major → major_s1
+        
+        // ✅ S1 Education (untuk S2/S3 students) - conditional mapping
+        university_s1_name: (['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik || '')) 
+          ? (formData.namaUniversitasS1 || null) 
+          : null,
+        faculty_s1: (['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik || '')) 
+          ? (formData.fakultasS1 || null) 
+          : (formData.fakultas || null), // For other status use current faculty
+        major_s1: (['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik || '')) 
+          ? (formData.jurusanS1 || null) 
+          : null,
         // gpa: formData.ipk, // ✅ REMOVED: gpa ada di user_profiles, bukan di sini
         entry_year: toIntOrNull(formData.tahunMasuk), // ✅ Fix: safe integer conversion
         // graduation_year: formData.tahunLulus, // ✅ REMOVED: graduation_year ada di user_profiles
         
         // High School Information - gunakan kolom khusus
         high_school: formData.namaSMA || null, // ✅ Add: high_school column
+        high_school_major: formData.jurusanSMA || null, // ✅ Add: high_school_major column
         high_school_graduation_year: toIntOrNull(formData.tahunLulusSMA), // ✅ Add: safe integer conversion
+        
+        // Alternative Learning Background (untuk statusAkademik = 'lainnya')
+        alternative_institution_name: (formData.statusAkademik === 'lainnya') 
+          ? (formData.namaInstitusi || null) 
+          : null,
+        expertise_field: (formData.statusAkademik === 'lainnya') 
+          ? (formData.bidangKeahlian || null) 
+          : null,
+        learning_experience: (formData.statusAkademik === 'lainnya') 
+          ? (formData.pengalamanBelajar || null) 
+          : null,
         
         // Teaching Experience - gunakan nama kolom yang benar
         teaching_experience: formData.pengalamanMengajar || null, // ✅ Fix: pengalaman_mengajar → teaching_experience
@@ -712,6 +735,30 @@ export default function AddTutorPage() {
           verification_status: 'pending',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        }] : []),
+        // Transcript Document (transkripNilai)
+        ...(formData.transkripNilai ? [{
+          document_type: 'transcript_document',
+          original_filename: 'transcript_document',
+          stored_filename: 'transcript_document',
+          file_size: 0,
+          file_url: null,
+          mime_type: 'application/pdf',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : []),
+        // Expertise Certificate (sertifikatKeahlian - untuk statusAkademik = 'lainnya')
+        ...(formData.sertifikatKeahlian ? [{
+          document_type: 'expertise_certificate',
+          original_filename: 'expertise_certificate',
+          stored_filename: 'expertise_certificate',
+          file_size: 0,
+          file_url: null,
+          mime_type: 'application/pdf',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }] : [])
       ];
 
@@ -730,15 +777,38 @@ export default function AddTutorPage() {
       if (migrationConfig.useEdgeFunctionForUserCreation) {
         console.log('🎯 [MIGRATION] Attempting edge function user creation...');
         console.log('📋 [DEBUG] Form data sample:', {
+          // Step 1: Personal & Basic Info
           provinsi: formData.provinsiDomisili,
           kota: formData.kotaKabupatenDomisili, 
           bank: formData.namaBank,
           tanggalLahir: formData.tanggalLahir,
-          jenisKelamin: formData.jenisKelamin
+          jenisKelamin: formData.jenisKelamin,
+          
+          // Step 2: Education Info
+          statusAkademik: formData.statusAkademik,
+          namaUniversitas: formData.namaUniversitas,
+          fakultas: formData.fakultas,
+          jurusan: formData.jurusan,
+          tahunLulus: formData.tahunLulus,
+          ipk: formData.ipk,
+          namaSMA: formData.namaSMA,
+          pengalamanMengajar: formData.pengalamanMengajar,
+          keahlianSpesialisasi: formData.keahlianSpesialisasi,
+          prestasiAkademik: formData.prestasiAkademik,
+          transkripNilai: formData.transkripNilai ? 'File provided' : 'No file',
+          sertifikatKeahlian: formData.sertifikatKeahlian ? 'File provided' : 'No file'
         });
         
         const basicTutorData: BasicTutorData = {
+          system: {
+            status_tutor: formData.status_tutor,
+            approval_level: formData.approval_level,
+            staff_notes: formData.staff_notes,
+            additionalScreening: formData.additionalScreening,
+          },
           personal: {
+            fotoProfil: formData.fotoProfil,
+            trn: formData.trn,
             namaLengkap: formData.namaLengkap || '',
             namaPanggilan: formData.namaPanggilan,
             tanggalLahir: formData.tanggalLahir || '',
@@ -747,6 +817,59 @@ export default function AddTutorPage() {
             email: formData.email || '',
             noHp1: formatPhoneNumber(formData.noHp1 || ''), // 🔧 Format phone for edge function
             noHp2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : undefined, // 🔧 Format phone for edge function
+          },
+          profile: {
+            headline: formData.headline,
+            deskripsiDiri: formData.deskripsiDiri,
+            motivasiMenjadiTutor: formData.motivasiMenjadiTutor,
+            socialMedia1: formData.socialMedia1,
+            socialMedia2: formData.socialMedia2,
+          },
+          
+          // 🎓 STEP 2: Education Information (Pendidikan & Pengalaman)
+          education: {
+            // A. RIWAYAT PENDIDIKAN
+            statusAkademik: formData.statusAkademik,
+            
+            // Current Education (University/College)
+            namaUniversitas: formData.namaUniversitas,
+            fakultas: formData.fakultas,
+            jurusan: formData.jurusan,
+            tahunMasuk: formData.tahunMasuk,
+            tahunLulus: formData.tahunLulus,
+            ipk: formData.ipk,
+            
+            // S1 Education (for S2/S3 students - conditional)
+            namaUniversitasS1: formData.namaUniversitasS1,
+            fakultasS1: formData.fakultasS1,
+            jurusanS1: formData.jurusanS1,
+            
+            // High School Information
+            namaSMA: formData.namaSMA,
+            jurusanSMA: formData.jurusanSMA,
+            tahunLulusSMA: formData.tahunLulusSMA,
+            
+            // Alternative Learning (for statusAkademik = 'lainnya')
+            namaInstitusi: formData.namaInstitusi,
+            bidangKeahlian: formData.bidangKeahlian,
+            pengalamanBelajar: formData.pengalamanBelajar,
+            
+            // B. KEAHLIAN & SPESIALISASI
+            keahlianSpesialisasi: formData.keahlianSpesialisasi,
+            keahlianLainnya: formData.keahlianLainnya,
+            
+            // C. PENGALAMAN
+            pengalamanMengajar: formData.pengalamanMengajar,
+            pengalamanLainnya: formData.pengalamanLainRelevan, // ✅ Fix: use correct field name
+            
+            // D. PRESTASI & SERTIFIKASI
+            prestasiAkademik: formData.prestasiAkademik,
+            prestasiNonAkademik: formData.prestasiNonAkademik,
+            sertifikasiPelatihan: formData.sertifikasiPelatihan,
+            
+            // Document Files (Step 2)
+            transkripNilai: formData.transkripNilai,
+            sertifikatKeahlian: formData.sertifikatKeahlian,
           },
           address: {
             provinsiDomisili: formData.provinsiDomisili || '',
@@ -1130,12 +1253,16 @@ export default function AddTutorPage() {
       console.log('dokumenIdentitas:', formData.dokumenIdentitas ? `${typeof formData.dokumenIdentitas} - ${formData.dokumenIdentitas instanceof File ? formData.dokumenIdentitas.name : 'not a file'}` : 'null');
       console.log('dokumenPendidikan:', formData.dokumenPendidikan ? `${typeof formData.dokumenPendidikan} - ${formData.dokumenPendidikan instanceof File ? formData.dokumenPendidikan.name : 'not a file'}` : 'null');
       console.log('dokumenSertifikat:', formData.dokumenSertifikat ? `${typeof formData.dokumenSertifikat} - ${formData.dokumenSertifikat instanceof File ? formData.dokumenSertifikat.name : 'not a file'}` : 'null');
+      console.log('transkripNilai:', formData.transkripNilai ? `${typeof formData.transkripNilai} - ${formData.transkripNilai instanceof File ? formData.transkripNilai.name : 'not a file'}` : 'null');
+      console.log('sertifikatKeahlian:', formData.sertifikatKeahlian ? `${typeof formData.sertifikatKeahlian} - ${formData.sertifikatKeahlian instanceof File ? formData.sertifikatKeahlian.name : 'not a file'}` : 'null');
 
       // Check if there are any files to upload
-      const hasFiles = (formData.fotoProfil && typeof formData.fotoProfil !== 'string') ||
-                      (formData.dokumenIdentitas && typeof formData.dokumenIdentitas !== 'string') ||
-                      (formData.dokumenPendidikan && typeof formData.dokumenPendidikan !== 'string') ||
-                      (formData.dokumenSertifikat && typeof formData.dokumenSertifikat !== 'string');
+      // ✅ UPDATED: Step 2 files (transkripNilai, sertifikatKeahlian) now handled by service layer PHASE 3
+      // ✅ UPDATED: Step 5 files (dokumenIdentitas, dokumenPendidikan, dokumenSertifikat) now handled by service layer PHASE 4
+      // Only check for Step 1 files in legacy upload
+      const hasFiles = (formData.fotoProfil && typeof formData.fotoProfil !== 'string');
+                      // ❌ REMOVED: Step 2 files (transkripNilai, sertifikatKeahlian) handled by service layer PHASE 3
+                      // ❌ REMOVED: Step 5 files (dokumenIdentitas, dokumenPendidikan, dokumenSertifikat) handled by service layer PHASE 4
 
       console.log('🎯 hasFiles result:', hasFiles);
 
@@ -1156,6 +1283,9 @@ export default function AddTutorPage() {
             console.log('📸 Adding foto profil to upload queue');
           }
           
+          // ✅ DISABLED: Step 5 documents now handled by service layer PHASE 4
+          // This prevents double upload attempts and ensures consistency with Step 2 approach
+          /*
           if (formData.dokumenIdentitas && typeof formData.dokumenIdentitas !== 'string') {
             uploadFormData.append('files', formData.dokumenIdentitas);
             uploadFormData.append('fileTypes', 'identity_document');
@@ -1176,6 +1306,25 @@ export default function AddTutorPage() {
             fileTypes.push('certificate_document');
             console.log('🏆 Adding dokumen sertifikat to upload queue');
           }
+          */
+          
+          // ✅ DISABLED: Step 2 documents now handled by service layer PHASE 3
+          // This prevents double upload attempts and file object corruption
+          /*
+          if (formData.transkripNilai && typeof formData.transkripNilai !== 'string') {
+            uploadFormData.append('files', formData.transkripNilai);
+            uploadFormData.append('fileTypes', 'transcript_document');
+            fileTypes.push('transcript_document');
+            console.log('📜 Adding transkrip nilai to upload queue');
+          }
+          
+          if (formData.sertifikatKeahlian && typeof formData.sertifikatKeahlian !== 'string') {
+            uploadFormData.append('files', formData.sertifikatKeahlian);
+            uploadFormData.append('fileTypes', 'expertise_certificate');
+            fileTypes.push('expertise_certificate');
+            console.log('🎯 Adding sertifikat keahlian to upload queue');
+          }
+          */
           
           console.log(`🚀 Starting upload of ${fileTypes.length} files via API...`);
           
