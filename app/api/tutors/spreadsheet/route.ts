@@ -548,11 +548,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         nomorRekening: banking?.account_number || '',
         namaBank: banking?.bank_name || '',
         
-        // Education
-        statusAkademik: tutorDetails?.academic_status || '',
-        namaUniversitas: tutorDetails?.university_s1_name || '',
-        fakultas: tutorDetails?.faculty || '',
-        jurusan: tutorDetails?.major_s1 || '',
+        // Education - use user_profiles as fallback if tutor_details is empty
+        statusAkademik: tutorDetails?.academic_status || profile?.education_level || '',
+        namaUniversitas: tutorDetails?.university_s1_name || profile?.university || '',
+        fakultas: tutorDetails?.faculty_s1 || tutorDetails?.faculty || '',
+        jurusan: tutorDetails?.major_s1 || profile?.major || '',
         jurusanSMKDetail: tutorDetails?.vocational_school_detail || extractFromEducationHistory(tutorDetails?.education_history, 'smk', 'major_detail') || '',
         ipk: profile?.gpa || 0,
         tahunMasuk: tutorDetails?.entry_year?.toString() || '',
@@ -583,7 +583,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         keahlianSpesialisasi: tutorDetails?.special_skills || '',
         keahlianLainnya: tutorDetails?.other_skills || '',
         pengalamanMengajar: tutorDetails?.teaching_experience || '',
-        pengalamanLainRelevan: tutorDetails?.other_experience || '',
+        pengalamanLainRelevan: tutorDetails?.other_relevant_experience || '',
         prestasiAkademik: tutorDetails?.academic_achievements || '',
         prestasiNonAkademik: tutorDetails?.non_academic_achievements || '',
         sertifikasiPelatihan: tutorDetails?.certifications_training || '',

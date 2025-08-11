@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Icon } from "@/components/ui/icon";
-import { createClient } from '@supabase/supabase-js';
+// Removed Supabase import - using API endpoints instead
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { toast } from '@/components/ui/use-toast';
@@ -36,22 +36,8 @@ interface TutorFormField {
   max?: number;
 }
 
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase environment variables:', {
-    url: !!supabaseUrl,
-    key: !!supabaseKey
-  });
-}
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
-
 // Log initialization status
 console.log('🔧 Import-Export Page Initialization:', {
-  supabaseConfigured: !!supabase,
   papaParseAvailable: typeof Papa !== 'undefined',
   xlsxAvailable: typeof XLSX !== 'undefined'
 });
@@ -393,6 +379,342 @@ export default function ImportExportPage() {
     }
   };
 
+  // Parse file content based on file type
+  const parseFile = useCallback(async (file: File): Promise<any[]> => {
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    console.log(`🔄 Parsing file: ${file.name} (${fileExtension})`);
+    
+    switch (fileExtension) {
+      case 'csv':
+        return new Promise((resolve, reject) => {
+          console.log('📄 Starting CSV parsing with Papa Parse...');
+          
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            encoding: 'UTF-8',
+            transform: (value: string) => {
+              // Clean up line breaks and extra whitespace
+              return value.replace(/\r?\n|\r/g, ' ').trim();
+            },
+            complete: (results: Papa.ParseResult<any>) => {
+              console.log('📊 CSV Parse Results:', {
+                rowCount: results.data?.length || 0,
+                errorCount: results.errors?.length || 0,
+                hasData: !!results.data,
+                meta: results.meta,
+                firstRow: results.data?.[0] || null
+              });
+              
+              if (results.errors && results.errors.length > 0) {
+                console.error('❌ CSV parsing errors:', results.errors);
+                const criticalErrors = results.errors.filter(err => err.type === 'Delimiter' || err.type === 'Quotes');
+                
+                if (criticalErrors.length > 0) {
+                  const errorDetails = criticalErrors.map(err => 
+                    `Row ${err.row || 'unknown'}: ${err.message} (Code: ${err.code || 'unknown'})`
+                  ).join('\n');
+                  reject(new Error(`Critical CSV parsing errors:\n${errorDetails}`));
+                  return;
+                }
+                
+                // Log warnings but continue processing
+                console.warn('⚠️ CSV parsing warnings (continuing):', results.errors);
+              }
+              
+              if (!results.data || results.data.length === 0) {
+                reject(new Error('CSV file appears to be empty or contains no valid data rows. Please check your file format.'));
+                return;
+              }
+              
+              // Check if first row has headers
+              const firstRow = results.data[0];
+              const headers = Object.keys(firstRow);
+              console.log('📋 CSV Headers detected:', headers);
+              
+              if (headers.length === 0) {
+                reject(new Error('CSV file has no headers. Please ensure the first row contains column names.'));
+                return;
+              }
+              
+              console.log(`✅ Successfully parsed ${results.data.length} rows from CSV with ${headers.length} columns`);
+              resolve(results.data as any[]);
+            },
+            error: (error: Error) => {
+              console.error('❌ Papa Parse Error:', error);
+              reject(new Error(`Failed to parse CSV file: ${error.message}. Please check if the file is properly formatted.`));
+            }
+          });
+        });
+        
+      case 'xlsx':
+      case 'xls':
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const data = new Uint8Array(e.target?.result as ArrayBuffer);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+              
+              // Convert to objects with headers
+              if (jsonData.length < 2) {
+                reject(new Error('File must contain at least one header row and one data row'));
+                return;
+              }
+              
+              const headers = jsonData[0] as string[];
+              const rows = jsonData.slice(1) as any[][];
+              const objects = rows.map((row: any[]) => {
+                const obj: Record<string, any> = {};
+                headers.forEach((header: string, index: number) => {
+                  obj[header] = row[index] || '';
+                });
+                return obj;
+              });
+              
+              resolve(objects);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsArrayBuffer(file);
+        });
+        
+      default:
+        throw new Error(`Unsupported file format: ${fileExtension}. Please use CSV or Excel files.`);
+    }
+  }, []);
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      console.log('❌ No file selected');
+      return;
+    }
+
+    // Validate file type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['csv', 'xlsx', 'xls'];
+    
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select a CSV or Excel file (.csv, .xlsx, .xls)",
+        variant: "destructive",
+        duration: 5000,
+      });
+      // Reset file input
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please select a file smaller than 10MB",
+        variant: "destructive",
+        duration: 5000,
+      });
+      // Reset file input
+      event.target.value = '';
+      return;
+    }
+
+    console.log('📁 File selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      extension: fileExtension,
+      lastModified: new Date(file.lastModified)
+    });
+
+    setSelectedFile(file);
+    setIsParsing(true);
+    setParsedData([]);
+    setShowPreview(false);
+    setImportResult(null);
+
+    try {
+      console.log('🔄 Starting file parsing...');
+      const rawData = await parseFile(file);
+      
+      if (rawData.length === 0) {
+        throw new Error('The file appears to be empty or has no valid data rows.');
+      }
+
+      console.log('✅ File parsed successfully:', {
+        totalRecords: rawData.length,
+        firstRecord: rawData[0]
+      });
+
+      // For now, just create simple parsed records
+      const processedData: ParsedRecord[] = rawData.map((row, index) => ({
+        rowNumber: index + 1,
+        originalData: row,
+        mappedData: row,
+        isValid: true,
+        errors: [],
+        warnings: []
+      }));
+
+      setParsedData(processedData);
+      setShowPreview(true);
+
+      toast({
+        title: "File Processed Successfully",
+        description: `Found ${processedData.length} records ready for import.`,
+        duration: 5000,
+      });
+
+    } catch (error) {
+      console.error('❌ File processing error:', error);
+      
+      toast({
+        title: "Error Processing File",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive",
+        duration: 8000,
+      });
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  // Handle import to database
+  const handleImport = async () => {
+    console.log('🔥 handleImport called', { parsedDataLength: parsedData?.length });
+    
+    if (!parsedData || parsedData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No data to import. Please upload a file first.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    const validRecords = parsedData.filter(r => r.isValid);
+    if (validRecords.length === 0) {
+      toast({
+        title: "No Valid Records",
+        description: "No valid records found to import.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress(0);
+
+    try {
+      console.log('🚀 Starting import process for', validRecords.length, 'records');
+      
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+      
+      // Prepare data for API
+      const importData = validRecords.map(record => record.mappedData);
+      
+      // Call import API
+      console.log('🚀 Calling API with data:', {
+        recordsCount: importData.length,
+        source: 'csv_import',
+        totalRecords: validRecords.length,
+        firstRecord: importData[0]
+      });
+      
+      const response = await fetch('/api/tutors/bulk-import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          records: importData,
+          source: 'csv_import',
+          totalRecords: validRecords.length
+        })
+      });
+      
+      console.log('📡 API Response status:', response.status, response.statusText);
+
+      clearInterval(progressInterval);
+      setImportProgress(95);
+
+      if (!response.ok) {
+        console.error('❌ API Response not OK:', response.status, response.statusText);
+        let errorMessage = `Import failed with status: ${response.status}`;
+        
+        try {
+          const errorData = await response.json();
+          console.error('❌ Error data:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('❌ Failed to parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('✅ API Response data:', result);
+      
+      setImportResult({
+        totalRecords: validRecords.length,
+        successCount: result.successCount ?? 0,
+        errorCount: result.errorCount ?? 0,
+        warningCount: result.warningCount ?? 0,
+        errors: result.errors ?? []
+      });
+
+      toast({
+        title: "Import Completed",
+        description: `Successfully imported ${result.successCount ?? 0} out of ${validRecords.length} records.`,
+        duration: 8000,
+      });
+
+      // Reset form after successful import
+      setTimeout(() => {
+        setSelectedFile(null);
+        setParsedData([]);
+        setShowPreview(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Import error:', error);
+      
+      toast({
+        title: "Import Failed",
+        description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+        variant: "destructive",
+        duration: 10000,
+      });
+
+      setImportResult({
+        totalRecords: validRecords.length,
+        successCount: 0,
+        errorCount: validRecords.length,
+        warningCount: 0,
+        errors: [{ row: 0, message: error instanceof Error ? error.message : 'Unknown error' }]
+      });
+    } finally {
+      setIsImporting(false);
+      setImportProgress(100);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -403,9 +725,73 @@ export default function ImportExportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-4">
               <h3 className="font-semibold">Import Data</h3>
+              
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Icon icon="heroicons:document-text" className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <div className="mb-4">
+                  <p className="text-lg font-medium">Upload your data file</p>
+                  <p className="text-sm text-muted-foreground">
+                    Supports CSV, Excel (.xlsx, .xls) files
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  className="sr-only"
+                  style={{ display: 'none !important', visibility: 'hidden', position: 'absolute', left: '-9999px' }}
+                />
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isParsing}
+                  >
+                    <Icon icon="heroicons:folder-open" className="w-4 h-4 mr-2" />
+                    {isParsing ? 'Processing...' : 'Browse Files'}
+                  </Button>
+                  
+                  {selectedFile && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setParsedData([]);
+                        setShowPreview(false);
+                        setImportResult(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      disabled={isParsing}
+                    >
+                      <Icon icon="heroicons:x-mark" className="w-4 h-4 mr-2" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                
+                {selectedFile && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-center gap-3">
+                      <Icon icon="heroicons:document-text" className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                      <div className="text-center">
+                        <p className="text-sm font-medium">{selectedFile.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type || 'Unknown type'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Download Template */}
               <div className="space-y-3">
                 <Button 
                   variant="outline" 
@@ -418,6 +804,63 @@ export default function ImportExportPage() {
                 <p className="text-sm text-muted-foreground">
                   Template has been updated with complete field mapping based on Form-Add-Tutor-Mapping-Guide.md
                 </p>
+                
+                {/* Debug Buttons */}
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/debug-db');
+                        const result = await response.json();
+                        console.log('🔍 Debug DB Result:', result);
+                        toast({
+                          title: "Debug DB",
+                          description: `Connection: ${result.success ? 'OK' : 'Failed'} - Check console for details`,
+                          duration: 5000,
+                        });
+                      } catch (error) {
+                        console.error('Debug DB Error:', error);
+                        toast({
+                          title: "Debug DB Error",
+                          description: "Check console for details",
+                          variant: "destructive",
+                          duration: 5000,
+                        });
+                      }
+                    }}
+                  >
+                    🔍 Debug DB
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/test-insert', { method: 'POST' });
+                        const result = await response.json();
+                        console.log('🧪 Test Insert Result:', result);
+                        toast({
+                          title: "Test Insert",
+                          description: `Result: ${result.success ? 'Success' : 'Failed'} - Check console for details`,
+                          duration: 5000,
+                        });
+                      } catch (error) {
+                        console.error('Test Insert Error:', error);
+                        toast({
+                          title: "Test Insert Error",
+                          description: "Check console for details",
+                          variant: "destructive",
+                          duration: 5000,
+                        });
+                      }
+                    }}
+                  >
+                    🧪 Test Insert
+                  </Button>
+                </div>
               </div>
             </div>
             
@@ -439,70 +882,153 @@ export default function ImportExportPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Field Mapping Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">System & Authentication</h4>
-              <p className="text-xs text-muted-foreground">6 fields including user_code, email, phone</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Personal Information</h4>
-              <p className="text-xs text-muted-foreground">9 fields including nama, tanggal lahir, gender</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Address Information</h4>
-              <p className="text-xs text-muted-foreground">13 fields for domicile and KTP addresses</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Banking Information</h4>
-              <p className="text-xs text-muted-foreground">3 fields for account details</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Education Information</h4>
-              <p className="text-xs text-muted-foreground">14 fields for academic background</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Professional Profile</h4>
-              <p className="text-xs text-muted-foreground">8 fields for experience and skills</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Availability & Pricing</h4>
-              <p className="text-xs text-muted-foreground">8 fields for schedule and rates</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Teaching Preferences</h4>
-              <p className="text-xs text-muted-foreground">7 fields for teaching capabilities</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Program Selection</h4>
-              <p className="text-xs text-muted-foreground">2 fields for subjects and programs</p>
-            </div>
-          </div>
-          
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Icon icon="heroicons:information-circle" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="space-y-2">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                  Total: 90+ Fields Available
-                </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-200">
-                  This template includes all fields from the Form-Add-Tutor-Mapping-Guide.md documentation, 
-                  ensuring complete data coverage for the new database structure.
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-300">
-                  Fields are organized by database tables: users_universal, user_profiles, user_addresses, 
-                  tutor_details, tutor_management, tutor_availability_config, and more.
-                </p>
+
+
+      {/* Data Preview */}
+      {showPreview && parsedData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Icon icon="heroicons:eye" className="w-5 h-5" />
+              Data Preview ({parsedData.length} records)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span>Valid: {parsedData.filter(r => r.isValid).length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span>Invalid: {parsedData.filter(r => !r.isValid).length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <span>Warnings: {parsedData.filter(r => r.warnings.length > 0).length}</span>
+                </div>
               </div>
+
+              {/* Preview Table */}
+              <div className="max-h-96 overflow-auto border rounded">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Row</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data Preview</TableHead>
+                      <TableHead>Issues</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedData.slice(0, 10).map((record) => (
+                      <TableRow key={record.rowNumber}>
+                        <TableCell>{record.rowNumber}</TableCell>
+                        <TableCell>
+                          <Badge className={record.isValid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                            {record.isValid ? "Valid" : "Invalid"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-xs space-y-1">
+                            {Object.entries(record.originalData).slice(0, 3).map(([key, value]) => (
+                              <div key={key}>
+                                <span className="font-medium">{key}:</span> {String(value).slice(0, 30)}...
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-xs space-y-1">
+                            {record.errors.map((error, idx) => (
+                              <div key={idx} className="text-red-600">❌ {error}</div>
+                            ))}
+                            {record.warnings.map((warning, idx) => (
+                              <div key={idx} className="text-yellow-600">⚠️ {warning}</div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {parsedData.length > 10 && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Showing first 10 records out of {parsedData.length} total records
+                </p>
+              )}
+
+              {/* Import Progress */}
+              {isImporting && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Importing records...</span>
+                    <span>{Math.round(importProgress)}%</span>
+                  </div>
+                  <Progress value={importProgress} className="h-2" />
+                </div>
+              )}
+
+              {/* Import Result */}
+              {importResult && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Import Results</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>Total Records: {importResult.totalRecords}</div>
+                    <div className="text-green-600">Success: {importResult.successCount}</div>
+                    <div className="text-red-600">Errors: {importResult.errorCount}</div>
+                    <div className="text-yellow-600">Warnings: {importResult.warningCount}</div>
+                  </div>
+                  {importResult.errors.length > 0 && (
+                    <div className="mt-3">
+                      <h5 className="text-sm font-medium text-red-600 mb-1">Errors:</h5>
+                      <div className="text-xs space-y-1">
+                        {importResult.errors.slice(0, 5).map((error, idx) => (
+                          <div key={idx} className="text-red-600">
+                            Row {error.row}: {error.message}
+                          </div>
+                        ))}
+                        {importResult.errors.length > 5 && (
+                          <div className="text-gray-500">
+                            ... and {importResult.errors.length - 5} more errors
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Import Button - Only show if not imported yet */}
+              {!importResult && (
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={handleImport}
+                    disabled={parsedData.filter(r => r.isValid).length === 0 || isImporting}
+                    size="lg"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Icon icon="heroicons:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="heroicons:arrow-up-tray" className="w-4 h-4 mr-2" />
+                        Import {parsedData.filter(r => r.isValid).length} Valid Records
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

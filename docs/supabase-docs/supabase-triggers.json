@@ -3,200 +3,161 @@
     "trigger_name": "tr_empire_entities_updated_at",
     "table_name": "corporate_entities",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_document_storage_updated_at",
     "table_name": "document_storage",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_banks_indonesia_updated_at",
     "table_name": "finance_banks_indonesia",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_cities_updated_at",
     "table_name": "location_cities",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_countries_updated_at",
     "table_name": "location_countries",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_location_districts_updated_at",
     "table_name": "location_districts",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_main_categories_updated_at",
     "table_name": "program_main_categories",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_sub_categories_updated_at",
     "table_name": "program_sub_categories",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_types_updated_at",
     "table_name": "program_types",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_programs_updated_at",
     "table_name": "programs_unit",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
-  },
-  {
-    "trigger_name": "tr_check_filters",
-    "table_name": "subscription",
-    "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION realtime.subscription_check_filters()",
-    "schema_name": "realtime"
-  },
-  {
-    "trigger_name": "tr_check_filters",
-    "table_name": "subscription",
-    "action_timing": "BEFORE",
-    "event": "INSERT",
-    "executes_function": "EXECUTE FUNCTION realtime.subscription_check_filters()",
-    "schema_name": "realtime"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_additional_subjects_updated_at",
     "table_name": "tutor_additional_subjects",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_availability_config_updated_at",
     "table_name": "tutor_availability_config",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_banking_info_updated_at",
     "table_name": "tutor_banking_info",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_details_updated_at",
     "table_name": "tutor_details",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_registration_number",
     "table_name": "tutor_details",
     "action_timing": "BEFORE",
-    "event": "INSERT",
-    "executes_function": "EXECUTE FUNCTION set_tutor_registration_number()",
-    "schema_name": "public"
+    "event_type": "INSERT",
+    "function_called": "EXECUTE FUNCTION set_tutor_registration_number()"
   },
   {
     "trigger_name": "tr_tutor_management_updated_at",
     "table_name": "tutor_management",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_personality_traits_updated_at",
     "table_name": "tutor_personality_traits",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_program_mappings_updated_at",
     "table_name": "tutor_program_mappings",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_tutor_teaching_preferences_updated_at",
     "table_name": "tutor_teaching_preferences",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_user_addresses_updated_at",
     "table_name": "user_addresses",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_user_demographics_updated_at",
     "table_name": "user_demographics",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_profiles_updated_at",
     "table_name": "user_profiles",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
     "trigger_name": "tr_users_updated_at",
     "table_name": "users_universal",
     "action_timing": "BEFORE",
-    "event": "UPDATE",
-    "executes_function": "EXECUTE FUNCTION update_timestamp()",
-    "schema_name": "public"
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION update_timestamp()"
   }
 ]
