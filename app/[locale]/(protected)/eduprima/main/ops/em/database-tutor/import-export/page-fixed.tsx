@@ -439,70 +439,7 @@ export default function ImportExportPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Field Mapping Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">System & Authentication</h4>
-              <p className="text-xs text-muted-foreground">6 fields including user_code, email, phone</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Personal Information</h4>
-              <p className="text-xs text-muted-foreground">9 fields including nama, tanggal lahir, gender</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Address Information</h4>
-              <p className="text-xs text-muted-foreground">13 fields for domicile and KTP addresses</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Banking Information</h4>
-              <p className="text-xs text-muted-foreground">3 fields for account details</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Education Information</h4>
-              <p className="text-xs text-muted-foreground">14 fields for academic background</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Professional Profile</h4>
-              <p className="text-xs text-muted-foreground">8 fields for experience and skills</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Availability & Pricing</h4>
-              <p className="text-xs text-muted-foreground">8 fields for schedule and rates</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Teaching Preferences</h4>
-              <p className="text-xs text-muted-foreground">7 fields for teaching capabilities</p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Program Selection</h4>
-              <p className="text-xs text-muted-foreground">2 fields for subjects and programs</p>
-            </div>
-          </div>
-          
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Icon icon="heroicons:information-circle" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="space-y-2">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                  Total: 90+ Fields Available
-                </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-200">
-                  This template includes all fields from the Form-Add-Tutor-Mapping-Guide.md documentation, 
-                  ensuring complete data coverage for the new database structure.
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-300">
-                  Fields are organized by database tables: users_universal, user_profiles, user_addresses, 
-                  tutor_details, tutor_management, tutor_availability_config, and more.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }
