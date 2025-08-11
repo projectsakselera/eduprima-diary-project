@@ -1,0 +1,47 @@
+{
+  "system": {
+    "status_tutor": "registration",
+    "approval_level": "junior",
+    "staff_notes": "Demo tutor created via CLI testing - Step 1 complete fields",
+    "additionalScreening": ["psikotes", "sharing_session", "background_check"]
+  },
+  "personal": {
+    "fotoProfil": null,
+    "trn": "ID2500199",
+    "namaLengkap": "Ahmad Budi Santoso",
+    "namaPanggilan": "Budi",
+    "tanggalLahir": "1995-08-15",
+    "jenisKelamin": "L",
+    "agama": "Islam",
+    "email": "demo.tutor.step1.final@eduprima.com",
+    "noHp1": "+6281234567890",
+    "noHp2": "+6281234567891"
+  },
+  "profile": {
+    "headline": "Guru Matematika Berpengalaman | Spesialis UTBK & OSN | Metode Fun Learning",
+    "deskripsiDiri": "Saya lulusan Matematika UI dengan pengalaman 5 tahun mengajar. Sudah membimbing 200+ siswa masuk PTN favorit. Menggunakan metode visual dan games untuk membuat matematika jadi menyenangkan. Siswa saya rata-rata naik 30 poin dalam 3 bulan.",
+    "motivasiMenjadiTutor": "Saya percaya bahwa setiap anak memiliki potensi untuk berprestasi dalam matematika. Passion saya adalah membantu mereka menemukan cara belajar yang tepat dan menyenangkan. Visi saya adalah menciptakan generasi yang tidak takut dengan matematika, bahkan mencintainya.",
+    "socialMedia1": "https://www.instagram.com/budimathtutor",
+    "socialMedia2": "https://www.youtube.com/channel/UCBudiMathTutor"
+  },
+  "address": {
+    "provinsiDomisili": null,
+    "kotaKabupatenDomisili": null,
+    "kecamatanDomisili": "Menteng",
+    "kelurahanDomisili": "Gondangdia",
+    "alamatLengkapDomisili": "Jl. Gondangdia Lama No. 28, RT 05/RW 02, Komplek Menteng Square",
+    "kodePosDomisili": "10350",
+    "alamatSamaDenganKTP": false,
+    "provinsiKTP": null,
+    "kotaKabupatenKTP": null,
+    "kecamatanKTP": "Bogor Selatan",
+    "kelurahanKTP": "Bondongan",
+    "alamatLengkapKTP": "Jl. Raya Bogor KM 25 No. 15, RT 02/RW 05, Perumahan Bogor Indah",
+    "kodePosKTP": "16137"
+  },
+  "banking": {
+    "namaNasabah": "Ahmad Budi Santoso",
+    "nomorRekening": "1234567890123",
+    "namaBank": null
+  }
+}

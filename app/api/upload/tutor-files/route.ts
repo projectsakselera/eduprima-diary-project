@@ -124,12 +124,33 @@ export async function POST(request: NextRequest) {
             });
         }
         
+        // 📸 SPECIAL HANDLING: Update user_profiles.profile_photo_url for profile photos
+        let profileUpdateSuccess = true;
+        if (fileType === 'profile_photo') {
+          console.log('📸 Updating user_profiles.profile_photo_url for user:', userId);
+          const { error: profileUpdateError } = await adminSupabase
+            .from('user_profiles')
+            .update({ 
+              profile_photo_url: uploadResult.url,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+          
+          if (profileUpdateError) {
+            console.error('❌ Failed to update user_profiles.profile_photo_url:', profileUpdateError);
+            profileUpdateSuccess = false;
+          } else {
+            console.log('✅ Successfully updated user_profiles.profile_photo_url');
+          }
+        }
+
         uploadResults.push({
           fileType,
           success: true,
           fileName,
           publicUrl: uploadResult.url,
           dbUpdateSuccess: !updateResult.error,
+          profileUpdateSuccess: fileType === 'profile_photo' ? profileUpdateSuccess : true,
           etag: uploadResult.etag,
           storage: 'cloudflare-r2'
         });

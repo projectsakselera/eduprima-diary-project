@@ -6,6 +6,76 @@
 
 import { migrationConfig } from '@/config';
 
+/**
+ * 📸 Upload profile photo to R2 and update user_profiles.profile_photo_url
+ * @param file - The profile photo file
+ * @param userId - User ID to associate the photo with
+ * @returns Promise<string> - The public URL of the uploaded photo
+ */
+async function uploadProfilePhotoToR2(file: File, userId: string): Promise<string> {
+  if (migrationConfig.enableMigrationLogs) {
+    console.log('📸 [UPLOAD] Starting profile photo upload for user:', userId);
+    console.log('📸 [UPLOAD] File details:', { 
+      name: file.name, 
+      size: file.size, 
+      type: file.type 
+    });
+  }
+
+  // Validate file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`Invalid file type: ${file.type}. Only JPEG, PNG, and WebP are allowed.`);
+  }
+
+  // Validate file size (max 5MB)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    throw new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed: 5MB.`);
+  }
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  formData.append('files', file);
+  formData.append('fileTypes', 'profile_photo');
+
+  try {
+    const response = await fetch('/api/upload/tutor-files', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Upload failed');
+    }
+
+    const uploadResult = result.results?.[0];
+    if (!uploadResult?.success) {
+      throw new Error(uploadResult?.error || 'Upload result failed');
+    }
+
+    if (!uploadResult.profileUpdateSuccess) {
+      console.warn('⚠️ [UPLOAD] Photo uploaded but failed to update user_profiles.profile_photo_url');
+    }
+
+    if (migrationConfig.enableMigrationLogs) {
+      console.log('✅ [UPLOAD] Profile photo uploaded successfully:', uploadResult.publicUrl);
+    }
+
+    return uploadResult.publicUrl;
+
+  } catch (error) {
+    console.error('❌ [UPLOAD] Profile photo upload failed:', error);
+    throw error;
+  }
+}
+
 // ================================================================
 // UTILITY: International phone formatting
 // ================================================================
@@ -40,7 +110,17 @@ const formatPhoneNumber = (phone: string): string => {
 
 // Types for edge function requests
 export interface BasicTutorData {
+  // System & Status Information (Staff only)
+  system: {
+    status_tutor?: string;
+    approval_level?: string;
+    staff_notes?: string;
+    additionalScreening?: string[]; // Checklist for additional screening
+  };
+  // Personal Information
   personal: {
+    fotoProfil?: File | string | null; // Profile photo upload
+    trn?: string; // Manual TRN input (if provided)
     namaLengkap: string;
     namaPanggilan?: string;
     tanggalLahir: string;
@@ -50,25 +130,35 @@ export interface BasicTutorData {
     noHp1: string;
     noHp2?: string;
   };
+  // Profile & Value Proposition
+  profile: {
+    headline?: string; // Headline/Tagline Tutor (max 100 chars)
+    deskripsiDiri?: string; // Bio/Description
+    motivasiMenjadiTutor?: string; // Teaching motivation
+    socialMedia1?: string; // Instagram/LinkedIn link
+    socialMedia2?: string; // YouTube/TikTok link
+  };
+  // Address Information
   address: {
-    provinsiDomisili: string;
-    kotaKabupatenDomisili: string;
+    provinsiDomisili: string | null; // UUID from dropdown
+    kotaKabupatenDomisili: string | null; // UUID from dropdown
     kecamatanDomisili: string;
     kelurahanDomisili: string;
     alamatLengkapDomisili: string;
     kodePosDomisili?: string;
     alamatSamaDenganKTP?: boolean;
-    provinsiKTP?: string;
-    kotaKabupatenKTP?: string;
+    provinsiKTP?: string | null; // UUID from dropdown
+    kotaKabupatenKTP?: string | null; // UUID from dropdown
     kecamatanKTP?: string;
     kelurahanKTP?: string;
     alamatLengkapKTP?: string;
     kodePosKTP?: string;
   };
+  // Banking Information
   banking: {
     namaNasabah: string;
     nomorRekening: string;
-    namaBank: string;
+    namaBank: string | null; // Bank UUID from dropdown
   };
 }
 
@@ -219,7 +309,17 @@ export async function createTutorWithMigrationSupport(
 
       // Map form data to edge function format
       const basicData: BasicTutorData = {
+        // System & Status Information (Staff only)
+        system: {
+          status_tutor: formData.status_tutor || undefined,
+          approval_level: formData.approval_level || undefined,
+          staff_notes: formData.staff_notes || undefined,
+          additionalScreening: formData.additionalScreening || undefined,
+        },
+        // Personal Information
         personal: {
+          fotoProfil: formData.fotoProfil || null, // Profile photo upload
+          trn: formData.trn || undefined, // Manual TRN input (if provided)
           namaLengkap: formData.namaLengkap || '',
           namaPanggilan: formData.namaPanggilan || 'Panggilan', // 🔧 Minimal 2 karakter
           tanggalLahir: formData.tanggalLahir || '',
@@ -229,6 +329,15 @@ export async function createTutorWithMigrationSupport(
           noHp1: formData.noHp1 ? formatPhoneNumber(formData.noHp1) : '081234567890', // 🔧 Default valid phone
           noHp2: formData.noHp2 ? formatPhoneNumber(formData.noHp2) : undefined,
         },
+        // Profile & Value Proposition
+        profile: {
+          headline: formData.headline || undefined, // Headline/Tagline Tutor
+          deskripsiDiri: formData.deskripsiDiri || undefined, // Bio/Description
+          motivasiMenjadiTutor: formData.motivasiMenjadiTutor || undefined, // Teaching motivation
+          socialMedia1: formData.socialMedia1 || undefined, // Instagram/LinkedIn link
+          socialMedia2: formData.socialMedia2 || undefined, // YouTube/TikTok link
+        },
+        // Address Information
         address: {
           provinsiDomisili: formData.provinsiDomisili || null, // 🔧 Allow null for optional UUID
           kotaKabupatenDomisili: formData.kotaKabupatenDomisili || null, // 🔧 Allow null for optional UUID  
@@ -244,6 +353,7 @@ export async function createTutorWithMigrationSupport(
           alamatLengkapKTP: formData.alamatLengkapKTP || 'Alamat KTP belum diisi', // 🔧 Min 10 chars
           kodePosKTP: formData.kodePosKTP || '12345', // 🔧 Default valid kode pos
         },
+        // Banking Information
         banking: {
           namaNasabah: formData.namaNasabah || 'Nama pemilik rekening belum diisi', // 🔧 Ensure min 3 chars
           nomorRekening: formData.nomorRekening || '1234567890', // 🔧 Fallback valid format
@@ -259,6 +369,30 @@ export async function createTutorWithMigrationSupport(
       const result = await createBasicTutorViaEdgeFunction(basicData, sessionToken);
       
       if (result.success) {
+        // 📸 PHASE 2: Upload profile photo if provided
+        if (formData.fotoProfil && formData.fotoProfil instanceof File && result.data?.user_id) {
+          if (migrationConfig.enableMigrationLogs) {
+            console.log('📸 [PHASE 2] Starting profile photo upload for user:', result.data.user_id);
+          }
+          
+          try {
+            const photoUrl = await uploadProfilePhotoToR2(formData.fotoProfil, result.data.user_id);
+            if (migrationConfig.enableMigrationLogs) {
+              console.log('✅ [PHASE 2] Profile photo uploaded successfully:', photoUrl);
+            }
+            
+            // Add photo URL to result data
+            result.data.profile_photo_url = photoUrl;
+            
+          } catch (photoError) {
+            console.error('❌ [PHASE 2] Profile photo upload failed:', photoError);
+            // Don't fail the entire operation, just log the error
+            if (migrationConfig.enableMigrationLogs) {
+              console.warn('⚠️ [PHASE 2] User created successfully but photo upload failed. User can upload later.');
+            }
+          }
+        }
+        
         return { success: true, data: result.data, source: 'edge' };
       }
       
