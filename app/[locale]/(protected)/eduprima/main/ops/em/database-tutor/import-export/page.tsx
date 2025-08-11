@@ -12,6 +12,7 @@ import { Icon } from "@/components/ui/icon";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import { 
   findBestLocationMatches, 
   findBestSubjectMatches, 
@@ -34,6 +35,14 @@ interface TutorFormField {
   validation?: (value: any) => string | null;
   min?: number;
   max?: number;
+  // New properties for alignment with Form Add
+  apiEndpoint?: string; // For dynamic select options
+  dependsOn?: string; // For dependent fields (e.g., cities depend on province)
+  className?: string; // For special field handling (e.g., 'map-picker-field')
+  accept?: string; // For file upload types
+  icon?: string; // For field icons
+  helperText?: string; // For additional help text
+  placeholder?: string; // For input placeholders
 }
 
 // Log initialization status
@@ -85,16 +94,260 @@ export default function ImportExportPage() {
     loadAllData();
   }, []);
 
+  // Advanced Field Renderer Component
+  const AdvancedFieldRenderer: React.FC<{
+    field: TutorFormField;
+    value: any;
+    originalValue?: any;
+    isMatched?: boolean;
+    className?: string;
+  }> = ({ field, value, originalValue, isMatched = false, className = "" }) => {
+    const displayValue = value ?? originalValue ?? '';
+    
+    // Helper to format phone numbers
+    const formatPhone = (phone: string) => {
+      if (!phone) return '';
+      const cleaned = phone.replace(/\D/g, '');
+      if (cleaned.length >= 10) {
+        return `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 5)}-${cleaned.slice(5, 9)}-${cleaned.slice(9)}`;
+      }
+      return phone;
+    };
+
+    // Helper to format arrays
+    const formatArray = (arr: any) => {
+      if (Array.isArray(arr)) {
+        return arr.slice(0, 3).join(', ') + (arr.length > 3 ? ` +${arr.length - 3} more` : '');
+      }
+      return String(arr);
+    };
+
+    const baseClasses = cn(
+      "text-xs px-2 py-1 rounded border",
+      isMatched ? "bg-green-50 border-green-200 text-green-800" : "bg-gray-50 border-gray-200 text-gray-700",
+      className
+    );
+
+    switch (field.type) {
+      case 'tel_split':
+      case 'tel':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:phone" className="w-3 h-3" />
+              <span>{formatPhone(displayValue)}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'email':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:envelope" className="w-3 h-3" />
+              <span className="truncate max-w-[120px]">{displayValue}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:list" className="w-3 h-3" />
+              <span className="truncate max-w-[100px]">{displayValue}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'category-program-selector':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:books" className="w-3 h-3" />
+              <span className="truncate max-w-[100px]">{formatArray(displayValue)}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'date':
+        const formattedDate = displayValue ? new Date(displayValue).toLocaleDateString('id-ID') : '';
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:calendar" className="w-3 h-3" />
+              <span>{formattedDate}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'number':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:hash" className="w-3 h-3" />
+              <span>{displayValue}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-start gap-1">
+              <Icon icon="ph:text-align-left" className="w-3 h-3 mt-0.5" />
+              <span className="line-clamp-2 text-xs">{String(displayValue).slice(0, 50)}...</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600 mt-0.5" />}
+            </div>
+          </div>
+        );
+
+      case 'file':
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:file" className="w-3 h-3" />
+              <span className="text-orange-600">File Upload Required</span>
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className={baseClasses}>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:text-aa" className="w-3 h-3" />
+              <span className="truncate max-w-[120px]">{String(displayValue).slice(0, 30)}</span>
+              {isMatched && <Icon icon="ph:check-circle" className="w-3 h-3 text-green-600" />}
+            </div>
+          </div>
+        );
+    }
+  };
+
+  // Step-based Field Grouping (sesuai Form Add structure)
+  const getFieldsByStep = (record: ParsedRecord) => {
+    return {
+      'identity-basic': {
+        title: 'Identitas Dasar',
+        icon: 'ph:user-circle',
+        fields: [
+          { key: 'Email Aktif', type: 'email', mappedKey: 'email' },
+          { key: 'No. HP Utama (+62)', type: 'tel_split', mappedKey: 'noHp1' },
+          { key: 'Nama Lengkap', type: 'text', mappedKey: 'namaLengkap' },
+          { key: 'Tanggal Lahir', type: 'date', mappedKey: 'tanggalLahir' },
+          { key: 'Provinsi Domisili', type: 'select', mappedKey: 'provinsiDomisili_matched' },
+          { key: 'Kota/Kabupaten Domisili', type: 'select', mappedKey: 'kotaKabupatenDomisili_matched' },
+          { key: 'Nama Bank', type: 'select', mappedKey: 'namaBank_matched' }
+        ]
+      },
+      'education-experience': {
+        title: 'Pendidikan & Pengalaman',
+        icon: 'ph:graduation-cap',
+        fields: [
+          { key: 'Status Akademik', type: 'select', mappedKey: 'statusAkademik' },
+          { key: 'Nama Universitas', type: 'text', mappedKey: 'namaUniversitas' },
+          { key: 'Fakultas/Jurusan', type: 'text', mappedKey: 'fakultas' },
+          { key: 'IPK/GPA', type: 'number', mappedKey: 'ipk' }
+        ]
+      },
+      'subjects-areas': {
+        title: 'Mata Pelajaran',
+        icon: 'ph:books',
+        fields: [
+          { key: 'Program yang Dipilih', type: 'category-program-selector', mappedKey: 'selectedPrograms_matched' }
+        ]
+      },
+      'availability-location': {
+        title: 'Ketersediaan & Wilayah',
+        icon: 'ph:map-pin',
+        fields: [
+          { key: 'Status Menerima Siswa', type: 'select', mappedKey: 'statusMenerimaSiswa' },
+          { key: 'Tarif per Jam', type: 'number', mappedKey: 'hourly_rate' },
+          { key: 'Radius Mengajar (km)', type: 'number', mappedKey: 'teaching_radius_km' }
+        ]
+      },
+      'documents': {
+        title: 'Dokumen',
+        icon: 'ph:file-text',
+        fields: [
+          { key: 'Foto Profil', type: 'file', mappedKey: 'fotoProfil' },
+          { key: 'Transkrip Nilai', type: 'file', mappedKey: 'transkripNilai' },
+          { key: 'Sertifikat Keahlian', type: 'file', mappedKey: 'sertifikatKeahlian' }
+        ]
+      }
+    };
+  };
+
+  // Step-based Preview Component
+  const StepBasedPreview: React.FC<{ record: ParsedRecord }> = ({ record }) => {
+    const steps = getFieldsByStep(record);
+    
+    return (
+      <div className="space-y-3">
+        {Object.entries(steps).map(([stepId, step]) => {
+          // Filter fields that have data
+          const fieldsWithData = step.fields.filter(field => 
+            record.originalData[field.key] || record.mappedData[field.mappedKey]
+          );
+          
+          if (fieldsWithData.length === 0) return null;
+          
+          return (
+            <div key={stepId} className="border rounded-lg p-2 bg-gray-50">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon icon={step.icon} className="w-4 h-4 text-primary" />
+                <span className="font-medium text-xs text-primary">{step.title}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1">
+                {fieldsWithData.map(field => (
+                  <AdvancedFieldRenderer
+                    key={field.key}
+                    field={{ 
+                      name: field.mappedKey, 
+                      label: field.key, 
+                      type: field.type 
+                    }}
+                    value={record.mappedData[field.mappedKey]}
+                    originalValue={record.originalData[field.key]}
+                    isMatched={!!record.mappedData[field.mappedKey] && record.mappedData[field.mappedKey] !== record.originalData[field.key]}
+                    className="w-full"
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   // Generate comprehensive field mapping from simplified config (UPDATED 2025 - Based on Form-Add-Tutor-Mapping-Guide.md)
   const generateFieldMapping = (): Array<{field: TutorFormField, csvColumn: string}> => {
     const fieldMap: Array<{field: TutorFormField, csvColumn: string}> = [];
     
     // Define comprehensive fields for bulk import (based on updated mapping guide)
     const essentialFields: TutorFormField[] = [
+      // === STEP 1: IDENTITY BASIC ===
+      {
+        name: 'section_identity_basic',
+        label: 'IDENTITAS DASAR',
+        type: 'text',
+        required: false,
+        className: 'section-divider',
+        icon: 'ph:user-circle'
+      },
+      
       // 1. SYSTEM & AUTHENTICATION
       { name: 'user_code', label: 'User Code', type: 'text', required: false },
       { name: 'email', label: 'Email Aktif', type: 'email', required: true },
-      { name: 'phone', label: 'No. HP Utama (+62)', type: 'tel', required: true },
+      { name: 'phone', label: 'No. HP Utama (+62)', type: 'tel_split', required: true },
       { name: 'primary_role_id', label: 'Primary Role ID', type: 'text', required: false },
       { name: 'account_type', label: 'Account Type', type: 'select', required: false },
       { name: 'user_status', label: 'User Status', type: 'select', required: false },
@@ -105,9 +358,9 @@ export default function ImportExportPage() {
       { name: 'namaPanggilan', label: 'Nama Panggilan', type: 'text', required: false },
       { name: 'tanggalLahir', label: 'Tanggal Lahir', type: 'date', required: true },
       { name: 'jenisKelamin', label: 'Jenis Kelamin', type: 'select', required: true },
-      { name: 'noHp1', label: 'No. HP Utama (+62)', type: 'tel', required: true },
-      { name: 'noHp2', label: 'No. HP Alternatif', type: 'tel', required: false },
-      { name: 'whatsappNumber', label: 'Nomor WhatsApp', type: 'tel', required: false },
+      { name: 'noHp1', label: 'No. HP Utama (+62)', type: 'tel_split', required: true },
+      { name: 'noHp2', label: 'No. HP Alternatif', type: 'tel_split', required: false },
+      { name: 'whatsappNumber', label: 'Nomor WhatsApp', type: 'tel_split', required: false },
       { name: 'agama', label: 'Agama', type: 'select', required: false },
       
       // 3. PROFILE & VALUE PROPOSITION
@@ -119,8 +372,8 @@ export default function ImportExportPage() {
       { name: 'preferredLanguage', label: 'Bahasa Komunikasi Preferred', type: 'text', required: false },
       
       // 4. ADDRESS INFORMATION - DOMICILE
-      { name: 'provinsiDomisili', label: 'Provinsi Domisili', type: 'select', required: true },
-      { name: 'kotaKabupatenDomisili', label: 'Kota/Kabupaten Domisili', type: 'select', required: true },
+      { name: 'provinsiDomisili', label: 'Provinsi Domisili', type: 'select', apiEndpoint: '/api/locations/provinces', required: true },
+      { name: 'kotaKabupatenDomisili', label: 'Kota/Kabupaten Domisili', type: 'select', apiEndpoint: '/api/locations/cities', dependsOn: 'provinsiDomisili', required: true },
       { name: 'kecamatanDomisili', label: 'Kecamatan Domisili', type: 'text', required: true },
       { name: 'kelurahanDomisili', label: 'Kelurahan/Desa Domisili', type: 'text', required: true },
       { name: 'alamatLengkapDomisili', label: 'Alamat Lengkap Domisili', type: 'textarea', required: true },
@@ -128,8 +381,8 @@ export default function ImportExportPage() {
       
       // 5. ADDRESS INFORMATION - KTP/KK
       { name: 'alamatSamaDenganKTP', label: 'Alamat Sama dengan KTP', type: 'select', required: false },
-      { name: 'provinsiKTP', label: 'Provinsi KTP', type: 'select', required: false },
-      { name: 'kotaKabupatenKTP', label: 'Kota/Kabupaten KTP', type: 'select', required: false },
+      { name: 'provinsiKTP', label: 'Provinsi KTP', type: 'select', apiEndpoint: '/api/locations/provinces', required: false },
+      { name: 'kotaKabupatenKTP', label: 'Kota/Kabupaten KTP', type: 'select', apiEndpoint: '/api/locations/cities', dependsOn: 'provinsiKTP', required: false },
       { name: 'kecamatanKTP', label: 'Kecamatan KTP', type: 'text', required: false },
       { name: 'kelurahanKTP', label: 'Kelurahan/Desa KTP', type: 'text', required: false },
       { name: 'alamatLengkapKTP', label: 'Alamat Lengkap KTP', type: 'textarea', required: false },
@@ -138,7 +391,17 @@ export default function ImportExportPage() {
       // 6. BANKING INFORMATION
       { name: 'namaNasabah', label: 'Nama Pemilik Rekening', type: 'text', required: true },
       { name: 'nomorRekening', label: 'Nomor Rekening Bank', type: 'text', required: true },
-      { name: 'namaBank', label: 'Nama Bank', type: 'select', required: true },
+      { name: 'namaBank', label: 'Nama Bank', type: 'select', apiEndpoint: '/api/banks/indonesia', required: true },
+      
+      // === STEP 2: EDUCATION & EXPERIENCE ===
+      {
+        name: 'section_education_experience',
+        label: 'PENDIDIKAN & PENGALAMAN',
+        type: 'text',
+        required: false,
+        className: 'section-divider',
+        icon: 'ph:graduation-cap'
+      },
       
       // 7. EDUCATION INFORMATION
       { name: 'statusAkademik', label: 'Status Akademik', type: 'select', required: true },
@@ -149,6 +412,7 @@ export default function ImportExportPage() {
       { name: 'namaUniversitasS1', label: 'Nama Universitas S1', type: 'text', required: false },
       { name: 'fakultasS1', label: 'Fakultas S1', type: 'text', required: false },
       { name: 'jurusanS1', label: 'Jurusan S1', type: 'text', required: false },
+      { name: 'jurusan', label: 'Jurusan (General)', type: 'text', required: false },
       { name: 'tahunMasuk', label: 'Tahun Masuk Kuliah', type: 'number', required: false },
       { name: 'namaSMA', label: 'Nama SMA/SMK', type: 'text', required: false },
       { name: 'jurusanSMA', label: 'Jurusan SMA', type: 'text', required: false },
@@ -180,6 +444,16 @@ export default function ImportExportPage() {
       { name: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', type: 'select', required: false },
       { name: 'status_verifikasi_pendidikan', label: 'Status Verifikasi Pendidikan', type: 'select', required: false },
       
+      // === STEP 4: AVAILABILITY & LOCATION ===
+      {
+        name: 'section_availability_location',
+        label: 'KETERSEDIAAN & WILAYAH MENGAJAR',
+        type: 'text',
+        required: false,
+        className: 'section-divider',
+        icon: 'ph:map-pin'
+      },
+      
       // 12. AVAILABILITY CONFIGURATION
       { name: 'statusMenerimaSiswa', label: 'Status Menerima Siswa', type: 'select', required: true },
       { name: 'maksimalSiswaBaru', label: 'Maksimal Siswa Baru per Minggu', type: 'number', required: false },
@@ -196,7 +470,7 @@ export default function ImportExportPage() {
       { name: 'location_notes', label: 'Catatan Lokasi', type: 'textarea', required: false },
       { name: 'titikLokasiLat', label: 'Latitude Titik Pusat', type: 'number', required: false },
       { name: 'titikLokasiLng', label: 'Longitude Titik Pusat', type: 'number', required: false },
-      { name: 'alamatTitikLokasi', label: 'Alamat Titik Pusat Mengajar', type: 'text', required: false },
+      { name: 'alamatTitikLokasi', label: 'Alamat Titik Pusat Mengajar', type: 'text', className: 'map-picker-field', required: false },
       
       // 14. TEACHING PREFERENCES
       { name: 'studentLevelPreferences', label: 'Level Siswa yang Disukai', type: 'text', required: false },
@@ -217,11 +491,38 @@ export default function ImportExportPage() {
       // 16. EMERGENCY CONTACT & COMMUNICATION
       { name: 'emergencyContactName', label: 'Nama Kontak Darurat', type: 'text', required: false },
       { name: 'emergencyContactRelationship', label: 'Hubungan dengan Kontak Darurat', type: 'text', required: false },
-      { name: 'emergencyContactPhone', label: 'Nomor Telepon Kontak Darurat', type: 'tel', required: false },
+      { name: 'emergencyContactPhone', label: 'Nomor Telepon Kontak Darurat', type: 'tel_split', required: false },
+      
+      // === STEP 3: SUBJECTS & AREAS ===
+      {
+        name: 'section_subjects_areas',
+        label: 'MATA PELAJARAN & BIDANG KEAHLIAN',
+        type: 'text',
+        required: false,
+        className: 'section-divider',
+        icon: 'ph:books'
+      },
       
       // 17. PROGRAM SELECTION
-      { name: 'selectedPrograms', label: 'Program yang Dipilih', type: 'text', required: false },
+      { name: 'selectedPrograms', label: 'Program yang Dipilih', type: 'category-program-selector', required: false },
       { name: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya', type: 'textarea', required: false },
+      
+      // === STEP 5: DOCUMENTS ===
+      {
+        name: 'section_documents',
+        label: 'DOKUMEN PENDUKUNG',
+        type: 'text',
+        required: false,
+        className: 'section-divider',
+        icon: 'ph:file-text'
+      },
+      
+      // 18. DOCUMENT UPLOADS (CRITICAL - Missing in Import-Export)
+      { name: 'fotoProfil', label: 'Foto Profil', type: 'file', required: false },
+      { name: 'transkripNilai', label: 'Transkrip Nilai/Ijazah', type: 'file', required: false },
+      { name: 'sertifikatKeahlian', label: 'Sertifikat Keahlian', type: 'file', required: false },
+      { name: 'dokumenIdentitas', label: 'Dokumen Identitas (KTP/Passport)', type: 'file', required: false },
+      { name: 'dokumenPendidikan', label: 'Dokumen Pendidikan', type: 'file', required: false },
     ];
     
     essentialFields.forEach(field => {
@@ -488,6 +789,252 @@ export default function ImportExportPage() {
     }
   }, []);
 
+  // Process records with fuzzy matching
+  const processRecordsWithFuzzyMatching = async (rawData: any[]): Promise<ParsedRecord[]> => {
+    const processedRecords: ParsedRecord[] = [];
+    
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i];
+      const rowNumber = i + 1;
+      const errors: string[] = [];
+      const warnings: string[] = [];
+      const mappedData = { ...row };
+      
+      console.log(`🔍 Processing record ${rowNumber}:`, Object.keys(row));
+      
+      // === FUZZY MATCHING VARIABLES ===
+      let resolvedProvinceName = null;
+      let resolvedCityName = null;
+      let resolvedBankName = null;
+      let resolvedProgramIds: string[] = [];
+      
+      // === FUZZY MATCHING FOR PROVINCES ===
+      if (row['Provinsi Domisili'] && dataCache.provinces.length > 0) {
+        const provinceMatches = findBestLocationMatches(
+          row['Provinsi Domisili'], 
+          dataCache.provinces, 
+          'provinces'
+        );
+        
+        if (provinceMatches.length > 0) {
+          const bestMatch = provinceMatches[0];
+          mappedData['provinsiDomisili'] = bestMatch.id;
+          mappedData['provinsiDomisili_matched'] = bestMatch.name;
+          resolvedProvinceName = bestMatch.name;
+          
+          if (provinceMatches[0].similarity && provinceMatches[0].similarity < 90) {
+            warnings.push(`Province "${row['Provinsi Domisili']}" matched to "${bestMatch.name}" with ${provinceMatches[0].similarity}% confidence`);
+          }
+          
+          console.log(`✅ Province matched: "${row['Provinsi Domisili']}" → "${bestMatch.name}" (${provinceMatches[0].similarity}%)`);
+        } else {
+          errors.push(`Province "${row['Provinsi Domisili']}" not found`);
+          console.log(`❌ Province not matched: "${row['Provinsi Domisili']}"`);
+        }
+      }
+      
+      // === FUZZY MATCHING FOR CITIES ===
+      if (row['Kota/Kabupaten Domisili'] && dataCache.cities.length > 0) {
+        // Filter cities by province if province was matched
+        let citiesToSearch = dataCache.cities;
+        if (mappedData['provinsiDomisili']) {
+          citiesToSearch = dataCache.cities.filter(city => 
+            city.province_id === mappedData['provinsiDomisili']
+          );
+        }
+        
+        const cityMatches = findBestLocationMatches(
+          row['Kota/Kabupaten Domisili'], 
+          citiesToSearch, 
+          'cities'
+        );
+        
+        if (cityMatches.length > 0) {
+          const bestMatch = cityMatches[0];
+          mappedData['kotaKabupatenDomisili'] = bestMatch.id;
+          mappedData['kotaKabupatenDomisili_matched'] = bestMatch.name;
+          
+          if (cityMatches[0].similarity && cityMatches[0].similarity < 90) {
+            warnings.push(`City "${row['Kota/Kabupaten Domisili']}" matched to "${bestMatch.name}" with ${cityMatches[0].similarity}% confidence`);
+          }
+          
+          console.log(`✅ City matched: "${row['Kota/Kabupaten Domisili']}" → "${bestMatch.name}" (${cityMatches[0].similarity}%)`);
+        } else {
+          errors.push(`City "${row['Kota/Kabupaten Domisili']}" not found`);
+          console.log(`❌ City not matched: "${row['Kota/Kabupaten Domisili']}"`);
+        }
+      }
+      
+      // === FUZZY MATCHING FOR BANKS ===
+      if (row['Nama Bank'] && dataCache.banks.length > 0) {
+        const bankMatches = findBestBankMatches(row['Nama Bank'], dataCache.banks);
+        
+        if (bankMatches.length > 0) {
+          const bestMatch = bankMatches[0];
+          mappedData['namaBank'] = bestMatch.id;
+          mappedData['namaBank_matched'] = bestMatch.name;
+          
+          if (bankMatches[0].similarity && bankMatches[0].similarity < 90) {
+            warnings.push(`Bank "${row['Nama Bank']}" matched to "${bestMatch.name}" with ${bankMatches[0].similarity}% confidence`);
+          }
+          
+          console.log(`✅ Bank matched: "${row['Nama Bank']}" → "${bestMatch.name}" (${bankMatches[0].similarity}%)`);
+        } else {
+          errors.push(`Bank "${row['Nama Bank']}" not found`);
+          console.log(`❌ Bank not matched: "${row['Nama Bank']}"`);
+        }
+      }
+      
+      // === FUZZY MATCHING FOR SUBJECTS/PROGRAMS ===
+      if (row['Program yang Dipilih'] && dataCache.subjects.length > 0) {
+        // Handle multiple programs separated by comma/semicolon
+        const programsList = row['Program yang Dipilih'].split(/[,;]/).map((p: string) => p.trim()).filter((p: string) => p);
+        const matchedPrograms: string[] = [];
+        const matchedProgramNames: string[] = [];
+        
+        for (const program of programsList) {
+          const programMatches = findBestSubjectMatches(program, dataCache.subjects);
+          
+          if (programMatches.length > 0) {
+            const bestMatch = programMatches[0];
+            matchedPrograms.push(bestMatch.id);
+            matchedProgramNames.push(bestMatch.name);
+            
+            if (programMatches[0].similarity && programMatches[0].similarity < 90) {
+              warnings.push(`Program "${program}" matched to "${bestMatch.name}" with ${programMatches[0].similarity}% confidence`);
+            }
+            
+            console.log(`✅ Program matched: "${program}" → "${bestMatch.name}" (${programMatches[0].similarity}%)`);
+          } else {
+            warnings.push(`Program "${program}" not found in database`);
+            console.log(`⚠️ Program not matched: "${program}"`);
+          }
+        }
+        
+        if (matchedPrograms.length > 0) {
+          mappedData['selectedPrograms'] = matchedPrograms;
+          mappedData['selectedPrograms_matched'] = matchedProgramNames;
+        }
+      }
+      
+      // === COMPREHENSIVE VALIDATION ===
+      console.log(`🔍 Running comprehensive validation for record ${rowNumber}...`);
+      
+      // Required field validation
+      const requiredFields = [
+        { key: 'Nama Lengkap', message: 'Nama lengkap wajib diisi' },
+        { key: 'Email Aktif', message: 'Email aktif wajib diisi' },
+        { key: 'No. HP Utama (+62)', message: 'Nomor HP utama wajib diisi' }
+      ];
+      
+      for (const field of requiredFields) {
+        if (!row[field.key] || String(row[field.key]).trim() === '') {
+          errors.push(field.message);
+        }
+      }
+      
+      // Email validation
+      if (row['Email Aktif']) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(row['Email Aktif'])) {
+          errors.push('Format email tidak valid');
+        }
+      }
+      
+      // Phone validation
+      if (row['No. HP Utama (+62)']) {
+        const phoneRegex = /^[\d\s\-\+\(\)]{8,15}$/;
+        if (!phoneRegex.test(row['No. HP Utama (+62)'])) {
+          errors.push('Format nomor HP tidak valid');
+        }
+      }
+      
+      // Date validation
+      if (row['Tanggal Lahir']) {
+        const birthDate = new Date(row['Tanggal Lahir']);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        
+        if (isNaN(birthDate.getTime())) {
+          errors.push('Format tanggal lahir tidak valid');
+        } else if (age < 17 || age > 70) {
+          warnings.push(`Usia ${age} tahun mungkin tidak sesuai untuk tutor`);
+        }
+      }
+      
+      // Location validation warnings
+      if (row['Provinsi Domisili'] && !resolvedProvinceName) {
+        warnings.push('Provinsi tidak ditemukan dalam database, akan menggunakan teks asli');
+      }
+      
+      if (row['Kota/Kabupaten Domisili'] && !resolvedCityName) {
+        warnings.push('Kota/Kabupaten tidak ditemukan dalam database, akan menggunakan teks asli');
+      }
+      
+      // Bank validation warnings
+      if (row['Nama Bank'] && !resolvedBankName) {
+        warnings.push('Bank tidak ditemukan dalam database, akan menggunakan teks asli');
+      }
+      
+      // Program validation
+      if (row['Program yang Dipilih']) {
+        const programsList = row['Program yang Dipilih'].split(/[,;]/).map((p: string) => p.trim()).filter((p: string) => p);
+        if (programsList.length === 0) {
+          warnings.push('Program yang dipilih kosong');
+        } else if (resolvedProgramIds.length === 0) {
+          warnings.push('Tidak ada program yang berhasil dicocokkan dengan database');
+        } else if (resolvedProgramIds.length < programsList.length) {
+          warnings.push(`Hanya ${resolvedProgramIds.length} dari ${programsList.length} program yang berhasil dicocokkan`);
+        }
+      }
+      
+      // Additional validation based on field types
+      if (row['IPK/GPA']) {
+        const gpa = parseFloat(row['IPK/GPA']);
+        if (isNaN(gpa) || gpa < 0 || gpa > 4) {
+          warnings.push('IPK/GPA harus berupa angka antara 0-4');
+        }
+      }
+      
+      if (row['Tarif per Jam']) {
+        const rate = parseFloat(row['Tarif per Jam']);
+        if (isNaN(rate) || rate <= 0) {
+          warnings.push('Tarif per jam harus berupa angka positif');
+        } else if (rate < 10000) {
+          warnings.push('Tarif per jam sangat rendah (< Rp 10.000)');
+        } else if (rate > 500000) {
+          warnings.push('Tarif per jam sangat tinggi (> Rp 500.000)');
+        }
+      }
+      
+      // Determine if record is valid (has critical errors)
+      const isValid = errors.length === 0;
+      
+      processedRecords.push({
+        rowNumber,
+        originalData: row,
+        mappedData,
+        isValid,
+        errors,
+        warnings
+      });
+      
+      // Log progress every 10 records
+      if (rowNumber % 10 === 0) {
+        console.log(`🔄 Processed ${rowNumber}/${rawData.length} records`);
+      }
+    }
+    
+    console.log('✅ Fuzzy matching completed:', {
+      totalRecords: processedRecords.length,
+      validRecords: processedRecords.filter(r => r.isValid).length,
+      recordsWithWarnings: processedRecords.filter(r => r.warnings.length > 0).length,
+      recordsWithErrors: processedRecords.filter(r => r.errors.length > 0).length
+    });
+    
+    return processedRecords;
+  };
+
   // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -553,15 +1100,9 @@ export default function ImportExportPage() {
         firstRecord: rawData[0]
       });
 
-      // For now, just create simple parsed records
-      const processedData: ParsedRecord[] = rawData.map((row, index) => ({
-        rowNumber: index + 1,
-        originalData: row,
-        mappedData: row,
-        isValid: true,
-        errors: [],
-        warnings: []
-      }));
+      // Process data with fuzzy matching
+      console.log('🔍 Starting fuzzy matching for', rawData.length, 'records...');
+      const processedData: ParsedRecord[] = await processRecordsWithFuzzyMatching(rawData);
 
       setParsedData(processedData);
       setShowPreview(true);
@@ -812,7 +1353,8 @@ export default function ImportExportPage() {
                     size="sm"
                     onClick={async () => {
                       try {
-                        const response = await fetch('/api/debug-db');
+                        // Debug DB API removed - use health check instead
+                        const response = await fetch('/api/health');
                         const result = await response.json();
                         console.log('🔍 Debug DB Result:', result);
                         toast({
@@ -839,8 +1381,9 @@ export default function ImportExportPage() {
                     size="sm"
                     onClick={async () => {
                       try {
-                        const response = await fetch('/api/test-insert', { method: 'POST' });
-                        const result = await response.json();
+                        // Test insert API removed - functionality moved to Edge Functions
+                        console.warn('Test insert functionality moved to Edge Functions');
+                        const result = { success: false, message: 'API removed - use Edge Functions' };
                         console.log('🧪 Test Insert Result:', result);
                         toast({
                           title: "Test Insert",
@@ -896,7 +1439,8 @@ export default function ImportExportPage() {
           <CardContent>
             <div className="space-y-4">
               {/* Summary */}
-              <div className="flex gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                {/* Validation Status */}
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   <span>Valid: {parsedData.filter(r => r.isValid).length}</span>
@@ -909,6 +1453,43 @@ export default function ImportExportPage() {
                   <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                   <span>Warnings: {parsedData.filter(r => r.warnings.length > 0).length}</span>
                 </div>
+                
+                {/* Fuzzy Matching Stats */}
+                <div className="flex items-center gap-2">
+                  <Icon icon="ph:magnifying-glass" className="w-3 h-3 text-blue-500" />
+                  <span>Matched: {parsedData.filter(r => 
+                    r.mappedData['provinsiDomisili_matched'] || 
+                    r.mappedData['kotaKabupatenDomisili_matched'] || 
+                    r.mappedData['namaBank_matched'] || 
+                    r.mappedData['selectedPrograms_matched']
+                  ).length}</span>
+                </div>
+              </div>
+              
+              {/* Detailed Fuzzy Matching Stats */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon icon="ph:robot" className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-800">Fuzzy Matching Results</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <Icon icon="ph:map-pin" className="inline w-3 h-3 mr-1 text-blue-600" />
+                    Provinces: {parsedData.filter(r => r.mappedData['provinsiDomisili_matched']).length}
+                  </div>
+                  <div>
+                    <Icon icon="ph:buildings" className="inline w-3 h-3 mr-1 text-blue-600" />
+                    Cities: {parsedData.filter(r => r.mappedData['kotaKabupatenDomisili_matched']).length}
+                  </div>
+                  <div>
+                    <Icon icon="ph:bank" className="inline w-3 h-3 mr-1 text-blue-600" />
+                    Banks: {parsedData.filter(r => r.mappedData['namaBank_matched']).length}
+                  </div>
+                  <div>
+                    <Icon icon="ph:books" className="inline w-3 h-3 mr-1 text-blue-600" />
+                    Programs: {parsedData.filter(r => r.mappedData['selectedPrograms_matched']).length}
+                  </div>
+                </div>
               </div>
 
               {/* Preview Table */}
@@ -916,10 +1497,10 @@ export default function ImportExportPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Row</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data Preview</TableHead>
-                      <TableHead>Issues</TableHead>
+                      <TableHead className="w-16">Row</TableHead>
+                      <TableHead className="w-20">Status</TableHead>
+                      <TableHead className="w-80">Step-based Preview</TableHead>
+                      <TableHead className="w-48">Validation Issues</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -932,12 +1513,9 @@ export default function ImportExportPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="text-xs space-y-1">
-                            {Object.entries(record.originalData).slice(0, 3).map(([key, value]) => (
-                              <div key={key}>
-                                <span className="font-medium">{key}:</span> {String(value).slice(0, 30)}...
-                              </div>
-                            ))}
+                          <div className="max-w-md">
+                            {/* Step-based Preview */}
+                            <StepBasedPreview record={record} />
                           </div>
                         </TableCell>
                         <TableCell>

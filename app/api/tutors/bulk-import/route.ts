@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { 
+  findBestLocationMatches, 
+  findBestBankMatches, 
+  findBestSubjectMatches,
+  type FieldMatch 
+} from '@/lib/fuzzy-location-matcher';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,6 +16,127 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Load reference data for fuzzy matching
+async function loadReferenceData() {
+  if (!supabase) return { provinces: [], cities: [], banks: [], subjects: [] };
+  
+  try {
+    console.log('🔄 Loading reference data for API fuzzy matching...');
+    
+    // Load provinces
+    const { data: provincesData } = await supabase
+      .from('location_province')
+      .select('id, region_name, region_local_name')
+      .eq('admin_level', 1)
+      .order('region_name');
+    
+    const provinces = (provincesData || []).map(p => ({
+      id: p.id,
+      name: p.region_name,
+      local_name: p.region_local_name
+    }));
+    
+    // Load cities
+    const { data: citiesData } = await supabase
+      .from('location_city')
+      .select('id, region_name, region_local_name, province_id')
+      .eq('admin_level', 2)
+      .order('region_name');
+    
+    const cities = (citiesData || []).map(c => ({
+      id: c.id,
+      name: c.region_name,
+      local_name: c.region_local_name,
+      province_id: c.province_id
+    }));
+    
+    // Load banks
+    const { data: banksData } = await supabase
+      .from('finance_banks_indonesia')
+      .select('id, bank_name, popular_bank_name')
+      .eq('is_active', true)
+      .order('popular_bank_name');
+    
+    const banks = (banksData || []).map(b => ({
+      id: b.id,
+      name: b.popular_bank_name,
+      local_name: b.popular_bank_name,
+      alternate_name: b.bank_name
+    }));
+    
+    // Load subjects/programs
+    const { data: subjectsData } = await supabase
+      .from('programs')
+      .select('id, program_name, program_name_local')
+      .eq('is_active', true)
+      .order('program_name');
+    
+    const subjects = (subjectsData || []).map(s => ({
+      id: s.id,
+      name: s.program_name_local || s.program_name,
+      local_name: s.program_name_local,
+      alternate_name: s.program_name
+    }));
+    
+    console.log('✅ Reference data loaded for API:', {
+      provinces: provinces.length,
+      cities: cities.length,
+      banks: banks.length,
+      subjects: subjects.length
+    });
+    
+    return { provinces, cities, banks, subjects };
+    
+  } catch (error) {
+    console.error('❌ Failed to load reference data for API:', error);
+    return { provinces: [], cities: [], banks: [], subjects: [] };
+  }
+}
+
+// Resolve field using fuzzy matching
+function resolveFieldWithFuzzy(
+  inputValue: string, 
+  fieldType: 'province' | 'city' | 'bank' | 'subject',
+  referenceData: any[],
+  additionalFilter?: (item: any) => boolean
+): { id: string | null, matched: string | null, confidence: number } {
+  
+  if (!inputValue || !referenceData.length) {
+    return { id: null, matched: null, confidence: 0 };
+  }
+  
+  // Apply additional filter if provided (e.g., filter cities by province)
+  const dataToSearch = additionalFilter ? referenceData.filter(additionalFilter) : referenceData;
+  
+  let matches: FieldMatch[] = [];
+  
+  switch (fieldType) {
+    case 'province':
+    case 'city':
+      matches = findBestLocationMatches(inputValue, dataToSearch, fieldType === 'province' ? 'provinces' : 'cities');
+      break;
+    case 'bank':
+      matches = findBestBankMatches(inputValue, dataToSearch);
+      break;
+    case 'subject':
+      matches = findBestSubjectMatches(inputValue, dataToSearch);
+      break;
+  }
+  
+  if (matches.length > 0) {
+    const bestMatch = matches[0];
+    console.log(`✅ ${fieldType} fuzzy matched: "${inputValue}" → "${bestMatch.name}" (${bestMatch.similarity}%)`);
+    return {
+      id: bestMatch.id,
+      matched: bestMatch.name,
+      confidence: bestMatch.similarity || 0
+    };
+  }
+  
+  console.log(`❌ ${fieldType} not matched: "${inputValue}"`);
+  return { id: null, matched: null, confidence: 0 };
+}
 
 export async function POST(request: NextRequest) {
   console.log('🔥 API Called: /api/tutors/bulk-import');
@@ -40,6 +167,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`🚀 Bulk import started: ${records.length} records from ${source}`);
+
+    // Load reference data for fuzzy matching
+    const referenceData = await loadReferenceData();
 
     let successCount = 0;
     let errorCount = 0;
@@ -233,6 +363,65 @@ export async function POST(request: NextRequest) {
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
 
+        // === FUZZY MATCHING RESOLUTION ===
+        console.log(`🔍 Resolving fields with fuzzy matching for record ${rowNumber}...`);
+        
+        // Resolve province using fuzzy matching
+        let resolvedProvinceId = null;
+        let resolvedProvinceName = null;
+        if (record['Provinsi Domisili'] || record['provinsiDomisili_matched']) {
+          const provinceInput = record['provinsiDomisili_matched'] || record['Provinsi Domisili'];
+          const provinceResult = resolveFieldWithFuzzy(provinceInput, 'province', referenceData.provinces);
+          resolvedProvinceId = provinceResult.id;
+          resolvedProvinceName = provinceResult.matched;
+        }
+        
+        // Resolve city using fuzzy matching (filter by province if available)
+        let resolvedCityId = null;
+        let resolvedCityName = null;
+        if (record['Kota/Kabupaten Domisili'] || record['kotaKabupatenDomisili_matched']) {
+          const cityInput = record['kotaKabupatenDomisili_matched'] || record['Kota/Kabupaten Domisili'];
+          const cityResult = resolveFieldWithFuzzy(
+            cityInput, 
+            'city', 
+            referenceData.cities,
+            resolvedProvinceId ? (city: any) => city.province_id === resolvedProvinceId : undefined
+          );
+          resolvedCityId = cityResult.id;
+          resolvedCityName = cityResult.matched;
+        }
+        
+        // Resolve bank using fuzzy matching
+        let resolvedBankId = null;
+        let resolvedBankName = null;
+        if (record['Nama Bank'] || record['namaBank_matched']) {
+          const bankInput = record['namaBank_matched'] || record['Nama Bank'];
+          const bankResult = resolveFieldWithFuzzy(bankInput, 'bank', referenceData.banks);
+          resolvedBankId = bankResult.id;
+          resolvedBankName = bankResult.matched;
+        }
+        
+        // Resolve programs using fuzzy matching
+        let resolvedProgramIds: string[] = [];
+        if (record['selectedPrograms'] && Array.isArray(record['selectedPrograms'])) {
+          resolvedProgramIds = record['selectedPrograms'];
+        } else if (record['Program yang Dipilih']) {
+          const programsList = record['Program yang Dipilih'].split(/[,;]/).map((p: string) => p.trim()).filter((p: string) => p);
+          for (const program of programsList) {
+            const programResult = resolveFieldWithFuzzy(program, 'subject', referenceData.subjects);
+            if (programResult.id) {
+              resolvedProgramIds.push(programResult.id);
+            }
+          }
+        }
+        
+        console.log(`✅ Fuzzy matching results for record ${rowNumber}:`, {
+          province: resolvedProvinceName,
+          city: resolvedCityName,
+          bank: resolvedBankName,
+          programs: resolvedProgramIds.length
+        });
+
         // Insert address data if provided
         console.log(`📝 Creating address records for user ${userId}...`);
         
@@ -244,6 +433,14 @@ export async function POST(request: NextRequest) {
             address_label: 'Alamat Domisili',
             street_address: record['Alamat Lengkap Domisili'] || null,
             postal_code: record['Kode Pos Domisili'] || null,
+            // Use resolved IDs from fuzzy matching
+            province_id: resolvedProvinceId,
+            city_id: resolvedCityId,
+            // Keep original names as fallback
+            province_name: resolvedProvinceName || record['Provinsi Domisili'],
+            city_name: resolvedCityName || record['Kota/Kabupaten Domisili'],
+            district_name: record['Kecamatan Domisili'] || null,
+            village_name: record['Kelurahan Domisili'] || null,
             is_primary: true,
             is_verified: false,
             created_at: new Date().toISOString(),

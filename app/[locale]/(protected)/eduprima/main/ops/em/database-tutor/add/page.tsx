@@ -796,7 +796,26 @@ export default function AddTutorPage() {
           keahlianSpesialisasi: formData.keahlianSpesialisasi,
           prestasiAkademik: formData.prestasiAkademik,
           transkripNilai: formData.transkripNilai ? 'File provided' : 'No file',
-          sertifikatKeahlian: formData.sertifikatKeahlian ? 'File provided' : 'No file'
+          sertifikatKeahlian: formData.sertifikatKeahlian ? 'File provided' : 'No file',
+          
+          // Step 4: Availability & Wilayah Info
+          statusMenerimaSiswa: formData.statusMenerimaSiswa,
+          available_schedule: formData.available_schedule ? `Array(${formData.available_schedule.length})` : 'No schedule',
+          teaching_methods: formData.teaching_methods ? `Array(${formData.teaching_methods.length})` : 'No methods',
+          hourly_rate: formData.hourly_rate,
+          transportasiTutor: formData.transportasiTutor ? `Array(${formData.transportasiTutor.length})` : 'No transport',
+          alamatTitikLokasi: formData.alamatTitikLokasi,
+          teaching_radius_km: formData.teaching_radius_km,
+          usiaTargetSiswa: formData.usiaTargetSiswa ? `Array(${formData.usiaTargetSiswa.length})` : 'No age target',
+          
+          // Step 4: Teaching Preferences & Personality Info (Phase 2)
+          teachingMethods: formData.teachingMethods ? `Array(${formData.teachingMethods.length})` : 'No teaching methods',
+          specialNeedsCapable: formData.specialNeedsCapable,
+          onlineTeachingCapable: formData.onlineTeachingCapable,
+          tutorPersonalityType: formData.tutorPersonalityType ? `Array(${formData.tutorPersonalityType.length})` : 'No personality',
+          communicationStyle: formData.communicationStyle ? `Array(${formData.communicationStyle.length})` : 'No comm style',
+          teachingPatienceLevel: formData.teachingPatienceLevel,
+          scheduleFlexibilityLevel: formData.scheduleFlexibilityLevel
         });
         
         const basicTutorData: BasicTutorData = {
@@ -890,6 +909,59 @@ export default function AddTutorPage() {
             namaNasabah: formData.namaNasabah || '',
             nomorRekening: formData.nomorRekening || '',
             namaBank: formData.namaBank || '',
+          },
+          
+          // 🎯 STEP 4: Availability & Wilayah (PHASE 1)
+          availability: {
+            // A. AVAILABILITY & STATUS
+            statusMenerimaSiswa: formData.statusMenerimaSiswa,
+            available_schedule: formData.available_schedule,
+            teaching_methods: formData.teaching_methods,
+            hourly_rate: formData.hourly_rate ? parseInt(formData.hourly_rate.toString()) : undefined,
+            maksimalSiswaBaru: formData.maksimalSiswaBaru ? parseInt(formData.maksimalSiswaBaru.toString()) : undefined,
+            maksimalTotalSiswa: formData.maksimalTotalSiswa ? parseInt(formData.maksimalTotalSiswa.toString()) : undefined,
+            usiaTargetSiswa: formData.usiaTargetSiswa,
+            catatanAvailability: formData.catatanAvailability,
+            
+            // B. LOCATION & TRANSPORTATION
+            transportasiTutor: formData.transportasiTutor,
+            alamatTitikLokasi: formData.alamatTitikLokasi,
+            teaching_radius_km: formData.teaching_radius_km ? parseInt(formData.teaching_radius_km.toString()) : undefined,
+            location_notes: formData.location_notes,
+            
+            // C. COORDINATES (Optional - for future map integration)
+            titikLokasiLat: formData.titikLokasiLat ? parseFloat(formData.titikLokasiLat.toString()) : undefined,
+            titikLokasiLng: formData.titikLokasiLng ? parseFloat(formData.titikLokasiLng.toString()) : undefined,
+            
+            // D. EMERGENCY CONTACT (PHASE 3)
+            emergencyContactName: formData.emergencyContactName,
+            emergencyContactRelationship: formData.emergencyContactRelationship,
+            emergencyContactPhone: formData.emergencyContactPhone,
+          },
+          
+          // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)
+          preferences: {
+            // A. TEACHING PREFERENCES
+            teachingMethods: formData.teachingMethods, // Gaya pembelajaran
+            studentLevelPreferences: formData.studentLevelPreferences,
+            specialNeedsCapable: formData.specialNeedsCapable,
+            groupClassWilling: formData.groupClassWilling,
+            
+            // B. TECHNOLOGY CAPABILITIES
+            onlineTeachingCapable: formData.onlineTeachingCapable,
+            techSavviness: formData.techSavviness,
+            gmeetExperience: formData.gmeetExperience,
+            presensiUpdateCapability: formData.presensiUpdateCapability,
+          },
+          
+          // 👤 STEP 4: Personality Traits (PHASE 2)
+          personality: {
+            // PERSONALITY & CHARACTER
+            tutorPersonalityType: formData.tutorPersonalityType,
+            communicationStyle: formData.communicationStyle,
+            teachingPatienceLevel: formData.teachingPatienceLevel ? parseInt(formData.teachingPatienceLevel.toString()) : undefined,
+            studentMotivationAbility: formData.studentMotivationAbility ? parseInt(formData.studentMotivationAbility.toString()) : undefined,
+            scheduleFlexibilityLevel: formData.scheduleFlexibilityLevel ? parseInt(formData.scheduleFlexibilityLevel.toString()) : undefined,
           }
         };
 

@@ -95,7 +95,7 @@ export function useEducatorSearch(): UseEducatorSearchReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/tutor/search', {
+      const response = await fetch('/api/tutors/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

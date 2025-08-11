@@ -377,6 +377,12 @@ export interface BasicTutorData {
     namaBank: string | null; // Bank UUID from dropdown
   };
   
+  // 📚 STEP 3: Subjects & Programs (Mata Pelajaran)
+  subjects?: {
+    selectedPrograms?: string[]; // Array of selected program IDs from database
+    mataPelajaranLainnya?: string; // Additional subjects not found in the selector
+  };
+  
   // 📄 STEP 5: Documents (Dokumen Pendukung)
   documents?: {
     // Document Files (Step 5)
@@ -387,6 +393,54 @@ export interface BasicTutorData {
     // Document Verification Status (Staff only)
     status_verifikasi_identitas?: string; // Identity verification status
     status_verifikasi_pendidikan?: string; // Education verification status
+  };
+  
+  // 🎯 STEP 4: Availability & Wilayah (PHASE 1)
+  availability?: {
+    // A. AVAILABILITY & STATUS
+    statusMenerimaSiswa?: string; // Availability status (available, limited, unavailable, leave)
+    available_schedule?: string[]; // Weekly schedule array (Senin Pagi, Selasa Siang, etc)
+    teaching_methods?: string[]; // Teaching methods array (tutor_visit, online_class, etc)
+    hourly_rate?: number; // Expected hourly rate in Rupiah
+    maksimalSiswaBaru?: number; // Max new students per week
+    maksimalTotalSiswa?: number; // Max total students
+    usiaTargetSiswa?: string[]; // Target student age ranges (2-5, 6-12, etc)
+    catatanAvailability?: string; // Additional availability notes
+    
+    // B. LOCATION & TRANSPORTATION  
+    transportasiTutor?: string[]; // Transportation methods (sepeda_motor, online_transport, etc)
+    alamatTitikLokasi?: string; // Teaching center location/address
+    teaching_radius_km?: number; // Teaching radius in kilometers
+    location_notes?: string; // Location preferences and notes
+    
+    // C. COORDINATES (Optional - for future map integration)
+    titikLokasiLat?: number; // Latitude of teaching center
+    titikLokasiLng?: number; // Longitude of teaching center
+  };
+  
+  // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)
+  preferences?: {
+    // A. TEACHING PREFERENCES
+    teachingMethods?: string[]; // Teaching styles (visual, auditory, kinesthetic, reading_writing)
+    studentLevelPreferences?: string[]; // Student level preferences (beginner, intermediate, advanced, remedial)
+    specialNeedsCapable?: string; // Special needs capability (tidak, basic, experienced, certified)
+    groupClassWilling?: string; // Group class willingness (tidak, ya_small, ya_medium, ya_large)
+    
+    // B. TECHNOLOGY CAPABILITIES
+    onlineTeachingCapable?: string; // Online teaching capability (tidak_bisa, basic, intermediate, advanced)
+    techSavviness?: string; // Technology savviness (low, medium, high, expert)
+    gmeetExperience?: string; // Google Meet/Zoom experience (belum_pernah, pemula, menengah, mahir)
+    presensiUpdateCapability?: string; // Attendance update capability (tidak_bisa, bisa_dilatih, bisa, mahir)
+  };
+  
+  // 👤 STEP 4: Personality Traits (PHASE 2)  
+  personality?: {
+    // PERSONALITY & CHARACTER
+    tutorPersonalityType?: string[]; // Personality types (sabar_lembut, energik_motivator, etc)
+    communicationStyle?: string[]; // Communication styles (formal_sopan, kasual_santai, etc)
+    teachingPatienceLevel?: number; // Teaching patience level (1-10)
+    studentMotivationAbility?: number; // Student motivation ability (1-10)
+    scheduleFlexibilityLevel?: number; // Schedule flexibility level (1-10)
   };
 }
 
@@ -653,6 +707,12 @@ export async function createTutorWithMigrationSupport(
           namaBank: formData.namaBank || null, // 🔧 Allow null for optional bank UUID
         },
         
+        // 📚 STEP 3: Subjects & Programs (Mata Pelajaran)
+        subjects: {
+          selectedPrograms: formData.selectedPrograms || undefined,
+          mataPelajaranLainnya: formData.mataPelajaranLainnya || undefined,
+        },
+        
         // 📄 STEP 5: Documents (Dokumen Pendukung)
         documents: {
           // Document Files (Step 5)
@@ -663,6 +723,54 @@ export async function createTutorWithMigrationSupport(
           // Document Verification Status (Staff only)
           status_verifikasi_identitas: formData.status_verifikasi_identitas || undefined,
           status_verifikasi_pendidikan: formData.status_verifikasi_pendidikan || undefined,
+        },
+        
+        // 🎯 STEP 4: Availability & Wilayah (PHASE 1)
+        availability: {
+          // A. AVAILABILITY & STATUS
+          statusMenerimaSiswa: formData.statusMenerimaSiswa || undefined,
+          available_schedule: formData.available_schedule || undefined,
+          teaching_methods: formData.teaching_methods || undefined,
+          hourly_rate: formData.hourly_rate ? parseInt(formData.hourly_rate.toString()) : undefined,
+          maksimalSiswaBaru: formData.maksimalSiswaBaru ? parseInt(formData.maksimalSiswaBaru.toString()) : undefined,
+          maksimalTotalSiswa: formData.maksimalTotalSiswa ? parseInt(formData.maksimalTotalSiswa.toString()) : undefined,
+          usiaTargetSiswa: formData.usiaTargetSiswa || undefined,
+          catatanAvailability: formData.catatanAvailability || undefined,
+          
+          // B. LOCATION & TRANSPORTATION
+          transportasiTutor: formData.transportasiTutor || undefined,
+          alamatTitikLokasi: formData.alamatTitikLokasi || undefined,
+          teaching_radius_km: formData.teaching_radius_km ? parseInt(formData.teaching_radius_km.toString()) : undefined,
+          location_notes: formData.location_notes || undefined,
+          
+          // C. COORDINATES (Optional - for future map integration)
+          titikLokasiLat: formData.titikLokasiLat ? parseFloat(formData.titikLokasiLat.toString()) : undefined,
+          titikLokasiLng: formData.titikLokasiLng ? parseFloat(formData.titikLokasiLng.toString()) : undefined,
+        },
+        
+        // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)
+        preferences: {
+          // A. TEACHING PREFERENCES
+          teachingMethods: formData.teachingMethods || undefined, // Gaya pembelajaran
+          studentLevelPreferences: formData.studentLevelPreferences || undefined,
+          specialNeedsCapable: formData.specialNeedsCapable || undefined,
+          groupClassWilling: formData.groupClassWilling || undefined,
+          
+          // B. TECHNOLOGY CAPABILITIES
+          onlineTeachingCapable: formData.onlineTeachingCapable || undefined,
+          techSavviness: formData.techSavviness || undefined,
+          gmeetExperience: formData.gmeetExperience || undefined,
+          presensiUpdateCapability: formData.presensiUpdateCapability || undefined,
+        },
+        
+        // 👤 STEP 4: Personality Traits (PHASE 2)
+        personality: {
+          // PERSONALITY & CHARACTER
+          tutorPersonalityType: formData.tutorPersonalityType || undefined,
+          communicationStyle: formData.communicationStyle || undefined,
+          teachingPatienceLevel: formData.teachingPatienceLevel ? parseInt(formData.teachingPatienceLevel.toString()) : undefined,
+          studentMotivationAbility: formData.studentMotivationAbility ? parseInt(formData.studentMotivationAbility.toString()) : undefined,
+          scheduleFlexibilityLevel: formData.scheduleFlexibilityLevel ? parseInt(formData.scheduleFlexibilityLevel.toString()) : undefined,
         }
       };
 
@@ -672,9 +780,13 @@ export async function createTutorWithMigrationSupport(
         console.log('📊 Personal:', basicData.personal);
         console.log('✨ Profile:', basicData.profile);
         console.log('🎓 Education:', basicData.education); // Step 2 education data
+        console.log('📚 Subjects:', basicData.subjects); // Step 3 subjects data
         console.log('📍 Address:', basicData.address);
         console.log('🏦 Banking:', basicData.banking);
         console.log('📄 Documents:', basicData.documents); // Step 5 documents data
+        console.log('🎯 Availability:', basicData.availability); // Step 4 availability data
+        console.log('🎨 Preferences:', basicData.preferences); // Step 4 teaching preferences data
+        console.log('👤 Personality:', basicData.personality); // Step 4 personality traits data
         console.log('🔧 System:', basicData.system);
       }
 

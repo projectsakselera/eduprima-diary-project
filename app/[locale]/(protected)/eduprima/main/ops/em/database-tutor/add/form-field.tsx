@@ -1317,7 +1317,7 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
 
     try {
       const response = await fetch(
-        `/api/subjects/programs?simple_category=${categoryCode}&limit=1000&offset=0`
+        `/api/subjects/programs?category=${categoryCode}&limit=1000&offset=0`
       );
       
       if (response.ok) {
@@ -1353,30 +1353,17 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
     return programsMap;
   };
 
-  // Fetch simple categories
+  // Fetch main categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesResponse = await fetch('/api/subjects/simple-categories');
-        if (!categoriesResponse.ok) throw new Error('Failed to fetch simple categories');
+        const categoriesResponse = await fetch('/api/subjects/categories');
+        if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
         
         const categoriesData = await categoriesResponse.json();
-        let categories = [];
-        if (categoriesData.categories) {
-          categories = categoriesData.categories.map((item: any) => ({
-            id: item.id,
-            main_code: item.code,
-            main_name: item.label,
-            main_name_local: item.label,
-            description: item.description,
-            icon: item.icon,
-            color_hex: item.color_hex,
-            is_active: item.is_active
-          }));
-        }
-        setCategories(categories);
+        setCategories(categoriesData.categories || []);
       } catch (error) {
-        console.error('Error fetching simple categories:', error);
+        console.error('Error fetching categories:', error);
       }
     };
 

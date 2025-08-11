@@ -5,7 +5,6 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const mainCategoryCode = searchParams.get('category');
-    const simpleCategoryCode = searchParams.get('simple_category'); // New parameter for simple category
     const subCategoryId = searchParams.get('subcategory');
     const search = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
     const supabase = createServerSupabaseClient();
     
     let query = supabase
-      .from('programs_catalog')
+      .from('programs_unit')
       .select(`
         *,
         subcategory:program_sub_categories!inner(
@@ -32,23 +31,12 @@ export async function GET(request: Request) {
           id,
           type_name,
           type_name_local
-        ),
-        simple_category_info:simple_categories!simple_category(
-          id,
-          code,
-          label,
-          icon,
-          color_hex
         )
       `)
       .eq('is_active', true);
 
-    // Filter by simple category (new priority filter)
-    if (simpleCategoryCode) {
-      query = query.eq('simple_category', simpleCategoryCode);
-    }
-    // Filter by main category (legacy support)
-    else if (mainCategoryCode) {
+    // Filter by main category
+    if (mainCategoryCode) {
       query = query.eq('subcategory.main_category.main_code', mainCategoryCode);
     }
 
