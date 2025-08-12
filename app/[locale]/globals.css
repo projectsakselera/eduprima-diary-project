@@ -838,24 +838,24 @@
     color: hsl(0 0% 100%) !important; /* Text putih */
   }
 
-  /* Override untuk Tailwind hover classes */
-  .hover\:bg-primary\/10:hover {
+  /* Override untuk Tailwind hover classes - EXCLUDE file upload components */
+  .hover\:bg-primary\/10:hover:not([class*="optimized-image"]):not([class*="file-upload"]):not(label[for*="image-upload"]) {
     background-color: hsl(201 42% 45%) !important; /* Primary solid */
     color: hsl(0 0% 100%) !important; /* Text putih */
   }
   
-  .hover\:text-primary:hover {
+  .hover\:text-primary:hover:not([class*="optimized-image"]):not([class*="file-upload"]):not(label[for*="image-upload"]) {
     background-color: hsl(201 42% 45%) !important; /* Primary solid */
     color: hsl(0 0% 100%) !important; /* Text putih */
   }
 
-  /* Override untuk secondary hover classes */
-  .hover\:bg-secondary:hover {
+  /* Override untuk secondary hover classes - EXCLUDE file upload components */
+  .hover\:bg-secondary:hover:not([class*="optimized-image"]):not([class*="file-upload"]):not(label[for*="image-upload"]) {
     background-color: hsl(201 42% 45%) !important; /* Primary solid */
     color: hsl(0 0% 100%) !important; /* Text putih */
   }
   
-  .hover\:text-secondary-foreground:hover {
+  .hover\:text-secondary-foreground:hover:not([class*="optimized-image"]):not([class*="file-upload"]):not(label[for*="image-upload"]) {
     background-color: hsl(201 42% 45%) !important; /* Primary solid */
     color: hsl(0 0% 100%) !important; /* Text putih */
   }
@@ -946,4 +946,77 @@
   .dark textarea:focus::placeholder,
   .dark select:focus::placeholder {
     opacity: 0.7 !important;
+  }
+
+  /* File Upload Component - Preserve original hover behavior */
+  label[for="image-upload-input"] .hover\:bg-primary\/10:hover,
+  [class*="optimized-image"] .hover\:bg-primary\/10:hover,
+  [class*="file-upload"] .hover\:bg-primary\/10:hover {
+    background-color: hsl(201 42% 45% / 0.1) !important; /* 10% opacity as intended */
+    color: hsl(215.3 19.3% 34.5%) !important; /* Keep dark text color */
+  }
+
+  /* File Upload Component - Preserve text hover */
+  label[for="image-upload-input"] .hover\:text-primary:hover,
+  [class*="optimized-image"] .hover\:text-primary:hover,
+  [class*="file-upload"] .hover\:text-primary:hover {
+    background-color: transparent !important;
+    color: hsl(201 42% 45%) !important; /* Primary color for text only */
+  }
+
+  /* File Upload Label - Preserve natural hover behavior */
+  label[for="image-upload-input"]:hover {
+    background-color: hsl(201 42% 45% / 0.1) !important; /* 10% opacity background */
+    color: inherit !important; /* Keep original text color */
+    border-color: hsl(201 42% 45%) !important; /* Primary border on hover */
+  }
+
+  /* Enhanced step navigation for better theme compatibility */
+  .step-nav-enhanced {
+    transition: all 0.2s ease-in-out !important;
+  }
+
+  .step-nav-enhanced:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .dark .step-nav-enhanced:hover {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Progress bar enhancements */
+  .progress-enhanced [data-state="complete"] {
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--primary) / 0.8) 100%) !important;
+  }
+
+  .dark .progress-enhanced [data-state="complete"] {
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--primary) / 0.9) 100%) !important;
+  }
+
+  /* Status indicator animations */
+  .status-indicator {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .status-indicator.success {
+    animation: pulse-success 2s infinite !important;
+  }
+
+  .status-indicator.warning {
+    animation: pulse-warning 2s infinite !important;
+  }
+
+  @keyframes pulse-success {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
   }

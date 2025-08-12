@@ -454,7 +454,8 @@ export interface EdgeFunctionResponse {
   success: boolean;
   data?: {
     user_id: string;
-    tutor_id: string;
+    tutor_id: string; // ✅ Real tutor UUID from database
+    trn: string; // ✅ Real TRN with kelipatan 7 from database
     user_code: string;
     password: string;
     email: string;
@@ -548,7 +549,28 @@ export async function createBasicTutorViaEdgeFunction(
       console.log('✅ [MIGRATION] Edge function success:', {
         user_id: result.data?.user_id,
         tutor_id: result.data?.tutor_id,
+        trn: result.data?.trn,
+        password: result.data?.password,
+        email: result.data?.email,
+        name: result.data?.name,
         tables_created: result.data?.tables_created?.length
+      });
+      
+      // 🔍 DEBUG: Log complete response structure from Edge Function
+      console.log('🔍 [DEBUG] Complete Edge Function Response Structure:', {
+        success: result.success,
+        data: result.data,
+        error: result.error,
+        details: result.details
+      });
+      
+      // 🔍 DEBUG: Validate critical fields existence
+      console.log('🔍 [DEBUG] Critical Fields Validation:', {
+        has_user_id: !!result.data?.user_id,
+        has_tutor_id: !!result.data?.tutor_id,
+        has_trn: !!result.data?.trn,
+        has_password: !!result.data?.password,
+        has_email: !!result.data?.email
       });
     }
 

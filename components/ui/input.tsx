@@ -9,7 +9,7 @@ export const inputVariants = cva(
     variants: {
       color: {
         default:
-          "border-default-200 text-default-500 focus:outline-hidden focus:border-default dark:focus:border-default-500 disabled:bg-default-200  dark:disabled:bg-default-500  placeholder:text-accent-foreground/50",
+          "border-default-200 text-default-foreground focus:outline-hidden focus:border-default dark:focus:border-default-500 disabled:bg-default-200  dark:disabled:bg-default-500  placeholder:text-accent-foreground/50",
         primary:
           "border-primary/50 text-primary focus:border-primary disabled:bg-primary/30 disabled:placeholder:text-primary  placeholder:text-primary/70",
         secondary:
