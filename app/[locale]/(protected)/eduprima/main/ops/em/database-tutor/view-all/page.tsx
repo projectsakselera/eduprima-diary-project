@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Select,
   SelectContent,
@@ -22,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -39,10 +48,37 @@ const getProxyUrl = (url: string) => {
   return `/api/files/${cleanUrl}`;
 };
 
-// Tutor status options used in inline editor
+// Tutor status options used in inline editor - synchronized with add form
 const TUTOR_STATUS_OPTIONS: Array<
-  'active' | 'inactive' | 'pending' | 'registration' | 'suspended' | 'verified' | 'unknown'
-> = ['active', 'inactive', 'pending', 'registration', 'suspended', 'verified', 'unknown'];
+  'registration' | 'learning_materials' | 'examination' | 'exam_verification' | 
+  'data_completion' | 'waiting_students' | 'active' | 'inactive' | 'suspended' | 
+  'blacklisted' | 'on_trial' | 'additional_screening' | 'pending' | 'verified' | 'unknown'
+> = [
+  // Recruitment Flow Stages
+  'registration',
+  'learning_materials', 
+  'examination',
+  'exam_verification',
+  'data_completion',
+  'waiting_students',
+  
+  // Active Status
+  'active',
+  
+  // Management Status  
+  'inactive',
+  'suspended',
+  'blacklisted',
+  
+  // Special Status
+  'on_trial',
+  'additional_screening',
+  
+  // Legacy statuses for compatibility
+  'pending',
+  'verified', 
+  'unknown'
+];
 
 // Fixed row height used to compute minimum table body height
 const ROW_HEIGHT_PX = 45;
@@ -54,13 +90,23 @@ interface ColumnManagerProps {
   visibleColumns: Set<keyof TutorSpreadsheetData>;
   onToggleColumn: (columnKey: keyof TutorSpreadsheetData) => void;
   categories: string[];
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onInvertSelection: () => void;
+  onShowAllInCategory: (category: string) => void;
+  onHideAllInCategory: (category: string) => void;
 }
 
 const ColumnManager: React.FC<ColumnManagerProps> = ({ 
   columns, 
   visibleColumns, 
   onToggleColumn, 
-  categories 
+  categories,
+  onSelectAll,
+  onDeselectAll,
+  onInvertSelection,
+  onShowAllInCategory,
+  onHideAllInCategory
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -161,6 +207,66 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-8 bg-slate-800 border-slate-700 placeholder:text-slate-400 text-slate-50"
               />
+            </div>
+
+            {/* Bulk Selection Controls */}
+            <div className="mb-4 space-y-2">
+              <div className="text-xs font-medium text-slate-300 mb-2">⚡ Bulk Actions:</div>
+              
+              {/* Main bulk actions */}
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onSelectAll}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:checks" className="h-3 w-3 mr-1" />
+                  Select All
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onDeselectAll}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:square" className="h-3 w-3 mr-1" />
+                  Deselect All
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onInvertSelection}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:arrows-clockwise" className="h-3 w-3 mr-1" />
+                  Invert
+                </Button>
+              </div>
+
+              {/* Category-specific bulk actions */}
+              {selectedCategory !== 'all' && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-700">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onShowAllInCategory(selectedCategory)}
+                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    <Icon icon="ph:eye" className="h-3 w-3 mr-1" />
+                    Show All in {selectedCategory}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onHideAllInCategory(selectedCategory)}
+                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    <Icon icon="ph:eye-slash" className="h-3 w-3 mr-1" />
+                    Hide All in {selectedCategory}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Category Filter - Cleaner */}
@@ -793,6 +899,27 @@ export default function ViewAllTutorsPage() {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionMode, setSelectionMode] = useState<'single' | 'range' | 'multi'>('single');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  // 🚀 ZOOM STATE - Table zoom functionality
+  const [tableZoom, setTableZoom] = useState(() => {
+    // Initialize zoom from localStorage or default to 100%
+    if (typeof window !== 'undefined') {
+      const savedZoom = localStorage.getItem('tutorViewAll:tableZoom');
+      return savedZoom ? parseInt(savedZoom) : 100;
+    }
+    return 100;
+  });
+  
+  // Separate state for input value to handle manual typing
+  const [zoomInputValue, setZoomInputValue] = useState(tableZoom.toString());
+  
+  // 🚀 POPUP TABLE STATE - Modal for focused table view
+  const [isTablePopupOpen, setIsTablePopupOpen] = useState(false);
+  
+  // Zoom configuration
+  const ZOOM_MIN = 20;
+  const ZOOM_MAX = 200;
+  const ZOOM_STEP = 5; // Smaller step for smoother control
   
   // Calculate sticky column offsets dynamically
   const stickyColumnOffsets = useMemo(() => {
@@ -1479,35 +1606,92 @@ export default function ViewAllTutorsPage() {
     const statusLower = status?.toLowerCase() || '';
     
     switch (statusLower) {
-      case 'active':
-        return {
-          backgroundColor: '#10b981', // green-500
-          color: '#ffffff',
-          text: 'ACTIVE'
-        };
-      case 'inactive':
-        return {
-          backgroundColor: '#6b7280', // gray-500
-          color: '#ffffff',
-          text: 'INACTIVE'
-        };
-      case 'pending':
-        return {
-          backgroundColor: '#f59e0b', // amber-500
-          color: '#ffffff',
-          text: 'PENDING'
-        };
+      // Recruitment Flow Stages (Blue tones)
       case 'registration':
         return {
           backgroundColor: '#3b82f6', // blue-500
           color: '#ffffff',
           text: 'REGISTRATION'
         };
+      case 'learning_materials':
+        return {
+          backgroundColor: '#6366f1', // indigo-500
+          color: '#ffffff',
+          text: 'LEARNING'
+        };
+      case 'examination':
+        return {
+          backgroundColor: '#8b5cf6', // violet-500
+          color: '#ffffff',
+          text: 'EXAM'
+        };
+      case 'exam_verification':
+        return {
+          backgroundColor: '#a855f7', // purple-500
+          color: '#ffffff',
+          text: 'VERIFYING'
+        };
+      case 'data_completion':
+        return {
+          backgroundColor: '#0ea5e9', // sky-500
+          color: '#ffffff',
+          text: 'COMPLETING'
+        };
+      case 'waiting_students':
+        return {
+          backgroundColor: '#06b6d4', // cyan-500
+          color: '#ffffff',
+          text: 'WAITING'
+        };
+      
+      // Active Status (Green)
+      case 'active':
+        return {
+          backgroundColor: '#10b981', // green-500
+          color: '#ffffff',
+          text: 'ACTIVE'
+        };
+      
+      // Management Status (Gray/Red)
+      case 'inactive':
+        return {
+          backgroundColor: '#6b7280', // gray-500
+          color: '#ffffff',
+          text: 'INACTIVE'
+        };
       case 'suspended':
         return {
           backgroundColor: '#ef4444', // red-500
           color: '#ffffff',
           text: 'SUSPENDED'
+        };
+      case 'blacklisted':
+        return {
+          backgroundColor: '#991b1b', // red-800
+          color: '#ffffff',
+          text: 'BLACKLISTED'
+        };
+      
+      // Special Status (Yellow/Orange)
+      case 'on_trial':
+        return {
+          backgroundColor: '#f59e0b', // amber-500
+          color: '#ffffff',
+          text: 'TRIAL'
+        };
+      case 'additional_screening':
+        return {
+          backgroundColor: '#d97706', // amber-600
+          color: '#ffffff',
+          text: 'SCREENING'
+        };
+      
+      // Legacy statuses for compatibility
+      case 'pending':
+        return {
+          backgroundColor: '#f59e0b', // amber-500
+          color: '#ffffff',
+          text: 'PENDING'
         };
       case 'verified':
         return {
@@ -1738,6 +1922,53 @@ export default function ViewAllTutorsPage() {
     });
   };
 
+  // Bulk column management functions
+  const selectAllColumns = () => {
+    const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+    setVisibleColumns(new Set(allColumnKeys));
+  };
+
+  const deselectAllColumns = () => {
+    setVisibleColumns(new Set());
+  };
+
+  const invertColumnSelection = () => {
+    const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+    setVisibleColumns(prev => {
+      const newSet = new Set<keyof TutorSpreadsheetData>();
+      allColumnKeys.forEach(key => {
+        if (!prev.has(key)) {
+          newSet.add(key);
+        }
+      });
+      return newSet;
+    });
+  };
+
+  const showAllInCategory = (category: string) => {
+    const categoryColumns = SPREADSHEET_COLUMNS
+      .filter(col => col.category === category)
+      .map(col => col.key);
+    
+    setVisibleColumns(prev => {
+      const newSet = new Set(prev);
+      categoryColumns.forEach(key => newSet.add(key));
+      return newSet;
+    });
+  };
+
+  const hideAllInCategory = (category: string) => {
+    const categoryColumns = SPREADSHEET_COLUMNS
+      .filter(col => col.category === category)
+      .map(col => col.key);
+    
+    setVisibleColumns(prev => {
+      const newSet = new Set(prev);
+      categoryColumns.forEach(key => newSet.delete(key));
+      return newSet;
+    });
+  };
+
   // Handle row selection
   const toggleRowSelection = (id: string) => {
     setSelectedRows(prev => {
@@ -1796,6 +2027,78 @@ export default function ViewAllTutorsPage() {
     return cats.sort();
   }, []);
 
+  // 🚀 ZOOM HANDLERS - Table zoom functionality
+  const handleZoomChange = useCallback((newZoom: number) => {
+    setTableZoom(newZoom);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tutorViewAll:tableZoom', newZoom.toString());
+    }
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    const newZoom = Math.min(tableZoom + ZOOM_STEP, ZOOM_MAX);
+    handleZoomChange(newZoom);
+  }, [tableZoom, handleZoomChange]);
+
+  const handleZoomOut = useCallback(() => {
+    const newZoom = Math.max(tableZoom - ZOOM_STEP, ZOOM_MIN);
+    handleZoomChange(newZoom);
+  }, [tableZoom, handleZoomChange]);
+
+  const handleZoomReset = useCallback(() => {
+    handleZoomChange(100);
+  }, [handleZoomChange]);
+
+  // Calculate zoom styles using CSS zoom property (better for sticky columns)
+  const zoomStyles = useMemo(() => ({
+    zoom: `${tableZoom}%`
+  }), [tableZoom]);
+
+
+
+  // Sync input value with tableZoom when zoom changes from other sources
+  useEffect(() => {
+    setZoomInputValue(tableZoom.toString());
+  }, [tableZoom]);
+
+  // 🚀 KEYBOARD SHORTCUTS for zoom
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle shortcuts when not typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Ctrl/Cmd + Plus for zoom in
+      if ((e.ctrlKey || e.metaKey) && e.key === '=') {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      
+      // Ctrl/Cmd + Minus for zoom out
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      
+      // Ctrl/Cmd + 0 for reset zoom
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        handleZoomReset();
+      }
+      
+      // ESC key to close popup table
+      if (e.key === 'Escape' && isTablePopupOpen) {
+        e.preventDefault();
+        setIsTablePopupOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleZoomIn, handleZoomOut, handleZoomReset, isTablePopupOpen]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -1828,6 +2131,11 @@ export default function ViewAllTutorsPage() {
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumnVisibility}
               categories={categories}
+              onSelectAll={selectAllColumns}
+              onDeselectAll={deselectAllColumns}
+              onInvertSelection={invertColumnSelection}
+              onShowAllInCategory={showAllInCategory}
+              onHideAllInCategory={hideAllInCategory}
             />}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
@@ -1940,6 +2248,161 @@ export default function ViewAllTutorsPage() {
               <span>• {sortedData.length} rows</span>
             </div>
           </div>
+
+      {/* 🚀 ZOOM CONTROLS */}
+      <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border border-border shadow-sm">
+        <div className="flex items-center gap-4">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">Zoom:</span>
+            
+            {/* Main Controls Group */}
+            <div className="flex items-center gap-1 p-1 bg-muted/50 border border-border rounded-md">
+              {/* Zoom Out */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomOut}
+                disabled={tableZoom <= ZOOM_MIN}
+                className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+                title="Zoom Out (Ctrl/Cmd + -)"
+              >
+                <Icon icon="ph:minus" className="h-4 w-4" />
+              </Button>
+              
+              {/* Zoom Input */}
+              <div className="flex items-center gap-1 px-2">
+                <Input
+                  type="number"
+                  value={zoomInputValue}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    setZoomInputValue(inputValue);
+                    
+                    if (inputValue === '') return;
+                    
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value)) {
+                      const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                      handleZoomChange(clampedValue);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value)) {
+                      const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                      handleZoomChange(clampedValue);
+                      setZoomInputValue(clampedValue.toString());
+                    } else {
+                      setZoomInputValue(tableZoom.toString());
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -1 : 1;
+                    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + delta));
+                    handleZoomChange(newZoom);
+                    setZoomInputValue(newZoom.toString());
+                  }}
+                  min={ZOOM_MIN}
+                  max={ZOOM_MAX}
+                  step={1}
+                  className="w-16 h-7 text-center text-sm font-mono bg-card text-foreground border border-slate-300 dark:border-slate-600 focus:border-primary"
+                  placeholder="100"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+              </div>
+              
+              {/* Zoom In */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomIn}
+                disabled={tableZoom >= ZOOM_MAX}
+                className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+                title="Zoom In (Ctrl/Cmd + +)"
+              >
+                <Icon icon="ph:plus" className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Quick:</span>
+            <div className="flex items-center gap-1">
+              {[50, 75, 100, 125, 150].map((preset) => (
+                <Button
+                  key={preset}
+                  variant={tableZoom === preset ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleZoomChange(preset)}
+                  className={cn(
+                    "h-7 px-2 text-xs border transition-colors",
+                    tableZoom === preset 
+                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                      : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                  )}
+                  title={`Set zoom to ${preset}%`}
+                >
+                  {preset}%
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Additional Controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomReset}
+              disabled={tableZoom === 100}
+              className="h-8 px-3 text-xs border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+              title="Reset to 100% (Ctrl/Cmd + 0)"
+            >
+              <Icon icon="ph:arrow-clockwise" className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsTablePopupOpen(true)}
+              className="h-8 px-3 text-xs border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+              title="Open table in popup window"
+            >
+              <Icon icon="ph:arrows-out" className="h-3 w-3 mr-1" />
+              Popup
+            </Button>
+          </div>
+        </div>
+        
+        {/* Zoom Info */}
+        <div className="flex items-center gap-2 text-sm">
+          <Badge className="bg-primary/10 text-primary border-primary/20">
+            {tableZoom}%
+          </Badge>
+          {tableZoom !== 100 && (
+            <Badge className="text-xs border border-border">
+              {tableZoom > 100 ? 'Zoomed In' : 'Zoomed Out'}
+            </Badge>
+          )}
+          
+          {/* Shortcuts - Simplified */}
+          <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
+            <span>•</span>
+            <span>Ctrl +/-/0 for shortcuts</span>
+            <span>•</span>
+            <span>Mouse wheel on input</span>
+          </div>
+        </div>
+      </div>
 
       {/* Error State */}
       {error && (
@@ -2061,10 +2524,13 @@ export default function ViewAllTutorsPage() {
               }
             }}
           >
-            <table className={cn(
-              "min-w-full border-collapse table-fixed",
-              isScrollable ? "min-h-[calc(100% + 1px)]" : ""
-            )}>
+            <table 
+              className={cn(
+                "min-w-full border-collapse table-fixed",
+                isScrollable ? "min-h-[calc(100% + 1px)]" : ""
+              )}
+              style={zoomStyles}
+            >
               {/* Header */}
               <thead className="sticky top-0 z-20 bg-background border-b">
                 <tr>
@@ -2092,11 +2558,10 @@ export default function ViewAllTutorsPage() {
                       key={column.key}
                       className={cn(
                         "h-10 border border-border bg-background text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
-                        column.sticky && "sticky z-20"
+                        column.sticky && "sticky left-12 z-20"
                       )}
                       style={{ 
-                        width: columnWidths[column.key] || column.width,
-                        left: column.sticky ? stickyColumnOffsets[column.key] : undefined
+                        width: columnWidths[column.key] || column.width
                       }}
                       onClick={() => handleSort(column.key)}
                     >
@@ -2218,7 +2683,7 @@ export default function ViewAllTutorsPage() {
                         key={column.key}
                         className={cn(
                           "h-auto py-3 md:py-4 border border-border px-3 text-base cursor-pointer hover:bg-muted/50 text-foreground select-none",
-                          column.sticky && "sticky bg-card z-10",
+                          column.sticky && "sticky left-12 bg-card z-10",
                           // Selection styling
                           isCellSelected(rowIndex, column.key) && "bg-primary/20 ring-1 ring-primary/30",
                           selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/30 ring-2 ring-primary",
@@ -2228,8 +2693,7 @@ export default function ViewAllTutorsPage() {
                         )}
                         style={{
                           width: columnWidths[column.key] || column.width,
-                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto',
-                          left: column.sticky ? stickyColumnOffsets[column.key] : undefined
+                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto'
                         }}
                         onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
                         onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
@@ -2511,7 +2975,177 @@ export default function ViewAllTutorsPage() {
           isLoading={deleteModal.isLoading}
           cascadePreview={deleteModal.cascadePreview}
           previewError={deleteModal.previewError}
-        />
+                />
+
+        {/* 🚀 POPUP TABLE MODAL - Complete Full Screen with All Features */}
+        {isTablePopupOpen && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col">
+            {/* Full Screen Header with All Controls */}
+            <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              {/* Top Header */}
+              <div className="h-16 flex items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-lg font-semibold">
+                    <Icon icon="ph:table" className="h-5 w-5" />
+                    Database Tutor - Full Screen View
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {sortedData.length} tutors • {filteredColumns.length} columns • Zoom: {tableZoom}%
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsTablePopupOpen(false)}
+                    className="h-8 px-3"
+                  >
+                    <Icon icon="ph:x" className="h-4 w-4 mr-1" />
+                    Close (ESC)
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Zoom Controls */}
+              <div className="px-6 pb-4">
+                <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground">Table Zoom:</span>
+                    <Button onClick={handleZoomOut} disabled={tableZoom <= ZOOM_MIN} size="sm" variant="outline" className="h-8 w-8 p-0">
+                      <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={zoomInputValue}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setZoomInputValue(value);
+                        }}
+                        onBlur={(e) => {
+                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, parseInt(e.target.value) || 100));
+                          handleZoomChange(newZoom);
+                          setZoomInputValue(newZoom.toString());
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          const delta = e.deltaY > 0 ? -1 : 1;
+                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + (delta * 1)));
+                          handleZoomChange(newZoom);
+                          setZoomInputValue(newZoom.toString());
+                        }}
+                        min={ZOOM_MIN} max={ZOOM_MAX} step={1}
+                        className="w-20 h-8 text-center" placeholder="100"
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                    <Button onClick={handleZoomIn} disabled={tableZoom >= ZOOM_MAX} size="sm" variant="outline" className="h-8 w-8 p-0">
+                      <Icon icon="ph:magnifying-glass-plus" className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={handleZoomReset} disabled={tableZoom === 100} size="sm" variant="outline" className="h-8 px-3">
+                      <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" /> Reset
+                    </Button>
+                          </div>
+        <div className="flex items-center gap-2 text-sm text-foreground/70">
+          <Badge className="bg-primary/10 text-primary border-primary/20">
+            Current zoom: {tableZoom}%
+          </Badge>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">Ctrl/Cmd + +/-/0 for shortcuts</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">Mouse wheel on input for fine control</span>
+        </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Full Screen Table with All Features */}
+            <div className="flex-1 overflow-hidden p-6">
+              <div className="w-full h-full overflow-auto border rounded-lg bg-background">
+                <div className="relative overflow-auto w-full h-full">
+                  <table 
+                    className={cn(
+                      "min-w-full border-collapse table-fixed",
+                      isScrollable ? "min-h-[calc(100% + 1px)]" : ""
+                    )}
+                    style={zoomStyles}
+                  >
+                    {/* Table Header */}
+                    <thead className="sticky top-0 bg-background border-b z-10">
+                      <tr>
+                        {filteredColumns.map((column) => (
+                          <th
+                            key={column.key}
+                            className={cn(
+                              "px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r last:border-r-0",
+                              column.sticky && "sticky left-0 bg-background z-20"
+                            )}
+                            style={{
+                              width: column.width || 'auto'
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="truncate">{column.label}</span>
+                              {column.sortable && (
+                                <button
+                                  onClick={() => handleSort(column.key)}
+                                  className="ml-1 p-1 hover:bg-muted rounded"
+                                >
+                                  <Icon 
+                                    icon={
+                                      sortConfig?.key === column.key
+                                        ? sortConfig?.direction === 'asc'
+                                          ? 'ph:sort-ascending'
+                                          : 'ph:sort-descending'
+                                        : 'ph:sort'
+                                    }
+                                    className="h-3 w-3 text-muted-foreground"
+                                  />
+                                </button>
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    {/* Table Body */}
+                    <tbody className="bg-background divide-y divide-border">
+                      {sortedData.map((tutor, index) => (
+                        <tr
+                          key={tutor.id}
+                          className={cn(
+                            "hover:bg-muted/50 transition-colors",
+                            selectedRows.has(tutor.id) && "bg-primary/5 border-l-4 border-l-primary"
+                          )}
+                        >
+                          {filteredColumns.map((column) => (
+                            <td
+                              key={column.key}
+                              className={cn(
+                                "px-3 py-3 text-sm border-r last:border-r-0",
+                                column.sticky && "sticky left-0 bg-background z-20"
+                              )}
+                            >
+                              <div className="truncate whitespace-nowrap" title={formatCellValue(tutor[column.key], column)}>
+                                {formatCellValue(tutor[column.key], column)}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -1190,9 +1190,14 @@ export const tutorFormConfig: FormConfig = {
             
             // Special Status
             { value: 'on_trial', label: '🧪 Masa Percobaan' },
-            { value: 'additional_screening', label: '🔬 Additional Screening' }
+            { value: 'additional_screening', label: '🔬 Additional Screening' },
+            
+            // Legacy statuses for compatibility
+            { value: 'pending', label: '⏳ Pending' },
+            { value: 'verified', label: '✅ Verified' },
+            { value: 'unknown', label: '❓ Unknown' }
           ],
-          helperText: 'Status tutor dalam sistem.',
+          helperText: 'Status tutor dalam sistem. Status akan mempengaruhi workflow dan permissions.',
           icon: 'ph:shield-check',
           size: 'lg'
         },

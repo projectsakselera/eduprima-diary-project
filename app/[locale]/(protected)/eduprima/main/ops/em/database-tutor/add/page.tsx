@@ -154,6 +154,14 @@ export default function AddTutorPage() {
   }, [user, isAuthLoading, router]);
 
   const handleFieldChange = (fieldName: string, value: any) => {
+    // Debug logging for selectedPrograms
+    if (fieldName === 'selectedPrograms') {
+      console.log('🔍 DEBUG: handleFieldChange called for selectedPrograms');
+      console.log('🔍 DEBUG: value =', value);
+      console.log('🔍 DEBUG: typeof value =', typeof value);
+      console.log('🔍 DEBUG: Array.isArray(value) =', Array.isArray(value));
+    }
+    
     setFormData(prev => {
       const newData = {
         ...prev,
@@ -169,6 +177,11 @@ export default function AddTutorPage() {
         newData.kelurahanKTP = prev.kelurahanDomisili || '';
         newData.alamatLengkapKTP = prev.alamatLengkapDomisili || '';
         newData.kodePosKTP = prev.kodePosDomisili || '';
+      }
+      
+      // Debug logging for selectedPrograms after state update
+      if (fieldName === 'selectedPrograms') {
+        console.log('🔍 DEBUG: New formData.selectedPrograms =', newData.selectedPrograms);
       }
       
       return newData;
@@ -220,6 +233,12 @@ export default function AddTutorPage() {
     setIsSubmitting(true);
     
     try {
+      // Debug logging for formData at submit
+      console.log('🔍 DEBUG: Form submitted with formData:', formData);
+      console.log('🔍 DEBUG: formData.selectedPrograms =', formData.selectedPrograms);
+      console.log('🔍 DEBUG: typeof formData.selectedPrograms =', typeof formData.selectedPrograms);
+      console.log('🔍 DEBUG: Array.isArray(formData.selectedPrograms) =', Array.isArray(formData.selectedPrograms));
+      
       // Step 0: Check authentication first (SECURITY) - Admin/Staff must be logged in
       console.log('🔐 Checking admin/staff authentication...');
       
@@ -707,6 +726,10 @@ export default function AddTutorPage() {
       } : null;
 
       // 2j. Prepare program mappings data (NEW TABLE)
+      console.log('🔍 DEBUG: formData.selectedPrograms =', formData.selectedPrograms);
+      console.log('🔍 DEBUG: typeof formData.selectedPrograms =', typeof formData.selectedPrograms);
+      console.log('🔍 DEBUG: Array.isArray(formData.selectedPrograms) =', Array.isArray(formData.selectedPrograms));
+      
       const programMappingsData = (formData.selectedPrograms || []).map(programId => ({
         program_id: programId,
         proficiency_level: 'intermediate', // Default value
@@ -715,6 +738,9 @@ export default function AddTutorPage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }));
+
+      console.log('🔍 DEBUG: programMappingsData =', programMappingsData);
+      console.log('🔍 DEBUG: programMappingsData.length =', programMappingsData.length);
 
       // 2k. Prepare document storage data (NEW TABLE)
       const documentStorageData = [
@@ -961,12 +987,7 @@ export default function AddTutorPage() {
             
             // C. COORDINATES (Optional - for future map integration)
             titikLokasiLat: formData.titikLokasiLat ? parseFloat(formData.titikLokasiLat.toString()) : undefined,
-            titikLokasiLng: formData.titikLokasiLng ? parseFloat(formData.titikLokasiLng.toString()) : undefined,
-            
-            // D. EMERGENCY CONTACT (PHASE 3)
-            emergencyContactName: formData.emergencyContactName,
-            emergencyContactRelationship: formData.emergencyContactRelationship,
-            emergencyContactPhone: formData.emergencyContactPhone,
+            titikLokasiLng: formData.titikLokasiLng ? parseFloat(formData.titikLokasiLng.toString()) : undefined
           },
           
           // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)
@@ -1178,7 +1199,8 @@ export default function AddTutorPage() {
             }
           ]
         });
-        return; // 🔥 STOP here - Edge Function already completed everything
+        // ✅ Lanjut ke file upload handling
+        console.log('🎯 [EDGE FUNCTION COMPLETE] All tables created by Edge Function');
       }
 
       // Step 3b: Insert to user_profiles (ONLY if Edge Function didn't handle it)
@@ -1358,16 +1380,29 @@ export default function AddTutorPage() {
       // Step 3l: Insert to tutor_program_mappings (NEW TABLE) - multiple records
       if (programMappingsData.length > 0) {
         console.log('Step 3l: Inserting to tutor_program_mappings...');
+        console.log('🔍 DEBUG: About to insert programMappingsData =', programMappingsData);
+        console.log('🔍 DEBUG: tutorId =', tutorId);
+        console.log('🔍 DEBUG: Final data to insert =', programMappingsData.map(mapping => ({ ...mapping, tutor_id: tutorId })));
+        
         const mappingsResult = await supabase
           ?.from('tutor_program_mappings')
           .insert(programMappingsData.map(mapping => ({ ...mapping, tutor_id: tutorId })));
 
         if (mappingsResult?.error) {
-          console.error('Error inserting to tutor_program_mappings:', mappingsResult.error);
+          console.error('❌ Error inserting to tutor_program_mappings:', mappingsResult.error);
+          console.error('❌ Error details:', {
+            message: mappingsResult.error.message,
+            details: mappingsResult.error.details,
+            hint: mappingsResult.error.hint,
+            code: mappingsResult.error.code
+          });
           throw new Error(`Failed to create program mappings: ${mappingsResult.error.message}`);
         }
 
         console.log('✅ Tutor program mappings created:', programMappingsData.length, 'records');
+        console.log('✅ Insert result:', mappingsResult?.data);
+      } else {
+        console.log('⚠️ WARNING: No program mappings to insert. programMappingsData.length =', programMappingsData.length);
       }
 
       // Step 3m: Document storage rows will be created by the upload API after successful uploads

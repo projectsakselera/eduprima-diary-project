@@ -208,6 +208,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log('🎯 Availability data:', data.availability) // Step 4 availability info
     console.log('🎨 Preferences data:', data.preferences) // Step 4 teaching preferences info
     console.log('👤 Personality data:', data.personality) // Step 4 personality traits info
+    console.log('📚 Subjects data:', data.subjects) // Step 3 subjects info
 
     // Basic validation - tanggal lahir required untuk generate password
     const validationErrors: Array<{field: string, message: string}> = []
@@ -888,7 +889,18 @@ serve(async (req: Request): Promise<Response> => {
       
       if (programMappingsError) {
         console.error('❌ Failed to create program mappings:', programMappingsError)
-        console.warn('⚠️ Continuing without program mappings - can be added later via admin panel')
+        // Batalkan semua jika mapping gagal, karena ini data krusial
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Failed to create tutor program mappings',
+            details: programMappingsError
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
       } else {
         console.log('✅ Tutor program mappings created:', programMappings.length, 'programs')
       }

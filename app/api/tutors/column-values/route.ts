@@ -24,7 +24,32 @@ const COLUMN_MAPPING: Record<string, {
     source: 'static',
     field: 'status_tutor',
     type: 'select',
-    staticValues: ['active', 'inactive', 'pending', 'registration', 'suspended', 'verified', 'unknown']
+    staticValues: [
+      // Recruitment Flow Stages
+      'registration',
+      'learning_materials', 
+      'examination',
+      'exam_verification',
+      'data_completion',
+      'waiting_students',
+      
+      // Active Status
+      'active',
+      
+      // Management Status  
+      'inactive',
+      'suspended',
+      'blacklisted',
+      
+      // Special Status
+      'on_trial',
+      'additional_screening',
+      
+      // Legacy statuses for compatibility
+      'pending',
+      'verified', 
+      'unknown'
+    ]
   },
   'approval_level': {
     source: 'static', 
