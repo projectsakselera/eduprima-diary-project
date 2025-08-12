@@ -1199,7 +1199,8 @@ export default function AddTutorPage() {
             }
           ]
         });
-        return; // 🔥 STOP here - Edge Function already completed everything
+        // ✅ Lanjut ke file upload handling
+        console.log('🎯 [EDGE FUNCTION COMPLETE] All tables created by Edge Function');
       }
 
       // Step 3b: Insert to user_profiles (ONLY if Edge Function didn't handle it)
