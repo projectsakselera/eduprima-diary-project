@@ -1617,8 +1617,10 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
     
     if (index > -1) {
       newValue.splice(index, 1);
+      console.log('🔍 DEBUG: Removed program', programId, 'from selection. New value:', newValue);
     } else {
       newValue.push(programId);
+      console.log('🔍 DEBUG: Added program', programId, 'to selection. New value:', newValue);
     }
     
     onChange(newValue);

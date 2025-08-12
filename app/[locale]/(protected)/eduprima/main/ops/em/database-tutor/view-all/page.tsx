@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Select,
   SelectContent,
@@ -22,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -795,6 +804,27 @@ export default function ViewAllTutorsPage() {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionMode, setSelectionMode] = useState<'single' | 'range' | 'multi'>('single');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  // 🚀 ZOOM STATE - Table zoom functionality
+  const [tableZoom, setTableZoom] = useState(() => {
+    // Initialize zoom from localStorage or default to 100%
+    if (typeof window !== 'undefined') {
+      const savedZoom = localStorage.getItem('tutorViewAll:tableZoom');
+      return savedZoom ? parseInt(savedZoom) : 100;
+    }
+    return 100;
+  });
+  
+  // Separate state for input value to handle manual typing
+  const [zoomInputValue, setZoomInputValue] = useState(tableZoom.toString());
+  
+  // 🚀 POPUP TABLE STATE - Modal for focused table view
+  const [isTablePopupOpen, setIsTablePopupOpen] = useState(false);
+  
+  // Zoom configuration
+  const ZOOM_MIN = 20;
+  const ZOOM_MAX = 200;
+  const ZOOM_STEP = 5; // Smaller step for smoother control
   
   // Calculate sticky column offsets dynamically
   const stickyColumnOffsets = useMemo(() => {
@@ -1798,6 +1828,78 @@ export default function ViewAllTutorsPage() {
     return cats.sort();
   }, []);
 
+  // 🚀 ZOOM HANDLERS - Table zoom functionality
+  const handleZoomChange = useCallback((newZoom: number) => {
+    setTableZoom(newZoom);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tutorViewAll:tableZoom', newZoom.toString());
+    }
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    const newZoom = Math.min(tableZoom + ZOOM_STEP, ZOOM_MAX);
+    handleZoomChange(newZoom);
+  }, [tableZoom, handleZoomChange]);
+
+  const handleZoomOut = useCallback(() => {
+    const newZoom = Math.max(tableZoom - ZOOM_STEP, ZOOM_MIN);
+    handleZoomChange(newZoom);
+  }, [tableZoom, handleZoomChange]);
+
+  const handleZoomReset = useCallback(() => {
+    handleZoomChange(100);
+  }, [handleZoomChange]);
+
+  // Calculate zoom styles using CSS zoom property (better for sticky columns)
+  const zoomStyles = useMemo(() => ({
+    zoom: `${tableZoom}%`
+  }), [tableZoom]);
+
+
+
+  // Sync input value with tableZoom when zoom changes from other sources
+  useEffect(() => {
+    setZoomInputValue(tableZoom.toString());
+  }, [tableZoom]);
+
+  // 🚀 KEYBOARD SHORTCUTS for zoom
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle shortcuts when not typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Ctrl/Cmd + Plus for zoom in
+      if ((e.ctrlKey || e.metaKey) && e.key === '=') {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      
+      // Ctrl/Cmd + Minus for zoom out
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      
+      // Ctrl/Cmd + 0 for reset zoom
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        handleZoomReset();
+      }
+      
+      // ESC key to close popup table
+      if (e.key === 'Escape' && isTablePopupOpen) {
+        e.preventDefault();
+        setIsTablePopupOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleZoomIn, handleZoomOut, handleZoomReset, isTablePopupOpen]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -1943,6 +2045,140 @@ export default function ViewAllTutorsPage() {
             </div>
           </div>
 
+      {/* 🚀 ZOOM CONTROLS */}
+      <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg border">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Table Zoom:</span>
+          
+          {/* Zoom Out Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomOut}
+            disabled={tableZoom <= ZOOM_MIN}
+            className="h-8 w-8 p-0"
+            title="Zoom Out"
+          >
+            <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
+          </Button>
+          
+          {/* Zoom Level Input */}
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={zoomInputValue}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                setZoomInputValue(inputValue);
+                
+                // Allow empty input while typing
+                if (inputValue === '') return;
+                
+                const value = parseInt(inputValue);
+                if (!isNaN(value)) {
+                  const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                  handleZoomChange(clampedValue);
+                }
+              }}
+              onBlur={(e) => {
+                const value = parseInt(e.target.value);
+                if (!isNaN(value)) {
+                  const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                  handleZoomChange(clampedValue);
+                  setZoomInputValue(clampedValue.toString());
+                } else {
+                  // Reset to current zoom if invalid input
+                  setZoomInputValue(tableZoom.toString());
+                }
+              }}
+              onKeyDown={(e) => {
+                // Handle Enter key to apply zoom
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              onWheel={(e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -1 : 1;
+                const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + delta));
+                handleZoomChange(newZoom);
+                setZoomInputValue(newZoom.toString());
+              }}
+              min={ZOOM_MIN}
+              max={ZOOM_MAX}
+              step={1}
+              className="w-20 h-8 text-center"
+              placeholder="100"
+            />
+            <span className="text-sm text-muted-foreground">%</span>
+          </div>
+          
+          {/* Zoom In Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomIn}
+            disabled={tableZoom >= ZOOM_MAX}
+            className="h-8 w-8 p-0"
+            title="Zoom In"
+          >
+            <Icon icon="ph:magnifying-glass-plus" className="h-4 w-4" />
+          </Button>
+          
+          {/* Reset Zoom Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomReset}
+            disabled={tableZoom === 100}
+            className="h-8 px-3"
+            title="Reset to 100%"
+          >
+            <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" />
+            Reset
+          </Button>
+          
+          {/* 🚀 POPUP TABLE BUTTON */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsTablePopupOpen(true)}
+            className="h-8 px-3"
+            title="Open table in popup for focused view"
+          >
+            <Icon icon="ph:arrows-out" className="h-4 w-4 mr-1" />
+            Popup Table
+          </Button>
+        </div>
+        
+        {/* Zoom Info */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Icon icon="ph:info" className="h-4 w-4" />
+          <span>Current zoom: {tableZoom}%</span>
+          {tableZoom !== 100 && (
+            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+              {tableZoom > 100 ? 'Zoomed In' : 'Zoomed Out'}
+            </span>
+          )}
+          
+          {/* Keyboard Shortcuts Info */}
+          <div className="hidden md:flex items-center gap-1 text-xs">
+            <span>•</span>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">Ctrl/Cmd +</kbd>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">+</kbd>
+            <span>Zoom In</span>
+            <span>•</span>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">-</kbd>
+            <span>Zoom Out</span>
+            <span>•</span>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">0</kbd>
+            <span>Reset</span>
+            <span>•</span>
+            <span>Mouse wheel on input for fine control</span>
+          </div>
+        </div>
+      </div>
+
       {/* Error State */}
       {error && (
         <div className="mb-4">
@@ -2063,10 +2299,13 @@ export default function ViewAllTutorsPage() {
               }
             }}
           >
-            <table className={cn(
-              "min-w-full border-collapse table-fixed",
-              isScrollable ? "min-h-[calc(100% + 1px)]" : ""
-            )}>
+            <table 
+              className={cn(
+                "min-w-full border-collapse table-fixed",
+                isScrollable ? "min-h-[calc(100% + 1px)]" : ""
+              )}
+              style={zoomStyles}
+            >
               {/* Header */}
               <thead className="sticky top-0 z-20 bg-background border-b">
                 <tr>
@@ -2094,11 +2333,10 @@ export default function ViewAllTutorsPage() {
                       key={column.key}
                       className={cn(
                         "h-10 border border-border bg-background text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
-                        column.sticky && "sticky z-20"
+                        column.sticky && "sticky left-12 z-20"
                       )}
                       style={{ 
-                        width: columnWidths[column.key] || column.width,
-                        left: column.sticky ? stickyColumnOffsets[column.key] : undefined
+                        width: columnWidths[column.key] || column.width
                       }}
                       onClick={() => handleSort(column.key)}
                     >
@@ -2220,7 +2458,7 @@ export default function ViewAllTutorsPage() {
                         key={column.key}
                         className={cn(
                           "h-auto py-3 md:py-4 border border-border px-3 text-base cursor-pointer hover:bg-muted/50 text-foreground select-none",
-                          column.sticky && "sticky bg-card z-10",
+                          column.sticky && "sticky left-12 bg-card z-10",
                           // Selection styling
                           isCellSelected(rowIndex, column.key) && "bg-primary/20 ring-1 ring-primary/30",
                           selectedCell?.row === rowIndex && selectedCell?.col === column.key && "bg-primary/30 ring-2 ring-primary",
@@ -2230,8 +2468,7 @@ export default function ViewAllTutorsPage() {
                         )}
                         style={{
                           width: columnWidths[column.key] || column.width,
-                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto',
-                          left: column.sticky ? stickyColumnOffsets[column.key] : undefined
+                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto'
                         }}
                         onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
                         onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
@@ -2513,7 +2750,175 @@ export default function ViewAllTutorsPage() {
           isLoading={deleteModal.isLoading}
           cascadePreview={deleteModal.cascadePreview}
           previewError={deleteModal.previewError}
-        />
+                />
+
+        {/* 🚀 POPUP TABLE MODAL - Complete Full Screen with All Features */}
+        {isTablePopupOpen && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col">
+            {/* Full Screen Header with All Controls */}
+            <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              {/* Top Header */}
+              <div className="h-16 flex items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-lg font-semibold">
+                    <Icon icon="ph:table" className="h-5 w-5" />
+                    Database Tutor - Full Screen View
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {sortedData.length} tutors • {filteredColumns.length} columns • Zoom: {tableZoom}%
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsTablePopupOpen(false)}
+                    className="h-8 px-3"
+                  >
+                    <Icon icon="ph:x" className="h-4 w-4 mr-1" />
+                    Close (ESC)
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Zoom Controls */}
+              <div className="px-6 pb-4">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">Table Zoom:</span>
+                    <Button onClick={handleZoomOut} disabled={tableZoom <= ZOOM_MIN} size="sm" variant="outline" className="h-8 w-8 p-0">
+                      <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={zoomInputValue}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setZoomInputValue(value);
+                        }}
+                        onBlur={(e) => {
+                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, parseInt(e.target.value) || 100));
+                          handleZoomChange(newZoom);
+                          setZoomInputValue(newZoom.toString());
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onWheel={(e) => {
+                          e.preventDefault();
+                          const delta = e.deltaY > 0 ? -1 : 1;
+                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + (delta * 1)));
+                          handleZoomChange(newZoom);
+                          setZoomInputValue(newZoom.toString());
+                        }}
+                        min={ZOOM_MIN} max={ZOOM_MAX} step={1}
+                        className="w-20 h-8 text-center" placeholder="100"
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                    <Button onClick={handleZoomIn} disabled={tableZoom >= ZOOM_MAX} size="sm" variant="outline" className="h-8 w-8 p-0">
+                      <Icon icon="ph:magnifying-glass-plus" className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={handleZoomReset} disabled={tableZoom === 100} size="sm" variant="outline" className="h-8 px-3">
+                      <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" /> Reset
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Current zoom: {tableZoom}%</span>
+                    <span>•</span>
+                    <span>Ctrl/Cmd + +/-/0 for shortcuts</span>
+                    <span>•</span>
+                    <span>Mouse wheel on input for fine control</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Full Screen Table with All Features */}
+            <div className="flex-1 overflow-hidden p-6">
+              <div className="w-full h-full overflow-auto border rounded-lg bg-background">
+                <div className="relative overflow-auto w-full h-full">
+                  <table 
+                    className={cn(
+                      "min-w-full border-collapse table-fixed",
+                      isScrollable ? "min-h-[calc(100% + 1px)]" : ""
+                    )}
+                    style={zoomStyles}
+                  >
+                    {/* Table Header */}
+                    <thead className="sticky top-0 bg-background border-b z-10">
+                      <tr>
+                        {filteredColumns.map((column) => (
+                          <th
+                            key={column.key}
+                            className={cn(
+                              "px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r last:border-r-0",
+                              column.sticky && "sticky left-0 bg-background z-20"
+                            )}
+                            style={{
+                              width: column.width || 'auto'
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="truncate">{column.label}</span>
+                              {column.sortable && (
+                                <button
+                                  onClick={() => handleSort(column.key)}
+                                  className="ml-1 p-1 hover:bg-muted rounded"
+                                >
+                                  <Icon 
+                                    icon={
+                                      sortConfig?.key === column.key
+                                        ? sortConfig?.direction === 'asc'
+                                          ? 'ph:sort-ascending'
+                                          : 'ph:sort-descending'
+                                        : 'ph:sort'
+                                    }
+                                    className="h-3 w-3 text-muted-foreground"
+                                  />
+                                </button>
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    {/* Table Body */}
+                    <tbody className="bg-background divide-y divide-border">
+                      {sortedData.map((tutor, index) => (
+                        <tr
+                          key={tutor.id}
+                          className={cn(
+                            "hover:bg-muted/50 transition-colors",
+                            selectedRows.has(tutor.id) && "bg-primary/5 border-l-4 border-l-primary"
+                          )}
+                        >
+                          {filteredColumns.map((column) => (
+                            <td
+                              key={column.key}
+                              className={cn(
+                                "px-3 py-3 text-sm border-r last:border-r-0",
+                                column.sticky && "sticky left-0 bg-background z-20"
+                              )}
+                            >
+                              <div className="truncate whitespace-nowrap" title={formatCellValue(tutor[column.key], column)}>
+                                {formatCellValue(tutor[column.key], column)}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
