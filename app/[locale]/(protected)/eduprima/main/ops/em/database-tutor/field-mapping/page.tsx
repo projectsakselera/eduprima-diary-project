@@ -376,23 +376,25 @@ export default function FieldMappingPage() {
       ]
     },
     {
-      table: 't_310_01_03_user_addresses',
+      table: 'user_addresses',
       columns: [
         { name: 'id', type: 'uuid', nullable: false },
         { name: 'user_id', type: 'uuid', nullable: false },
-        { name: 'address_type', type: 'text', nullable: true },
-        { name: 'address_label', type: 'text', nullable: true },
+        { name: 'address_type', type: 'character varying', nullable: false },
         { name: 'province_id', type: 'uuid', nullable: true },
         { name: 'city_id', type: 'uuid', nullable: true },
-        { name: 'district_id', type: 'uuid', nullable: true },
-        { name: 'village_id', type: 'uuid', nullable: true },
-        { name: 'street_address', type: 'text', nullable: true },
-        { name: 'postal_code', type: 'text', nullable: true },
-        { name: 'landmark', type: 'text', nullable: true },
+        { name: 'district_name', type: 'character varying', nullable: true },
+        { name: 'village_name', type: 'character varying', nullable: true },
+        { name: 'street_address', type: 'text', nullable: false },
+        { name: 'postal_code', type: 'character varying', nullable: true },
+        { name: 'notes', type: 'text', nullable: true },
         { name: 'is_primary', type: 'boolean', nullable: true },
         { name: 'is_verified', type: 'boolean', nullable: true },
-        { name: 'created_at', type: 'timestamp', nullable: true },
-        { name: 'updated_at', type: 'timestamp', nullable: true }
+        { name: 'verified_at', type: 'timestamp with time zone', nullable: true },
+        { name: 'verified_by', type: 'uuid', nullable: true },
+        { name: 'created_at', type: 'timestamp with time zone', nullable: true },
+        { name: 'updated_at', type: 'timestamp with time zone', nullable: true },
+        { name: 'is_same_as_domicile', type: 'boolean', nullable: true }
       ]
     },
     {

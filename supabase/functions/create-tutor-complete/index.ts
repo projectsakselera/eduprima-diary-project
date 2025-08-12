@@ -49,6 +49,7 @@ interface EdgeFunctionRequest {
     // High School Information
     namaSMA?: string // High school name
     jurusanSMA?: string // High school major
+    jurusanSMKDetail?: string // Vocational school major detail
     tahunLulusSMA?: string // High school graduation year
     
     // Alternative Learning (for statusAkademik = 'lainnya')
@@ -200,7 +201,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log('⚙️ System data:', data.system)
     console.log('📊 Personal data:', data.personal)
     console.log('✨ Profile data:', data.profile)
-    console.log('🎓 Education data:', data.education) // Step 2 education info
+    console.log('🎓 Education data:', data.education) // Step 2 education info - now stored in tutor_details ONLY
     console.log('📍 Address data:', data.address) 
     console.log('🏦 Banking data:', data.banking)
     console.log('📄 Documents data:', data.documents) // Step 5 documents info
@@ -281,12 +282,26 @@ serve(async (req: Request): Promise<Response> => {
       return status === 'lainnya'
     }
 
-    // Get tutor role ID
-    const { data: tutorRole, error: roleError } = await supabase
+    // Get tutor role ID - try both case variations for compatibility
+    let { data: tutorRole, error: roleError } = await supabase
       .from('user_roles')
       .select('id')
       .eq('role_name', 'Tutor')
       .single()
+
+    // If not found with 'Tutor', try with 'tutor' (case insensitive fallback)
+    if (roleError || !tutorRole) {
+      const { data: tutorRoleLower, error: roleLowerError } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('role_name', 'tutor')
+        .single()
+      
+      if (tutorRoleLower) {
+        tutorRole = tutorRoleLower
+        roleError = null
+      }
+    }
 
     if (roleError || !tutorRole) {
       return new Response(
@@ -348,7 +363,7 @@ serve(async (req: Request): Promise<Response> => {
           : null,
         faculty_s1: isS2S3Student(data.education?.statusAkademik)
           ? (data.education?.fakultasS1 || null)
-          : (data.education?.fakultas || null), // For other status use current faculty
+          : null, // ✅ FIXED: Only S1 faculty for S2/S3, not current faculty
         major_s1: isS2S3Student(data.education?.statusAkademik)
           ? (data.education?.jurusanS1 || null)
           : null,
@@ -357,6 +372,7 @@ serve(async (req: Request): Promise<Response> => {
         high_school: data.education?.namaSMA || null,
         high_school_major: data.education?.jurusanSMA || null,
         high_school_graduation_year: toIntOrNull(data.education?.tahunLulusSMA),
+        vocational_school_detail: data.education?.jurusanSMKDetail || null,
         
         // Alternative Learning (for statusAkademik = 'lainnya')
         alternative_institution_name: isAlternativeLearning(data.education?.statusAkademik)
@@ -372,6 +388,23 @@ serve(async (req: Request): Promise<Response> => {
         // Entry year (for current education)
         entry_year: toIntOrNull(data.education?.tahunMasuk),
         
+        // 🆕 Current Education Fields (for all except 'lainnya')
+        current_university: !isAlternativeLearning(data.education?.statusAkademik) 
+          ? (data.education?.namaUniversitas || null)
+          : null,
+        current_faculty: !isAlternativeLearning(data.education?.statusAkademik)
+          ? (data.education?.fakultas || null)
+          : null,
+        current_major: !isAlternativeLearning(data.education?.statusAkademik)
+          ? (data.education?.jurusan || null)
+          : null,
+        current_graduation_year: !isAlternativeLearning(data.education?.statusAkademik)
+          ? toIntOrNull(data.education?.tahunLulus)
+          : null,
+        current_gpa: !isAlternativeLearning(data.education?.statusAkademik)
+          ? toFloatOrNull(data.education?.ipk)
+          : null,
+        
         // Teaching Experience & Skills
         teaching_experience: data.education?.pengalamanMengajar || '',
         other_skills: data.education?.keahlianLainnya || '',
@@ -381,6 +414,9 @@ serve(async (req: Request): Promise<Response> => {
         academic_achievements: data.education?.prestasiAkademik || '',
         non_academic_achievements: data.education?.prestasiNonAkademik || '',
         certifications_training: data.education?.sertifikasiPelatihan || '',
+        
+        // ✅ NEW: Additional Subjects Description (Step 3 - Simple text field)
+        additional_subjects_description: data.subjects?.mataPelajaranLainnya || '',
         
         // System fields
         form_agreement_check: true,
@@ -467,12 +503,12 @@ serve(async (req: Request): Promise<Response> => {
         social_media_1: data.profile?.socialMedia1 || '',
         social_media_2: data.profile?.socialMedia2 || '',
         
-        // 🎓 Education fields (Step 2) - stored in user_profiles
-        education_level: data.education?.statusAkademik || null,
-        university: data.education?.namaUniversitas || null,
-        major: data.education?.jurusan || null,
-        graduation_year: toIntOrNull(data.education?.tahunLulus),
-        gpa: toFloatOrNull(data.education?.ipk),
+        // 🎓 Education fields REMOVED - now stored in tutor_details only
+        // education_level: MOVED to tutor_details.academic_status
+        // university: MOVED to tutor_details.current_university  
+        // major: MOVED to tutor_details.current_major
+        // graduation_year: MOVED to tutor_details.current_graduation_year
+        // gpa: MOVED to tutor_details.current_gpa
         
         // 🚨 Emergency Contact fields (Step 4 - PHASE 3)
         emergency_contact_name: data.availability?.emergencyContactName || null,
@@ -615,7 +651,7 @@ serve(async (req: Request): Promise<Response> => {
     // 📄 Create document storage placeholders for Step 2 files (if provided)
     const documentStorageData: any[] = []
     
-    // Transcript document (transkripNilai)
+    // Transcript document (transkripNilai) - for academic verification of formal students
     if (data.education?.transkripNilai) {
       documentStorageData.push({
         user_id: userData.id,
@@ -631,7 +667,7 @@ serve(async (req: Request): Promise<Response> => {
       })
     }
     
-    // Expertise certificate (sertifikatKeahlian - for statusAkademik = 'lainnya')
+    // Expertise certificate (sertifikatKeahlian) - primary skill verification for alternative learning only
     if (data.education?.sertifikatKeahlian && isAlternativeLearning(data.education?.statusAkademik)) {
       documentStorageData.push({
         user_id: userData.id,
@@ -665,8 +701,8 @@ serve(async (req: Request): Promise<Response> => {
       })
     }
     
-    // Education document (dokumenPendidikan)
-    if (data.documents?.dokumenPendidikan) {
+    // Education document (dokumenPendidikan) - ijazah only, not for alternative learning
+    if (data.documents?.dokumenPendidikan && !isAlternativeLearning(data.education?.statusAkademik)) {
       documentStorageData.push({
         user_id: userData.id,
         document_type: 'education_document',
@@ -681,8 +717,8 @@ serve(async (req: Request): Promise<Response> => {
       })
     }
     
-    // Certificate document (dokumenSertifikat) - Optional
-    if (data.documents?.dokumenSertifikat) {
+    // Certificate document (dokumenSertifikat) - additional certificates only, not for alternative learning
+    if (data.documents?.dokumenSertifikat && !isAlternativeLearning(data.education?.statusAkademik)) {
       documentStorageData.push({
         user_id: userData.id,
         document_type: 'certificate_document',
@@ -834,10 +870,15 @@ serve(async (req: Request): Promise<Response> => {
       const programMappings = data.subjects.selectedPrograms.map(programId => ({
         tutor_id: tutorData.id,
         program_id: programId,
-        proficiency_level: 'intermediate', // Default proficiency level
+        // ✅ FIXED: Use correct field names from database schema
+        competency_level: 'intermediate', // Database has competency_level
+        proficiency_level: 'intermediate', // Database also has proficiency_level (separate field)
         years_of_experience: 1, // Default years of experience
+        is_primary_subject: false, // Default to false - can be updated later
+        confidence_score: 0.7, // Default confidence score (0.7 = good match)
         certification_status: 'none', // Default certification status
-        additional_notes: data.subjects.mataPelajaranLainnya || null, // Additional subjects notes
+        mapped_by: null, // Can be set to admin user ID later
+        // ✅ FIXED: created_at DOES exist in database (field_type: OPTIONAL, default: now())
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }))
@@ -867,11 +908,19 @@ serve(async (req: Request): Promise<Response> => {
       console.log('ℹ️ No subjects data provided - skipping tutor_program_mappings creation')
     }
 
+    // ✅ CHANGED: mataPelajaranLainnya now stored as simple text field in tutor_details.additional_subjects_description
+    // No longer parsed into tutor_additional_subjects table - kept as free-form descriptive text
+    if (data.subjects?.mataPelajaranLainnya?.trim()) {
+      console.log('📝 Additional subjects description saved in tutor_details.additional_subjects_description')
+    } else {
+      console.log('ℹ️ No additional subjects description provided')
+    }
+
     console.log('✅ Edge Function - Tutor created successfully')
     console.log('📊 User ID:', userData.id)
     console.log('📊 Tutor ID:', tutorData.id)
     console.log('🎯 TRN (kelipatan 7):', tutorData.tutor_registration_number)
-    console.log('📋 Tables created: users_universal, tutor_details, tutor_management, user_profiles, user_demographics, user_addresses, tutor_banking_info, document_storage, tutor_availability_config, tutor_teaching_preferences, tutor_personality_traits, tutor_program_mappings')
+    console.log('📋 Tables created: users_universal, tutor_details (with current_* education fields), tutor_management, user_profiles (education fields removed), user_demographics, user_addresses, tutor_banking_info, document_storage, tutor_availability_config, tutor_teaching_preferences, tutor_personality_traits, tutor_program_mappings, tutor_additional_subjects')
 
     // 🔧 FIXED: Match expected response structure from service
     return new Response(
@@ -897,8 +946,9 @@ serve(async (req: Request): Promise<Response> => {
             'tutor_availability_config',
             'tutor_teaching_preferences',
             'tutor_personality_traits',
-            'tutor_program_mappings'
-          ] // Complete list of created tables (12 tables total)
+            'tutor_program_mappings',
+            'tutor_additional_subjects'
+          ] // Complete list of created tables (13 tables total)
         }
       }),
       {

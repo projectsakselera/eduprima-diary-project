@@ -2296,6 +2296,54 @@
     "field_type": "OPTIONAL"
   },
   {
+    "table_name": "tutor_details",
+    "column_name": "current_university",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "tutor_details",
+    "column_name": "current_faculty",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "tutor_details",
+    "column_name": "current_major",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "tutor_details",
+    "column_name": "current_graduation_year",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "tutor_details",
+    "column_name": "current_gpa",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "NULL::numeric",
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "tutor_details",
+    "column_name": "additional_subjects_description",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
     "table_name": "tutor_management",
     "column_name": "id",
     "data_type": "uuid",
@@ -2729,14 +2777,6 @@
   },
   {
     "table_name": "user_addresses",
-    "column_name": "address_label",
-    "data_type": "character varying",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_addresses",
     "column_name": "province_id",
     "data_type": "uuid",
     "is_nullable": "YES",
@@ -2746,22 +2786,6 @@
   {
     "table_name": "user_addresses",
     "column_name": "city_id",
-    "data_type": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "FK"
-  },
-  {
-    "table_name": "user_addresses",
-    "column_name": "district_id",
-    "data_type": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "FK"
-  },
-  {
-    "table_name": "user_addresses",
-    "column_name": "village_id",
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
@@ -2794,14 +2818,6 @@
   {
     "table_name": "user_addresses",
     "column_name": "postal_code",
-    "data_type": "character varying",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_addresses",
-    "column_name": "landmark",
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
@@ -3113,46 +3129,6 @@
   },
   {
     "table_name": "user_profiles",
-    "column_name": "education_level",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_profiles",
-    "column_name": "university",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_profiles",
-    "column_name": "major",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_profiles",
-    "column_name": "graduation_year",
-    "data_type": "integer",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_profiles",
-    "column_name": "gpa",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "field_type": "OPTIONAL"
-  },
-  {
-    "table_name": "user_profiles",
     "column_name": "created_at",
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
@@ -3211,6 +3187,78 @@
     "table_name": "user_profiles",
     "column_name": "motivation_as_tutor",
     "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "FK"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "education_level",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "university",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "major",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "graduation_year",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "gpa",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "field_type": "OPTIONAL"
+  },
+  {
+    "table_name": "user_profiles_education_backup",
+    "column_name": "backup_created_at",
+    "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
     "field_type": "OPTIONAL"

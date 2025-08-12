@@ -272,8 +272,8 @@ export default function AddTutorPage() {
       
       let tutorRole = null;
       
-      // Try by role_name field first
-      const possibleRoleNames = ['tutor', 'Tutor', 'TUTOR', 'educator', 'Educator', 'EDUCATOR', 'teacher', 'Teacher'];
+      // Try by role_name field first - prioritize exact matches used in Edge Function
+      const possibleRoleNames = ['Tutor', 'tutor', 'TUTOR', 'educator', 'Educator', 'EDUCATOR', 'teacher', 'Teacher'];
       
       for (const roleName of possibleRoleNames) {
         const roleResult = await supabase
@@ -422,12 +422,12 @@ export default function AddTutorPage() {
         social_media_2: formData.socialMedia2 || null,
         motivation_as_tutor: formData.motivasiMenjadiTutor || null,
         
-        // Education fields  
-        education_level: formData.statusAkademik || null,
-        university: formData.namaUniversitas || null,
-        major: formData.jurusan || null,
-        graduation_year: formData.tahunLulus ? parseInt(formData.tahunLulus) : null,
-        gpa: formData.ipk ? parseFloat(formData.ipk) : null, // ✅ Fix: convert string to number untuk numeric field
+        // ✅ EDUCATION FIELDS REMOVED - Now consolidated in tutor_details only
+        // education_level → tutor_details.academic_status
+        // university → tutor_details.current_university  
+        // major → tutor_details.current_major
+        // graduation_year → tutor_details.current_graduation_year
+        // gpa → tutor_details.current_gpa
         
         // ✅ REMOVED: high_school fields moved to tutor_details table
         // high_school_name and high_school_graduation_year are in tutor_details, not user_profiles
@@ -441,7 +441,6 @@ export default function AddTutorPage() {
       // 2c. Prepare domicile address data (NEW SEPARATE TABLE)
       const domicileAddressData = {
         address_type: 'domicile',
-        address_label: 'Alamat Domisili',
         province_id: formData.provinsiDomisili || null,
         city_id: formData.kotaKabupatenDomisili || null,
         district_name: formData.kecamatanDomisili || null, // Manual input
@@ -457,7 +456,6 @@ export default function AddTutorPage() {
       // 2d. Prepare KTP address data (if different from domicile)
       const ktpAddressData = formData.alamatSamaDenganKTP ? null : {
         address_type: 'ktp',
-        address_label: 'Alamat KTP/KK',
         province_id: formData.provinsiKTP || null,
         city_id: formData.kotaKabupatenKTP || null,
         district_name: formData.kecamatanKTP || null, // Manual input
@@ -500,6 +498,13 @@ export default function AddTutorPage() {
         // Professional Information - gunakan nama kolom yang benar
         academic_status: formData.statusAkademik || 'unknown', // ✅ Fix: status_akademik → academic_status + default
         
+        // ✅ CURRENT EDUCATION (Primary Education) - consolidated from user_profiles
+        current_university: formData.namaUniversitas || null,
+        current_faculty: formData.fakultas || null,
+        current_major: formData.jurusan || null,
+        current_graduation_year: toIntOrNull(formData.tahunLulus),
+        current_gpa: formData.ipk ? parseFloat(formData.ipk) : null,
+        
         // ✅ S1 Education (untuk S2/S3 students) - conditional mapping
         university_s1_name: (['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik || '')) 
           ? (formData.namaUniversitasS1 || null) 
@@ -510,14 +515,13 @@ export default function AddTutorPage() {
         major_s1: (['mahasiswa_s2', 'lulusan_s2'].includes(formData.statusAkademik || '')) 
           ? (formData.jurusanS1 || null) 
           : null,
-        // gpa: formData.ipk, // ✅ REMOVED: gpa ada di user_profiles, bukan di sini
         entry_year: toIntOrNull(formData.tahunMasuk), // ✅ Fix: safe integer conversion
-        // graduation_year: formData.tahunLulus, // ✅ REMOVED: graduation_year ada di user_profiles
         
         // High School Information - gunakan kolom khusus
         high_school: formData.namaSMA || null, // ✅ Add: high_school column
         high_school_major: formData.jurusanSMA || null, // ✅ Add: high_school_major column
         high_school_graduation_year: toIntOrNull(formData.tahunLulusSMA), // ✅ Add: safe integer conversion
+        vocational_school_detail: formData.jurusanSMKDetail || null, // ✅ FIXED: Added missing jurusanSMKDetail mapping
         
         // Alternative Learning Background (untuk statusAkademik = 'lainnya')
         alternative_institution_name: (formData.statusAkademik === 'lainnya') 
@@ -547,6 +551,9 @@ export default function AddTutorPage() {
         academic_achievements: formData.prestasiAkademik || null,
         non_academic_achievements: formData.prestasiNonAkademik || null, 
         certifications_training: formData.sertifikasiPelatihan || null,
+        
+        // ✅ STEP 3: Additional Subjects Description (mata pelajaran lainnya dari form)
+        additional_subjects_description: formData.mataPelajaranLainnya || null,
         
         // Student acceptance info (tetap di sini) - convert string status to boolean
         form_agreement_check: safeBool(

@@ -175,7 +175,39 @@ export default function ImportExportPage() {
         );
 
       case 'date':
-        const formattedDate = displayValue ? new Date(displayValue).toLocaleDateString('id-ID') : '';
+        let formattedDate = '';
+        if (displayValue) {
+          try {
+            // Handle different date formats
+            let dateObj;
+            const dateStr = String(displayValue).trim();
+            
+            // Try parsing various formats
+            if (dateStr.includes('/')) {
+              // Handle DD/MM/YYYY or MM/DD/YYYY format
+              const parts = dateStr.split('/');
+              if (parts.length === 3) {
+                // Assume DD/MM/YYYY format for Indonesian data
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]) - 1; // Month is 0-indexed
+                const year = parseInt(parts[2]);
+                dateObj = new Date(year, month, day);
+              }
+            } else {
+              // Try standard date parsing
+              dateObj = new Date(dateStr);
+            }
+            
+            if (dateObj && !isNaN(dateObj.getTime())) {
+              formattedDate = dateObj.toLocaleDateString('id-ID');
+            } else {
+              formattedDate = dateStr; // Fallback to original
+            }
+          } catch (error) {
+            formattedDate = String(displayValue);
+          }
+        }
+        
         return (
           <div className={baseClasses}>
             <div className="flex items-center gap-1">
@@ -535,67 +567,97 @@ export default function ImportExportPage() {
     return fieldMap;
   };
 
-  // Generate CSV template based on updated form config
+  // Generate CSV template dengan proper column names
   const downloadCSVTemplate = () => {
-    const fieldMapping = generateFieldMapping();
+    console.log('🔽 Generating CSV template with proper column mapping...');
     
-    // Create CSV headers
-    const headers = fieldMapping.map(({ field }) => field.label);
+    // Define CSV columns yang sesuai dengan field mapping yang sudah dibuat
+    const csvColumns = [
+      // === IDENTITAS DASAR ===
+      { csvHeader: 'Nama Lengkap', example: 'Ahmad Budi Santoso', required: true },
+      { csvHeader: 'Email Aktif', example: 'ahmad.budi@example.com', required: true },
+      { csvHeader: 'No. HP Utama (+62)', example: '81234567890', required: true },
+      { csvHeader: 'No. HP Alternatif (+62)', example: '85987654321', required: false },
+      { csvHeader: 'WhatsApp Number (+62)', example: '81234567890', required: false },
+      { csvHeader: 'Tanggal Lahir', example: '1995-06-15', required: false },
+      { csvHeader: 'Jenis Kelamin', example: 'L', required: false },
+      { csvHeader: 'Agama', example: 'Islam', required: false },
+      
+      // === ALAMAT & LOKASI ===
+      { csvHeader: 'Provinsi Domisili', example: 'DKI Jakarta', required: true },
+      { csvHeader: 'Kota/Kabupaten Domisili', example: 'Jakarta Selatan', required: true },
+      { csvHeader: 'Alamat Lengkap', example: 'Jl. Sudirman No. 123, Senayan', required: false },
+      { csvHeader: 'Provinsi KTP', example: 'Jawa Barat', required: false },
+      { csvHeader: 'Kota/Kabupaten KTP', example: 'Bandung', required: false },
+      { csvHeader: 'Alamat Titik Pusat Mengajar', example: 'Jl. Thamrin No. 45, Jakarta Pusat', required: false },
+      
+      // === PENDIDIKAN ===
+      { csvHeader: 'Status Akademik', example: 'S1', required: false },
+      { csvHeader: 'Nama Universitas', example: 'Universitas Indonesia', required: false },
+      { csvHeader: 'Fakultas/Jurusan', example: 'Teknik Informatika', required: false },
+      { csvHeader: 'IPK/GPA', example: '3.75', required: false },
+      { csvHeader: 'Tahun Lulus', example: '2020', required: false },
+      
+      // === PENGALAMAN MENGAJAR ===
+      { csvHeader: 'Pengalaman Mengajar (tahun)', example: '3', required: false },
+      { csvHeader: 'Status Menerima Siswa', example: 'active', required: false },
+      { csvHeader: 'Tarif per Jam', example: '75000', required: false },
+      { csvHeader: 'Radius Mengajar (km)', example: '15', required: false },
+      
+      // === MATA PELAJARAN ===
+      { csvHeader: 'Program yang Dipilih', example: 'Matematika; Fisika; Kimia', required: true },
+      
+      // === BANK & PEMBAYARAN ===
+      { csvHeader: 'Nama Bank', example: 'Mandiri', required: false },
+      { csvHeader: 'Nomor Rekening', example: '1234567890123', required: false },
+      { csvHeader: 'Nama Pemilik Rekening', example: 'Ahmad Budi Santoso', required: false },
+      
+      // === KONTAK DARURAT ===
+      { csvHeader: 'Nama Kontak Darurat', example: 'Siti Aminah', required: false },
+      { csvHeader: 'Hubungan Kontak Darurat', example: 'Ibu', required: false },
+      { csvHeader: 'No. HP Kontak Darurat', example: '82187654321', required: false },
+      
+      // === CATATAN TAMBAHAN ===
+      { csvHeader: 'Bio/Deskripsi Singkat', example: 'Tutor berpengalaman dalam matematika dan sains...', required: false },
+      { csvHeader: 'Keahlian Khusus', example: 'Olimpiade Matematika, Programming', required: false },
+      { csvHeader: 'Catatan Admin', example: 'Tutor recommended dari universitas', required: false }
+    ];
     
-    // Create sample data row with examples based on updated mapping
-    const sampleRow = fieldMapping.map(({ field }) => {
-      switch (field.type) {
-        case 'email':
-          return 'tutor@example.com';
-        case 'tel':
-          return '628123456789';
-        case 'number':
-          return field.name.includes('tarif') || field.name.includes('hourly_rate') ? '75000' : 
-                 field.name.includes('ipk') ? '3.75' : 
-                 field.name.includes('tahun') ? '2023' :
-                 field.name.includes('maksimal') ? '10' :
-                 field.name.includes('radius') ? '15' : '1';
-        case 'date':
-          return '2000-01-15';
-        case 'select':
-          if (field.name.includes('jenisKelamin')) return 'L';
-          if (field.name.includes('agama')) return 'Islam';
-          if (field.name.includes('status')) return 'active';
-          if (field.name.includes('akademik')) return 'S1';
-          if (field.name.includes('approval')) return 'junior';
-          if (field.name.includes('provinsi')) return 'DKI Jakarta';
-          if (field.name.includes('bank')) return 'Bank Mandiri';
-          return 'Pilih Opsi';
-        case 'textarea':
-          return 'Contoh deskripsi atau penjelasan lengkap...';
-        case 'text':
-        default:
-          if (field.name.includes('nama')) return 'Contoh Nama';
-          if (field.name.includes('alamat')) return 'Jl. Contoh No. 123';
-          if (field.name.includes('kode')) return 'AUTO-GENERATED';
-          return 'Contoh isi field';
-      }
+    // Create headers dan example row
+    const headers = csvColumns.map(col => col.csvHeader);
+    const exampleRow = csvColumns.map(col => col.example);
+    const requiredRow = csvColumns.map(col => col.required ? 'WAJIB' : 'Opsional');
+    
+    // Create CSV with 3 rows: headers, required info, example data
+    const csvData = [
+      headers,
+      requiredRow,
+      exampleRow
+    ];
+    
+    const csvContent = Papa.unparse(csvData, {
+      header: false,
+      skipEmptyLines: false,
+      quotes: true
     });
-    
-    // Combine headers and sample data
-    const csvData = [headers, sampleRow];
-    const csvContent = Papa.unparse(csvData);
     
     // Create download link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `tutor_import_template_v2_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `eduprima_tutor_import_template_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
+    console.log('✅ CSV template downloaded with', csvColumns.length, 'columns');
+    
     toast({
-      title: "Updated Template Downloaded",
-      description: "CSV template v2.0 has been downloaded with complete field mapping based on Form-Add-Tutor-Mapping-Guide.md",
-      duration: 3000,
+      title: "Template CSV Berhasil Diunduh! 📥",
+      description: `Template dengan ${csvColumns.length} kolom telah diunduh. Baris ke-2 menunjukkan field wajib/opsional, baris ke-3 berisi contoh data.`,
+      duration: 4000,
     });
   };
 
@@ -647,13 +709,17 @@ export default function ImportExportPage() {
       
       // Parse banks
       const banksData = await banksResponse.json();
+      console.log('🏦 Raw banks API response:', banksData);
+      
       const banks = banksData.success && banksData.data ? 
         banksData.data.map((b: any) => ({
-          id: b.id,
-          name: b.bank_name,
+          id: b.value || b.id,
+          name: b.label || b.popular_bank_name || b.bank_name,
           local_name: b.popular_bank_name,
-          alternate_name: b.bank_name
+          alternate_name: b.fullName || b.bank_name
         })) : [];
+      
+      console.log('🏦 Processed banks for fuzzy matching:', banks.slice(0, 3));
 
       console.log('✅ Reference data loaded:', {
         provinces: provinces.length,
@@ -809,7 +875,7 @@ export default function ImportExportPage() {
       let resolvedProgramIds: string[] = [];
       
       // === FUZZY MATCHING FOR PROVINCES ===
-      if (row['Provinsi Domisili'] && dataCache.provinces.length > 0) {
+      if (row['Provinsi Domisili'] && typeof row['Provinsi Domisili'] === 'string' && row['Provinsi Domisili'].trim() && dataCache.provinces.length > 0) {
         const provinceMatches = findBestLocationMatches(
           row['Provinsi Domisili'], 
           dataCache.provinces, 
@@ -834,7 +900,7 @@ export default function ImportExportPage() {
       }
       
       // === FUZZY MATCHING FOR CITIES ===
-      if (row['Kota/Kabupaten Domisili'] && dataCache.cities.length > 0) {
+      if (row['Kota/Kabupaten Domisili'] && typeof row['Kota/Kabupaten Domisili'] === 'string' && row['Kota/Kabupaten Domisili'].trim() && dataCache.cities.length > 0) {
         // Filter cities by province if province was matched
         let citiesToSearch = dataCache.cities;
         if (mappedData['provinsiDomisili']) {
@@ -853,6 +919,7 @@ export default function ImportExportPage() {
           const bestMatch = cityMatches[0];
           mappedData['kotaKabupatenDomisili'] = bestMatch.id;
           mappedData['kotaKabupatenDomisili_matched'] = bestMatch.name;
+          resolvedCityName = bestMatch.name;
           
           if (cityMatches[0].similarity && cityMatches[0].similarity < 90) {
             warnings.push(`City "${row['Kota/Kabupaten Domisili']}" matched to "${bestMatch.name}" with ${cityMatches[0].similarity}% confidence`);
@@ -866,13 +933,14 @@ export default function ImportExportPage() {
       }
       
       // === FUZZY MATCHING FOR BANKS ===
-      if (row['Nama Bank'] && dataCache.banks.length > 0) {
+      if (row['Nama Bank'] && typeof row['Nama Bank'] === 'string' && row['Nama Bank'].trim() && dataCache.banks.length > 0) {
         const bankMatches = findBestBankMatches(row['Nama Bank'], dataCache.banks);
         
         if (bankMatches.length > 0) {
           const bestMatch = bankMatches[0];
           mappedData['namaBank'] = bestMatch.id;
           mappedData['namaBank_matched'] = bestMatch.name;
+          resolvedBankName = bestMatch.name;
           
           if (bankMatches[0].similarity && bankMatches[0].similarity < 90) {
             warnings.push(`Bank "${row['Nama Bank']}" matched to "${bestMatch.name}" with ${bankMatches[0].similarity}% confidence`);
@@ -886,7 +954,7 @@ export default function ImportExportPage() {
       }
       
       // === FUZZY MATCHING FOR SUBJECTS/PROGRAMS ===
-      if (row['Program yang Dipilih'] && dataCache.subjects.length > 0) {
+      if (row['Program yang Dipilih'] && typeof row['Program yang Dipilih'] === 'string' && row['Program yang Dipilih'].trim() && dataCache.subjects.length > 0) {
         // Handle multiple programs separated by comma/semicolon
         const programsList = row['Program yang Dipilih'].split(/[,;]/).map((p: string) => p.trim()).filter((p: string) => p);
         const matchedPrograms: string[] = [];
@@ -900,7 +968,7 @@ export default function ImportExportPage() {
             matchedPrograms.push(bestMatch.id);
             matchedProgramNames.push(bestMatch.name);
             
-            if (programMatches[0].similarity && programMatches[0].similarity < 90) {
+            if (programMatches[0].similarity && programMatches[0].similarity < 75) {
               warnings.push(`Program "${program}" matched to "${bestMatch.name}" with ${programMatches[0].similarity}% confidence`);
             }
             
@@ -914,6 +982,7 @@ export default function ImportExportPage() {
         if (matchedPrograms.length > 0) {
           mappedData['selectedPrograms'] = matchedPrograms;
           mappedData['selectedPrograms_matched'] = matchedProgramNames;
+          resolvedProgramIds = matchedPrograms;
         }
       }
       
@@ -963,21 +1032,21 @@ export default function ImportExportPage() {
       }
       
       // Location validation warnings
-      if (row['Provinsi Domisili'] && !resolvedProvinceName) {
+      if (row['Provinsi Domisili'] && typeof row['Provinsi Domisili'] === 'string' && row['Provinsi Domisili'].trim() && !resolvedProvinceName) {
         warnings.push('Provinsi tidak ditemukan dalam database, akan menggunakan teks asli');
       }
       
-      if (row['Kota/Kabupaten Domisili'] && !resolvedCityName) {
+      if (row['Kota/Kabupaten Domisili'] && typeof row['Kota/Kabupaten Domisili'] === 'string' && row['Kota/Kabupaten Domisili'].trim() && !resolvedCityName) {
         warnings.push('Kota/Kabupaten tidak ditemukan dalam database, akan menggunakan teks asli');
       }
       
       // Bank validation warnings
-      if (row['Nama Bank'] && !resolvedBankName) {
+      if (row['Nama Bank'] && typeof row['Nama Bank'] === 'string' && row['Nama Bank'].trim() && !resolvedBankName) {
         warnings.push('Bank tidak ditemukan dalam database, akan menggunakan teks asli');
       }
       
       // Program validation
-      if (row['Program yang Dipilih']) {
+      if (row['Program yang Dipilih'] && typeof row['Program yang Dipilih'] === 'string' && row['Program yang Dipilih'].trim()) {
         const programsList = row['Program yang Dipilih'].split(/[,;]/).map((p: string) => p.trim()).filter((p: string) => p);
         if (programsList.length === 0) {
           warnings.push('Program yang dipilih kosong');
@@ -1340,10 +1409,11 @@ export default function ImportExportPage() {
                   className="w-full"
                 >
                   <Icon icon="heroicons:document-arrow-down" className="w-4 h-4 mr-2" />
-                  Download Template v2.0
+                  Download Template CSV
                 </Button>
                 <p className="text-sm text-muted-foreground">
-                  Template has been updated with complete field mapping based on Form-Add-Tutor-Mapping-Guide.md
+                  📥 Template CSV lengkap dengan 32 kolom, termasuk info field wajib/opsional dan contoh data. 
+                  Mendukung fuzzy matching untuk lokasi, bank, dan program.
                 </p>
                 
                 {/* Debug Buttons */}
