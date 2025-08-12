@@ -2796,15 +2796,34 @@ export const defaultFormData: Partial<TutorFormData> = {
 
 };
 
-// Utility functions
-export const validateStep = (step: FormStep, formData: Partial<TutorFormData>): string[] => {
-  // No validation required - all fields are optional
-  return [];
-};
+// Import validation functions from separate file
+import { 
+  validateStep as validateStepFn, 
+  canProceedToNextStep as canProceedFn,
+  getStepStatus,
+  canAccessStep,
+  getOverallProgress,
+  isStepCompleted,
+  getAllFieldsCount,
+  getCompletedAllFieldsCount,
+  getEmptyFieldsCount,
+  getRequiredFieldsCount,
+  getCompletedFieldsCount
+} from './step-validation';
 
-export const canProceedToNextStep = (step: FormStep, formData: Partial<TutorFormData>): boolean => {
-  // Allow free navigation between steps - no validation required
-  return true;
+// Export validation functions
+export const validateStep = validateStepFn;
+export const canProceedToNextStep = canProceedFn;
+export { 
+  getStepStatus, 
+  canAccessStep, 
+  getOverallProgress, 
+  isStepCompleted,
+  getAllFieldsCount,
+  getCompletedAllFieldsCount,
+  getEmptyFieldsCount,
+  getRequiredFieldsCount,
+  getCompletedFieldsCount
 };
 
 export const getStepProgress = (currentStep: number, totalSteps: number): number => {

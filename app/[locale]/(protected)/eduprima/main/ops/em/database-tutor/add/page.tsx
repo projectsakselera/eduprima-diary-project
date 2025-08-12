@@ -20,6 +20,13 @@ import {
   validateStep, 
   canProceedToNextStep, 
   getStepProgress,
+  getStepStatus,
+  canAccessStep,
+  getOverallProgress,
+  isStepCompleted,
+  getAllFieldsCount,
+  getCompletedAllFieldsCount,
+  getEmptyFieldsCount,
   isFieldVisible,
   type TutorFormData 
 } from './form-config';
@@ -102,13 +109,24 @@ export default function AddTutorPage() {
   const currentStepConfig = tutorFormConfig.steps[currentStep];
   const totalSteps = tutorFormConfig.steps.length;
   const progress = getStepProgress(currentStep, totalSteps);
+  const overallProgress = getOverallProgress(formData, tutorFormConfig.steps);
 
-  // Auto-validate completed steps - now always allows progress
+  // Real-time validation for current step
+  useEffect(() => {
+    const errors = validateStep(currentStepConfig, formData);
+    setStepErrors(prev => ({
+      ...prev,
+      [currentStep]: errors
+    }));
+  }, [formData, currentStep, currentStepConfig]);
+
+  // Update completed steps based on validation
   useEffect(() => {
     const newCompletedSteps = new Set<number>();
     tutorFormConfig.steps.forEach((step, index) => {
-      // Mark all steps as accessible since validation is disabled
-      newCompletedSteps.add(index);
+      if (isStepCompleted(step, formData)) {
+        newCompletedSteps.add(index);
+      }
     });
     setCompletedSteps(newCompletedSteps);
   }, [formData]);
@@ -179,11 +197,11 @@ export default function AddTutorPage() {
   };
 
   const validateCurrentStep = () => {
-    // No validation required - always return true
-    return true;
+    return canProceedToNextStep(currentStepConfig, formData);
   };
 
   const handleNext = () => {
+    // Allow free navigation - no validation required
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
       // Scroll to top smoothly
@@ -194,6 +212,11 @@ export default function AddTutorPage() {
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+      // Clear attempted state for previous step
+      setAttemptedNext(prev => ({
+        ...prev,
+        [currentStep - 1]: false
+      }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       router.push('/eduprima/main/ops/em/database-tutor');
@@ -201,7 +224,7 @@ export default function AddTutorPage() {
   };
 
   const handleStepClick = (stepIndex: number) => {
-    // Allow navigation to any step freely
+    // Allow free navigation - user can access any step at any time
     setCurrentStep(stepIndex);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1030,15 +1053,38 @@ export default function AddTutorPage() {
           if (edgeResult.success) {
             console.log('✅ [MIGRATION] User creation successful via:', edgeResult.source);
             
+            // 🔍 DEBUG: Log complete Edge Function response
+            console.log('🔍 [DEBUG] Complete Edge Function Response:', {
+              success: edgeResult.success,
+              source: edgeResult.source,
+              data: edgeResult.data,
+              error: edgeResult.error
+            });
+            
+            // 🔍 DEBUG: Log specific fields we need
+            console.log('🔍 [DEBUG] Critical Fields from Edge Function:', {
+              user_id: edgeResult.data?.user_id,
+              tutor_id: edgeResult.data?.tutor_id,
+              trn: edgeResult.data?.trn,
+              password: edgeResult.data?.password,
+              email: edgeResult.data?.email,
+              name: edgeResult.data?.name
+            });
+            
             if (edgeResult.source === 'edge') {
-              // Edge function success - map response to expected format
+              // 🔧 FIXED: Map ALL fields from Edge Function response
               newTutorUser = {
                 id: edgeResult.data?.user_id,
                 email: edgeResult.data?.email,
-                user_code: edgeResult.data?.user_code
+                user_code: edgeResult.data?.user_code,
+                // 🔧 FIX: Add missing critical fields
+                tutor_id: edgeResult.data?.tutor_id,
+                trn: edgeResult.data?.trn,
+                password: edgeResult.data?.password,
+                name: edgeResult.data?.name
               };
               migrationSource = 'edge_function';
-              console.log('🚀 [MIGRATION] Edge function returned:', newTutorUser);
+              console.log('🚀 [MIGRATION] Edge function returned (FIXED):', newTutorUser);
             } else {
               // Client-side fallback success
               newTutorUser = edgeResult.data?.data;
@@ -1108,6 +1154,17 @@ export default function AddTutorPage() {
       if (migrationSource === 'edge_function') {
         console.log('🎯 [EDGE FUNCTION COMPLETE] All tables created by Edge Function - skipping client inserts');
         
+        // 🔍 DEBUG: Log what we're about to show in success notification
+        console.log('🔍 [DEBUG] Success Notification Data BEFORE:', {
+          newTutorUser: newTutorUser,
+          tutor_id_from_edge: newTutorUser?.tutor_id,
+          trn_from_edge: newTutorUser?.trn,
+          password_from_edge: newTutorUser?.password,
+          user_id: userId,
+          email: formData.email,
+          autoGeneratedPassword: autoGeneratedPassword
+        });
+        
         // Show success message and return
         const insertedData = {
           user_id: userId,
@@ -1117,14 +1174,17 @@ export default function AddTutorPage() {
           name: formData.namaLengkap,
           religion: formData.agama || 'Not specified'
         };
+        
+        // 🔍 DEBUG: Log final data for success notification
+        console.log('🔍 [DEBUG] Final Success Notification Data:', insertedData);
 
-        // Show success notification using correct pattern
+        // 🚀 FIXED: Show success notification using REAL data from Edge Function
         showSuccess('🎉 Data Tutor Berhasil Disimpan via Edge Function!', {
           copyableData: [
             { label: 'TRN', value: newTutorUser?.trn || 'Auto-generated kelipatan 7' },
-            { label: 'Email', value: formData.email },
-            { label: 'Password', value: autoGeneratedPassword, sensitive: true },
-            { label: 'User ID', value: userId },
+            { label: 'Email', value: newTutorUser?.email || formData.email },
+            { label: 'Password', value: newTutorUser?.password || autoGeneratedPassword, sensitive: true },
+            { label: 'User ID', value: newTutorUser?.id || userId },
             { label: 'Tutor ID', value: newTutorUser?.tutor_id || 'Created by Edge Function' }
           ],
           message: '🚀 EDGE FUNCTION SUCCESS - TRN dengan kelipatan 7!\n⚠️ Catat password ini untuk diberikan kepada tutor!',
@@ -1610,74 +1670,123 @@ export default function AddTutorPage() {
             {/* Desktop Navigation Steps */}
             <nav className="space-y-3">
               {tutorFormConfig.steps.map((step, index) => {
-                const isActive = index === currentStep;
-                const isPast = index < currentStep;
+                const stepStatus = getStepStatus(index, currentStep, formData, tutorFormConfig.steps);
+                const canAccess = canAccessStep(index, currentStep, formData, tutorFormConfig.steps);
+                const errors = validateStep(step, formData);
+                const isActive = stepStatus === 'active';
                 
                 return (
                   <button
                     key={step.id}
                     onClick={() => handleStepClick(index)}
+                    disabled={!canAccess}
                     className={cn(
-                      "w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-200 text-left",
+                      "w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-200 text-left step-nav-enhanced",
                       {
-                        "bg-primary text-primary-foreground shadow-lg": isActive,
-                        "bg-success/10 text-success hover:bg-success/20": isPast && !isActive,
-                        "hover:bg-muted text-muted-foreground hover:text-default-900": !isActive && !isPast,
+                        // Active step - Enhanced blue with better contrast
+                        "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/20": stepStatus === 'active',
+                        
+                        // Completed step - Enhanced green with better contrast
+                        "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800": stepStatus === 'success',
+                        
+                        // Warning step - Enhanced amber for better visibility
+                        "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 border border-amber-200 dark:border-amber-800": stepStatus === 'warning',
+                        
+                        // Pending step - Better neutral colors
+                        "bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-slate-200 dark:border-slate-700": stepStatus === 'pending',
+                        
+                        // Disabled state
+                        "opacity-50 cursor-not-allowed": !canAccess,
                       }
                     )}
                   >
                     <div className="flex-shrink-0">
                       <Icon 
-                        icon={isPast ? "ph:check-circle-fill" : step.icon} 
+                        icon={
+                          stepStatus === 'success' ? "ph:check-circle-fill" : 
+                          stepStatus === 'warning' ? "ph:warning-circle-fill" :
+                          stepStatus === 'active' ? "ph:circle-fill" :
+                          step.icon
+                        } 
                         className={cn(
                           "h-6 w-6",
                           {
-                            "text-primary-foreground": isActive,
-                            "text-success": isPast && !isActive,
-                            "text-muted-foreground": !isActive && !isPast,
+                            "text-primary-foreground": stepStatus === 'active',
+                            "text-emerald-600 dark:text-emerald-400": stepStatus === 'success',
+                            "text-amber-600 dark:text-amber-400": stepStatus === 'warning',
+                            "text-slate-500 dark:text-slate-400": stepStatus === 'pending',
                           }
                         )} 
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className={cn(
-                        "font-semibold",
+                        "font-semibold text-sm",
                         {
-                          "text-primary-foreground": isActive,
-                          "text-success": isPast && !isActive,
-                          "text-muted-foreground": !isActive && !isPast,
+                          "text-primary-foreground": stepStatus === 'active',
+                          "text-emerald-800 dark:text-emerald-200": stepStatus === 'success',
+                          "text-amber-800 dark:text-amber-200": stepStatus === 'warning',
+                          "text-slate-700 dark:text-slate-300": stepStatus === 'pending',
                         }
                       )}>
                         {step.title}
                       </div>
                       <div className={cn(
-                        "text-sm mt-1",
+                        "text-xs mt-1 opacity-90",
                         {
-                          "text-primary-foreground/80": isActive,
-                          "text-success/80": isPast && !isActive,
-                          "text-muted-foreground/70": !isActive && !isPast,
+                          "text-primary-foreground/80": stepStatus === 'active',
+                          "text-emerald-600 dark:text-emerald-300": stepStatus === 'success',
+                          "text-amber-600 dark:text-amber-300": stepStatus === 'warning',
+                          "text-slate-600 dark:text-slate-400": stepStatus === 'pending',
                         }
                       )}>
                         {step.description}
                       </div>
+                      
+
                     </div>
-                    {isActive && (
-                      <div className="w-3 h-3 bg-primary-foreground rounded-full"></div>
-                    )}
+                    
+                    {/* Status indicator dot */}
+                    <div className={cn(
+                      "w-3 h-3 rounded-full flex-shrink-0 shadow-sm status-indicator",
+                      {
+                        "bg-primary": stepStatus === 'active',
+                        "bg-emerald-500 dark:bg-emerald-400 success": stepStatus === 'success',
+                        "bg-amber-500 dark:bg-amber-400 warning": stepStatus === 'warning',
+                        "bg-slate-400 dark:bg-slate-500": stepStatus === 'pending',
+                      }
+                    )} />
                   </button>
                 );
               })}
             </nav>
 
             {/* Desktop Progress Summary */}
-            <div className="mt-8 p-4 bg-muted/50 rounded-xl">
-              <div className="text-xs text-muted-foreground mb-2">Progress</div>
-              <div className="text-sm font-medium text-default-900 mb-3">
-                Step {currentStep + 1} / {totalSteps}
+            <div className="mt-8 space-y-4">
+              {/* Current Step Progress */}
+              <div className="p-4 bg-muted/50 rounded-xl">
+                <div className="text-xs text-muted-foreground mb-2">Step Saat Ini</div>
+                <div className="text-sm font-medium text-default-900 mb-3">
+                  Step {currentStep + 1} / {totalSteps}
+                </div>
+                <Progress value={progress} className="h-3" />
+                <div className="text-xs text-muted-foreground mt-2 text-center">
+                  {Math.round(progress)}% dari navigasi
+                </div>
               </div>
-              <Progress value={progress} className="h-3" />
-              <div className="text-xs text-muted-foreground mt-2 text-center">
-                {Math.round(progress)}% Complete
+
+              {/* Overall Completion Progress */}
+              <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">Progress Keseluruhan</div>
+                  <div className="text-xs text-slate-800 dark:text-slate-200 font-bold">
+                    {Math.round(overallProgress)}%
+                  </div>
+                </div>
+                <Progress value={overallProgress} className="h-2 progress-enhanced" />
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-2 text-center">
+                  Form completion berdasarkan semua field
+                </div>
               </div>
             </div>
           </div>
@@ -1927,33 +2036,51 @@ export default function AddTutorPage() {
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex space-x-1 px-4 py-3">
               {tutorFormConfig.steps.map((step, index) => {
-                const isActive = index === currentStep;
-                const isPast = index < currentStep;
+                const stepStatus = getStepStatus(index, currentStep, formData, tutorFormConfig.steps);
+                const canAccess = canAccessStep(index, currentStep, formData, tutorFormConfig.steps);
+                const errors = validateStep(step, formData);
                 
                 return (
                   <button
                     key={step.id}
                     onClick={() => handleStepClick(index)}
+                    disabled={!canAccess}
                     className={cn(
-                      "flex-shrink-0 flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      "flex-shrink-0 flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
                       {
-                        "bg-primary text-primary-foreground shadow-sm": isActive,
-                        "bg-success/10 text-success": isPast && !isActive,
-                        "bg-muted/50 text-muted-foreground hover:bg-muted": !isActive && !isPast,
+                        // Active step - Enhanced blue
+                        "bg-primary text-primary-foreground shadow-sm border-primary/30": stepStatus === 'active',
+                        
+                        // Completed step - Enhanced emerald
+                        "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800": stepStatus === 'success',
+                        
+                        // Warning step - Enhanced amber
+                        "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800": stepStatus === 'warning',
+                        
+                        // Pending step - Better neutrals
+                        "bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700": stepStatus === 'pending',
+                        
+                        // Disabled state
+                        "opacity-50 cursor-not-allowed": !canAccess,
                       }
                     )}
                   >
                     <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border flex-shrink-0",
+                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border flex-shrink-0 shadow-sm",
                       {
-                        "bg-primary-foreground text-primary border-primary-foreground": isActive,
-                        "bg-success text-success-foreground border-success": isPast && !isActive,
-                        "border-muted-foreground/30": !isActive && !isPast,
+                        "bg-primary-foreground text-primary border-primary-foreground": stepStatus === 'active',
+                        "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700": stepStatus === 'success',
+                        "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 border-amber-300 dark:border-amber-700": stepStatus === 'warning',
+                        "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600": stepStatus === 'pending',
                       }
                     )}>
-                      {isPast ? <Icon icon="ph:check" className="h-3 w-3" /> : index + 1}
+                      {stepStatus === 'success' ? <Icon icon="ph:check" className="h-3 w-3" /> : 
+                       stepStatus === 'warning' ? <Icon icon="ph:warning" className="h-3 w-3" /> :
+                       index + 1}
                     </div>
-                    <span className="truncate max-w-[80px]">{step.title}</span>
+                    <div className="flex flex-col items-start">
+                      <span className="truncate max-w-[80px] text-xs font-medium">{step.title}</span>
+                    </div>
                   </button>
                 );
               })}
@@ -1961,8 +2088,20 @@ export default function AddTutorPage() {
           </div>
 
           {/* Mobile Progress */}
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-3 space-y-2">
+            {/* Step Progress */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Step {currentStep + 1}/{totalSteps}</span>
+              <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+            </div>
             <Progress value={progress} className="h-2" />
+            
+            {/* Overall Progress */}
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Total Completion</span>
+              <span className="text-xs text-slate-800 dark:text-slate-200 font-bold">{Math.round(overallProgress)}%</span>
+            </div>
+            <Progress value={overallProgress} className="h-1 progress-enhanced" />
           </div>
         </div>
 

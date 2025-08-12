@@ -11,7 +11,7 @@ export const textareaVariants = cva(
     variants: {
       color: {
         default:
-          "border-default-200 text-default focus:outline-hidden focus:border-default disabled:bg-default-200  placeholder:text-accent-foreground/50",
+          "border-default-200 text-default-foreground focus:outline-hidden focus:border-default disabled:bg-default-200  placeholder:text-accent-foreground/50",
         primary:
           "border-primary text-primary focus:outline-hidden focus:border-primary-700 disabled:bg-primary/30 disabled:placeholder:text-primary  placeholder:text-primary/70",
         secondary:
