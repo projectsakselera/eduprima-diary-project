@@ -196,3 +196,4 @@ export function isInactiveStatus(status: string): boolean {
   const inactiveStatuses: TutorStatus[] = ['inactive', 'suspended', 'blacklisted'];
   return inactiveStatuses.includes(status?.toLowerCase() as TutorStatus);
 }
+

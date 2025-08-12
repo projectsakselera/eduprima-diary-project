@@ -90,13 +90,23 @@ interface ColumnManagerProps {
   visibleColumns: Set<keyof TutorSpreadsheetData>;
   onToggleColumn: (columnKey: keyof TutorSpreadsheetData) => void;
   categories: string[];
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onInvertSelection: () => void;
+  onShowAllInCategory: (category: string) => void;
+  onHideAllInCategory: (category: string) => void;
 }
 
 const ColumnManager: React.FC<ColumnManagerProps> = ({ 
   columns, 
   visibleColumns, 
   onToggleColumn, 
-  categories 
+  categories,
+  onSelectAll,
+  onDeselectAll,
+  onInvertSelection,
+  onShowAllInCategory,
+  onHideAllInCategory
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,6 +207,66 @@ const ColumnManager: React.FC<ColumnManagerProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-8 bg-slate-800 border-slate-700 placeholder:text-slate-400 text-slate-50"
               />
+            </div>
+
+            {/* Bulk Selection Controls */}
+            <div className="mb-4 space-y-2">
+              <div className="text-xs font-medium text-slate-300 mb-2">⚡ Bulk Actions:</div>
+              
+              {/* Main bulk actions */}
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onSelectAll}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:checks" className="h-3 w-3 mr-1" />
+                  Select All
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onDeselectAll}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:square" className="h-3 w-3 mr-1" />
+                  Deselect All
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onInvertSelection}
+                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  <Icon icon="ph:arrows-clockwise" className="h-3 w-3 mr-1" />
+                  Invert
+                </Button>
+              </div>
+
+              {/* Category-specific bulk actions */}
+              {selectedCategory !== 'all' && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-700">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onShowAllInCategory(selectedCategory)}
+                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    <Icon icon="ph:eye" className="h-3 w-3 mr-1" />
+                    Show All in {selectedCategory}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onHideAllInCategory(selectedCategory)}
+                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    <Icon icon="ph:eye-slash" className="h-3 w-3 mr-1" />
+                    Hide All in {selectedCategory}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Category Filter - Cleaner */}
@@ -1852,6 +1922,53 @@ export default function ViewAllTutorsPage() {
     });
   };
 
+  // Bulk column management functions
+  const selectAllColumns = () => {
+    const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+    setVisibleColumns(new Set(allColumnKeys));
+  };
+
+  const deselectAllColumns = () => {
+    setVisibleColumns(new Set());
+  };
+
+  const invertColumnSelection = () => {
+    const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+    setVisibleColumns(prev => {
+      const newSet = new Set<keyof TutorSpreadsheetData>();
+      allColumnKeys.forEach(key => {
+        if (!prev.has(key)) {
+          newSet.add(key);
+        }
+      });
+      return newSet;
+    });
+  };
+
+  const showAllInCategory = (category: string) => {
+    const categoryColumns = SPREADSHEET_COLUMNS
+      .filter(col => col.category === category)
+      .map(col => col.key);
+    
+    setVisibleColumns(prev => {
+      const newSet = new Set(prev);
+      categoryColumns.forEach(key => newSet.add(key));
+      return newSet;
+    });
+  };
+
+  const hideAllInCategory = (category: string) => {
+    const categoryColumns = SPREADSHEET_COLUMNS
+      .filter(col => col.category === category)
+      .map(col => col.key);
+    
+    setVisibleColumns(prev => {
+      const newSet = new Set(prev);
+      categoryColumns.forEach(key => newSet.delete(key));
+      return newSet;
+    });
+  };
+
   // Handle row selection
   const toggleRowSelection = (id: string) => {
     setSelectedRows(prev => {
@@ -2014,6 +2131,11 @@ export default function ViewAllTutorsPage() {
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumnVisibility}
               categories={categories}
+              onSelectAll={selectAllColumns}
+              onDeselectAll={deselectAllColumns}
+              onInvertSelection={invertColumnSelection}
+              onShowAllInCategory={showAllInCategory}
+              onHideAllInCategory={hideAllInCategory}
             />}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
@@ -2128,135 +2250,156 @@ export default function ViewAllTutorsPage() {
           </div>
 
       {/* 🚀 ZOOM CONTROLS */}
-      <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg border">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Table Zoom:</span>
-          
-          {/* Zoom Out Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleZoomOut}
-            disabled={tableZoom <= ZOOM_MIN}
-            className="h-8 w-8 p-0"
-            title="Zoom Out"
-          >
-            <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
-          </Button>
-          
-          {/* Zoom Level Input */}
-          <div className="flex items-center gap-1">
-            <Input
-              type="number"
-              value={zoomInputValue}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                setZoomInputValue(inputValue);
-                
-                // Allow empty input while typing
-                if (inputValue === '') return;
-                
-                const value = parseInt(inputValue);
-                if (!isNaN(value)) {
-                  const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
-                  handleZoomChange(clampedValue);
-                }
-              }}
-              onBlur={(e) => {
-                const value = parseInt(e.target.value);
-                if (!isNaN(value)) {
-                  const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
-                  handleZoomChange(clampedValue);
-                  setZoomInputValue(clampedValue.toString());
-                } else {
-                  // Reset to current zoom if invalid input
-                  setZoomInputValue(tableZoom.toString());
-                }
-              }}
-              onKeyDown={(e) => {
-                // Handle Enter key to apply zoom
-                if (e.key === 'Enter') {
-                  e.currentTarget.blur();
-                }
-              }}
-              onWheel={(e) => {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? -1 : 1;
-                const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + delta));
-                handleZoomChange(newZoom);
-                setZoomInputValue(newZoom.toString());
-              }}
-              min={ZOOM_MIN}
-              max={ZOOM_MAX}
-              step={1}
-              className="w-20 h-8 text-center"
-              placeholder="100"
-            />
-            <span className="text-sm text-muted-foreground">%</span>
+      <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border border-border shadow-sm">
+        <div className="flex items-center gap-4">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">Zoom:</span>
+            
+            {/* Main Controls Group */}
+            <div className="flex items-center gap-1 p-1 bg-muted/50 border border-border rounded-md">
+              {/* Zoom Out */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomOut}
+                disabled={tableZoom <= ZOOM_MIN}
+                className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+                title="Zoom Out (Ctrl/Cmd + -)"
+              >
+                <Icon icon="ph:minus" className="h-4 w-4" />
+              </Button>
+              
+              {/* Zoom Input */}
+              <div className="flex items-center gap-1 px-2">
+                <Input
+                  type="number"
+                  value={zoomInputValue}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    setZoomInputValue(inputValue);
+                    
+                    if (inputValue === '') return;
+                    
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value)) {
+                      const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                      handleZoomChange(clampedValue);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value)) {
+                      const clampedValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+                      handleZoomChange(clampedValue);
+                      setZoomInputValue(clampedValue.toString());
+                    } else {
+                      setZoomInputValue(tableZoom.toString());
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -1 : 1;
+                    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + delta));
+                    handleZoomChange(newZoom);
+                    setZoomInputValue(newZoom.toString());
+                  }}
+                  min={ZOOM_MIN}
+                  max={ZOOM_MAX}
+                  step={1}
+                  className="w-16 h-7 text-center text-sm font-mono bg-card text-foreground border border-slate-300 dark:border-slate-600 focus:border-primary"
+                  placeholder="100"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+              </div>
+              
+              {/* Zoom In */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomIn}
+                disabled={tableZoom >= ZOOM_MAX}
+                className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+                title="Zoom In (Ctrl/Cmd + +)"
+              >
+                <Icon icon="ph:plus" className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Quick:</span>
+            <div className="flex items-center gap-1">
+              {[50, 75, 100, 125, 150].map((preset) => (
+                <Button
+                  key={preset}
+                  variant={tableZoom === preset ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleZoomChange(preset)}
+                  className={cn(
+                    "h-7 px-2 text-xs border transition-colors",
+                    tableZoom === preset 
+                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                      : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                  )}
+                  title={`Set zoom to ${preset}%`}
+                >
+                  {preset}%
+                </Button>
+              ))}
+            </div>
           </div>
           
-          {/* Zoom In Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleZoomIn}
-            disabled={tableZoom >= ZOOM_MAX}
-            className="h-8 w-8 p-0"
-            title="Zoom In"
-          >
-            <Icon icon="ph:magnifying-glass-plus" className="h-4 w-4" />
-          </Button>
-          
-          {/* Reset Zoom Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleZoomReset}
-            disabled={tableZoom === 100}
-            className="h-8 px-3"
-            title="Reset to 100%"
-          >
-            <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" />
-            Reset
-          </Button>
-          
-          {/* 🚀 POPUP TABLE BUTTON */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsTablePopupOpen(true)}
-            className="h-8 px-3"
-            title="Open table in popup for focused view"
-          >
-            <Icon icon="ph:arrows-out" className="h-4 w-4 mr-1" />
-            Popup Table
-          </Button>
+          {/* Additional Controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomReset}
+              disabled={tableZoom === 100}
+              className="h-8 px-3 text-xs border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
+              title="Reset to 100% (Ctrl/Cmd + 0)"
+            >
+              <Icon icon="ph:arrow-clockwise" className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsTablePopupOpen(true)}
+              className="h-8 px-3 text-xs border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+              title="Open table in popup window"
+            >
+              <Icon icon="ph:arrows-out" className="h-3 w-3 mr-1" />
+              Popup
+            </Button>
+          </div>
         </div>
         
         {/* Zoom Info */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Icon icon="ph:info" className="h-4 w-4" />
-          <span>Current zoom: {tableZoom}%</span>
+        <div className="flex items-center gap-2 text-sm">
+          <Badge className="bg-primary/10 text-primary border-primary/20">
+            {tableZoom}%
+          </Badge>
           {tableZoom !== 100 && (
-            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+            <Badge className="text-xs border border-border">
               {tableZoom > 100 ? 'Zoomed In' : 'Zoomed Out'}
-            </span>
+            </Badge>
           )}
           
-          {/* Keyboard Shortcuts Info */}
-          <div className="hidden md:flex items-center gap-1 text-xs">
+          {/* Shortcuts - Simplified */}
+          <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
             <span>•</span>
-            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">Ctrl/Cmd +</kbd>
-            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">+</kbd>
-            <span>Zoom In</span>
+            <span>Ctrl +/-/0 for shortcuts</span>
             <span>•</span>
-            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">-</kbd>
-            <span>Zoom Out</span>
-            <span>•</span>
-            <kbd className="px-1.5 py-0.5 bg-muted rounded border text-xs">0</kbd>
-            <span>Reset</span>
-            <span>•</span>
-            <span>Mouse wheel on input for fine control</span>
+            <span>Mouse wheel on input</span>
           </div>
         </div>
       </div>
@@ -2865,9 +3008,9 @@ export default function ViewAllTutorsPage() {
               
               {/* Zoom Controls */}
               <div className="px-6 pb-4">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border shadow-sm">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-muted-foreground">Table Zoom:</span>
+                    <span className="text-sm font-medium text-foreground">Table Zoom:</span>
                     <Button onClick={handleZoomOut} disabled={tableZoom <= ZOOM_MIN} size="sm" variant="outline" className="h-8 w-8 p-0">
                       <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
                     </Button>
@@ -2907,14 +3050,16 @@ export default function ViewAllTutorsPage() {
                     <Button onClick={handleZoomReset} disabled={tableZoom === 100} size="sm" variant="outline" className="h-8 px-3">
                       <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" /> Reset
                     </Button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Current zoom: {tableZoom}%</span>
-                    <span>•</span>
-                    <span>Ctrl/Cmd + +/-/0 for shortcuts</span>
-                    <span>•</span>
-                    <span>Mouse wheel on input for fine control</span>
-                  </div>
+                          </div>
+        <div className="flex items-center gap-2 text-sm text-foreground/70">
+          <Badge className="bg-primary/10 text-primary border-primary/20">
+            Current zoom: {tableZoom}%
+          </Badge>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">Ctrl/Cmd + +/-/0 for shortcuts</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">Mouse wheel on input for fine control</span>
+        </div>
                 </div>
               </div>
             </div>
