@@ -328,6 +328,7 @@ export interface BasicTutorData {
     // High School Information
     namaSMA?: string; // High school name
     jurusanSMA?: string; // High school major
+    jurusanSMKDetail?: string; // Vocational school major detail (when jurusanSMA = 'SMK')
     tahunLulusSMA?: string; // High school graduation year
     
     // Alternative Learning (for statusAkademik = 'lainnya')
@@ -416,6 +417,11 @@ export interface BasicTutorData {
     // C. COORDINATES (Optional - for future map integration)
     titikLokasiLat?: number; // Latitude of teaching center
     titikLokasiLng?: number; // Longitude of teaching center
+    
+    // D. EMERGENCY CONTACT (PHASE 3)
+    emergencyContactName?: string; // Emergency contact name
+    emergencyContactRelationship?: string; // Relationship with emergency contact
+    emergencyContactPhone?: string; // Emergency contact phone number
   };
   
   // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)
@@ -660,6 +666,7 @@ export async function createTutorWithMigrationSupport(
           // High School Information
           namaSMA: formData.namaSMA || undefined,
           jurusanSMA: formData.jurusanSMA || undefined,
+          jurusanSMKDetail: formData.jurusanSMKDetail || undefined,
           tahunLulusSMA: formData.tahunLulusSMA || undefined,
           
           // Alternative Learning (for statusAkademik = 'lainnya')
@@ -746,6 +753,11 @@ export async function createTutorWithMigrationSupport(
           // C. COORDINATES (Optional - for future map integration)
           titikLokasiLat: formData.titikLokasiLat ? parseFloat(formData.titikLokasiLat.toString()) : undefined,
           titikLokasiLng: formData.titikLokasiLng ? parseFloat(formData.titikLokasiLng.toString()) : undefined,
+          
+          // D. EMERGENCY CONTACT (PHASE 3) - ✅ FIXED: Added missing mapping
+          emergencyContactName: formData.emergencyContactName || undefined,
+          emergencyContactRelationship: formData.emergencyContactRelationship || undefined,
+          emergencyContactPhone: formData.emergencyContactPhone || undefined,
         },
         
         // 🎨 STEP 4: Teaching Preferences & Personality (PHASE 2)

@@ -88,3 +88,4 @@ UPDATE tutor_sequences
 SET current_sequence = CEIL(current_sequence::float / 7) * 7
 WHERE country_year LIKE 'ID%';
 */
+

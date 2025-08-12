@@ -69,26 +69,23 @@ interface CompleteTutorData {
   nomorRekening: string;
   namaBank: string;
   
-  // Education
+  // Education - ✅ UPDATED: Current Education (matches Edge Function structure)
   statusAkademik: string;
-  namaUniversitas: string;
-  fakultas: string;
-  jurusan: string;
-  jurusanSMKDetail: string;
-  ipk: number;
-  tahunMasuk: string;
-  tahunLulus: string;
-  namaSMA: string;
-  jurusanSMA: string;
-  tahunLulusSMA: string;
+  namaUniversitas: string;           // Maps to current_university
+  fakultas: string;                  // Maps to current_faculty  
+  jurusan: string;                   // Maps to current_major
+  jurusanSMKDetail: string;          // Maps to vocational_school_detail
+  ipk: number;                       // Maps to current_gpa
+  tahunMasuk: string;                // Maps to entry_year
+  tahunLulus: string;                // Maps to current_graduation_year
+  namaSMA: string;                   // Maps to high_school
+  jurusanSMA: string;                // Maps to high_school_major  
+  tahunLulusSMA: string;             // Maps to high_school_graduation_year
   
   // Education Documents
   transkripNilai: string | null;
   sertifikatKeahlian: string | null;
   
-  // Education - Middle School
-  namaSMP: string;
-  tahunLulusSMP: string;
   
   // Education - S1 Background
   namaUniversitasS1: string;
@@ -108,6 +105,7 @@ interface CompleteTutorData {
   prestasiAkademik: string;
   prestasiNonAkademik: string;
   sertifikasiPelatihan: string;
+  
   
   // Programs & Subjects
   selectedPrograms: string[];
@@ -141,15 +139,14 @@ interface CompleteTutorData {
   gmeetExperience: string;
   presensiUpdateCapability: string;
   
-  // Personality
-  tutorPersonalityType: string;
-  communicationStyle: string;
+  // Personality - ✅ FIXED: Should be arrays
+  tutorPersonalityType: string[];
+  communicationStyle: string[];
   teachingPatienceLevel: string;
   studentMotivationAbility: string;
   scheduleFlexibilityLevel: string;
   
   // Emergency Contact
-  whatsappNumber: string;
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
@@ -160,6 +157,12 @@ interface CompleteTutorData {
   dokumenIdentitas: string | null;
   dokumenPendidikan: string | null;
   dokumenSertifikat: string | null;
+  
+  // ✅ ADDED: Document Preview Fields (from Form Add)
+  fotoProfilPreview: string | null;
+  dokumenIdentitasPreview: string | null;
+  dokumenPendidikanPreview: string | null;
+  dokumenSertifikatPreview: string | null;
   
   // Document Verification
   status_verifikasi_identitas: string;
@@ -182,11 +185,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
   try {
     console.log('🔍 Fetching all tutor data from Supabase with server-side filters...');
 
-    // First get all roles that match tutor/educator
+    // First get all roles that match tutor/educator (case insensitive)
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('id')
-      .or('role_name.ilike.%tutor%,role_name.ilike.%educator%');
+      .or('role_name.ilike.%tutor%,role_name.ilike.%Tutor%,role_name.ilike.%educator%,role_name.ilike.%Educator%');
     
     if (roleError) {
       console.error('❌ Error fetching roles:', roleError);
@@ -565,9 +568,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         motivasiMenjadiTutor: profile?.motivation_as_tutor || '',
         socialMedia1: profile?.social_media_1 || '',
         socialMedia2: profile?.social_media_2 || '',
-        languagesMastered: profile?.languages_mastered || [],
-        preferredLanguage: profile?.preferred_language || '',
-        whatsappNumber: profile?.whatsapp_number || profile?.mobile_phone || '',
         
         // Address - Domisili (with lookups to master tables)
         provinsiDomisili: provincesMap.get(domicileAddr.province_id) || domicileAddr.province_id || '',
@@ -591,36 +591,35 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         nomorRekening: banking?.account_number || '',
         namaBank: banking?.bank_name || '',
         
-        // Education - use user_profiles as fallback if tutor_details is empty
-        statusAkademik: tutorDetails?.academic_status || profile?.education_level || '',
-        namaUniversitas: tutorDetails?.university_s1_name || profile?.university || '',
-        fakultas: tutorDetails?.faculty_s1 || tutorDetails?.faculty || '',
-        jurusan: tutorDetails?.major_s1 || profile?.major || '',
-        jurusanSMKDetail: tutorDetails?.vocational_school_detail || extractFromEducationHistory(tutorDetails?.education_history, 'smk', 'major_detail') || '',
-        ipk: profile?.gpa || 0,
-        tahunMasuk: tutorDetails?.entry_year?.toString() || '',
-        tahunLulus: profile?.graduation_year?.toString() || '',
-        namaSMA: tutorDetails?.high_school || '',
-        jurusanSMA: extractFromEducationHistory(tutorDetails?.education_history, 'sma', 'major') || '',
-        tahunLulusSMA: tutorDetails?.high_school_graduation_year?.toString() || '',
+        // ✅ FIXED: Education - Current Education (matches Edge Function corrected structure)
+        statusAkademik: tutorDetails?.academic_status || '',
+        namaUniversitas: tutorDetails?.current_university || '',        // ✅ FIXED: Use current_university
+        fakultas: tutorDetails?.current_faculty || '',                  // ✅ FIXED: Use current_faculty
+        jurusan: tutorDetails?.current_major || '',                     // ✅ FIXED: Use current_major
+        jurusanSMKDetail: tutorDetails?.vocational_school_detail || '', // ✅ ALREADY CORRECT
+        ipk: tutorDetails?.current_gpa || 0,                           // ✅ FIXED: Use current_gpa
+        tahunMasuk: tutorDetails?.entry_year?.toString() || '',        // ✅ ALREADY CORRECT
+        tahunLulus: tutorDetails?.current_graduation_year?.toString() || '', // ✅ FIXED: Use current_graduation_year
+        namaSMA: tutorDetails?.high_school || '',                      // ✅ ALREADY CORRECT
+        jurusanSMA: tutorDetails?.high_school_major || '',             // ✅ FIXED: Use high_school_major
+        tahunLulusSMA: tutorDetails?.high_school_graduation_year?.toString() || '', // ✅ ALREADY CORRECT
         
         // Education Documents
         transkripNilai: documents.transcript_document?.file_url || null,
         sertifikatKeahlian: documents.skill_certificate?.file_url || null,
         
         // Education - Middle School
-        namaSMP: extractFromEducationHistory(tutorDetails?.education_history, 'smp', 'institution_name') || '',
-        tahunLulusSMP: extractFromEducationHistory(tutorDetails?.education_history, 'smp', 'graduation_year')?.toString() || '',
+
         
-        // Education - S1 Background (for S2 students)
-        namaUniversitasS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'institution_name') || '',
-        fakultasS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'faculty') || '',
-        jurusanS1: extractFromEducationHistory(tutorDetails?.education_history, 'university_s1', 'major') || '',
+        // ✅ FIXED: Education - S1 Background (for S2/S3 students - use dedicated S1 columns)
+        namaUniversitasS1: tutorDetails?.university_s1_name || '',  // ✅ FIXED: Use dedicated S1 column
+        fakultasS1: tutorDetails?.faculty_s1 || '',                // ✅ FIXED: Use dedicated S1 column  
+        jurusanS1: tutorDetails?.major_s1 || '',                   // ✅ FIXED: Use dedicated S1 column
         
-        // Education - Alternative Learning
-        namaInstitusi: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'institution_name') || '',
-        bidangKeahlian: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'field_of_expertise') || '',
-        pengalamanBelajar: extractFromEducationHistory(tutorDetails?.education_history, 'alternative', 'learning_experience') || '',
+        // ✅ FIXED: Education - Alternative Learning (use dedicated columns)
+        namaInstitusi: tutorDetails?.alternative_institution_name || '',   // ✅ FIXED: Use dedicated alternative column
+        bidangKeahlian: tutorDetails?.expertise_field || '',               // ✅ FIXED: Use dedicated alternative column
+        pengalamanBelajar: tutorDetails?.learning_experience || '',        // ✅ FIXED: Use dedicated alternative column
         
         // Professional Profile
         keahlianSpesialisasi: tutorDetails?.special_skills || '',
@@ -630,6 +629,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         prestasiAkademik: tutorDetails?.academic_achievements || '',
         prestasiNonAkademik: tutorDetails?.non_academic_achievements || '',
         sertifikasiPelatihan: tutorDetails?.certifications_training || '',
+        
+
         
         // Programs & Subjects (with lookups to program names + additional subjects)
         selectedPrograms: (() => {
@@ -647,7 +648,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           });
           return allPrograms;
         })(),
-        mataPelajaranLainnya: '', // This would be in notes or additional field
+        mataPelajaranLainnya: tutorDetails?.additional_subjects_description || '', // ✅ NEW FIELD: Simple descriptive text field for additional subjects
         
         // Availability - Map from database values to display values
         statusMenerimaSiswa: (() => {
@@ -728,9 +729,35 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           has_preferences: !!preferences
         },
         
-        // Personality
-        tutorPersonalityType: personality?.personality_type || '',
-        communicationStyle: personality?.communication_style || '',
+        // Personality - ✅ FIXED: Handle arrays properly
+        tutorPersonalityType: (() => {
+          const personalityType = personality?.personality_type;
+          if (Array.isArray(personalityType)) {
+            return personalityType;
+          } else if (typeof personalityType === 'string' && personalityType) {
+            // Handle string data from database (comma-separated or JSON)
+            try {
+              return personalityType.startsWith('[') ? JSON.parse(personalityType) : personalityType.split(',').map(s => s.trim());
+            } catch {
+              return [personalityType];
+            }
+          }
+          return [];
+        })(),
+        communicationStyle: (() => {
+          const commStyle = personality?.communication_style;
+          if (Array.isArray(commStyle)) {
+            return commStyle;
+          } else if (typeof commStyle === 'string' && commStyle) {
+            // Handle string data from database (comma-separated or JSON)
+            try {
+              return commStyle.startsWith('[') ? JSON.parse(commStyle) : commStyle.split(',').map(s => s.trim());
+            } catch {
+              return [commStyle];
+            }
+          }
+          return [];
+        })(),
         teachingPatienceLevel: personality?.teaching_patience_level?.toString() || '',
         studentMotivationAbility: personality?.student_motivation_ability?.toString() || '',
         scheduleFlexibilityLevel: personality?.schedule_flexibility_level?.toString() || '',
@@ -746,6 +773,12 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         dokumenIdentitas: documents.identity_document?.file_url || null,
         dokumenPendidikan: documents.education_document?.file_url || null,
         dokumenSertifikat: documents.certificate_document?.file_url || null,
+        
+        // ✅ ADDED: Document Preview Fields (currently null - could be implemented later)
+        fotoProfilPreview: null, // Preview fields are for form UI, not stored in database
+        dokumenIdentitasPreview: null,
+        dokumenPendidikanPreview: null,
+        dokumenSertifikatPreview: null,
         
         // Document Verification
         status_verifikasi_identitas: management?.identity_verification_status || '',
