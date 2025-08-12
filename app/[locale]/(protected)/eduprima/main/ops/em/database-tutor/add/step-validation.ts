@@ -1,25 +1,38 @@
 import { FormStep, TutorFormData } from './form-config';
 
-// Step validation configuration
+// Step validation configuration - Updated to match actual form structure
 export const stepValidationRules = {
   'identity-basic': {
     required: ['namaLengkap', 'tanggalLahir', 'jenisKelamin', 'email', 'noHp1', 'provinsiDomisili', 'kotaKabupatenDomisili', 'alamatLengkapDomisili', 'namaNasabah', 'nomorRekening', 'namaBank'],
     description: 'Data pribadi, alamat, dan informasi perbankan'
   },
   'education-experience': {
-    required: ['statusAkademik', 'namaUniversitasS1', 'fakultasS1', 'jurusanS1', 'tahunMasuk', 'ipk'],
+    // ✅ FIXED: Only core required fields that are always required
+    required: ['statusAkademik', 'pengalamanMengajar'],
+    // Additional conditional required fields are handled by conditional logic in hasEmptyFields
+    conditionalRequired: {
+      // For university/college students and graduates
+      university: ['namaUniversitas', 'jurusan', 'ipk', 'tahunMasuk', 'transkripNilai', 'namaSMA', 'jurusanSMA', 'tahunLulusSMA'],
+      // Additional for S2/S3
+      s2_s3: ['namaUniversitasS1', 'jurusanS1'],
+      // For SMK graduates
+      smk: ['jurusanSMKDetail'],
+      // For 'lainnya' category
+      alternative: ['namaInstitusi', 'bidangKeahlian', 'pengalamanBelajar']
+    },
     description: 'Latar belakang pendidikan, pengalaman, dan profil mengajar'
   },
-  'subjects': {
+  'subjects-areas': {
     required: ['selectedPrograms'],
     description: 'Pilihan mata pelajaran yang dapat diajarkan'
   },
   'availability-location': {
-    required: ['statusMenerimaSiswa', 'hourly_rate', 'available_schedule', 'teaching_methods'],
+    required: ['statusMenerimaSiswa', 'available_schedule', 'teaching_methods', 'emergencyContactName', 'emergencyContactRelationship', 'emergencyContactPhone'],
     description: 'Ketersediaan waktu dan jangkauan wilayah mengajar'
   },
   'documents': {
-    required: ['fotoProfil', 'dokumenIdentitas', 'dokumenPendidikan'],
+    required: ['fotoProfil'],
+    // dokumenIdentitas, dokumenPendidikan are optional in the current form
     description: 'Dokumen pendukung dan verifikasi'
   }
 };
@@ -65,20 +78,90 @@ export const canProceedToNextStep = (step: FormStep, formData: Partial<TutorForm
   return errors.length === 0;
 };
 
-// Helper function to check if any field in step is empty (not just required fields)
+// Helper function to check if any REQUIRED field in step is empty (with conditional logic)
 const hasEmptyFields = (step: FormStep, formData: Partial<TutorFormData>): boolean => {
-  // Get all visible fields in the step (excluding disabled/section dividers)
-  const visibleFields = step.fields.filter(field => 
-    field.type !== 'text' && 
-    !field.disabled && 
-    !field.className?.includes('section-divider')
-  );
+  // Get step validation rules for required fields
+  const stepRules = stepValidationRules[step.id as keyof typeof stepValidationRules];
+  if (!stepRules) {
+    // If no validation rules, fall back to checking all visible fields
+    const visibleFields = step.fields.filter(field => 
+      field.type !== 'text' && 
+      !field.disabled && 
+      !field.className?.includes('section-divider')
+    );
+    
+    return visibleFields.some(field => {
+      // Check conditional logic - if field is not visible, don't count as empty
+      if (field.conditional && !field.conditional(formData)) {
+        return false;
+      }
+      
+      const value = formData[field.name as keyof TutorFormData];
+      return isEmpty(value);
+    });
+  }
   
-  // Check if any visible field is empty
-  return visibleFields.some(field => {
-    const value = formData[field.name as keyof TutorFormData];
+  // 🎯 STEP 1: Check core required fields
+  const coreEmptyFields = stepRules.required.filter(fieldName => {
+    // Find the field definition to check conditional logic
+    const fieldDef = step.fields.find(f => f.name === fieldName);
+    
+    // If field has conditional logic and condition is not met, field is not required right now
+    if (fieldDef?.conditional && !fieldDef.conditional(formData)) {
+      return false; // Field not currently visible, so not empty
+    }
+    
+    // Check if the required field is empty
+    const value = formData[fieldName as keyof TutorFormData];
     return isEmpty(value);
   });
+  
+  // 🎯 STEP 2: Check conditional required fields for education-experience step
+  let conditionalEmptyFields: string[] = [];
+  
+  if (step.id === 'education-experience' && 'conditionalRequired' in stepRules) {
+    const conditionalRules = (stepRules as any).conditionalRequired;
+    const statusAkademik = formData.statusAkademik;
+    
+    // Determine which conditional fields are required based on statusAkademik
+    let requiredConditionalFields: string[] = [];
+    
+    if (['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(statusAkademik || '')) {
+      // University/college fields
+      requiredConditionalFields = [...conditionalRules.university];
+      
+      // Add S2/S3 specific fields
+      if (['mahasiswa_s2', 'lulusan_s2'].includes(statusAkademik || '')) {
+        requiredConditionalFields = [...requiredConditionalFields, ...conditionalRules.s2_s3];
+      }
+    } else if (statusAkademik === 'lainnya') {
+      // Alternative learning fields
+      requiredConditionalFields = [...conditionalRules.alternative];
+    }
+    
+    // Add SMK specific field if applicable
+    if (formData.jurusanSMA === 'SMK') {
+      requiredConditionalFields = [...requiredConditionalFields, ...conditionalRules.smk];
+    }
+    
+    // Check conditional required fields
+    conditionalEmptyFields = requiredConditionalFields.filter(fieldName => {
+      // Find the field definition to check conditional logic
+      const fieldDef = step.fields.find(f => f.name === fieldName);
+      
+      // If field has conditional logic and condition is not met, field is not required right now
+      if (fieldDef?.conditional && !fieldDef.conditional(formData)) {
+        return false; // Field not currently visible, so not empty
+      }
+      
+      // Check if the conditional required field is empty
+      const value = formData[fieldName as keyof TutorFormData];
+      return isEmpty(value);
+    });
+  }
+  
+  // Return true if any core or conditional required field is empty
+  return coreEmptyFields.length > 0 || conditionalEmptyFields.length > 0;
 };
 
 export const getStepStatus = (stepIndex: number, currentStep: number, formData: Partial<TutorFormData>, steps: FormStep[]): StepStatus => {
@@ -88,9 +171,81 @@ export const getStepStatus = (stepIndex: number, currentStep: number, formData: 
     return 'active';
   }
   
-  // For all non-active steps, check if they have any empty fields
+  // 🔍 DEBUG: Comprehensive step analysis
+  const stepRules = stepValidationRules[step.id as keyof typeof stepValidationRules];
+  
+  // Get all fields in step
+  const allFields = step.fields.filter(field => 
+    field.type !== 'text' && 
+    !field.disabled && 
+    !field.className?.includes('section-divider')
+  );
+  
+  // Get visible fields (considering conditional logic)
+  const visibleFields = allFields.filter(field => {
+    if (!field.conditional) return true;
+    return field.conditional(formData);
+  });
+  
+  // Get required fields that are currently visible
+  const visibleRequiredFields = stepRules?.required.filter(fieldName => {
+    const fieldDef = step.fields.find(f => f.name === fieldName);
+    if (!fieldDef?.conditional) return true;
+    return fieldDef.conditional(formData);
+  }) || [];
+  
+  // Get empty fields among visible required fields
+  const emptyRequiredFields = visibleRequiredFields.filter(fieldName => {
+    const value = formData[fieldName as keyof TutorFormData];
+    return isEmpty(value);
+  });
+  
+  // Get empty fields among all visible fields
+  const emptyVisibleFields = visibleFields.filter(field => {
+    const value = formData[field.name as keyof TutorFormData];
+    return isEmpty(value);
+  });
+  
+  // 🔍 DEBUG: Log detailed analysis for education-experience step
+  if (step.id === 'education-experience') {
+    console.log(`🔍 [DEBUG] Step "${step.title}" detailed analysis:`, {
+      stepId: step.id,
+      statusAkademik: formData.statusAkademik,
+      totalFields: allFields.length,
+      visibleFields: visibleFields.length,
+      visibleRequiredFields: visibleRequiredFields.length,
+      emptyRequiredFields: emptyRequiredFields.length,
+      emptyVisibleFields: emptyVisibleFields.length,
+      requiredFieldsList: stepRules?.required || [],
+      visibleRequiredFieldsList: visibleRequiredFields,
+      emptyRequiredFieldsList: emptyRequiredFields,
+      emptyVisibleFieldsList: emptyVisibleFields.map(f => f.name),
+      sampleFieldValues: {
+        statusAkademik: formData.statusAkademik,
+        namaUniversitas: formData.namaUniversitas ? 'Filled' : 'Empty',
+        fakultas: formData.fakultas ? 'Filled' : 'Empty',
+        jurusan: formData.jurusan ? 'Filled' : 'Empty',
+        ipk: formData.ipk ? 'Filled' : 'Empty',
+        pengalamanMengajar: formData.pengalamanMengajar ? 'Filled' : 'Empty',
+        keahlianSpesialisasi: formData.keahlianSpesialisasi ? 'Filled' : 'Empty'
+      }
+    });
+  }
+  
+  // For all non-active steps, check if they have any empty REQUIRED fields
   const hasEmpty = hasEmptyFields(step, formData);
-  return hasEmpty ? 'warning' : 'success';
+  const stepStatus = hasEmpty ? 'warning' : 'success';
+  
+  // 🔍 DEBUG: Log final status for education-experience
+  if (step.id === 'education-experience') {
+    console.log(`🔍 [DEBUG] Step "${step.title}" final status:`, {
+      hasEmptyRequiredFields: hasEmpty,
+      finalStatus: stepStatus,
+      reason: hasEmpty ? 'Has empty required fields' : 'All required fields filled'
+    });
+  }
+  
+  return stepStatus;
 };
 
 export const canAccessStep = (stepIndex: number, currentStep: number, formData: Partial<TutorFormData>, steps: FormStep[]): boolean => {

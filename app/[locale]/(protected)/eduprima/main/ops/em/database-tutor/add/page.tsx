@@ -1158,7 +1158,7 @@ export default function AddTutorPage() {
         console.log('🔍 [DEBUG] Final Success Notification Data:', insertedData);
 
         // 🚀 FIXED: Show success notification using REAL data from Edge Function
-        showSuccess('🎉 Data Tutor Berhasil Disimpan via Edge Function!', {
+        showSuccess('🚀 Data Tutor Berhasil Disimpan', {
           copyableData: [
             { label: 'TRN', value: newTutorUser?.trn || 'Auto-generated kelipatan 7' },
             { label: 'Email', value: newTutorUser?.email || formData.email },
@@ -1166,7 +1166,7 @@ export default function AddTutorPage() {
             { label: 'User ID', value: newTutorUser?.id || userId },
             { label: 'Tutor ID', value: newTutorUser?.tutor_id || 'Created by Edge Function' }
           ],
-          message: '🚀 EDGE FUNCTION SUCCESS - TRN dengan kelipatan 7!\n⚠️ Catat password ini untuk diberikan kepada tutor!',
+          message: '⚠️ Catat password ini untuk diberikan kepada tutor!',
           actions: [
             { 
               label: 'Kembali ke Daftar', 
