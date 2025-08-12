@@ -1,0 +1,14 @@
+                    <div className="flex-shrink-0">
+                      <Icon 
+                        icon={step.icon}
+                        className={cn(
+                          "h-6 w-6",
+                          {
+                            "text-primary-foreground": stepStatus === 'active',
+                            "text-emerald-600 dark:text-emerald-400": stepStatus === 'success',
+                            "text-amber-600 dark:text-amber-400": stepStatus === 'warning',
+                            "text-slate-500 dark:text-slate-400": stepStatus === 'pending',
+                          }
+                        )} 
+                      />
+                    </div>

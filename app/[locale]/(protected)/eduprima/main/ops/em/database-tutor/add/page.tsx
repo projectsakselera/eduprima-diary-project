@@ -1668,12 +1668,7 @@ export default function AddTutorPage() {
                   >
                     <div className="flex-shrink-0">
                       <Icon 
-                        icon={
-                          stepStatus === 'success' ? "ph:check-circle-fill" : 
-                          stepStatus === 'warning' ? "ph:warning-circle-fill" :
-                          stepStatus === 'active' ? "ph:circle-fill" :
-                          step.icon
-                        } 
+                        icon={step.icon} 
                         className={cn(
                           "h-6 w-6",
                           {
