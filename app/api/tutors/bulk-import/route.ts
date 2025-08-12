@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
         const { data: tutorRole, error: roleError } = await supabase
           .from('user_roles')
           .select('id')
-          .or('role_name.ilike.%tutor%,role_name.ilike.%educator%,role_code.eq.database_tutor_manager')
+          .or('role_name.ilike.%tutor%,role_name.ilike.%Tutor%,role_name.ilike.%educator%,role_name.ilike.%Educator%,role_code.eq.database_tutor_manager')
           .limit(1)
           .single();
 
@@ -430,15 +430,11 @@ export async function POST(request: NextRequest) {
           const domicileAddressData = {
             user_id: userId,
             address_type: 'domicile',
-            address_label: 'Alamat Domisili',
             street_address: record['Alamat Lengkap Domisili'] || null,
             postal_code: record['Kode Pos Domisili'] || null,
             // Use resolved IDs from fuzzy matching
             province_id: resolvedProvinceId,
             city_id: resolvedCityId,
-            // Keep original names as fallback
-            province_name: resolvedProvinceName || record['Provinsi Domisili'],
-            city_name: resolvedCityName || record['Kota/Kabupaten Domisili'],
             district_name: record['Kecamatan Domisili'] || null,
             village_name: record['Kelurahan Domisili'] || null,
             is_primary: true,
@@ -463,7 +459,6 @@ export async function POST(request: NextRequest) {
           const ktpAddressData = {
             user_id: userId,
             address_type: 'ktp',
-            address_label: 'Alamat KTP',
             street_address: record['Alamat Lengkap KTP'] || null,
             postal_code: record['Kode Pos KTP'] || null,
             is_primary: false,

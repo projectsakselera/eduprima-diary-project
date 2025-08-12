@@ -1,134 +1,134 @@
 [
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_additional_subjects",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_availability_config",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_banking_info",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_personality_traits",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_program_mappings",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "tutor_details",
-      "child_table": "tutor_teaching_preferences",
-      "delete_rule": "CASCADE",
-      "relationship_count": 2
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "document_storage",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "document_storage",
-      "delete_rule": "NO ACTION",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "document_storage",
-      "delete_rule": "SET NULL",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_additional_subjects",
-      "delete_rule": "NO ACTION",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_additional_subjects",
-      "delete_rule": "SET NULL",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_details",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_management",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_management",
-      "delete_rule": "NO ACTION",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_management",
-      "delete_rule": "SET NULL",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_program_mappings",
-      "delete_rule": "NO ACTION",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "tutor_program_mappings",
-      "delete_rule": "SET NULL",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "user_addresses",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "user_addresses",
-      "delete_rule": "NO ACTION",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "user_addresses",
-      "delete_rule": "SET NULL",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "user_demographics",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    },
-    {
-      "parent_table": "users_universal",
-      "child_table": "user_profiles",
-      "delete_rule": "CASCADE",
-      "relationship_count": 1
-    }
-  ]
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_additional_subjects",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_availability_config",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_banking_info",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_personality_traits",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_program_mappings",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "tutor_details",
+    "child_table": "tutor_teaching_preferences",
+    "delete_rule": "CASCADE",
+    "relationship_count": 2
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "document_storage",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "document_storage",
+    "delete_rule": "NO ACTION",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "document_storage",
+    "delete_rule": "SET NULL",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_additional_subjects",
+    "delete_rule": "NO ACTION",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_additional_subjects",
+    "delete_rule": "SET NULL",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_details",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_management",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_management",
+    "delete_rule": "NO ACTION",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_management",
+    "delete_rule": "SET NULL",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_program_mappings",
+    "delete_rule": "NO ACTION",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "tutor_program_mappings",
+    "delete_rule": "SET NULL",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "user_addresses",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "user_addresses",
+    "delete_rule": "NO ACTION",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "user_addresses",
+    "delete_rule": "SET NULL",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "user_demographics",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  },
+  {
+    "parent_table": "users_universal",
+    "child_table": "user_profiles",
+    "delete_rule": "CASCADE",
+    "relationship_count": 1
+  }
+]

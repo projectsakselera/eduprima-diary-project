@@ -1774,7 +1774,7 @@ export const tutorFormConfig: FormConfig = {
           type: 'file',
           required: true,
           accept: 'image/*,.pdf',
-          helperText: 'Unggah transkrip nilai terakhir Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          helperText: 'Unggah transkrip nilai terakhir (bukan ijazah). Ijazah akan diupload di langkah dokumentasi nanti. Format: PDF, JPG, PNG. Maksimal 5MB.',
           conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik),
           icon: 'ph:file-text',
           size: 'lg'
@@ -1892,7 +1892,7 @@ export const tutorFormConfig: FormConfig = {
           label: 'Sertifikat / Portofolio Keahlian',
           type: 'file',
           accept: 'image/*,.pdf',
-          helperText: 'Unggah sertifikat, portofolio, atau dokumen yang menunjukkan keahlian Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          helperText: 'Unggah sertifikat keahlian utama yang menunjukkan kompetensi Anda. Format: PDF, JPG, PNG. Maksimal 5MB.',
           conditional: (data) => data.statusAkademik === 'lainnya',
           icon: 'ph:certificate',
           size: 'lg'
@@ -2582,19 +2582,21 @@ export const tutorFormConfig: FormConfig = {
         },
         {
           name: 'dokumenPendidikan',
-          label: 'Dokumen Pendidikan (Ijazah/Transkrip)',
+          label: 'Ijazah Terakhir',
           type: 'file',
           accept: 'image/*,.pdf',
-          helperText: 'Unggah foto/scan ijazah atau transkrip nilai terakhir.',
+          helperText: 'Unggah ijazah terakhir (bukan transkrip - sudah diupload di Step 2). Khusus jalur pendidikan formal.',
+          conditional: (data) => data.statusAkademik !== 'lainnya', // ✅ FIXED: Hide for alternative learning
           icon: 'ph:certificate',
           size: 'lg'
         },
         {
           name: 'dokumenSertifikat',
-          label: 'Sertifikat/Dokumen Pendukung Lain',
+          label: 'Sertifikat Tambahan (Opsional)',
           type: 'file',
           accept: 'image/*,.pdf',
-          helperText: 'Opsional: Sertifikat pelatihan, kursus, atau dokumen pendukung lainnya.',
+          helperText: 'Opsional: Sertifikat pelatihan, kursus, atau dokumen pendukung tambahan (selain yang sudah diupload sebelumnya).',
+          conditional: (data) => data.statusAkademik !== 'lainnya', // ✅ FIXED: Hide for alternative learning
           icon: 'ph:medal',
           size: 'lg'
         },

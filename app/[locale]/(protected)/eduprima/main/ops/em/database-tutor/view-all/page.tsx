@@ -414,9 +414,6 @@ interface TutorSpreadsheetData {
   motivasiMenjadiTutor: string;
   socialMedia1: string;
   socialMedia2: string;
-  languagesMastered: string[];
-  preferredLanguage: string;
-  whatsappNumber: string;
 
   
   // Address - Domisili
@@ -441,18 +438,18 @@ interface TutorSpreadsheetData {
   nomorRekening: string;
   namaBank: string;
   
-  // Education
-  statusAkademik: string;
-  namaUniversitas: string;
-  fakultas: string;
-  jurusan: string;
-  jurusanSMKDetail: string;
-  ipk: number;
-  tahunMasuk: string;
-  tahunLulus: string;
-  namaSMA: string;
-  jurusanSMA: string;
-  tahunLulusSMA: string;
+  // ✅ UPDATED: Education - Current Education (matches corrected Edge Function structure)
+  statusAkademik: string;           // academic_status
+  namaUniversitas: string;          // current_university (✅ FIXED from S1 fields)
+  fakultas: string;                 // current_faculty (✅ FIXED from S1 fields)
+  jurusan: string;                  // current_major (✅ FIXED from S1 fields)
+  jurusanSMKDetail: string;         // vocational_school_detail (✅ FIXED mapping added)
+  ipk: number;                      // current_gpa (✅ FIXED from user_profiles)
+  tahunMasuk: string;               // entry_year
+  tahunLulus: string;               // current_graduation_year (✅ FIXED from user_profiles)
+  namaSMA: string;                  // high_school
+  jurusanSMA: string;               // high_school_major
+  tahunLulusSMA: string;            // high_school_graduation_year
   
   // Professional Profile
   keahlianSpesialisasi: string;
@@ -463,9 +460,11 @@ interface TutorSpreadsheetData {
   prestasiNonAkademik: string;
   sertifikasiPelatihan: string;
   
-  // Programs & Subjects
-  selectedPrograms: string[];
-  mataPelajaranLainnya: string;
+
+  
+  // ✅ UPDATED: Programs & Subjects
+  selectedPrograms: string[];       // Program mappings + additional subjects combined
+  mataPelajaranLainnya: string;     // ✅ FIXED: Now shows data from tutor_additional_subjects
   
   // Availability
   statusMenerimaSiswa: string;
@@ -506,19 +505,14 @@ interface TutorSpreadsheetData {
   teaching_center_lng: number | null;
   
   // Extended Professional Info
-  other_experience: string | null;
-  other_skills: string | null;
-  reason_for_teaching: string | null;
   
-  // Extended Education Fields
-  namaUniversitasS1: string | null; // For S2 students
-  fakultasS1: string | null;
-  jurusanS1: string | null;
-  namaInstitusi: string | null; // For alternative background
-  bidangKeahlian: string | null;
-  pengalamanBelajar: string | null;
-  namaSMP: string | null; // Middle school
-  tahunLulusSMP: string | null;
+  // ✅ UPDATED: S1 Education Fields (for S2/S3 students - now uses dedicated S1 columns)
+  namaUniversitasS1: string | null; // university_s1_name (✅ FIXED mapping)
+  fakultasS1: string | null;        // faculty_s1 (✅ FIXED mapping)
+  jurusanS1: string | null;         // major_s1 (✅ FIXED mapping)
+  namaInstitusi: string | null;     // alternative_institution_name (✅ FIXED to use dedicated column)
+  bidangKeahlian: string | null;    // expertise_field (✅ FIXED to use dedicated column)
+  pengalamanBelajar: string | null; // learning_experience (✅ FIXED to use dedicated column)
   
   // Form Agreement & Management
   form_agreement_check: boolean;
@@ -545,6 +539,12 @@ interface TutorSpreadsheetData {
   dokumenSertifikat: string | null;
   transkripNilai: string | null;
   sertifikatKeahlian: string | null;
+  
+  // ✅ ADDED: Document Preview Fields (missing from Form Add)
+  fotoProfilPreview: string | null;
+  dokumenIdentitasPreview: string | null;
+  dokumenPendidikanPreview: string | null;
+  dokumenSertifikatPreview: string | null;
   
   // Document Verification
   status_verifikasi_identitas: string;
@@ -577,11 +577,11 @@ interface Column {
 const SPREADSHEET_COLUMNS: Column[] = [
   // System & Management (Status & Kontrol Sistem)
   { key: 'id', label: 'ID', width: 100, type: 'text', category: 'System & Management', sticky: true },
-  { key: 'trn', label: 'TRN', width: 120, type: 'text', category: 'System & Management', sticky: true, frozen: true },
+  { key: 'trn', label: 'TRN (Tutor Registration Number)', width: 120, type: 'text', category: 'System & Management', sticky: true, frozen: true },
   { key: 'status_tutor', label: 'Status Tutor', width: 140, type: 'select', category: 'System & Management' },
   { key: 'approval_level', label: 'Level Approval', width: 130, type: 'select', category: 'System & Management' },
   { key: 'staff_notes', label: 'Catatan Staff', width: 200, type: 'text', category: 'System & Management' },
-  { key: 'additional_screening', label: 'Screening Tambahan', width: 200, type: 'array', category: 'System & Management' },
+  { key: 'additional_screening', label: 'Additional Screening Checklist', width: 200, type: 'array', category: 'System & Management' },
   { key: 'recruitment_stage_history', label: 'Riwayat Stage', width: 250, type: 'text', category: 'System & Management' },
   { key: 'last_status_change', label: 'Perubahan Status Terakhir', width: 180, type: 'date', category: 'System & Management' },
   { key: 'status_changed_by', label: 'Diubah Oleh', width: 150, type: 'text', category: 'System & Management' },
@@ -596,40 +596,37 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'tanggalLahir', label: 'Tanggal Lahir', width: 130, type: 'date', category: 'Identitas Dasar' },
   { key: 'jenisKelamin', label: 'Jenis Kelamin', width: 120, type: 'select', category: 'Identitas Dasar' },
   { key: 'agama', label: 'Agama', width: 120, type: 'select', category: 'Identitas Dasar' },
-  { key: 'email', label: 'Email', width: 250, type: 'email', category: 'Identitas Dasar', required: true },
-  { key: 'noHp1', label: 'No HP 1', width: 140, type: 'phone', category: 'Identitas Dasar' },
-  { key: 'noHp2', label: 'No HP 2', width: 140, type: 'phone', category: 'Identitas Dasar' },
+  { key: 'email', label: 'Email Aktif', width: 250, type: 'email', category: 'Identitas Dasar', required: true },
+  { key: 'noHp1', label: 'No. HP (WhatsApp)', width: 140, type: 'phone', category: 'Identitas Dasar' },
+  { key: 'noHp2', label: 'No. HP Alternatif (Opsional)', width: 140, type: 'phone', category: 'Identitas Dasar' },
   
   // Profil & Value Proposition
-  { key: 'headline', label: 'Headline', width: 200, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'deskripsiDiri', label: 'Deskripsi Diri', width: 300, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'motivasiMenjadiTutor', label: 'Motivasi', width: 300, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'socialMedia1', label: 'Social Media 1', width: 200, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'socialMedia2', label: 'Social Media 2', width: 200, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'languagesMastered', label: 'Bahasa Dikuasai', width: 200, type: 'array', category: 'Profil & Motivasi' },
-  { key: 'preferredLanguage', label: 'Bahasa Preferensi', width: 150, type: 'text', category: 'Profil & Motivasi' },
-  { key: 'whatsappNumber', label: 'WhatsApp', width: 140, type: 'phone', category: 'Profil & Motivasi' },
+  { key: 'headline', label: 'Headline/Tagline Tutor', width: 200, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'deskripsiDiri', label: 'Deskripsi Diri/Bio Tutor', width: 300, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'motivasiMenjadiTutor', label: 'Motivasi Menjadi Tutor', width: 300, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'socialMedia1', label: 'Link Media Sosial 1 (Opsional)', width: 200, type: 'text', category: 'Profil & Motivasi' },
+  { key: 'socialMedia2', label: 'Link Media Sosial 2 (Opsional)', width: 200, type: 'text', category: 'Profil & Motivasi' },
   
   
-  // Identitas Dasar - Alamat Domisili
-  { key: 'provinsiDomisili', label: 'Provinsi Domisili', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kotaKabupatenDomisili', label: 'Kota Domisili', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kecamatanDomisili', label: 'Kecamatan Domisili', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kelurahanDomisili', label: 'Kelurahan Domisili', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'alamatLengkapDomisili', label: 'Alamat Lengkap Domisili', width: 300, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kodePosDomisili', label: 'Kode Pos Domisili', width: 120, type: 'text', category: 'Identitas Dasar' },
+  // Identitas Dasar - Alamat Domisili (Tempat Tinggal Saat Ini)
+  { key: 'provinsiDomisili', label: 'Provinsi', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kotaKabupatenDomisili', label: 'Kota/Kabupaten', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kecamatanDomisili', label: 'Kecamatan', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kelurahanDomisili', label: 'Kelurahan/Desa', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'alamatLengkapDomisili', label: 'Alamat Lengkap/Nama Jalan', width: 300, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kodePosDomisili', label: 'Kode Pos', width: 120, type: 'text', category: 'Identitas Dasar' },
   
-  // Identitas Dasar - Alamat KTP
-  { key: 'alamatSamaDenganKTP', label: 'Alamat Sama KTP', width: 150, type: 'boolean', category: 'Identitas Dasar' },
-  { key: 'provinsiKTP', label: 'Provinsi KTP', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kotaKabupatenKTP', label: 'Kota KTP', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kecamatanKTP', label: 'Kecamatan KTP', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kelurahanKTP', label: 'Kelurahan KTP', width: 150, type: 'text', category: 'Identitas Dasar' },
-  { key: 'alamatLengkapKTP', label: 'Alamat Lengkap KTP', width: 300, type: 'text', category: 'Identitas Dasar' },
-  { key: 'kodePosKTP', label: 'Kode Pos KTP', width: 120, type: 'text', category: 'Identitas Dasar' },
+  // Identitas Dasar - Alamat Sesuai KTP/KK (Opsional)
+  { key: 'alamatSamaDenganKTP', label: 'Alamat domisili saya sama dengan alamat di KTP/KK', width: 150, type: 'boolean', category: 'Identitas Dasar' },
+  { key: 'provinsiKTP', label: 'Provinsi KTP/KK', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kotaKabupatenKTP', label: 'Kota/Kabupaten KTP/KK', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kecamatanKTP', label: 'Kecamatan KTP/KK', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kelurahanKTP', label: 'Kelurahan/Desa KTP/KK', width: 150, type: 'text', category: 'Identitas Dasar' },
+  { key: 'alamatLengkapKTP', label: 'Alamat Lengkap/Nama Jalan KTP/KK', width: 300, type: 'text', category: 'Identitas Dasar' },
+  { key: 'kodePosKTP', label: 'Kode Pos KTP/KK', width: 120, type: 'text', category: 'Identitas Dasar' },
   
   // Identitas Dasar - Informasi Perbankan
-  { key: 'namaNasabah', label: 'Nama Nasabah', width: 180, type: 'text', category: 'Identitas Dasar' },
+  { key: 'namaNasabah', label: 'Nama Pemilik Rekening', width: 180, type: 'text', category: 'Identitas Dasar' },
   { key: 'nomorRekening', label: 'Nomor Rekening', width: 160, type: 'text', category: 'Identitas Dasar' },
   { key: 'namaBank', label: 'Nama Bank', width: 160, type: 'text', category: 'Identitas Dasar' },
   { key: 'bank_id', label: 'Bank ID', width: 120, type: 'text', category: 'Identitas Dasar' },
@@ -655,8 +652,6 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'namaInstitusi', label: 'Nama Institusi (Alternative)', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'bidangKeahlian', label: 'Bidang Keahlian', width: 180, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'pengalamanBelajar', label: 'Pengalaman Belajar', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'namaSMP', label: 'Nama SMP', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'tahunLulusSMP', label: 'Tahun Lulus SMP', width: 140, type: 'text', category: 'Pendidikan & Pengalaman' },
   
   // Pendidikan & Pengalaman - Profil & Keahlian
   { key: 'keahlianSpesialisasi', label: 'Keahlian Spesialisasi', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
@@ -666,13 +661,10 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'prestasiAkademik', label: 'Prestasi Akademik', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'prestasiNonAkademik', label: 'Prestasi Non-Akademik', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'sertifikasiPelatihan', label: 'Sertifikasi Pelatihan', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'other_experience', label: 'Pengalaman Lain Relevan', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'other_skills', label: 'Keahlian Lainnya (Detail)', width: 250, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'reason_for_teaching', label: 'Motivasi Mengajar', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },
   
-  // Mata Pelajaran & Program
+  // Mata Pelajaran & Program (dari Step 3 Form Add)
   { key: 'selectedPrograms', label: 'Program Dipilih', width: 300, type: 'array', category: 'Mata Pelajaran & Program' },
-  { key: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya', width: 300, type: 'text', category: 'Mata Pelajaran & Program' },
+  { key: 'mataPelajaranLainnya', label: '📝 Mata Pelajaran Lainnya (Jika Tidak Ditemukan)', width: 300, type: 'text', category: 'Mata Pelajaran & Program' },
   
   // Ketersediaan & Preferensi Mengajar
   { key: 'statusMenerimaSiswa', label: 'Status Menerima Siswa', width: 180, type: 'select', category: 'Ketersediaan & Preferensi' },
@@ -712,10 +704,10 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'studentMotivationAbility', label: 'Kemampuan Motivasi', width: 170, type: 'text', category: 'Ketersediaan & Preferensi' },
   { key: 'scheduleFlexibilityLevel', label: 'Fleksibilitas Jadwal', width: 170, type: 'text', category: 'Ketersediaan & Preferensi' },
   
-  // Kontak Darurat & Komunikasi
-  { key: 'emergencyContactName', label: 'Kontak Darurat Nama', width: 180, type: 'text', category: 'Kontak Darurat & Komunikasi' },
-  { key: 'emergencyContactRelationship', label: 'Hubungan Kontak Darurat', width: 200, type: 'select', category: 'Kontak Darurat & Komunikasi' },
-  { key: 'emergencyContactPhone', label: 'No HP Kontak Darurat', width: 180, type: 'phone', category: 'Kontak Darurat & Komunikasi' },
+  // Kontak Darurat & Komunikasi (dari Step 4 Form Add)
+  { key: 'emergencyContactName', label: 'Nama Lengkap Kontak Darurat', width: 180, type: 'text', category: 'Ketersediaan & Preferensi' },
+  { key: 'emergencyContactRelationship', label: 'Hubungan dengan Kontak Darurat', width: 200, type: 'select', category: 'Ketersediaan & Preferensi' },
+  { key: 'emergencyContactPhone', label: 'Nomor HP Kontak Darurat', width: 180, type: 'phone', category: 'Ketersediaan & Preferensi' },
 
   // Upload Dokumen
   { key: 'dokumenIdentitas', label: 'Dokumen Identitas', width: 150, type: 'file', category: 'Upload Dokumen' },
@@ -723,6 +715,12 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'dokumenSertifikat', label: 'Dokumen Sertifikat', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'transkripNilai', label: 'Transkrip Nilai', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'sertifikatKeahlian', label: 'Sertifikat Keahlian', width: 150, type: 'file', category: 'Upload Dokumen' },
+  
+  // ✅ ADDED: Document Preview Fields (from Form Add)
+  { key: 'fotoProfilPreview', label: 'Preview Foto Profil', width: 150, type: 'file', category: 'Upload Dokumen' },
+  { key: 'dokumenIdentitasPreview', label: 'Preview Identitas', width: 150, type: 'file', category: 'Upload Dokumen' },
+  { key: 'dokumenPendidikanPreview', label: 'Preview Pendidikan', width: 150, type: 'file', category: 'Upload Dokumen' },
+  { key: 'dokumenSertifikatPreview', label: 'Preview Sertifikat', width: 150, type: 'file', category: 'Upload Dokumen' },
   
   // Upload Dokumen - Verifikasi
   { key: 'status_verifikasi_identitas', label: 'Verifikasi Identitas', width: 150, type: 'select', category: 'Upload Dokumen' },
@@ -1047,9 +1045,9 @@ export default function ViewAllTutorsPage() {
   useEffect(() => {
     const essentialColumns: (keyof TutorSpreadsheetData)[] = [
       'trn', 'fotoProfil', 'namaLengkap', 'email', 'noHp1', 'status_tutor', 
-      'statusAkademik', 'namaUniversitas', 'selectedPrograms', 
-      'hourly_rate', 'statusMenerimaSiswa', 'dokumenIdentitas', 
-      'dokumenPendidikan', 'status_verifikasi_identitas', 'created_at'
+      'statusAkademik', 'namaUniversitas', 'fakultas', 'jurusan', 'tahunMasuk', 'tahunLulus', 'ipk',
+      'selectedPrograms', 'mataPelajaranLainnya', 'hourly_rate', 'statusMenerimaSiswa', 'dokumenIdentitas', 
+      'dokumenPendidikan', 'dokumenSertifikat', 'transkripNilai', 'status_verifikasi_identitas', 'status_verifikasi_pendidikan', 'created_at'
     ];
     setVisibleColumns(new Set(essentialColumns));
 

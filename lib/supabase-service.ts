@@ -116,11 +116,11 @@ export class SupabaseTutorService {
     try {
       console.log('🔍 Fetching tutors from Supabase...');
 
-      // First, get role UUIDs for educators/tutors
+      // First, get role UUIDs for educators/tutors (case insensitive)
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('id, role_name')
-        .in('role_name', ['educator', 'tutor']);
+        .or('role_name.ilike.Tutor,role_name.ilike.tutor,role_name.ilike.educator,role_name.ilike.Educator');
 
       if (rolesError || !roles || roles.length === 0) {
         console.error('❌ Error fetching roles:', rolesError);
