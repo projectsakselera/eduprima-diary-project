@@ -628,10 +628,6 @@ interface TutorSpreadsheetData {
   status_changed_by: string | null;
   
   // Enhanced Banking Info
-  bank_id: string | null;
-  is_verified: boolean;
-  total_payouts: number;
-  payout_count: number;
 
   // Emergency Contact
   emergencyContactName: string;
@@ -644,13 +640,8 @@ interface TutorSpreadsheetData {
   dokumenPendidikan: string | null;
   dokumenSertifikat: string | null;
   transkripNilai: string | null;
-  sertifikatKeahlian: string | null;
   
   // ✅ ADDED: Document Preview Fields (missing from Form Add)
-  fotoProfilPreview: string | null;
-  dokumenIdentitasPreview: string | null;
-  dokumenPendidikanPreview: string | null;
-  dokumenSertifikatPreview: string | null;
   
   // Document Verification
   status_verifikasi_identitas: string;
@@ -735,10 +726,6 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'namaNasabah', label: 'Nama Pemilik Rekening', width: 180, type: 'text', category: 'Identitas Dasar' },
   { key: 'nomorRekening', label: 'Nomor Rekening', width: 160, type: 'text', category: 'Identitas Dasar' },
   { key: 'namaBank', label: 'Nama Bank', width: 160, type: 'text', category: 'Identitas Dasar' },
-  { key: 'bank_id', label: 'Bank ID', width: 120, type: 'text', category: 'Identitas Dasar' },
-  { key: 'is_verified', label: 'Bank Verified', width: 120, type: 'boolean', category: 'Identitas Dasar' },
-  { key: 'total_payouts', label: 'Total Payouts', width: 120, type: 'number', category: 'Identitas Dasar' },
-  { key: 'payout_count', label: 'Payout Count', width: 120, type: 'number', category: 'Identitas Dasar' },
   
   // Pendidikan & Pengalaman - Riwayat Pendidikan
   { key: 'statusAkademik', label: 'Status Akademik', width: 150, type: 'select', category: 'Pendidikan & Pengalaman' },
@@ -787,9 +774,6 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'transportasiTutor', label: 'Transportasi Tutor', width: 180, type: 'array', category: 'Ketersediaan & Preferensi' },
   { key: 'titikLokasiLat', label: 'Titik Lokasi Lat', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
   { key: 'titikLokasiLng', label: 'Titik Lokasi Lng', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
-  { key: 'transportation_method', label: 'Metode Transportasi', width: 180, type: 'text', category: 'Ketersediaan & Preferensi' },
-  { key: 'teaching_center_lat', label: 'Koordinat Lat', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
-  { key: 'teaching_center_lng', label: 'Koordinat Lng', width: 120, type: 'number', category: 'Ketersediaan & Preferensi' },
   
   // Ketersediaan & Preferensi - Gaya Mengajar
   { key: 'teachingMethods', label: 'Gaya Pembelajaran', width: 200, type: 'array', category: 'Ketersediaan & Preferensi' },
@@ -820,13 +804,8 @@ const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'dokumenPendidikan', label: 'Dokumen Pendidikan', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'dokumenSertifikat', label: 'Dokumen Sertifikat', width: 150, type: 'file', category: 'Upload Dokumen' },
   { key: 'transkripNilai', label: 'Transkrip Nilai', width: 150, type: 'file', category: 'Upload Dokumen' },
-  { key: 'sertifikatKeahlian', label: 'Sertifikat Keahlian', width: 150, type: 'file', category: 'Upload Dokumen' },
   
   // ✅ ADDED: Document Preview Fields (from Form Add)
-  { key: 'fotoProfilPreview', label: 'Preview Foto Profil', width: 150, type: 'file', category: 'Upload Dokumen' },
-  { key: 'dokumenIdentitasPreview', label: 'Preview Identitas', width: 150, type: 'file', category: 'Upload Dokumen' },
-  { key: 'dokumenPendidikanPreview', label: 'Preview Pendidikan', width: 150, type: 'file', category: 'Upload Dokumen' },
-  { key: 'dokumenSertifikatPreview', label: 'Preview Sertifikat', width: 150, type: 'file', category: 'Upload Dokumen' },
   
   // Upload Dokumen - Verifikasi
   { key: 'status_verifikasi_identitas', label: 'Verifikasi Identitas', width: 150, type: 'select', category: 'Upload Dokumen' },
