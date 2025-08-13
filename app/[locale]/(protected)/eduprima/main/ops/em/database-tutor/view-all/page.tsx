@@ -1310,10 +1310,13 @@ export default function ViewAllTutorsPage() {
       'statusAkademik', 'namaUniversitas', 'fakultas', 'jurusan',
       
       // Availability columns
-      'statusMenerimaSiswa',
+      'statusMenerimaSiswa', 'available_schedule', 'teaching_methods',
       
-      // Location columns  
+      // Location columns - Now all should work with API backend
       'provinsiDomisili', 'kotaKabupatenDomisili', 'provinsiKTP', 'kotaKabupatenKTP',
+      
+      // Programs
+      'selectedPrograms',
       
       // Verification columns
       'status_verifikasi_identitas', 'status_verifikasi_pendidikan',
@@ -1342,6 +1345,8 @@ export default function ViewAllTutorsPage() {
       const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ HTTP ${response.status} for column ${columnKey}:`, errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
@@ -1399,6 +1404,54 @@ export default function ViewAllTutorsPage() {
 
   const clearAllFilters = () => {
     setColumnFilters({});
+  };
+
+  // 🚀 DEBUG FUNCTION - Test all filters
+  const testAllFilters = async () => {
+    console.log('🧪 Testing all filterable columns...');
+    const results: Record<string, { success: boolean; error?: string; count?: number }> = {};
+    
+    for (const columnKey of Array.from(filterableColumns)) {
+      try {
+        console.log(`Testing ${columnKey}...`);
+        const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            results[columnKey] = { 
+              success: true, 
+              count: result.data?.length || 0 
+            };
+            console.log(`✅ ${columnKey}: ${result.data?.length || 0} values`);
+          } else {
+            results[columnKey] = { 
+              success: false, 
+              error: result.error 
+            };
+            console.log(`❌ ${columnKey}: ${result.error}`);
+          }
+        } else {
+          results[columnKey] = { 
+            success: false, 
+            error: `HTTP ${response.status}` 
+          };
+          console.log(`❌ ${columnKey}: HTTP ${response.status}`);
+        }
+      } catch (error) {
+        results[columnKey] = { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+        console.log(`❌ ${columnKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      // Small delay to prevent overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log('🧪 Filter test results:', results);
+    return results;
   };
 
   // Handle search input change (for debouncing)
@@ -2463,6 +2516,19 @@ export default function ViewAllTutorsPage() {
                 >
                   <Icon icon="ph:x" className="h-3 w-3 mr-1" />
                   Clear filters
+                </Button>
+              )}
+              
+              {/* Debug button - only show in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <Button
+                  onClick={testAllFilters}
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  title="Test all filters (development only)"
+                >
+                  <Icon icon="ph:bug" className="h-3 w-3 mr-1" />
+                  Test Filters
                 </Button>
               )}
               
