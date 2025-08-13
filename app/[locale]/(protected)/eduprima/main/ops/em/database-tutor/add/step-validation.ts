@@ -31,8 +31,8 @@ export const stepValidationRules = {
     description: 'Ketersediaan waktu dan jangkauan wilayah mengajar'
   },
   'documents': {
-    required: ['fotoProfil'],
-    // dokumenIdentitas, dokumenPendidikan are optional in the current form
+    required: [], // Semua dokumen bersifat opsional dalam mode staff entry
+    // dokumenIdentitas, dokumenPendidikan, dokumenSertifikat are all optional in staff entry mode
     description: 'Dokumen pendukung dan verifikasi'
   }
 };
@@ -160,6 +160,22 @@ const hasEmptyFields = (step: FormStep, formData: Partial<TutorFormData>): boole
     });
   }
   
+  // 🎯 STEP 3: Special handling for documents step
+  // In staff entry mode, documents are optional but step status should reflect progress
+  if (step.id === 'documents') {
+    // Check if any documents have been uploaded
+    const hasAnyDocuments = formData.dokumenIdentitas || formData.dokumenPendidikan || formData.dokumenSertifikat;
+    
+    // If no documents uploaded yet, step should be 'pending' (not 'success')
+    // This prevents the step from showing green when user hasn't started uploading
+    if (!hasAnyDocuments) {
+      return true; // Has empty fields - step is pending
+    }
+    
+    // If at least one document is uploaded, step is considered complete
+    return false; // No empty fields - step is complete
+  }
+  
   // Return true if any core or conditional required field is empty
   return coreEmptyFields.length > 0 || conditionalEmptyFields.length > 0;
 };
@@ -236,12 +252,27 @@ export const getStepStatus = (stepIndex: number, currentStep: number, formData: 
   const hasEmpty = hasEmptyFields(step, formData);
   const stepStatus = hasEmpty ? 'warning' : 'success';
   
-  // 🔍 DEBUG: Log final status for education-experience
+  // 🔍 DEBUG: Log final status for education-experience and documents
   if (step.id === 'education-experience') {
     console.log(`🔍 [DEBUG] Step "${step.title}" final status:`, {
       hasEmptyRequiredFields: hasEmpty,
       finalStatus: stepStatus,
       reason: hasEmpty ? 'Has empty required fields' : 'All required fields filled'
+    });
+  }
+  
+  if (step.id === 'documents') {
+    const hasAnyDocuments = formData.dokumenIdentitas || formData.dokumenPendidikan || formData.dokumenSertifikat;
+    console.log(`🔍 [DEBUG] Step "${step.title}" final status:`, {
+      hasEmptyRequiredFields: hasEmpty,
+      finalStatus: stepStatus,
+      hasAnyDocuments: hasAnyDocuments,
+      reason: hasEmpty ? 'No documents uploaded yet - pending' : 'At least one document uploaded - success',
+      documentFields: {
+        dokumenIdentitas: formData.dokumenIdentitas ? 'Uploaded' : 'Not uploaded',
+        dokumenPendidikan: formData.dokumenPendidikan ? 'Uploaded' : 'Not uploaded',
+        dokumenSertifikat: formData.dokumenSertifikat ? 'Uploaded' : 'Not uploaded'
+      }
     });
   }
   
