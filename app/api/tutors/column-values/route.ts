@@ -16,7 +16,7 @@ const COLUMN_MAPPING: Record<string, {
   table?: string;
   field: string;
   type: 'text' | 'select' | 'array' | 'boolean' | 'number';
-  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static';
+  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking';
   staticValues?: string[];
 }> = {
   // Status and system fields
@@ -125,15 +125,25 @@ const COLUMN_MAPPING: Record<string, {
     staticValues: ['Online', 'Offline', 'Hybrid', 'Home Visit', 'Center']
   },
   
-  // Location fields - these would come from addresses table
+  // Location fields - these come from location tables via lookup
   'provinsiDomisili': {
-    source: 'addresses',
-    field: 'provinsiDomisili',
+    source: 'location_province',
+    field: 'region_name',
     type: 'text'
   },
   'kotaKabupatenDomisili': {
-    source: 'addresses', 
-    field: 'kotaKabupatenDomisili',
+    source: 'location_cities', 
+    field: 'city_name',
+    type: 'text'
+  },
+  'provinsiKTP': {
+    source: 'location_province',
+    field: 'region_name',
+    type: 'text'
+  },
+  'kotaKabupatenKTP': {
+    source: 'location_cities',
+    field: 'city_name', 
     type: 'text'
   },
   
@@ -157,6 +167,13 @@ const COLUMN_MAPPING: Record<string, {
     field: 'status_verifikasi_pendidikan', 
     type: 'select',
     staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
+  },
+  
+  // Banking fields
+  'namaBank': {
+    source: 'banking',
+    field: 'bank_name',
+    type: 'text'
   },
 };
 
@@ -247,6 +264,94 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
     if (columnConfig.source === 'addresses') {
       const { data, error } = await supabase
         .from('user_addresses')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '');
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For demographics
+    if (columnConfig.source === 'demographics') {
+      const { data, error } = await supabase
+        .from('user_demographics')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '');
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For location provinces
+    if (columnConfig.source === 'location_province') {
+      const { data, error } = await supabase
+        .from('location_province')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '');
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For location cities
+    if (columnConfig.source === 'location_cities') {
+      const { data, error } = await supabase
+        .from('location_cities')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '');
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For banking
+    if (columnConfig.source === 'banking') {
+      const { data, error } = await supabase
+        .from('user_banking')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');

@@ -895,6 +895,19 @@ export default function ViewAllTutorsPage() {
   // 🚀 POPUP TABLE STATE - Modal for focused table view
   const [isTablePopupOpen, setIsTablePopupOpen] = useState(false);
   
+  // 🚀 CELL DETAIL POPUP STATE - Modal for viewing full cell content
+  const [cellDetailPopup, setCellDetailPopup] = useState<{
+    isOpen: boolean;
+    content: string;
+    columnLabel: string;
+    tutorName?: string;
+  }>({
+    isOpen: false,
+    content: '',
+    columnLabel: '',
+    tutorName: ''
+  });
+  
   // Zoom configuration
   const ZOOM_MIN = 20;
   const ZOOM_MAX = 200;
@@ -946,6 +959,19 @@ export default function ViewAllTutorsPage() {
   }>({
     isOpen: false,
     tutor: null,
+    isLoading: false,
+    cascadePreview: null,
+    previewError: null
+  });
+
+  // 🚀 BULK DELETE STATE - For multiple tutor deletion
+  const [bulkDeleteModal, setBulkDeleteModal] = useState<{
+    isOpen: boolean;
+    isLoading: boolean;
+    cascadePreview: Array<{table_name: string; records_affected: number; data_type: string}> | null;
+    previewError: string | null;
+  }>({
+    isOpen: false,
     isLoading: false,
     cascadePreview: null,
     previewError: null
@@ -1263,10 +1289,13 @@ export default function ViewAllTutorsPage() {
       'statusAkademik', 'namaUniversitas', 'fakultas', 'jurusan',
       
       // Availability columns
-      'statusMenerimaSiswa',
+      'statusMenerimaSiswa', 'available_schedule', 'teaching_methods',
       
-      // Location columns  
+      // Location columns - Now all should work with API backend
       'provinsiDomisili', 'kotaKabupatenDomisili', 'provinsiKTP', 'kotaKabupatenKTP',
+      
+      // Programs
+      'selectedPrograms',
       
       // Verification columns
       'status_verifikasi_identitas', 'status_verifikasi_pendidikan',
@@ -1295,6 +1324,8 @@ export default function ViewAllTutorsPage() {
       const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ HTTP ${response.status} for column ${columnKey}:`, errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
@@ -1352,6 +1383,54 @@ export default function ViewAllTutorsPage() {
 
   const clearAllFilters = () => {
     setColumnFilters({});
+  };
+
+  // 🚀 DEBUG FUNCTION - Test all filters
+  const testAllFilters = async () => {
+    console.log('🧪 Testing all filterable columns...');
+    const results: Record<string, { success: boolean; error?: string; count?: number }> = {};
+    
+    for (const columnKey of Array.from(filterableColumns)) {
+      try {
+        console.log(`Testing ${columnKey}...`);
+        const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            results[columnKey] = { 
+              success: true, 
+              count: result.data?.length || 0 
+            };
+            console.log(`✅ ${columnKey}: ${result.data?.length || 0} values`);
+          } else {
+            results[columnKey] = { 
+              success: false, 
+              error: result.error 
+            };
+            console.log(`❌ ${columnKey}: ${result.error}`);
+          }
+        } else {
+          results[columnKey] = { 
+            success: false, 
+            error: `HTTP ${response.status}` 
+          };
+          console.log(`❌ ${columnKey}: HTTP ${response.status}`);
+        }
+      } catch (error) {
+        results[columnKey] = { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+        console.log(`❌ ${columnKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      // Small delay to prevent overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log('🧪 Filter test results:', results);
+    return results;
   };
 
   // Handle search input change (for debouncing)
@@ -1498,6 +1577,180 @@ export default function ViewAllTutorsPage() {
       });
       setDeleteModal(prev => ({ ...prev, isLoading: false }));
     }
+  };
+
+  // 🚀 BULK DELETE HANDLERS
+  const handleBulkDeleteTutors = async () => {
+    if (selectedRows.size === 0) {
+      toast.error('Pilih minimal satu tutor untuk dihapus');
+      return;
+    }
+
+    try {
+      setBulkDeleteModal(prev => ({ ...prev, isOpen: true, isLoading: true }));
+      
+      const tutorIds = Array.from(selectedRows);
+      
+      // Get preview for first tutor to show cascade impact
+      // (Since we use individual API calls, we'll show preview for one representative tutor)
+      const firstTutorId = tutorIds[0];
+      const response = await fetch(`/api/tutors/delete-preview/${firstTutorId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Modify preview to reflect bulk operation
+        const bulkPreview = result.preview ? result.preview.map((item: any) => ({
+          ...item,
+          records_affected: item.records_affected * tutorIds.length // Estimate bulk impact
+        })) : [];
+        
+        setBulkDeleteModal(prev => ({
+          ...prev,
+          isLoading: false,
+          cascadePreview: bulkPreview,
+          previewError: null
+        }));
+      } else {
+        setBulkDeleteModal(prev => ({
+          ...prev,
+          isLoading: false,
+          cascadePreview: null,
+          previewError: result.error || 'Failed to load delete preview'
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch delete preview:', error);
+      setBulkDeleteModal(prev => ({
+        ...prev,
+        isLoading: false,
+        cascadePreview: null,
+        previewError: error instanceof Error ? error.message : 'Unknown error occurred'
+      }));
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedRows.size === 0) return;
+
+    try {
+      setBulkDeleteModal(prev => ({ ...prev, isLoading: true }));
+      
+      const tutorIds = Array.from(selectedRows);
+      let successCount = 0;
+      let failedCount = 0;
+      const errors: string[] = [];
+      
+      // Process deletions in batches to avoid overwhelming the server
+      const batchSize = 5;
+      for (let i = 0; i < tutorIds.length; i += batchSize) {
+        const batch = tutorIds.slice(i, i + batchSize);
+        
+        // Process batch in parallel
+        const batchPromises = batch.map(async (tutorId) => {
+          try {
+            const response = await fetch(`/api/tutors/delete/${tutorId}`, {
+              method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              successCount++;
+              return { success: true, tutorId };
+            } else {
+              throw new Error(result.error || 'Delete failed');
+            }
+          } catch (error) {
+            failedCount++;
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            errors.push(`Tutor ${tutorId}: ${errorMessage}`);
+            return { success: false, tutorId, error: errorMessage };
+          }
+        });
+        
+        // Wait for batch to complete
+        await Promise.all(batchPromises);
+        
+        // Small delay between batches to be gentle on the server
+        if (i + batchSize < tutorIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Show results
+      if (successCount > 0) {
+        toast.success(`✅ ${successCount} tutor berhasil dihapus dari database`, {
+          duration: 5000,
+          position: 'top-right',
+        });
+      }
+      
+      if (failedCount > 0) {
+        toast.error(`❌ ${failedCount} tutor gagal dihapus. Lihat console untuk detail.`, {
+          duration: 8000,
+          position: 'top-right',
+        });
+        console.error('Bulk delete errors:', errors);
+      }
+      
+      // Refresh tutor data
+      fetchTutorData(searchTerm, currentPage, itemsPerPage);
+      
+      // Clear selection
+      setSelectedRows(new Set());
+      
+      setBulkDeleteModal({
+        isOpen: false,
+        isLoading: false,
+        cascadePreview: null,
+        previewError: null
+      });
+      
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      toast.error(`❌ Gagal menghapus tutor: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        duration: 8000,
+        position: 'top-right',
+      });
+      setBulkDeleteModal(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Safe line breaking for header labels - preserves ALL characters
+  const formatHeaderLabel = (label: string) => {
+    // Pattern 1: Break before parentheses (keep all characters including spaces)
+    if (label.includes('(') && label.includes(')')) {
+      return label.replace(/\s+(\([^)]+\))$/, '\n$1');
+    }
+    
+    // Pattern 2: Break long text at word boundary (no character loss)
+    if (label.length > 30) {
+      const words = label.split(' ');
+      let line1 = '';
+      let line2 = '';
+      
+      for (const word of words) {
+        if (line1.length + word.length + 1 <= 30) {
+          line1 += (line1 ? ' ' : '') + word;
+        } else {
+          line2 += (line2 ? ' ' : '') + word;
+        }
+      }
+      
+      return line2 ? line1 + '\n' + line2 : label;
+    }
+    
+    // Return exactly as-is for short text - NO CHANGES
+    return label;
   };
 
   // Filter columns by category
@@ -2000,6 +2253,26 @@ export default function ViewAllTutorsPage() {
     });
   };
 
+  // 🚀 CELL DETAIL POPUP FUNCTIONALITY
+  const handleCellClick = (content: string, columnLabel: string, tutorName?: string) => {
+    const formattedContent = String(content || '');
+    setCellDetailPopup({
+      isOpen: true,
+      content: formattedContent,
+      columnLabel,
+      tutorName: tutorName || 'Unknown'
+    });
+  };
+
+  const closeCellDetailPopup = () => {
+    setCellDetailPopup({
+      isOpen: false,
+      content: '',
+      columnLabel: '',
+      tutorName: ''
+    });
+  };
+
   // Get unique categories
   const categories = useMemo(() => {
     const cats = [...new Set(SPREADSHEET_COLUMNS.map(col => col.category).filter(Boolean))] as string[];
@@ -2072,11 +2345,17 @@ export default function ViewAllTutorsPage() {
         e.preventDefault();
         setIsTablePopupOpen(false);
       }
+      
+      // ESC key to close cell detail popup
+      if (e.key === 'Escape' && cellDetailPopup.isOpen) {
+        e.preventDefault();
+        closeCellDetailPopup();
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleZoomIn, handleZoomOut, handleZoomReset, isTablePopupOpen]);
+  }, [handleZoomIn, handleZoomOut, handleZoomReset, isTablePopupOpen, cellDetailPopup.isOpen]);
 
   if (isLoading) {
     return (
@@ -2159,6 +2438,17 @@ export default function ViewAllTutorsPage() {
                     </span>
                   )}
                 </Button>
+                {/* Bulk Delete Button */}
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400" 
+                  onClick={handleBulkDeleteTutors}
+                  disabled={selectedRows.size === 0}
+                >
+                  <Icon icon="ph:trash" className="h-4 w-4 mr-1" />
+                  Hapus ({selectedRows.size})
+                </Button>
               </div>
             )}
 
@@ -2208,6 +2498,19 @@ export default function ViewAllTutorsPage() {
                 </Button>
               )}
               
+              {/* Debug button - only show in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <Button
+                  onClick={testAllFilters}
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  title="Test all filters (development only)"
+                >
+                  <Icon icon="ph:bug" className="h-3 w-3 mr-1" />
+                  Test Filters
+                </Button>
+              )}
+              
               {/* Column values loading indicator */}
               {Object.values(loadingColumnValues).some(Boolean) && (
                 <Badge className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">
@@ -2246,7 +2549,7 @@ export default function ViewAllTutorsPage() {
                 className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
                 title="Zoom Out (Ctrl/Cmd + -)"
               >
-                <Icon icon="ph:minus" className="h-4 w-4" />
+                -
               </Button>
               
               {/* Zoom Input */}
@@ -2306,7 +2609,7 @@ export default function ViewAllTutorsPage() {
                 className="h-8 w-8 p-0 border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 disabled:opacity-50"
                 title="Zoom In (Ctrl/Cmd + +)"
               >
-                <Icon icon="ph:plus" className="h-4 w-4" />
+                +
               </Button>
             </div>
           </div>
@@ -2360,27 +2663,10 @@ export default function ViewAllTutorsPage() {
               Popup
             </Button>
           </div>
+
         </div>
         
-        {/* Zoom Info */}
-        <div className="flex items-center gap-2 text-sm">
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            {tableZoom}%
-          </Badge>
-          {tableZoom !== 100 && (
-            <Badge className="text-xs border border-border">
-              {tableZoom > 100 ? 'Zoomed In' : 'Zoomed Out'}
-            </Badge>
-          )}
-          
-          {/* Shortcuts - Simplified */}
-          <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
-            <span>•</span>
-            <span>Ctrl +/-/0 for shortcuts</span>
-            <span>•</span>
-            <span>Mouse wheel on input</span>
-          </div>
-        </div>
+
       </div>
 
       {/* Error State */}
@@ -2505,10 +2791,14 @@ export default function ViewAllTutorsPage() {
           >
             <table 
               className={cn(
-                "min-w-full border-collapse table-fixed",
+                "w-full border-collapse",
                 isScrollable ? "min-h-[calc(100% + 1px)]" : ""
               )}
-              style={zoomStyles}
+              style={{ 
+                ...zoomStyles, 
+                tableLayout: 'fixed',
+                width: '100%'
+              }}
             >
               {/* Header */}
               <thead className="sticky top-0 z-20 bg-background border-b">
@@ -2536,17 +2826,28 @@ export default function ViewAllTutorsPage() {
                     <th
                       key={column.key}
                       className={cn(
-                        "h-10 border border-border bg-background text-left px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
+                        "min-h-[60px] border border-border bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider select-none cursor-pointer hover:bg-muted/70",
                         column.sticky && "sticky left-12 z-20"
                       )}
                       style={{ 
-                        width: columnWidths[column.key] || column.width
+                        width: '150px',
+                        maxWidth: '150px',
+                        minWidth: '100px'
                       }}
                       onClick={() => handleSort(column.key)}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-medium truncate">{column.label}</span>
+                                                 <div className="flex items-center space-x-2 min-w-0 flex-1">
+                           <span 
+                             className="text-xs font-medium leading-tight break-words hyphens-auto"
+                             style={{ 
+                               whiteSpace: 'pre-line',
+                               wordBreak: 'break-word',
+                               lineHeight: '1.3'
+                             }}
+                           >
+                             {formatHeaderLabel(column.label)}
+                           </span>
                           {column.required && (
                             <span className="text-destructive text-xs">*</span>
                           )}
@@ -2671,8 +2972,9 @@ export default function ViewAllTutorsPage() {
                           selectionRange.end?.row === rowIndex && selectionRange.end?.col === column.key && selectionMode === 'range' && "ring-2 ring-primary ring-dashed"
                         )}
                         style={{
-                          width: columnWidths[column.key] || column.width,
-                          minWidth: (column.key === 'namaLengkap' || column.key === 'email') ? '160px' : 'auto'
+                          width: '150px',
+                          maxWidth: '150px',
+                          minWidth: '100px'
                         }}
                         onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
                         onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
@@ -2761,8 +3063,25 @@ export default function ViewAllTutorsPage() {
                             );
                           })()
                         ) : (
-                          <div className="truncate whitespace-nowrap" title={formatCellValue(tutor[column.key], column)}>
+                          <div 
+                            className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
+                            title={formatCellValue(tutor[column.key], column)}
+                            style={{ 
+                              maxWidth: '130px',
+                              overflow: 'hidden', 
+                              textOverflow: 'ellipsis' 
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCellClick(
+                                formatCellValue(tutor[column.key], column),
+                                column.label,
+                                tutor.namaLengkap
+                              );
+                            }}
+                          >
                             {formatCellValue(tutor[column.key], column)}
+                            <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
                           </div>
                         )}
                       </td>
@@ -2956,6 +3275,24 @@ export default function ViewAllTutorsPage() {
           previewError={deleteModal.previewError}
                 />
 
+        {/* 🚀 BULK DELETE MODAL - For multiple tutor deletion */}
+        <TutorDeleteConfirmationDialog
+          isOpen={bulkDeleteModal.isOpen}
+          onClose={() => setBulkDeleteModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmBulkDelete}
+          tutor={{
+            id: '',
+            namaLengkap: `${selectedRows.size} tutor dipilih`,
+            email: '',
+            noTelepon: '',
+            alamat: '',
+            status_tutor: 'menunggu'
+          } as any}
+          isLoading={bulkDeleteModal.isLoading}
+          cascadePreview={bulkDeleteModal.cascadePreview}
+          previewError={bulkDeleteModal.previewError}
+                />
+
         {/* 🚀 POPUP TABLE MODAL - Complete Full Screen with All Features */}
         {isTablePopupOpen && (
           <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -2991,7 +3328,7 @@ export default function ViewAllTutorsPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-foreground">Table Zoom:</span>
                     <Button onClick={handleZoomOut} disabled={tableZoom <= ZOOM_MIN} size="sm" variant="outline" className="h-8 w-8 p-0">
-                      <Icon icon="ph:magnifying-glass-minus" className="h-4 w-4" />
+                      -
                     </Button>
                     <div className="flex items-center gap-1">
                       <Input
@@ -3024,20 +3361,11 @@ export default function ViewAllTutorsPage() {
                       <span className="text-sm text-muted-foreground">%</span>
                     </div>
                     <Button onClick={handleZoomIn} disabled={tableZoom >= ZOOM_MAX} size="sm" variant="outline" className="h-8 w-8 p-0">
-                      <Icon icon="ph:magnifying-glass-plus" className="h-4 w-4" />
+                      +
                     </Button>
                     <Button onClick={handleZoomReset} disabled={tableZoom === 100} size="sm" variant="outline" className="h-8 px-3">
                       <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" /> Reset
                     </Button>
-                          </div>
-        <div className="flex items-center gap-2 text-sm text-foreground/70">
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            Current zoom: {tableZoom}%
-          </Badge>
-          <span className="text-muted-foreground">•</span>
-          <span className="text-muted-foreground">Ctrl/Cmd + +/-/0 for shortcuts</span>
-          <span className="text-muted-foreground">•</span>
-          <span className="text-muted-foreground">Mouse wheel on input for fine control</span>
         </div>
                 </div>
               </div>
@@ -3061,15 +3389,26 @@ export default function ViewAllTutorsPage() {
                           <th
                             key={column.key}
                             className={cn(
-                              "px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r last:border-r-0",
+                              "px-3 py-3 min-h-[60px] text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r last:border-r-0",
                               column.sticky && "sticky left-0 bg-background z-20"
                             )}
                             style={{
-                              width: column.width || 'auto'
+                              width: '150px',
+                              maxWidth: '150px',
+                              minWidth: '100px'
                             }}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="truncate">{column.label}</span>
+                            <div className="flex items-center justify-between h-full">
+                              <span 
+                                className="text-xs font-medium leading-tight break-words hyphens-auto"
+                                style={{ 
+                                  whiteSpace: 'pre-line',
+                                  wordBreak: 'break-word',
+                                  lineHeight: '1.3'
+                                }}
+                              >
+                                {formatHeaderLabel(column.label)}
+                              </span>
                               {column.sortable && (
                                 <button
                                   onClick={() => handleSort(column.key)}
@@ -3110,9 +3449,30 @@ export default function ViewAllTutorsPage() {
                                 "px-3 py-3 text-sm border-r last:border-r-0",
                                 column.sticky && "sticky left-0 bg-background z-20"
                               )}
+                              style={{
+                                maxWidth: '150px',
+                                minWidth: '100px'
+                              }}
                             >
-                              <div className="truncate whitespace-nowrap" title={formatCellValue(tutor[column.key], column)}>
+                              <div 
+                                className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
+                                title={formatCellValue(tutor[column.key], column)}
+                                style={{ 
+                                  maxWidth: '130px',
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis' 
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCellClick(
+                                    formatCellValue(tutor[column.key], column),
+                                    column.label,
+                                    tutor.namaLengkap
+                                  );
+                                }}
+                              >
                                 {formatCellValue(tutor[column.key], column)}
+                                <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
                               </div>
                             </td>
                           ))}
@@ -3120,6 +3480,63 @@ export default function ViewAllTutorsPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🚀 CELL DETAIL POPUP MODAL - For viewing full cell content */}
+        {cellDetailPopup.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <Icon icon="ph:magnifying-glass" className="h-5 w-5 text-gray-600" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{cellDetailPopup.columnLabel}</h3>
+                    {cellDetailPopup.tutorName && (
+                      <p className="text-sm text-gray-600">Tutor: {cellDetailPopup.tutorName}</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={closeCellDetailPopup}
+                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  <Icon icon="ph:x" className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="p-4 max-h-[60vh] overflow-y-auto">
+                <div className="bg-gray-50 rounded-lg p-4 border">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-sans">
+                    {cellDetailPopup.content}
+                  </pre>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+                <div className="text-sm text-gray-600">
+                  Character count: {cellDetailPopup.content.length}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(cellDetailPopup.content)}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                  >
+                    <Icon icon="ph:copy" className="h-4 w-4" />
+                    Copy
+                  </button>
+                  <button
+                    onClick={closeCellDetailPopup}
+                    className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>

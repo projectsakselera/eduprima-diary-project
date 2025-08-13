@@ -38,28 +38,39 @@ type CheckboxProps = React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Roo
   VariantProps<typeof checkboxVariants> & {
     color?: color
     icon?: React.ReactNode;
+    indeterminate?: string | boolean;
   };
 
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   CheckboxProps
->(({ className, color, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      checkboxVariants({ color }),
-      className
-    )}
-    {...props}
-  >
-    <CheckboxPrimitive.Indicator
-      className={cn("flex items-center justify-center text-current ")}
+>(({ className, color, indeterminate, ...props }, ref) => {
+  // Handle indeterminate prop conversion
+  const processedProps = {
+    ...props,
+    ...(indeterminate !== undefined && { 
+      "data-indeterminate": indeterminate === true || indeterminate === "true" ? "true" : undefined 
+    })
+  };
+
+  return (
+    <CheckboxPrimitive.Root
+      ref={ref}
+      className={cn(
+        checkboxVariants({ color }),
+        className
+      )}
+      {...processedProps}
     >
-      <Check className="h-3 w-3" strokeWidth={3} />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
-));
+      <CheckboxPrimitive.Indicator
+        className={cn("flex items-center justify-center text-current ")}
+      >
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  );
+});
 
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 

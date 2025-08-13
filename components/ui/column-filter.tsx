@@ -335,7 +335,6 @@ export default function ColumnFilter({
               <Checkbox
                 id={`select-all-${column}`}
                 checked={isSelectAllChecked}
-                // @ts-ignore - indeterminate is supported
                 indeterminate={isSelectAllIndeterminate}
                 onCheckedChange={handleSelectAll}
               />
