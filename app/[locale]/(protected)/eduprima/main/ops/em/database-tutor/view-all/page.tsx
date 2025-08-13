@@ -2497,20 +2497,7 @@ export default function ViewAllTutorsPage() {
                   Clear filters
                 </Button>
               )}
-              
-              {/* Debug button - only show in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <Button
-                  onClick={testAllFilters}
-                  variant="ghost"
-                  className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                  title="Test all filters (development only)"
-                >
-                  <Icon icon="ph:bug" className="h-3 w-3 mr-1" />
-                  Test Filters
-                </Button>
-              )}
-              
+                          
               {/* Column values loading indicator */}
               {Object.values(loadingColumnValues).some(Boolean) && (
                 <Badge className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">
