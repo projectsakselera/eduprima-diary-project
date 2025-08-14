@@ -1340,7 +1340,7 @@ export default function ViewAllTutorsPage() {
     const autoRefreshInterval = setInterval(() => {
       console.log('🔄 Auto refresh triggered');
       fetchTutorData(searchTerm, currentPage, itemsPerPage);
-    }, 30000); // 30 seconds
+    }, 300000); // 30 seconds
     
     return () => {
       window.removeEventListener('focus', handleFocus);
