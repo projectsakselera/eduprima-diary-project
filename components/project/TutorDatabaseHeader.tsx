@@ -106,7 +106,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
             )}
           />
           <Input
-            placeholder="Search by name, email, TRN..."
+            placeholder="Search by name, email, TRN, program, subjects..."
             value={searchInput}
             onChange={(e) => handleSearchInputChange(e.target.value)}
             onKeyDown={(e) => {

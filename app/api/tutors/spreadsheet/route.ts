@@ -257,8 +257,89 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // Add search filtering if search term provided
     if (search && search.length >= 2) {
       const searchTerm = search.toLowerCase();
-      userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
-      console.log(`🔍 Server-side search applied: "${search}"`);
+      
+      // First, search for user IDs that have matching programs
+      let programUserIds: string[] = [];
+      
+      // Search in program mappings (tutor_program_mappings + programs_unit)
+      const { data: programMappings, error: programError } = await supabase
+        .from('tutor_program_mappings')
+        .select(`
+          tutor_id,
+          programs_unit!inner(program_name, program_name_local)
+        `)
+        .or(`programs_unit.program_name.ilike.%${searchTerm}%,programs_unit.program_name_local.ilike.%${searchTerm}%`);
+      
+      if (!programError && programMappings) {
+        // Get tutor_ids and convert to user_ids
+        const tutorIds = programMappings.map(pm => pm.tutor_id);
+        if (tutorIds.length > 0) {
+          const { data: tutorDetailsForPrograms } = await supabase
+            .from('tutor_details')
+            .select('user_id')
+            .in('id', tutorIds);
+          
+          if (tutorDetailsForPrograms) {
+            programUserIds.push(...tutorDetailsForPrograms.map(td => td.user_id));
+          }
+        }
+      }
+      
+      // Search in additional subjects (tutor_additional_subjects)
+      const { data: additionalSubjects, error: additionalError } = await supabase
+        .from('tutor_additional_subjects')
+        .select('tutor_id')
+        .ilike('subject_name', `%${searchTerm}%`);
+      
+      if (!additionalError && additionalSubjects) {
+        // Get tutor_ids and convert to user_ids
+        const tutorIds = additionalSubjects.map(as => as.tutor_id);
+        if (tutorIds.length > 0) {
+          const { data: tutorDetailsForSubjects } = await supabase
+            .from('tutor_details')
+            .select('user_id')
+            .in('id', tutorIds);
+          
+          if (tutorDetailsForSubjects) {
+            programUserIds.push(...tutorDetailsForSubjects.map(td => td.user_id));
+          }
+        }
+      }
+      
+      // Search in additional subjects description (tutor_details.additional_subjects_description)
+      const { data: additionalDescriptionMatches, error: descriptionError } = await supabase
+        .from('tutor_details')
+        .select('user_id')
+        .ilike('additional_subjects_description', `%${searchTerm}%`);
+      
+      if (!descriptionError && additionalDescriptionMatches) {
+        programUserIds.push(...additionalDescriptionMatches.map(td => td.user_id));
+      }
+      
+      // Remove duplicates
+      programUserIds = [...new Set(programUserIds)];
+      
+      // Search for user IDs that have matching full names in user_profiles
+      const { data: profileMatches, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .ilike('full_name', `%${searchTerm}%`);
+      
+      if (!profileError && profileMatches) {
+        programUserIds.push(...profileMatches.map(pm => pm.user_id));
+      }
+      
+      // Remove duplicates
+      programUserIds = [...new Set(programUserIds)];
+      
+      // Apply search: either direct user fields OR program/name matches
+      if (programUserIds.length > 0) {
+        userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,id.in.(${programUserIds.join(',')})`);
+      } else {
+        userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
+      
+      console.log(`🔍 Server-side search applied: "${search}" (found ${programUserIds.length} users with matching programs/names/descriptions)`);
     }
 
     // Apply the collected user ID filters
