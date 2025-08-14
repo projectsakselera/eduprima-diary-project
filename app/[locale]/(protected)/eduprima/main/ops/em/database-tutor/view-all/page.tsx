@@ -1156,7 +1156,12 @@ export default function ViewAllTutorsPage() {
     const fetchProgramsData = async () => {
       try {
         console.log('🔄 Fetching programs lookup data for view-all...');
-        const response = await fetch('/api/programs/lookup');
+        const response = await fetch('/api/programs/lookup', {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         const result = await response.json();
         
         console.log('📚 Programs lookup API response (view-all):', result);
@@ -1210,6 +1215,10 @@ export default function ViewAllTutorsPage() {
         url.searchParams.set('search', search.trim());
       }
       
+      // Add timestamp and random string to prevent caching
+      url.searchParams.set('t', Date.now().toString());
+      url.searchParams.set('r', Math.random().toString(36).substring(7));
+      
       // Add column filters (use filter_<column>=comma,separated,values)
       if (Object.keys(columnFilters).length > 0) {
         Object.entries(columnFilters).forEach(([col, values]) => {
@@ -1219,7 +1228,15 @@ export default function ViewAllTutorsPage() {
         });
       }
 
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Timestamp': Date.now().toString()
+        },
+        cache: 'no-store'
+      });
       
       // Check if response is ok
       if (!response.ok) {
@@ -1272,10 +1289,64 @@ export default function ViewAllTutorsPage() {
       clearTimeout(debounceTimer);
     };
   }, [searchTerm, itemsPerPage, columnFilters]);
+  
+  // Manual refresh function that can be called by user action
+  const refreshData = useCallback(async () => {
+    console.log('🔄 Manual refresh triggered');
+    await fetchTutorData(searchTerm, currentPage, itemsPerPage);
+  }, [searchTerm, currentPage, itemsPerPage]);
 
-  // Load initial data on mount
+  // Load initial data on mount and refresh on focus
   useEffect(() => {
+    // Clear any existing service workers and cache storage
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        registrations.forEach(function(registration) {
+          console.log('🧹 Clearing service worker:', registration.scope);
+        });
+      });
+    }
+    
+    // Clear cache storage
+    if ('caches' in window) {
+      caches.keys().then(function(cacheNames) {
+        cacheNames.forEach(function(cacheName) {
+          console.log('🧹 Clearing cache:', cacheName);
+          caches.delete(cacheName);
+        });
+      });
+    }
+    
     fetchTutorData('', 1, itemsPerPage);
+    
+    // Add focus event listener to refresh data when user returns to page
+    const handleFocus = () => {
+      console.log('🔄 Page focused, refreshing data...');
+      fetchTutorData(searchTerm, currentPage, itemsPerPage);
+    };
+    
+    // Add visibility change listener to refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Page visible, refreshing data...');
+        fetchTutorData(searchTerm, currentPage, itemsPerPage);
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Auto-refresh every 30 seconds to ensure fresh data
+    const autoRefreshInterval = setInterval(() => {
+      console.log('🔄 Auto refresh triggered');
+      fetchTutorData(searchTerm, currentPage, itemsPerPage);
+    }, 30000); // 30 seconds
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(autoRefreshInterval);
+    };
   }, []);
 
   // 🚀 COLUMN FILTERS: Define which columns support filtering
@@ -1323,7 +1394,12 @@ export default function ViewAllTutorsPage() {
     
     try {
       console.log(`🔍 Fetching column values for: ${columnKey}`);
-      const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
+      const response = await fetch(`/api/tutors/column-values?column=${columnKey}`, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -1395,7 +1471,12 @@ export default function ViewAllTutorsPage() {
     for (const columnKey of Array.from(filterableColumns)) {
       try {
         console.log(`Testing ${columnKey}...`);
-        const response = await fetch(`/api/tutors/column-values?column=${columnKey}`);
+        const response = await fetch(`/api/tutors/column-values?column=${columnKey}`, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
         
         if (response.ok) {
           const result = await response.json();
@@ -1485,7 +1566,12 @@ export default function ViewAllTutorsPage() {
 
     try {
       // Fetch cascade preview
-      const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`);
+      const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1596,7 +1682,12 @@ export default function ViewAllTutorsPage() {
       // Get preview for first tutor to show cascade impact
       // (Since we use individual API calls, we'll show preview for one representative tutor)
       const firstTutorId = tutorIds[0];
-      const response = await fetch(`/api/tutors/delete-preview/${firstTutorId}`);
+      const response = await fetch(`/api/tutors/delete-preview/${firstTutorId}`, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

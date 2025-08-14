@@ -972,7 +972,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(result.total / limit);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: result.data,
       total: result.total,
@@ -984,8 +984,17 @@ export async function GET(request: NextRequest) {
       hasPrevPage: page > 1,
       hasActiveFilters: Object.keys(columnFilters).length > 0,
       activeFilters: Object.keys(columnFilters).length > 0 ? columnFilters : undefined,
-      message: `Page ${page}/${totalPages}: ${result.data.length} tutors loaded efficiently${Object.keys(columnFilters).length > 0 ? ' (filtered)' : ''}`
+      message: `Page ${page}/${totalPages}: ${result.data.length} tutors loaded efficiently${Object.keys(columnFilters).length > 0 ? ' (filtered)' : ''}`,
+      timestamp: Date.now() // Add timestamp to response
     });
+
+    // Set aggressive no-cache headers
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Surrogate-Control', 'no-store');
+    
+    return response;
 
   } catch (error) {
     console.error('❌ API Error:', error);
