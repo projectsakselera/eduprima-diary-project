@@ -2804,7 +2804,7 @@ export default function ViewAllTutorsPage() {
 
 
                   {/* Actions Header */}
-                  <th className="w-20 h-10 border border-border bg-background sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
+                  <th className="w-12 h-10 border border-border bg-background sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
                     <Icon icon="ph:gear" className="h-4 w-4 mx-auto" />
                   </th>
 

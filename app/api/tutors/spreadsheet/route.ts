@@ -257,11 +257,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // Add search filtering if search term provided
     if (search && search.length >= 2) {
       const searchTerm = search.toLowerCase();
-      userQuery = userQuery.or(`
-        user_code.ilike.%${searchTerm}%, 
-        email.ilike.%${searchTerm}%, 
-        phone.ilike.%${searchTerm}%
-      `);
+      userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       console.log(`🔍 Server-side search applied: "${search}"`);
     }
 
