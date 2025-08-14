@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: existingErr.message }, { status: 500 });
     }
 
-    const existingIds = new Set((existingRows || []).map(r => r.user_id));
+    const existingIds = new Set((existingRows || []).map((r: any) => r.user_id));
     const toInsert = user_ids.filter(id => !existingIds.has(id)).map(id => ({
       user_id: id,
       status_tutor,

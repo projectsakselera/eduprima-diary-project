@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Prepare user profile data
+        // Prepare user profile data (education fields moved to tutor_details)
         const profileData = {
           user_id: userId,
           full_name: record['Nama Lengkap'] || record['nama'] || 'Unknown',
@@ -327,12 +327,6 @@ export async function POST(request: NextRequest) {
           gender: record['Jenis Kelamin'] || record['gender'] || null,
           headline: record['Headline'] || '',
           bio: record['Deskripsi Diri'] || '',
-          // Education data
-          education_level: record['Status Akademik'] || null,
-          university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
-          major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
-          graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-          gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -500,12 +494,18 @@ export async function POST(request: NextRequest) {
               other_relevant_experience: record['Pengalaman Lain'] || null,
               academic_achievements: record['Prestasi Akademik'] || null,
               non_academic_achievements: record['Prestasi Non-Akademik'] || null,
-              // Education data in tutor_details
+              // Education data in tutor_details (moved from user_profiles)
               academic_status: record['Status Akademik'] || null,
               university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
               faculty_s1: record['Fakultas S1'] || null,
               major_s1: record['Jurusan S1'] || null,
-              entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
+              entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
+              // Additional education fields
+              current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+              current_faculty: record['Fakultas S1'] || null,
+              current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
+              current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
+              current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
             })
             .eq('user_id', userId);
 
@@ -546,12 +546,18 @@ export async function POST(request: NextRequest) {
                     other_relevant_experience: record['Pengalaman Lain'] || null,
                     academic_achievements: record['Prestasi Akademik'] || null,
                     non_academic_achievements: record['Prestasi Non-Akademik'] || null,
-                    // Education data in tutor_details
+                    // Education data in tutor_details (moved from user_profiles)
                     academic_status: record['Status Akademik'] || null,
                     university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
                     faculty_s1: record['Fakultas S1'] || null,
                     major_s1: record['Jurusan S1'] || null,
-                    entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
+                    entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
+                    // Additional education fields
+                    current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                    current_faculty: record['Fakultas S1'] || null,
+                    current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
+                    current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
+                    current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
                   })
                   .eq('user_id', userId);
                 
@@ -569,12 +575,18 @@ export async function POST(request: NextRequest) {
                   other_relevant_experience: record['Pengalaman Lain'] || null,
                   academic_achievements: record['Prestasi Akademik'] || null,
                   non_academic_achievements: record['Prestasi Non-Akademik'] || null,
-                  // Education data in tutor_details
+                  // Education data in tutor_details (moved from user_profiles)
                   academic_status: record['Status Akademik'] || null,
                   university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
                   faculty_s1: record['Fakultas S1'] || null,
                   major_s1: record['Jurusan S1'] || null,
-                  entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null
+                  entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
+                  // Additional education fields
+                  current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                  current_faculty: record['Fakultas S1'] || null,
+                  current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
+                  current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
+                  current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
                 })
                 .eq('user_id', userId);
               
