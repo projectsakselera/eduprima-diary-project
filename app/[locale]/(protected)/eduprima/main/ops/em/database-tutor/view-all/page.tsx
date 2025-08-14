@@ -892,21 +892,10 @@ export default function ViewAllTutorsPage() {
   // Separate state for input value to handle manual typing
   const [zoomInputValue, setZoomInputValue] = useState(tableZoom.toString());
   
-  // 🚀 POPUP TABLE STATE - Modal for focused table view
-  const [isTablePopupOpen, setIsTablePopupOpen] = useState(false);
+  // 🚀 FULL SCREEN TABLE - Always visible (removed popup mode)
   
-  // 🚀 CELL DETAIL POPUP STATE - Modal for viewing full cell content
-  const [cellDetailPopup, setCellDetailPopup] = useState<{
-    isOpen: boolean;
-    content: string;
-    columnLabel: string;
-    tutorName?: string;
-  }>({
-    isOpen: false,
-    content: '',
-    columnLabel: '',
-    tutorName: ''
-  });
+  // 🚀 FULLSCREEN STATE
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Zoom configuration
   const ZOOM_MIN = 20;
@@ -933,8 +922,8 @@ export default function ViewAllTutorsPage() {
     return offsets;
   }, [visibleColumns, columnWidths]);
   
-  // Flag: should the table body be scrollable?
-  const isScrollable = totalRecords > itemsPerPage;
+  // Flag: should the table body be scrollable? - Always true for horizontal/vertical scroll
+  const isScrollable = true; // Always scrollable for large datasets and many columns
 
   // File preview modal state
   const [previewModal, setPreviewModal] = useState<{
@@ -2223,22 +2212,22 @@ export default function ViewAllTutorsPage() {
     }
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
+  // Export to TSV
+  const exportToTSV = () => {
     const headers = filteredColumns.map(col => col.label);
     const rows = sortedData.map(tutor => 
       filteredColumns.map(col => formatCellValue(tutor[col.key], col))
     );
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(','))
+    const tsvContent = [headers, ...rows]
+      .map(row => row.map(cell => cell.toString().replace(/\t/g, ' ').replace(/\n/g, ' ')).join('\t'))
       .join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tutor-spreadsheet-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `tutor-spreadsheet-${new Date().toISOString().split('T')[0]}.tsv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -2250,26 +2239,6 @@ export default function ViewAllTutorsPage() {
       url,
       title,
       type
-    });
-  };
-
-  // 🚀 CELL DETAIL POPUP FUNCTIONALITY
-  const handleCellClick = (content: string, columnLabel: string, tutorName?: string) => {
-    const formattedContent = String(content || '');
-    setCellDetailPopup({
-      isOpen: true,
-      content: formattedContent,
-      columnLabel,
-      tutorName: tutorName || 'Unknown'
-    });
-  };
-
-  const closeCellDetailPopup = () => {
-    setCellDetailPopup({
-      isOpen: false,
-      content: '',
-      columnLabel: '',
-      tutorName: ''
     });
   };
 
@@ -2307,7 +2276,34 @@ export default function ViewAllTutorsPage() {
     zoom: `${tableZoom}%`
   }), [tableZoom]);
 
+  // 🚀 FULLSCREEN FUNCTIONALITY
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch((err) => {
+        console.error('Error attempting to enable fullscreen mode:', err);
+      });
+    } else {
+      // Exit fullscreen
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch((err) => {
+        console.error('Error attempting to exit fullscreen mode:', err);
+      });
+    }
+  }, []);
 
+  // Listen for fullscreen changes (e.g., when user presses ESC)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   // Sync input value with tableZoom when zoom changes from other sources
   useEffect(() => {
@@ -2340,22 +2336,20 @@ export default function ViewAllTutorsPage() {
         handleZoomReset();
       }
       
-      // ESC key to close popup table
-      if (e.key === 'Escape' && isTablePopupOpen) {
+      // F11 for fullscreen toggle
+      if (e.key === 'F11') {
         e.preventDefault();
-        setIsTablePopupOpen(false);
+        toggleFullscreen();
       }
       
-      // ESC key to close cell detail popup
-      if (e.key === 'Escape' && cellDetailPopup.isOpen) {
-        e.preventDefault();
-        closeCellDetailPopup();
-      }
+      // ESC key to close popup table - REMOVED (full screen mode)
+      
+
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleZoomIn, handleZoomOut, handleZoomReset, isTablePopupOpen, cellDetailPopup.isOpen]);
+  }, [handleZoomIn, handleZoomOut, handleZoomReset, toggleFullscreen]);
 
   if (isLoading) {
     return (
@@ -2372,39 +2366,41 @@ export default function ViewAllTutorsPage() {
   }
 
   return (
-    <div className="w-full max-w-none p-4">
-      <TutorDatabaseHeader
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalRecords={totalRecords}
-        isLoading={isLoading}
-        isSearching={isSearching}
-        searchTerm={searchTerm}
-        searchInput={searchInput}
-        fetchTutorData={fetchTutorData}
-        itemsPerPage={itemsPerPage}
-        exportToCSV={exportToCSV}
-        columnManager={ <ColumnManager 
-              columns={SPREADSHEET_COLUMNS}
-              visibleColumns={visibleColumns}
-              onToggleColumn={toggleColumnVisibility}
-              categories={categories}
-              onSelectAll={selectAllColumns}
-              onDeselectAll={deselectAllColumns}
-              onInvertSelection={invertColumnSelection}
-              onShowAllInCategory={showAllInCategory}
-              onHideAllInCategory={hideAllInCategory}
-            />}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        handleSearchInputChange={handleSearchInputChange}
-        handleSearchClick={handleSearchClick}
-        handleClearSearch={handleClearSearch}
-        categories={categories}
-      />
+    <div className={`h-screen flex flex-col bg-background ${isFullscreen ? 'p-2' : ''}`}>
+      {/* Header and Controls Section */}
+      <div className="p-4 space-y-4">
+        <TutorDatabaseHeader
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          isLoading={isLoading}
+          isSearching={isSearching}
+          searchTerm={searchTerm}
+          searchInput={searchInput}
+          fetchTutorData={fetchTutorData}
+          itemsPerPage={itemsPerPage}
+          exportToCSV={exportToTSV}
+          columnManager={ <ColumnManager 
+                columns={SPREADSHEET_COLUMNS}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumnVisibility}
+                categories={categories}
+                onSelectAll={selectAllColumns}
+                onDeselectAll={deselectAllColumns}
+                onInvertSelection={invertColumnSelection}
+                onShowAllInCategory={showAllInCategory}
+                onHideAllInCategory={hideAllInCategory}
+              />}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          handleSearchInputChange={handleSearchInputChange}
+          handleSearchClick={handleSearchClick}
+          handleClearSearch={handleClearSearch}
+          categories={categories}
+        />
 
-      {/* Status Info Row - Left Aligned */}
-      <div className="flex flex-wrap items-center gap-4 mb-4 w-full">
+        {/* Status Info Row - Left Aligned */}
+        <div className="flex flex-wrap items-center gap-4 w-full">
 
             {/* Selected rows indicator */}
             {selectedRows.size > 0 && (
@@ -2518,8 +2514,8 @@ export default function ViewAllTutorsPage() {
             </div>
           </div>
 
-      {/* 🚀 ZOOM CONTROLS */}
-      <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border border-border shadow-sm">
+        {/* 🚀 ZOOM CONTROLS */}
+        <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border shadow-sm">
         <div className="flex items-center gap-4">
           {/* Zoom Controls */}
           <div className="flex items-center gap-2">
@@ -2639,26 +2635,27 @@ export default function ViewAllTutorsPage() {
               Reset
             </Button>
             
+            {/* Fullscreen Toggle Button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsTablePopupOpen(true)}
+              onClick={toggleFullscreen}
               className="h-8 px-3 text-xs border transition-colors bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
-              title="Open table in popup window"
+              title={isFullscreen ? "Exit Fullscreen (F11 or ESC)" : "Enter Fullscreen (F11)"}
             >
-              <Icon icon="ph:arrows-out" className="h-3 w-3 mr-1" />
-              Popup
+              <Icon 
+                icon={isFullscreen ? "ph:arrows-in" : "ph:arrows-out"} 
+                className="h-3 w-3 mr-1" 
+              />
+              {isFullscreen ? "Exit" : "Fullscreen"}
             </Button>
           </div>
 
         </div>
-        
 
-      </div>
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-4">
+        {/* Error State */}
+        {error && (
+          <div>
           <Alert className="border-destructive/50 bg-destructive/10">
             <Icon icon="ph:warning" className="h-4 w-4 text-destructive" />
             <AlertDescription>
@@ -2670,12 +2667,12 @@ export default function ViewAllTutorsPage() {
               </Button>
             </AlertDescription>
           </Alert>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Cell Selection Info */}
-      {(selectedCell || selectionRange.start || selectedCells.size > 0) && (
-          <div className="bg-muted/50 border rounded-lg p-2 mb-4">
+        {/* Cell Selection Info */}
+        {(selectedCell || selectionRange.start || selectedCells.size > 0) && (
+          <div className="bg-muted/50 border rounded-lg p-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
                 {selectedCell && (
@@ -2720,13 +2717,12 @@ export default function ViewAllTutorsPage() {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Spreadsheet */}
-        <div
-          className={cn(
-            "bg-card rounded-lg shadow-sm border",
-            isScrollable ? "overflow-auto h-[78vh] md:h-[85vh]" : "overflow-x-auto overflow-y-visible h-auto"
-          )}
+      {/* Full Screen Table */}
+      <div className="flex-1 overflow-hidden">
+        <div 
+          className="w-full h-full border-t bg-background"
           style={{
             // Ensure minimum visual height equals at least 10 rows + header so header area doesn't look cut
             minHeight: `${Math.max(itemsPerPage, 10) * ROW_HEIGHT_PX + HEADER_HEIGHT_PX}px`
@@ -2804,7 +2800,7 @@ export default function ViewAllTutorsPage() {
 
 
                   {/* Actions Header */}
-                  <th className="w-20 h-10 border border-border bg-background sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
+                  <th className="w-12 h-10 border border-border bg-background sticky right-0 z-20 text-xs font-medium text-center text-muted-foreground uppercase tracking-wider">
                     <Icon icon="ph:gear" className="h-4 w-4 mx-auto" />
                   </th>
 
@@ -3051,24 +3047,15 @@ export default function ViewAllTutorsPage() {
                           })()
                         ) : (
                           <div 
-                            className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
+                            className="truncate whitespace-nowrap"
                             title={formatCellValue(tutor[column.key], column)}
                             style={{ 
                               maxWidth: '130px',
                               overflow: 'hidden', 
                               textOverflow: 'ellipsis' 
                             }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCellClick(
-                                formatCellValue(tutor[column.key], column),
-                                column.label,
-                                tutor.namaLengkap
-                              );
-                            }}
                           >
                             {formatCellValue(tutor[column.key], column)}
-                            <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
                           </div>
                         )}
                       </td>
@@ -3280,255 +3267,55 @@ export default function ViewAllTutorsPage() {
           previewError={bulkDeleteModal.previewError}
                 />
 
-        {/* 🚀 POPUP TABLE MODAL - Complete Full Screen with All Features */}
-        {isTablePopupOpen && (
-          <div className="fixed inset-0 z-50 bg-background flex flex-col">
-            {/* Full Screen Header with All Controls */}
-            <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              {/* Top Header */}
-              <div className="h-16 flex items-center justify-between px-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-lg font-semibold">
-                    <Icon icon="ph:table" className="h-5 w-5" />
-                    Database Tutor - Full Screen View
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {sortedData.length} tutors • {filteredColumns.length} columns • Zoom: {tableZoom}%
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsTablePopupOpen(false)}
-                    className="h-8 px-3"
-                  >
-                    <Icon icon="ph:x" className="h-4 w-4 mr-1" />
-                    Close (ESC)
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Zoom Controls */}
-              <div className="px-6 pb-4">
-                <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-foreground">Table Zoom:</span>
-                    <Button onClick={handleZoomOut} disabled={tableZoom <= ZOOM_MIN} size="sm" variant="outline" className="h-8 w-8 p-0">
-                      -
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={zoomInputValue}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setZoomInputValue(value);
-                        }}
-                        onBlur={(e) => {
-                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, parseInt(e.target.value) || 100));
-                          handleZoomChange(newZoom);
-                          setZoomInputValue(newZoom.toString());
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.currentTarget.blur();
-                          }
-                        }}
-                        onWheel={(e) => {
-                          e.preventDefault();
-                          const delta = e.deltaY > 0 ? -1 : 1;
-                          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, tableZoom + (delta * 1)));
-                          handleZoomChange(newZoom);
-                          setZoomInputValue(newZoom.toString());
-                        }}
-                        min={ZOOM_MIN} max={ZOOM_MAX} step={1}
-                        className="w-20 h-8 text-center" placeholder="100"
-                      />
-                      <span className="text-sm text-muted-foreground">%</span>
-                    </div>
-                    <Button onClick={handleZoomIn} disabled={tableZoom >= ZOOM_MAX} size="sm" variant="outline" className="h-8 w-8 p-0">
-                      +
-                    </Button>
-                    <Button onClick={handleZoomReset} disabled={tableZoom === 100} size="sm" variant="outline" className="h-8 px-3">
-                      <Icon icon="ph:arrows-clockwise" className="h-4 w-4 mr-1" /> Reset
-                    </Button>
+        {/* 🚀 POPUP TABLE MODAL - REMOVED (now using full screen layout) */}
         </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Full Screen Table with All Features */}
-            <div className="flex-1 overflow-hidden p-6">
-              <div className="w-full h-full overflow-auto border rounded-lg bg-background">
-                <div className="relative overflow-auto w-full h-full">
-                  <table 
-                    className={cn(
-                      "min-w-full border-collapse table-fixed",
-                      isScrollable ? "min-h-[calc(100% + 1px)]" : ""
-                    )}
-                    style={zoomStyles}
-                  >
-                    {/* Table Header */}
-                    <thead className="sticky top-0 bg-background border-b z-10">
-                      <tr>
-                        {filteredColumns.map((column) => (
-                          <th
-                            key={column.key}
-                            className={cn(
-                              "px-3 py-3 min-h-[60px] text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r last:border-r-0",
-                              column.sticky && "sticky left-0 bg-background z-20"
-                            )}
-                            style={{
-                              width: '150px',
-                              maxWidth: '150px',
-                              minWidth: '100px'
-                            }}
-                          >
-                            <div className="flex items-center justify-between h-full">
-                              <span 
-                                className="text-xs font-medium leading-tight break-words hyphens-auto"
-                                style={{ 
-                                  whiteSpace: 'pre-line',
-                                  wordBreak: 'break-word',
-                                  lineHeight: '1.3'
-                                }}
-                              >
-                                {formatHeaderLabel(column.label)}
-                              </span>
-                              {column.sortable && (
-                                <button
-                                  onClick={() => handleSort(column.key)}
-                                  className="ml-1 p-1 hover:bg-muted rounded"
-                                >
-                                  <Icon 
-                                    icon={
-                                      sortConfig?.key === column.key
-                                        ? sortConfig?.direction === 'asc'
-                                          ? 'ph:sort-ascending'
-                                          : 'ph:sort-descending'
-                                        : 'ph:sort'
-                                    }
-                                    className="h-3 w-3 text-muted-foreground"
-                                  />
-                                </button>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
+      </div>
 
-                    {/* Table Body */}
-                    <tbody className="bg-background divide-y divide-border">
-                      {sortedData.map((tutor, index) => (
-                        <tr
-                          key={tutor.id}
-                          className={cn(
-                            "hover:bg-muted/50 transition-colors",
-                            selectedRows.has(tutor.id) && "bg-primary/5 border-l-4 border-l-primary"
-                          )}
-                        >
-                          {filteredColumns.map((column) => (
-                            <td
-                              key={column.key}
-                              className={cn(
-                                "px-3 py-3 text-sm border-r last:border-r-0",
-                                column.sticky && "sticky left-0 bg-background z-20"
-                              )}
-                              style={{
-                                maxWidth: '150px',
-                                minWidth: '100px'
-                              }}
-                            >
-                              <div 
-                                className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
-                                title={formatCellValue(tutor[column.key], column)}
-                                style={{ 
-                                  maxWidth: '130px',
-                                  overflow: 'hidden', 
-                                  textOverflow: 'ellipsis' 
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCellClick(
-                                    formatCellValue(tutor[column.key], column),
-                                    column.label,
-                                    tutor.namaLengkap
-                                  );
-                                }}
-                              >
-                                {formatCellValue(tutor[column.key], column)}
-                                <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 🚀 CELL DETAIL POPUP MODAL - For viewing full cell content */}
-        {cellDetailPopup.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <Icon icon="ph:magnifying-glass" className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{cellDetailPopup.columnLabel}</h3>
-                    {cellDetailPopup.tutorName && (
-                      <p className="text-sm text-gray-600">Tutor: {cellDetailPopup.tutorName}</p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={closeCellDetailPopup}
-                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+      {/* Pagination Controls at Bottom */}
+      <div className="p-4 border-t bg-background flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalRecords)} of {totalRecords} tutors
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1 || isLoading}
+          >
+            <Icon icon="ph:caret-left" className="h-4 w-4" />
+            Previous
+          </Button>
+          <div className="flex items-center gap-1">
+            {[...Array(Math.min(5, totalPages))].map((_, i) => {
+              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              return (
+                <Button
+                  key={pageNum}
+                  variant={pageNum === currentPage ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(pageNum)}
+                  className="w-8 h-8 p-0"
                 >
-                  <Icon icon="ph:x" className="h-5 w-5 text-gray-600" />
-                </button>
-              </div>
-              
-              {/* Content */}
-              <div className="p-4 max-h-[60vh] overflow-y-auto">
-                <div className="bg-gray-50 rounded-lg p-4 border">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-sans">
-                    {cellDetailPopup.content}
-                  </pre>
-                </div>
-              </div>
-              
-              {/* Footer */}
-              <div className="flex items-center justify-between p-4 border-t bg-gray-50">
-                <div className="text-sm text-gray-600">
-                  Character count: {cellDetailPopup.content.length}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => navigator.clipboard.writeText(cellDetailPopup.content)}
-                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
-                  >
-                    <Icon icon="ph:copy" className="h-4 w-4" />
-                    Copy
-                  </button>
-                  <button
-                    onClick={closeCellDetailPopup}
-                    className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
+                  {pageNum}
+                </Button>
+              );
+            })}
           </div>
-        )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages || isLoading}
+          >
+            Next
+            <Icon icon="ph:caret-right" className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+
+
     </div>
   );
 }

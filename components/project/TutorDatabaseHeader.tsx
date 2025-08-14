@@ -80,7 +80,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
             size="icon"
             onClick={exportToCSV}
             className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
-            title="Export to CSV"
+            title="Export to TSV"
           >
             <Icon icon="ph:download" className="h-4 w-4" />
           </Button>
@@ -106,7 +106,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
             )}
           />
           <Input
-            placeholder="Search by name, email, TRN..."
+            placeholder="Search by name, email, TRN, program, subjects..."
             value={searchInput}
             onChange={(e) => handleSearchInputChange(e.target.value)}
             onKeyDown={(e) => {

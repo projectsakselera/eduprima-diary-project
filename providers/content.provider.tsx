@@ -15,7 +15,7 @@ const LayoutContentProvider = ({ children }: { children: React.ReactNode }) => {
                 'xl:ms-0': config.menuHidden || config.layout === "horizontal",
 
             })}>
-                <div className={cn('p-6 mb-24 md:mb-0', {
+                <div className={cn('p-6 mb-24 md:mb-20', {
                     'container ': config.contentWidth === 'boxed',
 
 
@@ -37,7 +37,7 @@ const LayoutContentProvider = ({ children }: { children: React.ReactNode }) => {
                 'xl:ms-28': config.sidebar === 'compact',
                 'pt-6': config.navbar === 'floating' && config.layout !== 'semi-box'
             })}>
-                <div className={cn('mb-24 md:mb-0', {
+                <div className={cn('mb-24 md:mb-20', {
                     'container': config.contentWidth === 'boxed',
                     'p-6': config.layout !== 'semi-box',
                     'py-10': config.layout === 'semi-box',
