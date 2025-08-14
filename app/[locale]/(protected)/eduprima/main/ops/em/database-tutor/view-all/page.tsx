@@ -897,6 +897,19 @@ export default function ViewAllTutorsPage() {
   // 🚀 FULLSCREEN STATE
   const [isFullscreen, setIsFullscreen] = useState(false);
   
+  // 🚀 CELL DETAIL POPUP STATE - Modal for viewing full cell content
+  const [cellDetailPopup, setCellDetailPopup] = useState<{
+    isOpen: boolean;
+    content: string;
+    columnLabel: string;
+    tutorName?: string;
+  }>({
+    isOpen: false,
+    content: '',
+    columnLabel: '',
+    tutorName: ''
+  });
+  
   // Zoom configuration
   const ZOOM_MIN = 20;
   const ZOOM_MAX = 200;
@@ -2242,6 +2255,26 @@ export default function ViewAllTutorsPage() {
     });
   };
 
+  // 🚀 CELL DETAIL POPUP FUNCTIONALITY
+  const handleCellClick = (content: string, columnLabel: string, tutorName?: string) => {
+    const formattedContent = String(content || '');
+    setCellDetailPopup({
+      isOpen: true,
+      content: formattedContent,
+      columnLabel,
+      tutorName: tutorName || 'Unknown'
+    });
+  };
+
+  const closeCellDetailPopup = () => {
+    setCellDetailPopup({
+      isOpen: false,
+      content: '',
+      columnLabel: '',
+      tutorName: ''
+    });
+  };
+
   // Get unique categories
   const categories = useMemo(() => {
     const cats = [...new Set(SPREADSHEET_COLUMNS.map(col => col.category).filter(Boolean))] as string[];
@@ -2342,14 +2375,17 @@ export default function ViewAllTutorsPage() {
         toggleFullscreen();
       }
       
-      // ESC key to close popup table - REMOVED (full screen mode)
-      
+      // ESC key to close cell detail popup
+      if (e.key === 'Escape' && cellDetailPopup.isOpen) {
+        e.preventDefault();
+        closeCellDetailPopup();
+      }
 
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleZoomIn, handleZoomOut, handleZoomReset, toggleFullscreen]);
+  }, [handleZoomIn, handleZoomOut, handleZoomReset, toggleFullscreen, cellDetailPopup.isOpen, closeCellDetailPopup]);
 
   if (isLoading) {
     return (
@@ -2667,35 +2703,6 @@ export default function ViewAllTutorsPage() {
               </Button>
             </AlertDescription>
           </Alert>
-          </div>
-        )}
-
-        {/* Cell Selection Info */}
-        {(selectedCell || selectionRange.start || selectedCells.size > 0) && (
-          <div className="bg-muted/50 border rounded-lg p-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-4">
-                {selectedCell && (
-                  <span className="text-muted-foreground">
-                    Selected: Row {selectedCell.row + 1}, Column {filteredColumns.find(col => col.key === selectedCell.col)?.label}
-                  </span>
-                )}
-                {selectionRange.start && selectionRange.end && selectionMode === 'range' && (() => {
-                  const start = selectionRange.start!;
-                  const end = selectionRange.end!;
-                  return (
-                    <span className="text-muted-foreground">
-                      Range: {Math.abs(end.row - start.row) + 1} × {Math.abs(getColumnIndex(end.col) - getColumnIndex(start.col)) + 1} cells
-                    </span>
-                  );
-                })()}
-                {selectedCells.size > 0 && selectionMode === 'multi' && (
-                  <span className="text-muted-foreground">
-                    Multi-selection: {selectedCells.size} cells
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -3028,15 +3035,24 @@ export default function ViewAllTutorsPage() {
                           })()
                         ) : (
                           <div 
-                            className="truncate whitespace-nowrap"
+                            className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
                             title={formatCellValue(tutor[column.key], column)}
                             style={{ 
                               maxWidth: '130px',
                               overflow: 'hidden', 
                               textOverflow: 'ellipsis' 
                             }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCellClick(
+                                formatCellValue(tutor[column.key], column),
+                                column.label,
+                                tutor.namaLengkap
+                              );
+                            }}
                           >
                             {formatCellValue(tutor[column.key], column)}
+                            <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
                           </div>
                         )}
                       </td>
@@ -3295,7 +3311,62 @@ export default function ViewAllTutorsPage() {
         </div>
       </div>
 
-
+      {/* 🚀 CELL DETAIL POPUP MODAL - For viewing full cell content */}
+      {cellDetailPopup.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <div className="flex items-center gap-3">
+                <Icon icon="ph:magnifying-glass" className="h-5 w-5 text-gray-600" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">{cellDetailPopup.columnLabel}</h3>
+                  {cellDetailPopup.tutorName && (
+                    <p className="text-sm text-gray-600">Tutor: {cellDetailPopup.tutorName}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={closeCellDetailPopup}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <Icon icon="ph:x" className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <pre className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-sans">
+                  {cellDetailPopup.content}
+                </pre>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+              <div className="text-sm text-gray-600">
+                Character count: {cellDetailPopup.content.length}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => navigator.clipboard.writeText(cellDetailPopup.content)}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                >
+                  <Icon icon="ph:copy" className="h-4 w-4" />
+                  Copy
+                </button>
+                <button
+                  onClick={closeCellDetailPopup}
+                  className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
