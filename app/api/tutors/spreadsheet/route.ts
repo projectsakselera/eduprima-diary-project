@@ -541,7 +541,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       const documents = documentsMap.get(user.id) || {};
 
       const domicileAddr = addresses.domicile || {};
-      const ktpAddr = addresses.ktp || {};
+      const ktpAddr = addresses.identity || {};
 
       return {
         // System & Status

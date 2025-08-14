@@ -801,12 +801,12 @@ serve(async (req: Request): Promise<Response> => {
         tutor_id: tutorData.id,
         teaching_styles: data.preferences.teachingMethods || [],
         student_level_preferences: data.preferences.studentLevelPreferences || [],
-        special_needs_capable: data.preferences.specialNeedsCapable || null,
-        group_class_willing: data.preferences.groupClassWilling || null,
-        online_teaching_capable: data.preferences.onlineTeachingCapable || null,
-        tech_savviness: data.preferences.techSavviness || null,
-        gmeet_experience: data.preferences.gmeetExperience || null,
-        presensi_update_capability: data.preferences.presensiUpdateCapability || null,
+        special_needs_capability: data.preferences.specialNeedsCapable || null,
+        group_class_willingness: data.preferences.groupClassWilling || null,
+        online_teaching_capability: data.preferences.onlineTeachingCapable || null,
+        tech_savviness_level: data.preferences.techSavviness || null,
+        gmeet_experience_level: data.preferences.gmeetExperience || null,
+        attendance_update_capability: data.preferences.presensiUpdateCapability || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
