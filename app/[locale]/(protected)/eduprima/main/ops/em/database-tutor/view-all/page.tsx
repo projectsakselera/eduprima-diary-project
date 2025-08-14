@@ -2695,25 +2695,6 @@ export default function ViewAllTutorsPage() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={copySelectedCells}
-                  className="h-6 px-2 text-xs"
-                >
-                  <Icon icon="ph:copy" className="h-3 w-3 mr-1" />
-                  Copy
-                </Button>
-                <span>•</span>
-                <kbd className="px-1.5 py-0.5 bg-muted rounded border">Ctrl+C</kbd>
-                <span>Copy</span>
-                <span>•</span>
-                <kbd className="px-1.5 py-0.5 bg-muted rounded border">Esc</kbd>
-                <span>Clear</span>
-                <span>•</span>
-                <span>Drag to select range</span>
-              </div>
             </div>
           </div>
         )}
