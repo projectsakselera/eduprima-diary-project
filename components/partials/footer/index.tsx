@@ -6,19 +6,25 @@ import { Icon } from "@/components/ui/icon";
 import { auth } from '@/lib/auth'
 
 const EduPrimaFooter = async () => {
+    let session;
     try {
-        const session = await auth()
-        return (
-            <FooterContent>
-                <div className=' md:flex  justify-between text-default-600 hidden'>
-                    <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
-                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Diary, All rights Reserved
-                    </div>
-                    <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
-                        ⚡ Every choice, every step forward in our quest to elevate humanity through wisdom and dedication.
-                    </div>
+        session = await auth()
+    } catch (error) {
+        console.warn('Auth error in footer:', error)
+        session = null
+    }
+
+    return (
+        <FooterContent>
+            <div className=' md:flex  justify-between text-default-600 hidden'>
+                <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
+                    COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Diary, All rights Reserved
                 </div>
-                <div className='flex md:hidden justify-around items-center'>
+                <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
+                    ⚡ Every choice, every step forward in our quest to elevate humanity through wisdom and dedication.
+                </div>
+            </div>
+            <div className='flex md:hidden justify-around items-center'>
                     <Link href="/app/chat" className="text-default-600">
                         <div>
                             <span
@@ -71,21 +77,6 @@ const EduPrimaFooter = async () => {
 
             </FooterContent>
         )
-    } catch (error) {
-        // Fallback jika auth error
-        return (
-            <FooterContent>
-                <div className=' md:flex  justify-between text-default-600 hidden'>
-                    <div className="text-center md:ltr:text-start md:rtl:text-right text-sm">
-                        COPYRIGHT &copy; {new Date().getFullYear()} Eduprima Diary, All rights Reserved
-                    </div>
-                    <div className="md:ltr:text-right md:rtl:text-end text-center text-sm">
-                        ⚡ Every choice, every step forward in our quest to elevate humanity through wisdom and dedication.
-                    </div>
-                </div>
-            </FooterContent>
-        )
-    }
 }
 
 export default EduPrimaFooter

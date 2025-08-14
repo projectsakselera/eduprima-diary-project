@@ -80,7 +80,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
             size="icon"
             onClick={exportToCSV}
             className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
-            title="Export to CSV"
+            title="Export to TSV"
           >
             <Icon icon="ph:download" className="h-4 w-4" />
           </Button>

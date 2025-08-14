@@ -922,8 +922,8 @@ export default function ViewAllTutorsPage() {
     return offsets;
   }, [visibleColumns, columnWidths]);
   
-  // Flag: should the table body be scrollable?
-  const isScrollable = totalRecords > itemsPerPage;
+  // Flag: should the table body be scrollable? - Always true for horizontal/vertical scroll
+  const isScrollable = true; // Always scrollable for large datasets and many columns
 
   // File preview modal state
   const [previewModal, setPreviewModal] = useState<{
@@ -2212,22 +2212,22 @@ export default function ViewAllTutorsPage() {
     }
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
+  // Export to TSV
+  const exportToTSV = () => {
     const headers = filteredColumns.map(col => col.label);
     const rows = sortedData.map(tutor => 
       filteredColumns.map(col => formatCellValue(tutor[col.key], col))
     );
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(','))
+    const tsvContent = [headers, ...rows]
+      .map(row => row.map(cell => cell.toString().replace(/\t/g, ' ').replace(/\n/g, ' ')).join('\t'))
       .join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tutor-spreadsheet-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `tutor-spreadsheet-${new Date().toISOString().split('T')[0]}.tsv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -2379,7 +2379,7 @@ export default function ViewAllTutorsPage() {
           searchInput={searchInput}
           fetchTutorData={fetchTutorData}
           itemsPerPage={itemsPerPage}
-          exportToCSV={exportToCSV}
+          exportToCSV={exportToTSV}
           columnManager={ <ColumnManager 
                 columns={SPREADSHEET_COLUMNS}
                 visibleColumns={visibleColumns}
@@ -2722,7 +2722,7 @@ export default function ViewAllTutorsPage() {
       {/* Full Screen Table */}
       <div className="flex-1 overflow-hidden">
         <div 
-          className="w-full h-full overflow-auto border-t bg-background"
+          className="w-full h-full border-t bg-background"
           style={{
             // Ensure minimum visual height equals at least 10 rows + header so header area doesn't look cut
             minHeight: `${Math.max(itemsPerPage, 10) * ROW_HEIGHT_PX + HEADER_HEIGHT_PX}px`
