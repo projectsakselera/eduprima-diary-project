@@ -2524,6 +2524,7 @@ export default function ViewAllTutorsPage() {
           handleSearchClick={handleSearchClick}
           handleClearSearch={handleClearSearch}
           categories={categories}
+          refreshData={refreshData}
         />
 
         {/* Status Info Row - Left Aligned */}

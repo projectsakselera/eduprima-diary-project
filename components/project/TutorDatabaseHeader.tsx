@@ -24,6 +24,7 @@ interface TutorDatabaseHeaderProps {
   handleSearchClick: () => void;
   handleClearSearch: () => void;
   categories: string[];
+  refreshData?: () => void;
 }
 
 export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
@@ -43,9 +44,27 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
   handleSearchInputChange,
   handleSearchClick,
   handleClearSearch,
-  categories
+  categories,
+  refreshData
 }) => {
   const router = useRouter();
+
+  const handleDebugCheck = async () => {
+    try {
+      const response = await fetch('/api/debug/tutor-count', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      });
+      const data = await response.json();
+      console.log('🔍 Debug Info:', data);
+      alert(`Debug Info:\nTotal Users: ${data.debug?.totalUsers}\nEnvironment: ${data.environment}\nTimestamp: ${data.timestamp}\nCheck console for full details.`);
+    } catch (error) {
+      console.error('Debug check failed:', error);
+      alert('Debug check failed. Check console for details.');
+    }
+  };
 
   return (
     <div className="bg-card rounded-lg shadow-sm border mb-4 p-3">
@@ -75,6 +94,28 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
               className={cn("h-4 w-4", isLoading && "animate-spin")}
             />
           </Button>
+          {process.env.NODE_ENV === 'development' && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleDebugCheck}
+              className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
+              title="Debug cache check"
+            >
+              <Icon icon="ph:bug" className="h-4 w-4" />
+            </Button>
+          )}
+          {refreshData && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={refreshData}
+              className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
+              title="Force refresh data"
+            >
+              <Icon icon="ph:arrows-clockwise" className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"
