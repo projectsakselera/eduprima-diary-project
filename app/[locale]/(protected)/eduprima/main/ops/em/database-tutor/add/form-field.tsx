@@ -1394,8 +1394,11 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
         
         // Combine programs based on selected category
         if (selectedCategory === 'all') {
-          // Combine all programs from all categories
-          programsToFetch = Array.from(programsMap.values()).flat();
+          // Combine all programs from all categories and deduplicate
+          const allCombinedPrograms = Array.from(programsMap.values()).flat();
+          programsToFetch = allCombinedPrograms.filter((program, index, array) => 
+            array.findIndex(p => p.id === program.id) === index
+          );
         } else {
           // Get programs from specific category
           programsToFetch = programsMap.get(selectedCategory) || [];
@@ -1511,8 +1514,11 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       let allProgramsData: Program[] = [];
       
       if (programsByCategory.size > 0) {
-        // Use cached programs from all categories
-        allProgramsData = Array.from(programsByCategory.values()).flat();
+        // Use cached programs from all categories and deduplicate
+        const allCachedPrograms = Array.from(programsByCategory.values()).flat();
+        allProgramsData = allCachedPrograms.filter((program, index, array) => 
+          array.findIndex(p => p.id === program.id) === index
+        );
 
       } else if (allProgramsRaw.length > 0) {
         // Fallback to allProgramsRaw
@@ -1521,7 +1527,10 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       } else {
         // Last resort: fetch specific category for search
         const programsMap = await fetchMultipleCategories([selectedCategory]);
-        allProgramsData = Array.from(programsMap.values()).flat();
+        const fetchedPrograms = Array.from(programsMap.values()).flat();
+        allProgramsData = fetchedPrograms.filter((program, index, array) => 
+          array.findIndex(p => p.id === program.id) === index
+        );
       }
       
       // Filter by search term - Enhanced search across multiple fields
@@ -1601,12 +1610,25 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
       return programs.filter(program => program.popularity === selectedPopularity);
     };
 
+    // Deduplicate programs by ID to prevent duplicate keys
+    const deduplicatePrograms = (programs: Program[]) => {
+      const seen = new Set<string>();
+      return programs.filter(program => {
+        if (seen.has(program.id)) {
+          console.warn(`🔍 Duplicate program detected: ${program.id} - ${program.program_name}`);
+          return false;
+        }
+        seen.add(program.id);
+        return true;
+      });
+    };
+
     if (searchTerm.trim()) {
       // Show search results (already sorted by popularity)
-      return filterByPopularity([...searchResults]);
+      return deduplicatePrograms(filterByPopularity([...searchResults]));
     } else {
       // Show category-filtered programs (already sorted by popularity)
-      return filterByPopularity([...allPrograms]);
+      return deduplicatePrograms(filterByPopularity([...allPrograms]));
     }
   }, [allPrograms, searchResults, searchTerm, value, selectedPopularity]);
 
@@ -1770,12 +1792,12 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-4 bg-muted/20 rounded-lg border">
-              {displayPrograms.map((program: Program) => {
+              {displayPrograms.map((program: Program, index: number) => {
                 const isSelected = value.includes(program.id);
                 
                 return (
                   <div
-                    key={program.id}
+                    key={`${program.id}-${index}`}
                     className={cn(
                       "flex items-center space-x-3 p-3 rounded cursor-pointer transition-colors",
                       "hover:bg-background/50 border",
@@ -1884,17 +1906,23 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
                 {(() => {
                   // Get selected programs from all available data
                   const allAvailablePrograms = [...allPrograms, ...searchResults];
+                  
+                  // Deduplicate available programs by ID first
+                  const deduplicatedAvailablePrograms = allAvailablePrograms.filter((program, index, array) => 
+                    array.findIndex(p => p.id === program.id) === index
+                  );
+                  
                   const selectedProgramsData = value.map(id => 
-                    allAvailablePrograms.find(p => p.id === id)
+                    deduplicatedAvailablePrograms.find(p => p.id === id)
                   ).filter(Boolean);
 
-                  return selectedProgramsData.map((program) => {
+                  return selectedProgramsData.map((program, index) => {
                     if (!program) return null;
                     const categoryInfo = categories.find(c => c.main_code === program.subcategory?.main_category?.main_code);
                     
                     return (
                       <div
-                        key={program.id}
+                        key={`selected-${program.id}-${index}`}
                         className="flex items-center justify-between p-2 bg-background rounded border border-success/20 hover:border-success/40 transition-colors group"
                       >
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
