@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +78,160 @@ export default function ImportExportPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const virtualScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [virtualScrollTop, setVirtualScrollTop] = useState(0);
+
+  // Pagination logic
+  const paginatedData = useMemo(() => {
+    if (useVirtualScrolling) {
+      return parsedData; // Virtual scrolling handles the slicing
+    }
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return parsedData.slice(startIndex, endIndex);
+  }, [parsedData, currentPage, pageSize, useVirtualScrolling]);
+
+  const totalPages = Math.ceil(parsedData.length / pageSize);
+
+  // Virtual scrolling logic
+  const ITEM_HEIGHT = 100; // Approximate height of each table row in pixels
+  const CONTAINER_HEIGHT = 400; // Height of the scrollable container
+  const BUFFER_SIZE = 5; // Extra items to render for smooth scrolling
+
+  const virtualScrollData = useMemo(() => {
+    if (!useVirtualScrolling) return { items: paginatedData, startIndex: 0, endIndex: 0, totalHeight: 0, offsetY: 0 };
+
+    const startIndex = Math.max(0, Math.floor(virtualScrollTop / ITEM_HEIGHT) - BUFFER_SIZE);
+    const endIndex = Math.min(
+      parsedData.length,
+      startIndex + Math.ceil(CONTAINER_HEIGHT / ITEM_HEIGHT) + BUFFER_SIZE * 2
+    );
+
+    return {
+      items: parsedData.slice(startIndex, endIndex),
+      startIndex,
+      endIndex,
+      totalHeight: parsedData.length * ITEM_HEIGHT,
+      offsetY: startIndex * ITEM_HEIGHT,
+    };
+  }, [parsedData, virtualScrollTop, useVirtualScrolling, paginatedData]);
+
+  // Handle virtual scroll
+  const handleVirtualScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setVirtualScrollTop(e.currentTarget.scrollTop);
+  };
+
+  // Auto-enable virtual scrolling for large datasets
+  useEffect(() => {
+    if (parsedData.length > 200 && !useVirtualScrolling) {
+      setUseVirtualScrolling(true);
+    } else if (parsedData.length <= 200 && useVirtualScrolling) {
+      setUseVirtualScrolling(false);
+    }
+  }, [parsedData.length, useVirtualScrolling]);
+
+  // Pagination component
+  const PaginationControls = () => {
+    const getPageNumbers = () => {
+      const delta = 2;
+      const range = [];
+      const rangeWithDots = [];
+
+      for (
+        let i = Math.max(2, currentPage - delta);
+        i <= Math.min(totalPages - 1, currentPage + delta);
+        i++
+      ) {
+        range.push(i);
+      }
+
+      if (currentPage - delta > 2) {
+        rangeWithDots.push(1, '...');
+      } else {
+        rangeWithDots.push(1);
+      }
+
+      rangeWithDots.push(...range);
+
+      if (currentPage + delta < totalPages - 1) {
+        rangeWithDots.push('...', totalPages);
+      } else {
+        rangeWithDots.push(totalPages);
+      }
+
+      return rangeWithDots;
+    };
+
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, parsedData.length)} of {parsedData.length} records
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            <Icon icon="heroicons:chevron-double-left" className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <Icon icon="heroicons:chevron-left" className="w-4 h-4" />
+          </Button>
+
+          {getPageNumbers().map((pageNum, idx) => (
+            pageNum === '...' ? (
+              <span key={idx} className="px-2 text-muted-foreground">...</span>
+            ) : (
+              <Button
+                key={idx}
+                variant={currentPage === pageNum ? "default" : "outline"}
+                size="sm"
+                onClick={() => typeof pageNum === 'number' && setCurrentPage(pageNum)}
+                className="min-w-[32px]"
+              >
+                {pageNum}
+              </Button>
+            )
+          ))}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            <Icon icon="heroicons:chevron-right" className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <Icon icon="heroicons:chevron-double-right" className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
   
   // Data cache for fuzzy matching
   const [dataCache, setDataCache] = useState<{
@@ -1154,6 +1307,7 @@ export default function ImportExportPage() {
     setIsParsing(true);
     setParsedData([]);
     setShowPreview(false);
+    setCurrentPage(1);
     setImportResult(null);
 
     try {
@@ -1174,6 +1328,7 @@ export default function ImportExportPage() {
       const processedData: ParsedRecord[] = await processRecordsWithFuzzyMatching(rawData);
 
       setParsedData(processedData);
+      setCurrentPage(1);
       setShowPreview(true);
 
       toast({
@@ -1297,6 +1452,7 @@ export default function ImportExportPage() {
         setSelectedFile(null);
         setParsedData([]);
         setShowPreview(false);
+        setCurrentPage(1);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -1373,6 +1529,7 @@ export default function ImportExportPage() {
                         setSelectedFile(null);
                         setParsedData([]);
                         setShowPreview(false);
+                        setCurrentPage(1);
                         setImportResult(null);
                         if (fileInputRef.current) {
                           fileInputRef.current.value = '';
@@ -1508,6 +1665,51 @@ export default function ImportExportPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="pageSize" className="text-sm font-medium">
+                      Rows per page:
+                    </label>
+                    <select
+                      id="pageSize"
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    {useVirtualScrolling ? (
+                      `Virtual scrolling enabled (${parsedData.length} records)`
+                    ) : (
+                      `Page ${currentPage} of ${totalPages}`
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={useVirtualScrolling}
+                      onChange={(e) => setUseVirtualScrolling(e.target.checked)}
+                      className="rounded"
+                    />
+                    Virtual Scrolling {parsedData.length > 200 && "(Recommended)"}
+                  </label>
+                </div>
+              </div>
+
               {/* Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 {/* Validation Status */}
@@ -1563,52 +1765,99 @@ export default function ImportExportPage() {
               </div>
 
               {/* Preview Table */}
-              <div className="max-h-96 overflow-auto border rounded">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Row</TableHead>
-                      <TableHead className="w-20">Status</TableHead>
-                      <TableHead className="w-80">Step-based Preview</TableHead>
-                      <TableHead className="w-48">Validation Issues</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parsedData.slice(0, 10).map((record) => (
-                      <TableRow key={record.rowNumber}>
-                        <TableCell>{record.rowNumber}</TableCell>
-                        <TableCell>
-                          <Badge className={record.isValid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                            {record.isValid ? "Valid" : "Invalid"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-md">
-                            {/* Step-based Preview */}
-                            <StepBasedPreview record={record} />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-xs space-y-1">
-                            {record.errors.map((error, idx) => (
-                              <div key={idx} className="text-red-600">❌ {error}</div>
-                            ))}
-                            {record.warnings.map((warning, idx) => (
-                              <div key={idx} className="text-yellow-600">⚠️ {warning}</div>
-                            ))}
-                          </div>
-                        </TableCell>
+              {useVirtualScrolling ? (
+                <div 
+                  ref={virtualScrollContainerRef}
+                  className="border rounded"
+                  style={{ height: CONTAINER_HEIGHT, overflow: 'auto' }}
+                  onScroll={handleVirtualScroll}
+                >
+                  <div style={{ height: virtualScrollData.totalHeight, position: 'relative' }}>
+                    <div style={{ transform: `translateY(${virtualScrollData.offsetY}px)` }}>
+                      <Table>
+                        <TableHeader style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
+                          <TableRow>
+                            <TableHead className="w-16">Row</TableHead>
+                            <TableHead className="w-20">Status</TableHead>
+                            <TableHead className="w-80">Step-based Preview</TableHead>
+                            <TableHead className="w-48">Validation Issues</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {virtualScrollData.items.map((record, index) => (
+                            <TableRow key={record.rowNumber} style={{ height: ITEM_HEIGHT }}>
+                              <TableCell>{record.rowNumber}</TableCell>
+                              <TableCell>
+                                <Badge className={record.isValid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                                  {record.isValid ? "Valid" : "Invalid"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="max-w-md">
+                                  <StepBasedPreview record={record} />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-xs space-y-1">
+                                  {record.errors.map((error, idx) => (
+                                    <div key={idx} className="text-red-600">❌ {error}</div>
+                                  ))}
+                                  {record.warnings.map((warning, idx) => (
+                                    <div key={idx} className="text-yellow-600">⚠️ {warning}</div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-auto border rounded">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16">Row</TableHead>
+                        <TableHead className="w-20">Status</TableHead>
+                        <TableHead className="w-80">Step-based Preview</TableHead>
+                        <TableHead className="w-48">Validation Issues</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {parsedData.length > 10 && (
-                <p className="text-sm text-muted-foreground text-center">
-                  Showing first 10 records out of {parsedData.length} total records
-                </p>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.map((record) => (
+                        <TableRow key={record.rowNumber}>
+                          <TableCell>{record.rowNumber}</TableCell>
+                          <TableCell>
+                            <Badge className={record.isValid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                              {record.isValid ? "Valid" : "Invalid"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-md">
+                              <StepBasedPreview record={record} />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-xs space-y-1">
+                              {record.errors.map((error, idx) => (
+                                <div key={idx} className="text-red-600">❌ {error}</div>
+                              ))}
+                              {record.warnings.map((warning, idx) => (
+                                <div key={idx} className="text-yellow-600">⚠️ {warning}</div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
+
+              {/* Pagination Controls - Only show when not using virtual scrolling */}
+              {!useVirtualScrolling && <PaginationControls />}
 
               {/* Import Progress */}
               {isImporting && (
