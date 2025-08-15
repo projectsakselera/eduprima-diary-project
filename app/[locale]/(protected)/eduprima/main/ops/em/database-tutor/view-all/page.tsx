@@ -1340,7 +1340,7 @@ export default function ViewAllTutorsPage() {
     const autoRefreshInterval = setInterval(() => {
       console.log('🔄 Auto refresh triggered');
       fetchTutorData(searchTerm, currentPage, itemsPerPage);
-    }, 300000); // 30 seconds
+    }, 30000); // 30 seconds
     
     return () => {
       window.removeEventListener('focus', handleFocus);
@@ -2524,6 +2524,7 @@ export default function ViewAllTutorsPage() {
           handleSearchClick={handleSearchClick}
           handleClearSearch={handleClearSearch}
           categories={categories}
+          refreshData={refreshData}
         />
 
         {/* Status Info Row - Left Aligned */}
