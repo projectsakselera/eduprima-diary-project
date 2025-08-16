@@ -603,6 +603,7 @@ export async function POST(request: NextRequest) {
               high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
               vocational_school_detail: record['Jurusan SMK Detail'] || null,
               alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
+              certifications_training: record['Sertifikasi Pelatihan'] || null,
             })
             .eq('user_id', userId);
 
@@ -661,6 +662,7 @@ export async function POST(request: NextRequest) {
                     high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
                     vocational_school_detail: record['Jurusan SMK Detail'] || null,
                     alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
+                    certifications_training: record['Sertifikasi Pelatihan'] || null,
                   })
                   .eq('user_id', userId);
                 
@@ -696,6 +698,7 @@ export async function POST(request: NextRequest) {
                   high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
                   vocational_school_detail: record['Jurusan SMK Detail'] || null,
                   alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
+                  certifications_training: record['Sertifikasi Pelatihan'] || null,
                 })
                 .eq('user_id', userId);
               
