@@ -38,20 +38,29 @@ async function loadReferenceData() {
     }));
     
     // Load cities
+    console.log('🔍 Attempting to load cities from location_cities table...');
     const { data: citiesData, error: citiesError } = await supabase
       .from('location_cities')
-      .select('id, region_name, region_local_name, province_id')
-      .eq('admin_level', 2)
-      .order('region_name');
+      .select('id, city_name, city_local_name, province_id')
+      .order('city_name');
+    
+    console.log('🔍 Cities query result:', {
+      citiesData: citiesData?.length || 0,
+      citiesError: citiesError,
+      sampleCities: citiesData?.slice(0, 3)
+    });
     
     if (citiesError) {
       console.error('❌ Failed to load cities:', citiesError);
+    } else {
+      console.log('🏙️ Cities loaded successfully:', citiesData?.length || 0);
+      console.log('🔍 First 3 cities:', citiesData?.slice(0, 3));
     }
     
     const cities = (citiesData || []).map(c => ({
       id: c.id,
-      name: c.region_name,
-      local_name: c.region_local_name,
+      name: c.city_name,
+      local_name: c.city_local_name,
       province_id: c.province_id
     }));
     
@@ -396,6 +405,19 @@ export async function POST(request: NextRequest) {
         let resolvedCityName = null;
         if (record['Kota/Kabupaten'] || record['kotaKabupatenDomisili_matched']) {
           const cityInput = record['kotaKabupatenDomisili_matched'] || record['Kota/Kabupaten'];
+          
+          const filteredCities = resolvedProvinceId ? 
+            referenceData.cities.filter(city => city.province_id === resolvedProvinceId) : 
+            referenceData.cities;
+            
+          console.log(`🔍 City fuzzy matching for record ${rowNumber}:`, {
+            cityInput: cityInput,
+            totalCities: referenceData.cities.length,
+            resolvedProvinceId: resolvedProvinceId,
+            filteredCitiesCount: filteredCities.length,
+            sampleFilteredCities: filteredCities.slice(0, 3).map(c => c.name)
+          });
+          
           const cityResult = resolveFieldWithFuzzy(
             cityInput, 
             'city', 
@@ -404,6 +426,13 @@ export async function POST(request: NextRequest) {
           );
           resolvedCityId = cityResult.id;
           resolvedCityName = cityResult.matched;
+          
+          console.log(`🔍 City matching result for record ${rowNumber}:`, {
+            input: cityInput,
+            matched: resolvedCityName,
+            confidence: cityResult.confidence,
+            id: resolvedCityId
+          });
         }
         
         // Resolve bank using fuzzy matching
