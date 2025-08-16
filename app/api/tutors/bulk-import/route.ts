@@ -361,7 +361,9 @@ export async function POST(request: NextRequest) {
           teaching_experience: record['Pengalaman Mengajar'] || null,
           special_skills: record['Keahlian Spesialisasi'] || null,
           onboarding_status: 'pending',
-          background_check_status: 'pending'
+          background_check_status: 'pending',
+          high_school: record['Nama SMA'] || null,
+          high_school_major: record['Jurusan SMA'] || null,
         };
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
@@ -505,17 +507,20 @@ export async function POST(request: NextRequest) {
               non_academic_achievements: record['Prestasi Non-Akademik'] || null,
               // Education data in tutor_details (moved from user_profiles)
               academic_status: record['Status Akademik'] || null,
-              university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+              university_s1_name: record['Universitas S1 (untuk S2)'] || record['Nama Universitas S1'] || record['Nama Universitas'] || null,
               faculty_s1: record['Fakultas S1'] || null,
               major_s1: record['Jurusan S1'] || null,
               entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
               // Additional education fields
-              current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+              current_university: record['Universitas'] || record['Nama Universitas'] || record['Nama Universitas S1'] || null,
               current_faculty: record['Fakultas S1'] || null,
               current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
               current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
               current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
-              additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
+              additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+              high_school: record['Nama SMA'] || null,
+              high_school_major: record['Jurusan SMA'] || null,
+              high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
             })
             .eq('user_id', userId);
 
@@ -558,17 +563,20 @@ export async function POST(request: NextRequest) {
                     non_academic_achievements: record['Prestasi Non-Akademik'] || null,
                     // Education data in tutor_details (moved from user_profiles)
                     academic_status: record['Status Akademik'] || null,
-                    university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                    university_s1_name: record['Universitas S1 (untuk S2)'] || record['Nama Universitas S1'] || record['Nama Universitas'] || null,
                     faculty_s1: record['Fakultas S1'] || null,
                     major_s1: record['Jurusan S1'] || null,
                     entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
                     // Additional education fields
-                    current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                    current_university: record['Universitas'] || record['Nama Universitas'] || record['Nama Universitas S1'] || null,
                     current_faculty: record['Fakultas S1'] || null,
                     current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                     current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
                     current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
-                    additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
+                    additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+                    high_school: record['Nama SMA'] || null,
+                    high_school_major: record['Jurusan SMA'] || null,
+                    high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
                   })
                   .eq('user_id', userId);
                 
@@ -588,17 +596,20 @@ export async function POST(request: NextRequest) {
                   non_academic_achievements: record['Prestasi Non-Akademik'] || null,
                   // Education data in tutor_details (moved from user_profiles)
                   academic_status: record['Status Akademik'] || null,
-                  university_s1_name: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                  university_s1_name: record['Universitas S1 (untuk S2)'] || record['Nama Universitas S1'] || record['Nama Universitas'] || null,
                   faculty_s1: record['Fakultas S1'] || null,
                   major_s1: record['Jurusan S1'] || null,
                   entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
                   // Additional education fields
-                  current_university: record['Nama Universitas'] || record['Nama Universitas S1'] || null,
+                  current_university: record['Universitas'] || record['Nama Universitas'] || record['Nama Universitas S1'] || null,
                   current_faculty: record['Fakultas S1'] || null,
                   current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                   current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
                   current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
-                  additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
+                  additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+                  high_school: record['Nama SMA'] || null,
+                  high_school_major: record['Jurusan SMA'] || null,
+                  high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
                 })
                 .eq('user_id', userId);
               
