@@ -38,11 +38,15 @@ async function loadReferenceData() {
     }));
     
     // Load cities
-    const { data: citiesData } = await supabase
-      .from('location_city')
+    const { data: citiesData, error: citiesError } = await supabase
+      .from('location_cities')
       .select('id, region_name, region_local_name, province_id')
       .eq('admin_level', 2)
       .order('region_name');
+    
+    if (citiesError) {
+      console.error('❌ Failed to load cities:', citiesError);
+    }
     
     const cities = (citiesData || []).map(c => ({
       id: c.id,
@@ -66,11 +70,15 @@ async function loadReferenceData() {
     }));
     
     // Load subjects/programs
-    const { data: subjectsData } = await supabase
-      .from('programs')
+    const { data: subjectsData, error: subjectsError } = await supabase
+      .from('programs_unit')
       .select('id, program_name, program_name_local')
       .eq('is_active', true)
       .order('program_name');
+    
+    if (subjectsError) {
+      console.error('❌ Failed to load subjects:', subjectsError);
+    }
     
     const subjects = (subjectsData || []).map(s => ({
       id: s.id,
@@ -416,26 +424,53 @@ export async function POST(request: NextRequest) {
           programs: resolvedProgramIds.length
         });
 
+        // Add debug logging for address data - sesuai dengan Testing_data_tutor.csv
+        console.log(`🔍 Address data for record ${rowNumber}:`, {
+          domicile: {
+            provinsi: record['Provinsi Domisili'],
+            kota: record['Kota/Kabupaten Domisili'],
+            kecamatan: record['Kecamatan Domisili'],
+            kelurahan: record['Kelurahan/Desa Domisili'],
+            alamat: record['Alamat Lengkap Domisili'],
+            kodePos: record['Kode Pos Domisili']
+          },
+          ktp: {
+            samaDenganDomisili: record['Alamat Sama dengan KTP'],
+            provinsi: record['Provinsi KTP'],
+            kota: record['Kota/Kabupaten KTP'],
+            kecamatan: record['Kecamatan KTP'],
+            kelurahan: record['Kelurahan/Desa KTP'],
+            alamat: record['Alamat Lengkap KTP'],
+            kodePos: record['Kode Pos KTP']
+          },
+          resolved: {
+            domicileProvinceId: resolvedProvinceId,
+            domicileCityId: resolvedCityId
+          }
+        });
+
         // Insert address data if provided
         console.log(`📝 Creating address records for user ${userId}...`);
         
-        // Create domicile address
+        // Create domicile address - sesuai dengan Testing_data_tutor.csv
         if (record['Provinsi Domisili'] || record['Kota/Kabupaten Domisili'] || record['Alamat Lengkap Domisili']) {
+          // Pastikan insert alamat menggunakan struktur yang benar
           const domicileAddressData = {
             user_id: userId,
             address_type: 'domicile',
-            street_address: record['Alamat Lengkap Domisili'] || null,
+            street_address: record['Alamat Lengkap Domisili'] || 'Alamat belum diisi', // ✅ Handle required constraint
             postal_code: record['Kode Pos Domisili'] || null,
-            // Use resolved IDs from fuzzy matching
-            province_id: resolvedProvinceId,
-            city_id: resolvedCityId,
+            province_id: resolvedProvinceId,        // ✅ Pastikan ini ada
+            city_id: resolvedCityId,               // ✅ Pastikan ini ada
             district_name: record['Kecamatan Domisili'] || null,
-            village_name: record['Kelurahan Domisili'] || null,
+            village_name: record['Kelurahan/Desa Domisili'] || null,
             is_primary: true,
             is_verified: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
+
+          console.log(`🏠 Domicile address data for ${rowNumber}:`, domicileAddressData);
 
           const { error: domicileError } = await supabase
             .from('user_addresses')
@@ -448,18 +483,51 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create KTP address if different from domicile
-        if (record['Alamat Sama Dengan KTP'] !== 'true' && (record['Provinsi KTP'] || record['Kota/Kabupaten KTP'] || record['Alamat Lengkap KTP'])) {
+        // Create KTP address (ALAMAT IDENTITAS) if different from domicile
+        const alamatSamaDenganKTP = record['Alamat Sama dengan KTP'] === 'true' || 
+                                    record['Alamat Sama dengan KTP'] === true;
+
+        if (!alamatSamaDenganKTP && (
+          record['Provinsi KTP'] || 
+          record['Kota/Kabupaten KTP'] || 
+          record['Alamat Lengkap KTP']
+        )) {
+          // Resolve KTP province and city using fuzzy matching
+          let resolvedKTPProvinceId = null;
+          let resolvedKTPCityId = null;
+          
+          if (record['Provinsi KTP']) {
+            const ktpProvinceResult = resolveFieldWithFuzzy(record['Provinsi KTP'], 'province', referenceData.provinces);
+            resolvedKTPProvinceId = ktpProvinceResult.id;
+          }
+          
+          if (record['Kota/Kabupaten KTP']) {
+            const ktpCityResult = resolveFieldWithFuzzy(
+              record['Kota/Kabupaten KTP'], 
+              'city', 
+              referenceData.cities,
+              resolvedKTPProvinceId ? (city: any) => city.province_id === resolvedKTPProvinceId : undefined
+            );
+            resolvedKTPCityId = ktpCityResult.id;
+          }
+
           const ktpAddressData = {
             user_id: userId,
-            address_type: 'ktp',
-            street_address: record['Alamat Lengkap KTP'] || null,
+            address_type: 'ktp', // ✅ Specify KTP address type
+            street_address: record['Alamat Lengkap KTP'] || 'Alamat KTP belum diisi', // ✅ Handle required constraint
             postal_code: record['Kode Pos KTP'] || null,
-            is_primary: false,
+            // Use resolved KTP location IDs
+            province_id: resolvedKTPProvinceId,
+            city_id: resolvedKTPCityId,
+            district_name: record['Kecamatan KTP'] || null,
+            village_name: record['Kelurahan/Desa KTP'] || null,
+            is_primary: false, // ✅ Not primary address
             is_verified: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
+
+          console.log(`🆔 KTP address data for ${rowNumber}:`, ktpAddressData);
 
           const { error: ktpError } = await supabase
             .from('user_addresses')
@@ -470,6 +538,8 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`✅ Created KTP address for record ${rowNumber}`);
           }
+        } else if (alamatSamaDenganKTP) {
+          console.log(`ℹ️ KTP address same as domicile for record ${rowNumber} - no separate KTP record needed`);
         }
 
         // Try to update existing tutor_details or create via manual approach
