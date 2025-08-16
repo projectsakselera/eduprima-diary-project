@@ -88,7 +88,7 @@ async function loadReferenceData() {
     
     return { provinces, cities, banks, subjects };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Failed to load reference data for API:', error);
     return { provinces: [], cities: [], banks: [], subjects: [] };
   }
@@ -514,12 +514,13 @@ export async function POST(request: NextRequest) {
               current_faculty: record['Fakultas S1'] || null,
               current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
               current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-              current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
+              current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+              additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
             })
             .eq('user_id', userId);
 
           if (updateError) {
-            console.warn(`⚠️ Warning: Could not update tutor_details for ${rowNumber}:`, updateError);
+            console.warn(`⚠️ Warning: Could not update tutor_details for ${rowNumber}:`, updateError && updateError.message ? updateError.message : JSON.stringify(updateError));
           } else {
             console.log(`✅ Updated existing tutor_details for record ${rowNumber}`);
           }
@@ -534,7 +535,7 @@ export async function POST(request: NextRequest) {
             });
 
             if (createError) {
-              console.warn(`⚠️ Could not create tutor_details via RPC, trying direct approach:`, createError);
+              console.warn(`⚠️ Could not create tutor_details via RPC, trying direct approach:`, createError && createError.message ? createError.message : JSON.stringify(createError));
               
               // Fallback: try direct insert with minimal data
               const { error: directInsertError } = await supabase
@@ -566,7 +567,8 @@ export async function POST(request: NextRequest) {
                     current_faculty: record['Fakultas S1'] || null,
                     current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                     current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                    current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
+                    current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                    additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
                   })
                   .eq('user_id', userId);
                 
@@ -595,95 +597,38 @@ export async function POST(request: NextRequest) {
                   current_faculty: record['Fakultas S1'] || null,
                   current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                   current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                  current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null
+                  current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                  additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null
                 })
                 .eq('user_id', userId);
               
               console.log(`✅ Created (via RPC) and updated tutor_details for record ${rowNumber}`);
             }
-          } catch (createError) {
-            console.warn(`⚠️ Exception creating tutor_details for ${rowNumber}:`, createError);
+          } catch (createError: any) {
+            console.warn(`⚠️ Error creating tutor_details for record ${rowNumber}:`, createError && createError.message ? createError.message : JSON.stringify(createError));
           }
         }
-
-        // Create tutor management record for approval status
-        const managementData = {
-          user_id: userId,
-          status_tutor: 'active',
-          approval_level: 'junior',
-          staff_notes: `Imported via bulk import from ${source || 'unknown source'}`
-        };
-
-        console.log(`📝 Prepared management data for ${rowNumber}:`, managementData);
-
-        const { error: managementError } = await supabase
-          .from('tutor_management')
-          .insert(managementData);
-
-        if (managementError) {
-          console.warn(`⚠️ Warning: Could not create management record for ${rowNumber}:`, managementError);
-        }
-
-        console.log(`✅ Created profile and management record for record ${rowNumber}`);
-        successCount++;
-
-      } catch (recordError) {
-        console.error(`❌ Error processing record ${rowNumber}:`, recordError);
-        const errorMessage = recordError instanceof Error 
-          ? recordError.message 
-          : typeof recordError === 'string' 
-            ? recordError 
-            : `Unknown processing error: ${JSON.stringify(recordError)}`;
-        
-        errors.push({ 
-          row: rowNumber, 
-          message: errorMessage
-        });
+      } catch (error: any) {
+        console.error(`❌ Error processing record ${rowNumber}:`, error);
+        errors.push({ row: rowNumber, message: `An unexpected error occurred: ${error.message || 'Unknown error'}` });
         errorCount++;
       }
     }
 
-    const result = {
+    console.log(`✅ Bulk import finished. Total records: ${records.length}, Success: ${successCount}, Errors: ${errorCount}`);
+    return NextResponse.json({
       success: true,
-      message: `Successfully imported ${successCount} out of ${records.length} records`,
-      successCount,
-      errorCount,
-      warningCount: 0,
-      totalProcessed: records.length,
-      errors: errors.length > 0 ? errors : [],
-      details: {
-        source: source || 'unknown',
-        processedAt: new Date().toISOString(),
-        processedBy: 'system',
-        recordsCreated: successCount || 0,
-        tablesUpdated: ['users_universal', 'user_profiles', 'user_demographics', 'user_addresses', 'tutor_details', 'tutor_management']
-      }
-    };
+      message: `Bulk import completed. ${successCount} records imported, ${errorCount} errors.`,
+      totalRecords: totalRecords,
+      importedCount: successCount,
+      errors: errors
+    });
 
-    console.log('✅ Bulk import completed:', result);
-
-    return NextResponse.json(result);
-
-  } catch (error) {
-    console.error('❌ Bulk import error:', error);
-    
+  } catch (error: any) {
+    console.error('❌ Bulk import failed:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error during import',
-        successCount: 0,
-        errorCount: 0,
-        errors: [{ row: 0, message: 'System error occurred' }]
-      },
+      { success: false, message: `Bulk import failed: ${error.message || 'Unknown error'}` },
       { status: 500 }
     );
   }
-}
-
-// Handle unsupported methods
-export async function GET() {
-  return NextResponse.json(
-    { success: false, message: 'Method not allowed' },
-    { status: 405 }
-  );
 }
