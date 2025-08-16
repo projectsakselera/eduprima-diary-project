@@ -364,6 +364,8 @@ export async function POST(request: NextRequest) {
           background_check_status: 'pending',
           high_school: record['Nama SMA'] || null,
           high_school_major: record['Jurusan SMA'] || null,
+          vocational_school_detail: record['Jurusan SMK Detail'] || null,
+          alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
         };
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
@@ -516,11 +518,13 @@ export async function POST(request: NextRequest) {
               current_faculty: record['Fakultas S1'] || null,
               current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
               current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-              current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+              current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
               additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
               high_school: record['Nama SMA'] || null,
               high_school_major: record['Jurusan SMA'] || null,
-              high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
+              high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
+              vocational_school_detail: record['Jurusan SMK Detail'] || null,
+              alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
             })
             .eq('user_id', userId);
 
@@ -572,11 +576,13 @@ export async function POST(request: NextRequest) {
                     current_faculty: record['Fakultas S1'] || null,
                     current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                     current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                    current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                    current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
                     additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
                     high_school: record['Nama SMA'] || null,
                     high_school_major: record['Jurusan SMA'] || null,
-                    high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
+                    high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
+                    vocational_school_detail: record['Jurusan SMK Detail'] || null,
+                    alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
                   })
                   .eq('user_id', userId);
                 
@@ -605,78 +611,25 @@ export async function POST(request: NextRequest) {
                   current_faculty: record['Fakultas S1'] || null,
                   current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                   current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                  current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                  current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
                   additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
                   high_school: record['Nama SMA'] || null,
                   high_school_major: record['Jurusan SMA'] || null,
-                  high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null
+                  high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
+                  vocational_school_detail: record['Jurusan SMK Detail'] || null,
+                  alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
                 })
                 .eq('user_id', userId);
               
               console.log(`✅ Created (via RPC) and updated tutor_details for record ${rowNumber}`);
             }
           } catch (createError: any) {
-            console.warn(`⚠️ Error creating tutor_details for record ${rowNumber}:`, createError && createError.message ? createError.message : JSON.stringify(createError));
-          }
-        }
-
-        // === BANKING INFO ===
-        // Ambil tutor_id dari tabel tutor_details
-        const { data: tutorDetailsRow } = await supabase
-          .from('tutor_details')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
-        const tutorId = tutorDetailsRow?.id;
-
-        if (
-          tutorId &&
-          record['Nama Pemilik Rekening'] &&
-          record['Nomor Rekening'] &&
-          (resolvedBankName || record['Nama Bank'])
-        ) {
-          const bankingInfoData = {
-            tutor_id: tutorId,
-            account_holder_name: record['Nama Pemilik Rekening'],
-            account_number: record['Nomor Rekening'],
-            bank_name: resolvedBankName || record['Nama Bank'],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-
-          // Cek apakah sudah ada data banking info
-          const { data: existingBanking, error: bankingCheckError } = await supabase
-            .from('tutor_banking_info')
-            .select('id')
-            .eq('tutor_id', tutorId)
-            .single();
-
-          if (existingBanking && !bankingCheckError) {
-            // Update
-            const { error: bankingUpdateError } = await supabase
-              .from('tutor_banking_info')
-              .update(bankingInfoData)
-              .eq('tutor_id', tutorId);
-            if (bankingUpdateError) {
-              console.warn(`⚠️ Warning: Could not update tutor_banking_info for ${rowNumber}:`, bankingUpdateError && bankingUpdateError.message ? bankingUpdateError.message : JSON.stringify(bankingUpdateError));
-            } else {
-              console.log(`✅ Updated tutor_banking_info for record ${rowNumber}`);
-            }
-          } else {
-            // Insert
-            const { error: bankingInsertError } = await supabase
-              .from('tutor_banking_info')
-              .insert(bankingInfoData);
-            if (bankingInsertError) {
-              console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, bankingInsertError && bankingInsertError.message ? bankingInsertError.message : JSON.stringify(bankingInsertError));
-            } else {
-              console.log(`✅ Inserted tutor_banking_info for record ${rowNumber}`);
-            }
+            console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, createError && createError.message ? createError.message : JSON.stringify(createError));
           }
         }
       } catch (error: any) {
         console.error(`❌ Error processing record ${rowNumber}:`, error);
-        errors.push({ row: rowNumber, message: `An unexpected error occurred: ${error.message || 'Unknown error'}` });
+        errors.push({ row: rowNumber, message: `Failed to process record: ${error.message || 'Unknown error'}` });
         errorCount++;
       }
     }
