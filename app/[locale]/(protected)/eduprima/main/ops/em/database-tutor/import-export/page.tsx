@@ -1108,14 +1108,16 @@ export default function ImportExportPage() {
       // Required field validation
       const requiredFields = [
         { key: 'Nama Lengkap', message: 'Nama lengkap wajib diisi' },
-        { key: 'Email Aktif', message: 'Email aktif wajib diisi' },
-        { key: 'No. HP Utama (+62)', message: 'Nomor HP utama wajib diisi' }
+        { key: 'Email Aktif', message: 'Email aktif wajib diisi' }
       ];
-      
       for (const field of requiredFields) {
         if (!row[field.key] || String(row[field.key]).trim() === '') {
           errors.push(field.message);
         }
+      }
+      // Validasi nomor HP utama hanya cek 'No. HP (WhatsApp)'
+      if (!row['No. HP (WhatsApp)'] || String(row['No. HP (WhatsApp)']).trim() === '') {
+        errors.push('Nomor HP utama wajib diisi');
       }
       
       // Email validation

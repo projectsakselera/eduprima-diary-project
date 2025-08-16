@@ -227,11 +227,16 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
+        // Helper untuk normalisasi nomor HP
+        function normalizePhone(phone: any) {
+          if (!phone) return '';
+          return String(phone).replace(/[^0-9]/g, '');
+        }
         // Prepare user data for users_universal table
         const userData = {
           user_code: userCode,
           email: uniqueEmail,
-          phone: record['No. HP Utama (+62)'] || record['phone'] || `08${uniqueId}`,
+          phone: normalizePhone(record['No. HP (WhatsApp)'] || record['phone'] || `08${uniqueId}`),
           account_type: 'tutor',
           user_status: 'active',
           password_hash: '$2a$10$defaulthash.for.imported.users.only', // Default hash for imported users
@@ -318,19 +323,21 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Prepare user profile data (education fields moved to tutor_details)
+        // === BULK MAPPING UNTUK FIELD YANG SUDAH ADA ===
+        // User Profile
         const profileData = {
           user_id: userId,
-          full_name: record['Nama Lengkap'] || record['nama'] || 'Unknown',
+          full_name: record['Nama Lengkap'] || '',
           nick_name: record['Nama Panggilan'] || '',
           date_of_birth: record['Tanggal Lahir'] || null,
-          gender: record['Jenis Kelamin'] || record['gender'] || null,
-          headline: record['Headline'] || '',
-          bio: record['Deskripsi Diri'] || '',
-          social_media_1: record['Link Media Sosial 1 (Opsional)'] || null,
-          social_media_2: record['Link Media Sosial 2 (Opsional)'] || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          gender: record['Jenis Kelamin'] || null,
+          headline: record['Headline/Tagline Tutor'] || '',
+          bio: record['Deskripsi Diri/Bio Tutor'] || '',
+          social_media_1: record['Link Media Sosial 1 (Opsional)'] || '',
+          social_media_2: record['Link Media Sosial 2 (Opsional)'] || '',
+          mobile_phone: normalizePhone(record['No. HP (WhatsApp)'] || ''),
+          mobile_phone_2: normalizePhone(record['No. HP Alternatif (Opsional)'] || ''),
+          motivation_as_tutor: record['Motivasi Menjadi Tutor'] || '',
         };
 
         console.log(`📝 Prepared profile data for ${rowNumber}:`, profileData);
