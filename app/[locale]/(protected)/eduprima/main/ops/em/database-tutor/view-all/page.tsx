@@ -743,8 +743,8 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'fakultasS1', label: 'Fakultas S1', width: 150, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'jurusanS1', label: 'Jurusan S1', width: 150, type: 'text', category: 'Pendidikan & Pengalaman' },
   { key: 'namaInstitusi', label: 'Nama Institusi (Alternative)', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'bidangKeahlian', label: 'Bidang Keahlian', width: 180, type: 'text', category: 'Pendidikan & Pengalaman' },
-  { key: 'pengalamanBelajar', label: 'Pengalaman Belajar', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
+  // { key: 'bidangKeahlian', label: 'Bidang Keahlian', width: 180, type: 'text', category: 'Pendidikan & Pengalaman' },
+  // { key: 'pengalamanBelajar', label: 'Pengalaman Belajar', width: 200, type: 'text', category: 'Pendidikan & Pengalaman' },
   
   // Pendidikan & Pengalaman - Profil & Keahlian
   { key: 'keahlianSpesialisasi', label: 'Keahlian Spesialisasi', width: 300, type: 'text', category: 'Pendidikan & Pengalaman' },

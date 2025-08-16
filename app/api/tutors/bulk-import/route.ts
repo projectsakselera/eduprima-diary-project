@@ -705,6 +705,61 @@ export async function POST(request: NextRequest) {
             console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, createError && createError.message ? createError.message : JSON.stringify(createError));
           }
         }
+
+        // === BANKING INFO ===
+        // Ambil tutor_id dari tabel tutor_details
+        const { data: tutorDetailsRow } = await supabase
+          .from('tutor_details')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        const tutorId = tutorDetailsRow?.id;
+
+        if (
+          tutorId &&
+          record['Nama Pemilik Rekening'] &&
+          record['Nomor Rekening'] &&
+          (resolvedBankName || record['Nama Bank'])
+        ) {
+          const bankingInfoData = {
+            tutor_id: tutorId,
+            account_holder_name: record['Nama Pemilik Rekening'],
+            account_number: record['Nomor Rekening'],
+            bank_name: resolvedBankName || record['Nama Bank'],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          // Cek apakah sudah ada data banking info
+          const { data: existingBanking, error: bankingCheckError } = await supabase
+            .from('tutor_banking_info')
+            .select('id')
+            .eq('tutor_id', tutorId)
+            .single();
+
+          if (existingBanking && !bankingCheckError) {
+            // Update
+            const { error: bankingUpdateError } = await supabase
+              .from('tutor_banking_info')
+              .update(bankingInfoData)
+              .eq('tutor_id', tutorId);
+            if (bankingUpdateError) {
+              console.warn(`⚠️ Warning: Could not update tutor_banking_info for ${rowNumber}:`, bankingUpdateError && bankingUpdateError.message ? bankingUpdateError.message : JSON.stringify(bankingUpdateError));
+            } else {
+              console.log(`✅ Updated tutor_banking_info for record ${rowNumber}`);
+            }
+          } else {
+            // Insert
+            const { error: bankingInsertError } = await supabase
+              .from('tutor_banking_info')
+              .insert(bankingInfoData);
+            if (bankingInsertError) {
+              console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, bankingInsertError && bankingInsertError.message ? bankingInsertError.message : JSON.stringify(bankingInsertError));
+            } else {
+              console.log(`✅ Inserted tutor_banking_info for record ${rowNumber}`);
+            }
+          }
+        }
       } catch (error: any) {
         console.error(`❌ Error processing record ${rowNumber}:`, error);
         errors.push({ row: rowNumber, message: `Failed to process record: ${error.message || 'Unknown error'}` });

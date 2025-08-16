@@ -608,8 +608,8 @@ export default function ImportExportPage() {
       
       // 8. ALTERNATIVE LEARNING BACKGROUND
       { name: 'namaInstitusi', label: 'Nama Institusi Alternatif', type: 'text', required: false },
-      { name: 'bidangKeahlian', label: 'Bidang Keahlian', type: 'text', required: false },
-      { name: 'pengalamanBelajar', label: 'Pengalaman Belajar', type: 'textarea', required: false },
+      // { name: 'bidangKeahlian', label: 'Bidang Keahlian', type: 'text', required: false },
+      // { name: 'pengalamanBelajar', label: 'Pengalaman Belajar', type: 'textarea', required: false },
       
       // 9. PROFESSIONAL PROFILE & EXPERIENCE
       { name: 'motivasiMenjadiTutor', label: 'Motivasi Menjadi Tutor', type: 'textarea', required: false },
