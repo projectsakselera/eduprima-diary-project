@@ -23,6 +23,8 @@ import {
   type LocationMatch,
   type FieldMatch 
 } from '@/lib/fuzzy-location-matcher';
+// 1. Import SPREADSHEET_COLUMNS from view-all
+import { SPREADSHEET_COLUMNS } from '../view-all/page';
 
 // Temporary simplified types to avoid dependency issues
 interface TutorFormField {
@@ -722,72 +724,33 @@ export default function ImportExportPage() {
 
   // Generate CSV template dengan proper column names
   const downloadCSVTemplate = () => {
-    console.log('🔽 Generating CSV template with proper column mapping...');
-    
-    // Define CSV columns yang sesuai dengan field mapping yang sudah dibuat
-    const csvColumns = [
-      // === IDENTITAS DASAR ===
-      { csvHeader: 'Nama Lengkap', example: 'Ahmad Budi Santoso', required: true },
-      { csvHeader: 'Email Aktif', example: 'ahmad.budi@example.com', required: true },
-      { csvHeader: 'No. HP Utama (+62)', example: '81234567890', required: true },
-      { csvHeader: 'No. HP Alternatif (+62)', example: '85987654321', required: false },
-      { csvHeader: 'WhatsApp Number (+62)', example: '81234567890', required: false },
-      { csvHeader: 'Tanggal Lahir', example: '1995-06-15', required: false },
-      { csvHeader: 'Jenis Kelamin', example: 'L', required: false },
-      { csvHeader: 'Agama', example: 'Islam', required: false },
-      
-      // === ALAMAT & LOKASI ===
-      { csvHeader: 'Provinsi Domisili', example: 'DKI Jakarta', required: true },
-      { csvHeader: 'Kota/Kabupaten Domisili', example: 'Jakarta Selatan', required: true },
-      { csvHeader: 'Alamat Lengkap', example: 'Jl. Sudirman No. 123, Senayan', required: false },
-      { csvHeader: 'Provinsi KTP', example: 'Jawa Barat', required: false },
-      { csvHeader: 'Kota/Kabupaten KTP', example: 'Bandung', required: false },
-      { csvHeader: 'Alamat Titik Pusat Mengajar', example: 'Jl. Thamrin No. 45, Jakarta Pusat', required: false },
-      
-      // === PENDIDIKAN ===
-      { csvHeader: 'Status Akademik', example: 'S1', required: false },
-      { csvHeader: 'Nama Universitas', example: 'Universitas Indonesia', required: false },
-      { csvHeader: 'Fakultas/Jurusan', example: 'Teknik Informatika', required: false },
-      { csvHeader: 'IPK/GPA', example: '3.75', required: false },
-      { csvHeader: 'Tahun Lulus', example: '2020', required: false },
-      
-      // === PENGALAMAN MENGAJAR ===
-      { csvHeader: 'Pengalaman Mengajar (tahun)', example: '3', required: false },
-      { csvHeader: 'Status Menerima Siswa', example: 'active', required: false },
-      { csvHeader: 'Tarif per Jam', example: '75000', required: false },
-      { csvHeader: 'Radius Mengajar (km)', example: '15', required: false },
-      
-      // === MATA PELAJARAN ===
-      { csvHeader: 'Program yang Dipilih', example: 'Matematika; Fisika; Kimia', required: true },
-      
-      // === BANK & PEMBAYARAN ===
-      { csvHeader: 'Nama Bank', example: 'Mandiri', required: false },
-      { csvHeader: 'Nomor Rekening', example: '1234567890123', required: false },
-      { csvHeader: 'Nama Pemilik Rekening', example: 'Ahmad Budi Santoso', required: false },
-      
-      // === KONTAK DARURAT ===
-      { csvHeader: 'Nama Kontak Darurat', example: 'Siti Aminah', required: false },
-      { csvHeader: 'Hubungan Kontak Darurat', example: 'Ibu', required: false },
-      { csvHeader: 'No. HP Kontak Darurat', example: '82187654321', required: false },
-      
-      // === CATATAN TAMBAHAN ===
-      { csvHeader: 'Bio/Deskripsi Singkat', example: 'Tutor berpengalaman dalam matematika dan sains...', required: false },
-      { csvHeader: 'Keahlian Khusus', example: 'Olimpiade Matematika, Programming', required: false },
-      { csvHeader: 'Catatan Admin', example: 'Tutor recommended dari universitas', required: false }
+    // Filter out system/display-only columns
+    const skipKeys = [
+      'id', 'created_at', 'updated_at', 'recruitment_stage_history', 'last_status_change', 'status_changed_by',
+      'form_agreement_check', 'recruitment_stage_history', 'fotoProfil', 'dokumenIdentitas', 'dokumenPendidikan', 'dokumenSertifikat', 'transkripNilai',
+      'status_verifikasi_identitas', 'status_verifikasi_pendidikan', 'additional_screening', 'staff_notes', 'approval_level', 'trn', 'status_tutor',
+      'recruitment_stage_history', 'form_agreement_check', 'recruitment_stage_history', 'recruitment_stage_history', 'recruitment_stage_history',
     ];
-    
-    // Create headers dan example row
-    const headers = csvColumns.map(col => col.csvHeader);
-    const exampleRow = csvColumns.map(col => col.example);
-    const requiredRow = csvColumns.map(col => col.required ? 'WAJIB' : 'Opsional');
-    
+    const csvColumns = SPREADSHEET_COLUMNS.filter((col: any) => !skipKeys.includes(col.key));
+
+    // Generate headers, example, and required info
+    const headers = csvColumns.map((col: any) => col.label);
+    const exampleRow = csvColumns.map((col: any) => {
+      switch (col.type) {
+        case 'email': return 'tutor@email.com';
+        case 'phone': return '08123456789';
+        case 'date': return '1990-01-01';
+        case 'number': return '100';
+        case 'array': return 'item1; item2';
+        case 'select': return 'Pilihan';
+        case 'boolean': return 'TRUE/FALSE';
+        default: return 'Contoh';
+      }
+    });
+    const requiredRow = csvColumns.map((col: any) => col.required ? 'WAJIB' : 'Opsional');
+
     // Create CSV with 3 rows: headers, required info, example data
-    const csvData = [
-      headers,
-      requiredRow,
-      exampleRow
-    ];
-    
+    const csvData = [headers, requiredRow, exampleRow];
     const csvContent = Papa.unparse(csvData, {
       header: false,
       skipEmptyLines: false,

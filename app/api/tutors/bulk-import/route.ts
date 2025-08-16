@@ -327,6 +327,8 @@ export async function POST(request: NextRequest) {
           gender: record['Jenis Kelamin'] || record['gender'] || null,
           headline: record['Headline'] || '',
           bio: record['Deskripsi Diri'] || '',
+          social_media_1: record['Link Media Sosial 1 (Opsional)'] || null,
+          social_media_2: record['Link Media Sosial 2 (Opsional)'] || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
