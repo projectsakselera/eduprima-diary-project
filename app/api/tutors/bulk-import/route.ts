@@ -377,21 +377,21 @@ export async function POST(request: NextRequest) {
         // === FUZZY MATCHING RESOLUTION ===
         console.log(`🔍 Resolving fields with fuzzy matching for record ${rowNumber}...`);
         
-        // Resolve province using fuzzy matching
+        // Resolve province using fuzzy matching - UPDATE untuk Testing2.csv
         let resolvedProvinceId = null;
         let resolvedProvinceName = null;
-        if (record['Provinsi Domisili'] || record['provinsiDomisili_matched']) {
-          const provinceInput = record['provinsiDomisili_matched'] || record['Provinsi Domisili'];
+        if (record['Provinsi'] || record['provinsiDomisili_matched']) {
+          const provinceInput = record['provinsiDomisili_matched'] || record['Provinsi'];
           const provinceResult = resolveFieldWithFuzzy(provinceInput, 'province', referenceData.provinces);
           resolvedProvinceId = provinceResult.id;
           resolvedProvinceName = provinceResult.matched;
         }
         
-        // Resolve city using fuzzy matching (filter by province if available)
+        // Resolve city using fuzzy matching (filter by province if available) - UPDATE untuk Testing2.csv
         let resolvedCityId = null;
         let resolvedCityName = null;
-        if (record['Kota/Kabupaten Domisili'] || record['kotaKabupatenDomisili_matched']) {
-          const cityInput = record['kotaKabupatenDomisili_matched'] || record['Kota/Kabupaten Domisili'];
+        if (record['Kota/Kabupaten'] || record['kotaKabupatenDomisili_matched']) {
+          const cityInput = record['kotaKabupatenDomisili_matched'] || record['Kota/Kabupaten'];
           const cityResult = resolveFieldWithFuzzy(
             cityInput, 
             'city', 
@@ -433,24 +433,24 @@ export async function POST(request: NextRequest) {
           programs: resolvedProgramIds.length
         });
 
-        // Add debug logging for address data - sesuai dengan Testing_data_tutor.csv
+        // Add debug logging for address data - UPDATE untuk Testing2.csv
         console.log(`🔍 Address data for record ${rowNumber}:`, {
           domicile: {
-            provinsi: record['Provinsi Domisili'],
-            kota: record['Kota/Kabupaten Domisili'],
-            kecamatan: record['Kecamatan Domisili'],
-            kelurahan: record['Kelurahan/Desa Domisili'],
-            alamat: record['Alamat Lengkap Domisili'],
-            kodePos: record['Kode Pos Domisili']
+            provinsi: record['Provinsi'],
+            kota: record['Kota/Kabupaten'],
+            kecamatan: record['Kecamatan'],
+            kelurahan: record['Kelurahan/Desa'],
+            alamat: record['Alamat Lengkap/Nama Jalan'],
+            kodePos: record['Kode Pos']
           },
           ktp: {
-            samaDenganDomisili: record['Alamat Sama dengan KTP'],
-            provinsi: record['Provinsi KTP'],
-            kota: record['Kota/Kabupaten KTP'],
-            kecamatan: record['Kecamatan KTP'],
-            kelurahan: record['Kelurahan/Desa KTP'],
-            alamat: record['Alamat Lengkap KTP'],
-            kodePos: record['Kode Pos KTP']
+            samaDenganDomisili: record['Alamat domisili saya sama dengan alamat di KTP/KK'],
+            provinsi: record['Provinsi KTP/KK'],
+            kota: record['Kota/Kabupaten KTP/KK'],
+            kecamatan: record['Kecamatan KTP/KK'],
+            kelurahan: record['Kelurahan/Desa KTP/KK'],
+            alamat: record['Alamat Lengkap/Nama Jalan KTP/KK'],
+            kodePos: record['Kode Pos KTP/KK']
           },
           resolved: {
             domicileProvinceId: resolvedProvinceId,
@@ -458,21 +458,20 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Insert address data if provided
+        // === IMPORT ALAMAT - UPDATE untuk Testing2.csv ===
         console.log(`📝 Creating address records for user ${userId}...`);
         
-        // Create domicile address - sesuai dengan Testing_data_tutor.csv
-        if (record['Provinsi Domisili'] || record['Kota/Kabupaten Domisili'] || record['Alamat Lengkap Domisili']) {
-          // Pastikan insert alamat menggunakan struktur yang benar
+        // Create domicile address
+        if (record['Provinsi'] || record['Kota/Kabupaten'] || record['Alamat Lengkap/Nama Jalan']) {
           const domicileAddressData = {
             user_id: userId,
             address_type: 'domicile',
-            street_address: record['Alamat Lengkap Domisili'] || 'Alamat belum diisi', // ✅ Handle required constraint
-            postal_code: record['Kode Pos Domisili'] || null,
-            province_id: resolvedProvinceId,        // ✅ Pastikan ini ada
-            city_id: resolvedCityId,               // ✅ Pastikan ini ada
-            district_name: record['Kecamatan Domisili'] || null,
-            village_name: record['Kelurahan/Desa Domisili'] || null,
+            street_address: record['Alamat Lengkap/Nama Jalan'] || 'Alamat belum diisi',
+            postal_code: record['Kode Pos'] || null,
+            province_id: resolvedProvinceId,
+            city_id: resolvedCityId,
+            district_name: record['Kecamatan'] || null,
+            village_name: record['Kelurahan/Desa'] || null,
             is_primary: true,
             is_verified: false,
             created_at: new Date().toISOString(),
@@ -492,27 +491,28 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create KTP address (ALAMAT IDENTITAS) if different from domicile
-        const alamatSamaDenganKTP = record['Alamat Sama dengan KTP'] === 'true' || 
-                                    record['Alamat Sama dengan KTP'] === true;
+        // Create KTP address if different from domicile
+        const alamatSamaDenganKTP = record['Alamat domisili saya sama dengan alamat di KTP/KK'] === 'TRUE' ||
+                                    record['Alamat domisili saya sama dengan alamat di KTP/KK'] === true ||
+                                    record['Alamat domisili saya sama dengan alamat di KTP/KK'] === 'true';
 
         if (!alamatSamaDenganKTP && (
-          record['Provinsi KTP'] || 
-          record['Kota/Kabupaten KTP'] || 
-          record['Alamat Lengkap KTP']
+          record['Provinsi KTP/KK'] || 
+          record['Kota/Kabupaten KTP/KK'] || 
+          record['Alamat Lengkap/Nama Jalan KTP/KK']
         )) {
           // Resolve KTP province and city using fuzzy matching
           let resolvedKTPProvinceId = null;
           let resolvedKTPCityId = null;
           
-          if (record['Provinsi KTP']) {
-            const ktpProvinceResult = resolveFieldWithFuzzy(record['Provinsi KTP'], 'province', referenceData.provinces);
+          if (record['Provinsi KTP/KK']) {
+            const ktpProvinceResult = resolveFieldWithFuzzy(record['Provinsi KTP/KK'], 'province', referenceData.provinces);
             resolvedKTPProvinceId = ktpProvinceResult.id;
           }
           
-          if (record['Kota/Kabupaten KTP']) {
+          if (record['Kota/Kabupaten KTP/KK']) {
             const ktpCityResult = resolveFieldWithFuzzy(
-              record['Kota/Kabupaten KTP'], 
+              record['Kota/Kabupaten KTP/KK'], 
               'city', 
               referenceData.cities,
               resolvedKTPProvinceId ? (city: any) => city.province_id === resolvedKTPProvinceId : undefined
@@ -522,15 +522,14 @@ export async function POST(request: NextRequest) {
 
           const ktpAddressData = {
             user_id: userId,
-            address_type: 'ktp', // ✅ Specify KTP address type
-            street_address: record['Alamat Lengkap KTP'] || 'Alamat KTP belum diisi', // ✅ Handle required constraint
-            postal_code: record['Kode Pos KTP'] || null,
-            // Use resolved KTP location IDs
+            address_type: 'ktp',
+            street_address: record['Alamat Lengkap/Nama Jalan KTP/KK'] || 'Alamat KTP belum diisi',
+            postal_code: record['Kode Pos KTP/KK'] || null,
             province_id: resolvedKTPProvinceId,
             city_id: resolvedKTPCityId,
-            district_name: record['Kecamatan KTP'] || null,
-            village_name: record['Kelurahan/Desa KTP'] || null,
-            is_primary: false, // ✅ Not primary address
+            district_name: record['Kecamatan KTP/KK'] || null,
+            village_name: record['Kelurahan/Desa KTP/KK'] || null,
+            is_primary: false,
             is_verified: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
