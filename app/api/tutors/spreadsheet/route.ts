@@ -4,16 +4,41 @@ import { convertTutorFileUrls } from '@/lib/url-converter';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Disable ISR completely
+export const fetchCache = 'force-no-store'; // Force no caching
+export const runtime = 'nodejs';
 
-// Supabase Configuration
+// Supabase Configuration with debug logging
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
+  console.error('❌ Missing Supabase environment variables');
+  console.error('URL present:', !!supabaseUrl);
+  console.error('Key present:', !!supabaseKey);
 }
 
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// Add connection options to prevent connection pooling issues
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false, // Don't persist session in serverless
+  },
+  global: {
+    headers: {
+      'X-Request-ID': Date.now().toString(),
+      'X-No-Cache': 'true'
+    }
+  }
+}) : null;
+
+// Debug environment
+console.log('🔍 Environment debug:', {
+  hasSupabaseUrl: !!supabaseUrl,
+  hasSupabaseKey: !!supabaseKey,
+  nodeEnv: process.env.NODE_ENV,
+  vercelEnv: process.env.VERCEL_ENV,
+  timestamp: new Date().toISOString()
+});
 
 // Helper function to extract data from education_history JSONB
 function extractFromEducationHistory(educationHistory: any[], level: string, field: string): any {
@@ -187,6 +212,14 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
 
   try {
     console.log('🔍 Fetching all tutor data from Supabase with server-side filters...');
+    console.log('🔍 Database query parameters:', {
+      limit,
+      offset, 
+      search,
+      columnFilters,
+      timestamp: new Date().toISOString(),
+      environment: process.env.VERCEL_ENV || 'development'
+    });
 
     // First get all roles that match tutor/educator (case insensitive)
     const { data: roleData, error: roleError } = await supabase
@@ -366,10 +399,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
 
     if (!usersData || usersData.length === 0) {
       console.log('⚠️ No tutor users found');
-      return { data: [], error: null, total: 0 };
+      console.log('🔍 Debug empty result:', {
+        totalCount,
+        hasRoleIds: roleIds.length > 0,
+        roleIds: roleIds.slice(0, 3),
+        query: 'users_universal',
+        environment: process.env.VERCEL_ENV || 'development'
+      });
+      return { data: [], error: null, total: totalCount || 0 };
     }
 
-    console.log(`✅ Found ${usersData.length} tutor users`);
+    console.log(`✅ Found ${usersData.length} tutor users (total count: ${totalCount})`);
 
     // Extract user IDs for related data queries
     const userIds = usersData.map(user => user.id);
@@ -988,11 +1028,16 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now() // Add timestamp to response
     });
 
-    // Set aggressive no-cache headers
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    // Set aggressive no-cache headers for Vercel Edge
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
     response.headers.set('Surrogate-Control', 'no-store');
+    response.headers.set('CDN-Cache-Control', 'no-store');
+    response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+    response.headers.set('X-No-Cache', 'true');
+    response.headers.set('X-Timestamp', Date.now().toString());
+    response.headers.set('X-Accel-Expires', '0');
     
     return response;
 

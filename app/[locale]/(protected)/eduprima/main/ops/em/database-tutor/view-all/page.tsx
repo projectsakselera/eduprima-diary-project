@@ -671,7 +671,7 @@ interface Column {
 }
 
 // Define columns with categories - matching form structure
-const SPREADSHEET_COLUMNS: Column[] = [
+export const SPREADSHEET_COLUMNS: Column[] = [
   // System & Management (Status & Kontrol Sistem)
   { key: 'id', label: 'ID', width: 100, type: 'text', category: 'System & Management', sticky: true },
   { key: 'trn', label: 'TRN (Tutor Registration Number)', width: 120, type: 'text', category: 'System & Management', sticky: true, frozen: true },
@@ -2524,6 +2524,7 @@ export default function ViewAllTutorsPage() {
           handleSearchClick={handleSearchClick}
           handleClearSearch={handleClearSearch}
           categories={categories}
+          refreshData={refreshData}
         />
 
         {/* Status Info Row - Left Aligned */}
