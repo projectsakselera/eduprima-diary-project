@@ -492,9 +492,18 @@ export async function POST(request: NextRequest) {
         }
 
         // Create KTP address if different from domicile
+        console.log(`🔍 Debug KTP check for record ${rowNumber}:`, {
+          rawValue: record['Alamat domisili saya sama dengan alamat di KTP/KK'],
+          valueType: typeof record['Alamat domisili saya sama dengan alamat di KTP/KK'],
+          trimmedValue: String(record['Alamat domisili saya sama dengan alamat di KTP/KK']).trim(),
+        });
+        
         const alamatSamaDenganKTP = record['Alamat domisili saya sama dengan alamat di KTP/KK'] === 'TRUE' ||
                                     record['Alamat domisili saya sama dengan alamat di KTP/KK'] === true ||
-                                    record['Alamat domisili saya sama dengan alamat di KTP/KK'] === 'true';
+                                    record['Alamat domisili saya sama dengan alamat di KTP/KK'] === 'true' ||
+                                    String(record['Alamat domisili saya sama dengan alamat di KTP/KK']).trim().toUpperCase() === 'TRUE';
+        
+        console.log(`🔍 KTP check result for record ${rowNumber}: alamatSamaDenganKTP = ${alamatSamaDenganKTP}`);
 
         if (!alamatSamaDenganKTP && (
           record['Provinsi KTP/KK'] || 
@@ -522,7 +531,7 @@ export async function POST(request: NextRequest) {
 
           const ktpAddressData = {
             user_id: userId,
-            address_type: 'ktp',
+            address_type: 'identity', // ✅ Corrected: use 'identity' instead of 'ktp'
             street_address: record['Alamat Lengkap/Nama Jalan KTP/KK'] || 'Alamat KTP belum diisi',
             postal_code: record['Kode Pos KTP/KK'] || null,
             province_id: resolvedKTPProvinceId,
@@ -535,16 +544,16 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString()
           };
 
-          console.log(`🆔 KTP address data for ${rowNumber}:`, ktpAddressData);
+          console.log(`🆔 Identity/KTP address data for ${rowNumber}:`, ktpAddressData);
 
           const { error: ktpError } = await supabase
             .from('user_addresses')
             .insert(ktpAddressData);
 
           if (ktpError) {
-            console.warn(`⚠️ Warning: Could not create KTP address for ${rowNumber}:`, ktpError);
+            console.warn(`⚠️ Warning: Could not create identity address for ${rowNumber}:`, ktpError);
           } else {
-            console.log(`✅ Created KTP address for record ${rowNumber}`);
+            console.log(`✅ Created identity address for record ${rowNumber}`);
           }
         } else if (alamatSamaDenganKTP) {
           console.log(`ℹ️ KTP address same as domicile for record ${rowNumber} - no separate KTP record needed`);
