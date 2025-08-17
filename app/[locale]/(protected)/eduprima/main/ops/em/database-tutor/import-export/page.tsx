@@ -24,7 +24,7 @@ import {
   type FieldMatch 
 } from '@/lib/fuzzy-location-matcher';
 // 1. Import SPREADSHEET_COLUMNS from view-all
-import { SPREADSHEET_COLUMNS } from '../view-all/page';
+import { SPREADSHEET_COLUMNS } from '../view-all/spreadsheet-columns';
 
 // Temporary simplified types to avoid dependency issues
 interface TutorFormField {
