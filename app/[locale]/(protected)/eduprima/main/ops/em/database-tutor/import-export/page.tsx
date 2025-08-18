@@ -425,6 +425,7 @@ export default function ImportExportPage() {
         title: 'Identitas Dasar',
         icon: 'ph:user-circle',
         fields: [
+          { key: 'TRN (Tutor Registration Number)', type: 'text', mappedKey: 'trn' },
           { key: 'Email Aktif', type: 'email', mappedKey: 'email' },
           { key: 'No. HP Utama (+62)', type: 'tel_split', mappedKey: 'noHp1' },
           { key: 'Nama Lengkap', type: 'text', mappedKey: 'namaLengkap' },
@@ -724,14 +725,127 @@ export default function ImportExportPage() {
 
   // Generate CSV template dengan proper column names
   const downloadCSVTemplate = () => {
-    // Filter out system/display-only columns
-    const skipKeys = [
-      'id', 'created_at', 'updated_at', 'recruitment_stage_history', 'last_status_change', 'status_changed_by',
-      'form_agreement_check', 'recruitment_stage_history', 'fotoProfil', 'dokumenIdentitas', 'dokumenPendidikan', 'dokumenSertifikat', 'transkripNilai',
-      'status_verifikasi_identitas', 'status_verifikasi_pendidikan', 'additional_screening', 'staff_notes', 'approval_level', 'trn', 'status_tutor',
-      'recruitment_stage_history', 'form_agreement_check', 'recruitment_stage_history', 'recruitment_stage_history', 'recruitment_stage_history',
+    // Define custom column order as specified by user
+    const customColumnOrder = [
+      'trn', // TRN (Tutor Registration Number)
+      'namaLengkap', // Nama Lengkap
+      'namaPanggilan', // Nama Panggilan
+      'tanggalLahir', // Tanggal Lahir
+      'jenisKelamin', // Jenis Kelamin
+      'agama', // Agama
+      'email', // Email Aktif
+      'noHp1', // No. HP (WhatsApp)
+      'noHp2', // No. HP Alternatif (Opsional)
+      'headline', // Headline/Tagline Tutor
+      'deskripsiDiri', // Deskripsi Diri/Bio Tutor
+      'motivasiMenjadiTutor', // Motivasi Menjadi Tutor
+      'socialMedia1', // Link Media Sosial 1 (Opsional)
+      'socialMedia2', // Link Media Sosial 2 (Opsional)
+      'provinsiDomisili', // Provinsi
+      'kotaKabupatenDomisili', // Kota/Kabupaten
+      'kecamatanDomisili', // Kecamatan
+      'kelurahanDomisili', // Kelurahan/Desa
+      'alamatLengkapDomisili', // Alamat Lengkap/Nama Jalan
+      'kodePosDomisili', // Kode Pos
+      'alamatSamaDenganKTP', // Alamat domisili saya sama dengan alamat di KTP/KK
+      'provinsiKTP', // Provinsi KTP/KK
+      'kotaKabupatenKTP', // Kota/Kabupaten KTP/KK
+      'kecamatanKTP', // Kecamatan KTP/KK
+      'kelurahanKTP', // Kelurahan/Desa KTP/KK
+      'alamatLengkapKTP', // Alamat Lengkap/Nama Jalan KTP/KK
+      'kodePosKTP', // Kode Pos KTP/KK
+      'namaNasabah', // Nama Pemilik Rekening
+      'nomorRekening', // Nomor Rekening
+      'namaBank', // Nama Bank
+      // Education fields - these will be created as fallback if not found
+      'statusAkademik', // Status Akademik 
+      'namaUniversitas', // Universitas
+      'fakultas', // Fakultas 
+      'jurusan', // Jurusan
+      'jurusanSMKDetail', // Jurusan SMK Detail
+      'ipk', // IPK
+      'tahunMasuk', // Tahun Masuk
+      'tahunLulus', // Tahun Lulus
+      'namaSMA', // Nama SMA
+      'jurusanSMA', // Jurusan SMA
+      'tahunLulusSMA', // Tahun Lulus SMA
+      'namaUniversitasS1', // Universitas S1 (untuk S2)
+      'fakultasS1', // Fakultas S1
+      'jurusanS1', // Jurusan S1
+      'namaInstitusi', // Nama Institusi (Alternative)
+      'keahlianSpesialisasi', // Keahlian Spesialisasi
+      'keahlianLainnya', // Keahlian Lainnya
+      'pengalamanMengajar', // Pengalaman Mengajar
+      'pengalamanLainRelevan', // Pengalaman Lain
+      'prestasiAkademik', // Prestasi Akademik
+      'prestasiNonAkademik', // Prestasi Non-Akademik
+      'sertifikasiPelatihan', // Sertifikasi Pelatihan
+      'selectedPrograms', // Program Dipilih
+      'mataPelajaranLainnya', // Mata Pelajaran Lainnya (Jika Tidak Ditemukan)
+      'statusMenerimaSiswa', // Status Menerima Siswa
+      'available_schedule', // Jadwal Tersedia
+      'teaching_methods', // Metode Mengajar
+      'hourly_rate', // Tarif per Jam
+      'maksimalSiswaBaru', // Max Siswa Baru
+      'maksimalTotalSiswa', // Max Total Siswa
+      'usiaTargetSiswa', // Usia Target Siswa
+      'teaching_radius_km', // Radius Mengajar (km)
+      'alamatTitikLokasi', // Titik Lokasi
+      'location_notes', // Catatan Lokasi
+      'catatanAvailability', // Catatan Ketersediaan
+      'transportasiTutor', // Transportasi Tutor
+      'titikLokasiLat', // Titik Lokasi Lat
+      'titikLokasiLng', // Titik Lokasi Lng
+      'teachingMethods', // Gaya Pembelajaran
+      'studentLevelPreferences', // Preferensi Level Siswa
+      'specialNeedsCapable', // Mampu ABK
+      'groupClassWilling', // Bersedia Grup
+      'onlineTeachingCapable', // Mampu Online
+      'techSavviness', // Tech Savviness
+      'gmeetExperience', // Pengalaman GMeet
+      'presensiUpdateCapability', // Update Presensi
+      'tutorPersonalityType', // Tipe Kepribadian
+      'communicationStyle', // Gaya Komunikasi
+      'teachingPatienceLevel', // Level Kesabaran
+      'studentMotivationAbility', // Kemampuan Motivasi
+      'scheduleFlexibilityLevel', // Fleksibilitas Jadwal
+      'emergencyContactName', // Nama Lengkap Kontak Darurat
+      'emergencyContactRelationship', // Hubungan dengan Kontak Darurat
+      'emergencyContactPhone', // Nomor HP Kontak Darurat
     ];
-    const csvColumns = SPREADSHEET_COLUMNS.filter((col: any) => !skipKeys.includes(col.key));
+
+    // Create a map of all available columns for quick lookup
+    const columnsMap = new Map();
+    SPREADSHEET_COLUMNS.forEach(col => {
+      columnsMap.set(col.key, col);
+    });
+
+    // Build csvColumns array based on custom order
+    const csvColumns: any[] = [];
+    const missingColumns: string[] = [];
+    
+    customColumnOrder.forEach(key => {
+      const column = columnsMap.get(key);
+      if (column) {
+        csvColumns.push(column);
+      } else {
+        missingColumns.push(key);
+        // Create fallback column for missing keys
+        csvColumns.push({
+          key: key,
+          label: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
+          type: 'text',
+          required: false
+        });
+      }
+    });
+    
+    // Log missing columns for debugging
+    if (missingColumns.length > 0) {
+      console.warn('⚠️ Missing columns in SPREADSHEET_COLUMNS:', missingColumns);
+    }
+    
+    console.log('✅ CSV columns prepared:', csvColumns.length, 'total columns');
 
     // Generate headers, example, and required info
     const headers = csvColumns.map((col: any) => col.label);

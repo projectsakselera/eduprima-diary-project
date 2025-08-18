@@ -396,6 +396,21 @@ export async function POST(request: NextRequest) {
           high_school_major: record['Jurusan SMA'] || null,
           vocational_school_detail: record['Jurusan SMK Detail'] || null,
           alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
+          // Handle TRN field from new CSV template
+          tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
+          // Handle additional education fields - using exact database column names
+          academic_status: record['Status Akademik'] || null,
+          faculty: record['Fakultas'] || record['fakultas'] || null,
+          university_s1_name: record['Universitas S1 (untuk S2)'] || null,
+          faculty_s1: record['Fakultas S1'] || null,
+          major_s1: record['Jurusan S1'] || null,
+          // Handle other education fields
+          entry_year: record['Tahun Masuk'] ? parseInt(record['Tahun Masuk']) : null,
+          graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
+          // Handle GPA field - support both naming conventions
+          current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+          // Handle other relevant experience - support both naming conventions  
+          other_relevant_experience: record['Pengalaman Lain Relevan'] || record['pengalamanLainRelevan'] || null,
         };
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
