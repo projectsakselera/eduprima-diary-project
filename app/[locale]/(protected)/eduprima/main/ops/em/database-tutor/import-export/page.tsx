@@ -693,7 +693,7 @@ export default function ImportExportPage() {
       
       // 17. PROGRAM SELECTION
       { name: 'selectedPrograms', label: 'Program yang Dipilih', type: 'category-program-selector', required: false },
-      { name: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya', type: 'textarea', required: false },
+      { name: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya (Jika Tidak Ditemukan)', type: 'textarea', required: false },
       
       // === STEP 5: DOCUMENTS ===
       {

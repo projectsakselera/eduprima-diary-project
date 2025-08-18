@@ -202,7 +202,15 @@ export async function POST(request: NextRequest) {
           keys: Object.keys(record),
           hasNamaLengkap: !!record['Nama Lengkap'],
           hasEmail: !!record['Email Aktif'],
-          hasUserCode: !!record['User Code']
+          hasUserCode: !!record['User Code'],
+          hasTRN: !!record['TRN (Tutor Registration Number)'],
+          trnValue: record['TRN (Tutor Registration Number)'],
+          hasIPK: !!record['IPK/GPA'],
+          ipkValue: record['IPK/GPA'],
+          hasPengalamanLain: !!record['Pengalaman Lain Relevan'],
+          pengalamanLainValue: record['Pengalaman Lain Relevan'],
+          hasMataPelajaranLainnya: !!record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
+          mataPelajaranLainnyaValue: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)']
         });
         
         // Generate truly unique user_code and email for each record
@@ -411,6 +419,8 @@ export async function POST(request: NextRequest) {
           current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
           // Handle other relevant experience - support both naming conventions  
           other_relevant_experience: record['Pengalaman Lain Relevan'] || record['pengalamanLainRelevan'] || null,
+          // Handle additional subjects description
+          additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || record['Mata Pelajaran Lainnya'] || record['mataPelajaranLainnya'] || null,
         };
 
         console.log(`📝 Prepared tutor details data for ${rowNumber}:`, tutorDetailsData);
@@ -631,15 +641,17 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (existingTutorDetails && !checkError) {
-          // Record exists, update it
+          // Record exists, update it including TRN override
           const { error: updateError } = await supabase
             .from('tutor_details')
             .update({
+              // Override TRN if provided in CSV
+              tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
               teaching_experience: record['Pengalaman Mengajar'] || null,
               special_skills: record['Keahlian Spesialisasi'] || null,
               other_skills: record['Keahlian Lainnya'] || null,
               learning_experience: record['Deskripsi Diri'] || null,
-              other_relevant_experience: record['Pengalaman Lain'] || null,
+              other_relevant_experience: record['Pengalaman Lain Relevan'] || record['pengalamanLainRelevan'] || null,
               academic_achievements: record['Prestasi Akademik'] || null,
               non_academic_achievements: record['Prestasi Non-Akademik'] || null,
               // Education data in tutor_details (moved from user_profiles)
@@ -653,8 +665,8 @@ export async function POST(request: NextRequest) {
               current_faculty: record['Fakultas S1'] || null,
               current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
               current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-              current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
-              additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+              current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+              additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || record['Mata Pelajaran Lainnya'] || record['mataPelajaranLainnya'] || null,
               high_school: record['Nama SMA'] || null,
               high_school_major: record['Jurusan SMA'] || null,
               high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
@@ -690,15 +702,17 @@ export async function POST(request: NextRequest) {
               if (directInsertError) {
                 console.warn(`⚠️ Could not create tutor_details for ${rowNumber}:`, directInsertError);
               } else {
-                // Successfully created, now update with data
+                // Successfully created, now update with data including TRN override
                 await supabase
                   .from('tutor_details')
                   .update({
+                    // Override TRN if provided in CSV
+                    tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
                     teaching_experience: record['Pengalaman Mengajar'] || null,
                     special_skills: record['Keahlian Spesialisasi'] || null,
                     other_skills: record['Keahlian Lainnya'] || null,
                     learning_experience: record['Deskripsi Diri'] || null,
-                    other_relevant_experience: record['Pengalaman Lain'] || null,
+                    other_relevant_experience: record['Pengalaman Lain Relevan'] || record['pengalamanLainRelevan'] || null,
                     academic_achievements: record['Prestasi Akademik'] || null,
                     non_academic_achievements: record['Prestasi Non-Akademik'] || null,
                     // Education data in tutor_details (moved from user_profiles)
@@ -712,8 +726,8 @@ export async function POST(request: NextRequest) {
                     current_faculty: record['Fakultas S1'] || null,
                     current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                     current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                    current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
-                    additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+                    current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                    additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || record['Mata Pelajaran Lainnya'] || record['mataPelajaranLainnya'] || null,
                     high_school: record['Nama SMA'] || null,
                     high_school_major: record['Jurusan SMA'] || null,
                     high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,
@@ -726,15 +740,17 @@ export async function POST(request: NextRequest) {
                 console.log(`✅ Created and updated tutor_details for record ${rowNumber}`);
               }
             } else {
-              // RPC succeeded, now update with data
+              // RPC succeeded, now update with data including TRN override
               await supabase
                 .from('tutor_details')
                 .update({
+                  // Override TRN if provided in CSV
+                  tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
                   teaching_experience: record['Pengalaman Mengajar'] || null,
                   special_skills: record['Keahlian Spesialisasi'] || null,
                   other_skills: record['Keahlian Lainnya'] || null,
                   learning_experience: record['Deskripsi Diri'] || null,
-                  other_relevant_experience: record['Pengalaman Lain'] || null,
+                  other_relevant_experience: record['Pengalaman Lain Relevan'] || record['pengalamanLainRelevan'] || null,
                   academic_achievements: record['Prestasi Akademik'] || null,
                   non_academic_achievements: record['Prestasi Non-Akademik'] || null,
                   // Education data in tutor_details (moved from user_profiles)
@@ -748,8 +764,8 @@ export async function POST(request: NextRequest) {
                   current_faculty: record['Fakultas S1'] || null,
                   current_major: record['Jurusan S1'] || record['Fakultas/Jurusan'] || null,
                   current_graduation_year: record['Tahun Lulus'] ? parseInt(record['Tahun Lulus']) : null,
-                  current_gpa: record['IPK'] ? parseFloat(record['IPK']) : null,
-                  additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || null,
+                  current_gpa: record['IPK/GPA'] ? parseFloat(record['IPK/GPA']) : null,
+                  additional_subjects_description: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'] || record['Mata Pelajaran Lainnya'] || record['mataPelajaranLainnya'] || null,
                   high_school: record['Nama SMA'] || null,
                   high_school_major: record['Jurusan SMA'] || null,
                   high_school_graduation_year: record['Tahun Lulus SMA'] ? parseInt(record['Tahun Lulus SMA']) : null,

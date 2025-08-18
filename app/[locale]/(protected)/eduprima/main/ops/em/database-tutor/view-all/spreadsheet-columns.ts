@@ -74,7 +74,7 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'prestasiNonAkademik', label: 'Prestasi Non-Akademik', width: 200, type: 'text', category: 'Profil Profesional' },
   { key: 'sertifikasiPelatihan', label: 'Sertifikasi/Pelatihan', width: 200, type: 'text', category: 'Profil Profesional' },
   { key: 'selectedPrograms', label: 'Program Dipilih', width: 200, type: 'array', category: 'Program & Mata Pelajaran' },
-  { key: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya', width: 200, type: 'text', category: 'Program & Mata Pelajaran' },
+  { key: 'mataPelajaranLainnya', label: 'Mata Pelajaran Lainnya (Jika Tidak Ditemukan)', width: 200, type: 'text', category: 'Program & Mata Pelajaran' },
   { key: 'statusMenerimaSiswa', label: 'Status Menerima Siswa', width: 150, type: 'select', category: 'Ketersediaan' },
   { key: 'available_schedule', label: 'Jadwal Tersedia', width: 200, type: 'array', category: 'Ketersediaan' },
   { key: 'teaching_methods', label: 'Metode Mengajar', width: 200, type: 'array', category: 'Ketersediaan' },
