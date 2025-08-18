@@ -294,10 +294,13 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     if (search && search.length >= 2) {
       const searchTerm = search.toLowerCase();
       
-      // First, search for user IDs that have matching programs
-      let programUserIds: string[] = [];
+      // Collect all user IDs that match search across various tables
+      let matchingUserIds: string[] = [];
       
-      // Search in program mappings (tutor_program_mappings + programs_unit)
+      console.log(`🔍 Starting comprehensive search for: "${searchTerm}"`);
+      
+      try {
+        // 1. Search in program mappings (tutor_program_mappings + programs_unit)
       const { data: programMappings, error: programError } = await supabase
         .from('tutor_program_mappings')
         .select(`
@@ -307,7 +310,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .or(`programs_unit.program_name.ilike.%${searchTerm}%,programs_unit.program_name_local.ilike.%${searchTerm}%`);
       
       if (!programError && programMappings) {
-        // Get tutor_ids and convert to user_ids
         const tutorIds = programMappings.map(pm => pm.tutor_id);
         if (tutorIds.length > 0) {
           const { data: tutorDetailsForPrograms } = await supabase
@@ -316,19 +318,18 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
             .in('id', tutorIds);
           
           if (tutorDetailsForPrograms) {
-            programUserIds.push(...tutorDetailsForPrograms.map(td => td.user_id));
+            matchingUserIds.push(...tutorDetailsForPrograms.map(td => td.user_id));
           }
         }
       }
       
-      // Search in additional subjects (tutor_additional_subjects)
+      // 2. Search in additional subjects (tutor_additional_subjects)
       const { data: additionalSubjects, error: additionalError } = await supabase
         .from('tutor_additional_subjects')
         .select('tutor_id')
         .ilike('subject_name', `%${searchTerm}%`);
       
       if (!additionalError && additionalSubjects) {
-        // Get tutor_ids and convert to user_ids
         const tutorIds = additionalSubjects.map(as => as.tutor_id);
         if (tutorIds.length > 0) {
           const { data: tutorDetailsForSubjects } = await supabase
@@ -337,45 +338,262 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
             .in('id', tutorIds);
           
           if (tutorDetailsForSubjects) {
-            programUserIds.push(...tutorDetailsForSubjects.map(td => td.user_id));
+            matchingUserIds.push(...tutorDetailsForSubjects.map(td => td.user_id));
           }
         }
       }
       
-      // Search in additional subjects description (tutor_details.additional_subjects_description)
-      const { data: additionalDescriptionMatches, error: descriptionError } = await supabase
+      // 3. Search in tutor_details for education and professional fields
+      const { data: tutorDetailsMatches, error: tutorDetailsError } = await supabase
         .from('tutor_details')
         .select('user_id')
-        .ilike('additional_subjects_description', `%${searchTerm}%`);
+        .or(`additional_subjects_description.ilike.%${searchTerm}%,current_university.ilike.%${searchTerm}%,current_faculty.ilike.%${searchTerm}%,current_major.ilike.%${searchTerm}%,special_skills.ilike.%${searchTerm}%,teaching_experience.ilike.%${searchTerm}%`);
       
-      if (!descriptionError && additionalDescriptionMatches) {
-        programUserIds.push(...additionalDescriptionMatches.map(td => td.user_id));
+      if (tutorDetailsError) {
+        console.error('❌ Error searching tutor_details:', tutorDetailsError);
       }
       
-      // Remove duplicates
-      programUserIds = [...new Set(programUserIds)];
+      if (!tutorDetailsError && tutorDetailsMatches) {
+        matchingUserIds.push(...tutorDetailsMatches.map(td => td.user_id));
+        console.log(`📚 Found ${tutorDetailsMatches.length} matches in tutor_details for "${searchTerm}"`);
+      }
       
-      // Search for user IDs that have matching full names in user_profiles
+      // 3b. Dedicated search for education fields only (for debugging)
+      const { data: educationMatches, error: educationError } = await supabase
+        .from('tutor_details')
+        .select('user_id, current_university, current_faculty, current_major')
+        .or(`current_university.ilike.%${searchTerm}%,current_faculty.ilike.%${searchTerm}%,current_major.ilike.%${searchTerm}%`);
+      
+      if (educationError) {
+        console.error('❌ Error searching education fields:', educationError);
+      }
+      
+      if (!educationError && educationMatches) {
+        matchingUserIds.push(...educationMatches.map(em => em.user_id));
+        console.log(`🎓 Found ${educationMatches.length} matches in education fields for "${searchTerm}":`, educationMatches.slice(0, 3));
+      }
+      
+      // 4. Search for user IDs that have matching full names and phone numbers in user_profiles
       const { data: profileMatches, error: profileError } = await supabase
         .from('user_profiles')
-        .select('user_id')
-        .ilike('full_name', `%${searchTerm}%`);
+        .select('user_id, full_name, mobile_phone_2')
+        .or(`full_name.ilike.%${searchTerm}%,mobile_phone_2.ilike.%${searchTerm}%`);
       
-      if (!profileError && profileMatches) {
-        programUserIds.push(...profileMatches.map(pm => pm.user_id));
+      if (profileError) {
+        console.error('❌ Error searching profiles:', profileError);
       }
       
-      // Remove duplicates
-      programUserIds = [...new Set(programUserIds)];
+      if (!profileError && profileMatches) {
+        matchingUserIds.push(...profileMatches.map(pm => pm.user_id));
+        const phoneMatches = profileMatches.filter(pm => pm.mobile_phone_2?.includes(searchTerm));
+        if (phoneMatches.length > 0) {
+          console.log(`📱 Found ${phoneMatches.length} matches in alternative phone for "${searchTerm}":`, phoneMatches.slice(0, 3));
+        }
+      }
       
-      // Apply search: either direct user fields OR program/name matches
-      if (programUserIds.length > 0) {
-        userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,id.in.(${programUserIds.join(',')})`);
-      } else {
+      // 4b. Search for religion in user_demographics
+      const { data: religionMatches, error: religionError } = await supabase
+        .from('user_demographics')
+        .select('user_id, religion')
+        .ilike('religion', `%${searchTerm}%`);
+      
+      if (religionError) {
+        console.error('❌ Error searching religion:', religionError);
+      }
+      
+      if (!religionError && religionMatches) {
+        matchingUserIds.push(...religionMatches.map(rm => rm.user_id));
+        console.log(`🕌 Found ${religionMatches.length} matches in religion for "${searchTerm}":`, religionMatches.slice(0, 3));
+      }
+      
+      // 5. Search in user_addresses for address fields
+      const { data: addressMatches, error: addressError } = await supabase
+        .from('user_addresses')
+        .select('user_id')
+        .or(`street_address.ilike.%${searchTerm}%,district_name.ilike.%${searchTerm}%,village_name.ilike.%${searchTerm}%`);
+      
+      if (!addressError && addressMatches) {
+        matchingUserIds.push(...addressMatches.map(am => am.user_id));
+      }
+      
+      // 5b. Search in location_province for province names (then find users)
+      const { data: provinceMatches, error: provinceError } = await supabase
+        .from('location_province')
+        .select('id')
+        .ilike('region_name', `%${searchTerm}%`);
+      
+      if (!provinceError && provinceMatches) {
+        const provinceIds = provinceMatches.map(p => p.id);
+        if (provinceIds.length > 0) {
+          const { data: usersInProvince } = await supabase
+            .from('user_addresses')
+            .select('user_id')
+            .in('province_id', provinceIds);
+          
+          if (usersInProvince) {
+            matchingUserIds.push(...usersInProvince.map(u => u.user_id));
+          }
+        }
+      }
+      
+      // 5c. Search in location_cities for city names (then find users)
+      const { data: cityMatches, error: cityError } = await supabase
+        .from('location_cities')
+        .select('id')
+        .ilike('city_name', `%${searchTerm}%`);
+      
+      if (!cityError && cityMatches) {
+        const cityIds = cityMatches.map(c => c.id);
+        if (cityIds.length > 0) {
+          const { data: usersInCity } = await supabase
+            .from('user_addresses')
+            .select('user_id')
+            .in('city_id', cityIds);
+          
+          if (usersInCity) {
+            matchingUserIds.push(...usersInCity.map(u => u.user_id));
+          }
+        }
+      }
+      
+      // 6. Search in tutor_banking_info for banking fields
+      const { data: bankingMatches, error: bankingError } = await supabase
+        .from('tutor_banking_info')
+        .select('tutor_id')
+        .or(`bank_name.ilike.%${searchTerm}%,account_holder_name.ilike.%${searchTerm}%`);
+      
+      if (!bankingError && bankingMatches) {
+        const tutorIds = bankingMatches.map(bm => bm.tutor_id);
+        if (tutorIds.length > 0) {
+          const { data: tutorDetailsForBanking } = await supabase
+            .from('tutor_details')
+            .select('user_id')
+            .in('id', tutorIds);
+          
+          if (tutorDetailsForBanking) {
+            matchingUserIds.push(...tutorDetailsForBanking.map(td => td.user_id));
+          }
+        }
+      }
+      
+      // 7. Search in tutor_management for status fields
+      const { data: managementMatches, error: managementError } = await supabase
+        .from('tutor_management')
+        .select('user_id')
+        .or(`status_tutor.ilike.%${searchTerm}%,approval_level.ilike.%${searchTerm}%`);
+      
+      if (!managementError && managementMatches) {
+        matchingUserIds.push(...managementMatches.map(mm => mm.user_id));
+      }
+      
+      // 8. Search in tutor_availability_config for availability fields
+      const { data: availabilityMatches, error: availabilityError } = await supabase
+        .from('tutor_availability_config')
+        .select('tutor_id')
+        .or(`availability_status.ilike.%${searchTerm}%`);
+      
+      if (!availabilityError && availabilityMatches) {
+        const tutorIds = availabilityMatches.map(am => am.tutor_id);
+        if (tutorIds.length > 0) {
+          const { data: tutorDetailsForAvailability } = await supabase
+            .from('tutor_details')
+            .select('user_id')
+            .in('id', tutorIds);
+          
+          if (tutorDetailsForAvailability) {
+            matchingUserIds.push(...tutorDetailsForAvailability.map(td => td.user_id));
+          }
+        }
+      }
+      
+      // 9. Search in document_storage for document fields  
+      const { data: documentMatches, error: documentError } = await supabase
+        .from('document_storage')
+        .select('user_id')
+        .or(`document_type.ilike.%${searchTerm}%,original_filename.ilike.%${searchTerm}%`);
+      
+      if (!documentError && documentMatches) {
+        matchingUserIds.push(...documentMatches.map(dm => dm.user_id));
+      }
+      
+      // 10. Search for TRN (Tutor Registration Number) in tutor_details
+      const { data: trnMatches, error: trnError } = await supabase
+        .from('tutor_details')
+        .select('user_id, tutor_registration_number')
+        .ilike('tutor_registration_number', `%${searchTerm}%`);
+      
+      if (trnError) {
+        console.error('❌ Error searching TRN:', trnError);
+      }
+      
+      if (!trnError && trnMatches) {
+        matchingUserIds.push(...trnMatches.map(tm => tm.user_id));
+        console.log(`🔢 Found ${trnMatches.length} matches in TRN for "${searchTerm}":`, trnMatches.slice(0, 3));
+      }
+      
+      // 11. Search for exact UUID if search term looks like a UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(searchTerm)) {
+        const { data: uuidMatches, error: uuidError } = await supabase
+          .from('users_universal')
+          .select('id')
+          .eq('id', searchTerm);
+        
+        if (!uuidError && uuidMatches && uuidMatches.length > 0) {
+          matchingUserIds.push(...uuidMatches.map(um => um.id));
+          console.log(`🆔 Found exact UUID match for "${searchTerm}"`);
+        }
+      }
+      
+      // Remove duplicates from all searches
+      matchingUserIds = [...new Set(matchingUserIds)];
+      
+      // Apply search: either direct user fields OR matches from related tables
+      try {
+        if (matchingUserIds.length > 0) {
+          // Limit the IN clause to prevent query size issues
+          const limitedUserIds = matchingUserIds.slice(0, 100); // Limit to 100 IDs
+          userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,id.in.(${limitedUserIds.join(',')})`);
+          
+          if (matchingUserIds.length > 100) {
+            console.log(`⚠️ Limited search results to first 100 user IDs (found ${matchingUserIds.length} total)`);
+          }
+        } else {
+          userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+        }
+      } catch (queryError) {
+        console.error('❌ Error building search query:', queryError);
+        // Fallback to basic search if complex query fails
         userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
       
-      console.log(`🔍 Server-side search applied: "${search}" (found ${programUserIds.length} users with matching programs/names/descriptions)`);
+      // Debug logging untuk setiap search step
+      console.log(`🔍 Detailed search results for "${search}":`, {
+        step1_programs: programMappings?.length || 0,
+        step2_additionalSubjects: additionalSubjects?.length || 0,
+        step3_tutorDetails: tutorDetailsMatches?.length || 0,
+        step3b_educationOnly: educationMatches?.length || 0,
+        step4_profiles: profileMatches?.length || 0,
+        step4b_religion: religionMatches?.length || 0,
+        step5a_addresses: addressMatches?.length || 0,
+        step5b_provinces: provinceMatches?.length || 0,
+        step5c_cities: cityMatches?.length || 0,
+        step6_banking: bankingMatches?.length || 0,
+        step7_management: managementMatches?.length || 0,
+        step8_availability: availabilityMatches?.length || 0,
+        step9_documents: documentMatches?.length || 0,
+        step10_trn: trnMatches?.length || 0,
+        step11_uuid: uuidRegex?.test(searchTerm) ? (uuidMatches?.length || 0) : 'N/A',
+        totalUniqueUsers: matchingUserIds.length
+      });
+      
+        console.log(`🔍 Server-side search applied: "${search}" (found ${matchingUserIds.length} users with matching data across all tables)`);
+      } catch (searchError) {
+        console.error('❌ Error during comprehensive search:', searchError);
+        // Fallback to basic search
+        matchingUserIds = [];
+        userQuery = userQuery.or(`user_code.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
     }
 
     // Apply the collected user ID filters

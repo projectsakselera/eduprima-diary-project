@@ -1096,10 +1096,10 @@ export default function ViewAllTutorsPage() {
     }
   };
 
-  // 🚀 ADVANCED SEARCH EFFECT - With pagination reset
+  // 🚀 COLUMN FILTERS EFFECT - Only for filters, not search
   useEffect(() => {
-    // Only fetch if searchTerm has changed or filters have changed
-    if (searchTerm || Object.keys(columnFilters).length > 0) {
+    // Only fetch when filters change (not search term)
+    if (Object.keys(columnFilters).length > 0) {
       const debounceTimer = setTimeout(() => {
         fetchTutorData(searchTerm, 1, itemsPerPage);
       }, 500);
@@ -1108,7 +1108,7 @@ export default function ViewAllTutorsPage() {
         clearTimeout(debounceTimer);
       };
     }
-  }, [searchTerm, columnFilters]);
+  }, [columnFilters]);
   
   // Manual refresh function that can be called by user action
   const refreshData = useCallback(async () => {
@@ -1286,14 +1286,15 @@ export default function ViewAllTutorsPage() {
     return results;
   };
 
-  // Handle search input change (for debouncing)
+  // Handle search input change (without auto-search)
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
-    setSearchTerm(value);
+    // Don't auto-update searchTerm - user must click search button
   };
 
   // Handle explicit search button click
   const handleSearchClick = () => {
+    setIsSearching(true);
     setSearchTerm(searchInput);
     fetchTutorData(searchInput, 1, itemsPerPage);
   };
@@ -1302,6 +1303,7 @@ export default function ViewAllTutorsPage() {
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchTerm('');
+    setIsSearching(false);
     fetchTutorData('', 1, itemsPerPage);
   };
 
