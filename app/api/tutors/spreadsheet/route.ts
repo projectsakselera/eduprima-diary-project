@@ -53,6 +53,7 @@ interface CompleteTutorData {
   // System & Status
   id: string;
   trn: string;
+  brand: string;
   status_tutor: string;
   approval_level: string;
   staff_notes: string;
@@ -244,7 +245,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // 🚀 PERFORMANCE UPGRADE: Server-side filtering for related tables
     const relatedFilters: Record<string, { table: string; column: string }> = {
         // status_tutor is handled client-side to correctly manage 'unknown' default
-        approval_level: { table: 'tutor_management', column: 'approval_level' }
+        approval_level: { table: 'tutor_management', column: 'approval_level' },
+        brand: { table: 'tutor_management', column: 'entity_code' }
     };
 
     for (const column in relatedFilters) {
@@ -476,11 +478,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         }
       }
       
-      // 7. Search in tutor_management for status fields
+      // 7. Search in tutor_management for status fields and brand/entity_code
       const { data: managementMatches, error: managementError } = await supabase
         .from('tutor_management')
         .select('user_id')
-        .or(`status_tutor.ilike.%${searchTerm}%,approval_level.ilike.%${searchTerm}%`);
+        .or(`status_tutor.ilike.%${searchTerm}%,approval_level.ilike.%${searchTerm}%,entity_code.ilike.%${searchTerm}%`);
       
       if (!managementError && managementMatches) {
         matchingUserIds.push(...managementMatches.map(mm => mm.user_id));
@@ -533,11 +535,14 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       
       // 11. Search for exact UUID if search term looks like a UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let uuidMatches = null;
       if (uuidRegex.test(searchTerm)) {
-        const { data: uuidMatches, error: uuidError } = await supabase
+        const { data: uuidData, error: uuidError } = await supabase
           .from('users_universal')
           .select('id')
           .eq('id', searchTerm);
+        
+        uuidMatches = uuidData;
         
         if (!uuidError && uuidMatches && uuidMatches.length > 0) {
           matchingUserIds.push(...uuidMatches.map(um => um.id));
@@ -885,6 +890,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         // System & Status
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
+        brand: management?.entity_code || '',
         status_tutor: management?.status_tutor || 'unknown',
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',

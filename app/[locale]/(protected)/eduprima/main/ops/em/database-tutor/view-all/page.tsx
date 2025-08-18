@@ -500,6 +500,7 @@ interface TutorSpreadsheetData {
   // System & Status
   id: string;
   trn: string;
+  brand: string;
   status_tutor: string;
   approval_level: string;
   staff_notes: string;
@@ -666,6 +667,7 @@ export default function ViewAllTutorsPage() {
   const [searchInput, setSearchInput] = useState(''); // Separate input state for debouncing
   const [isSearching, setIsSearching] = useState(false); // Loading state for search only
   const [programsLookup, setProgramsLookup] = useState<Record<string, string>>({});
+  const [brandsOptions, setBrandsOptions] = useState<string[]>([]);
 
   // Inline saving state for status update
   const [savingStatusUserId, setSavingStatusUserId] = useState<string | null>(null);
@@ -699,8 +701,22 @@ export default function ViewAllTutorsPage() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{key: keyof TutorSpreadsheetData; direction: 'asc' | 'desc'} | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
-  // Inisialisasi visibleColumns dengan semua key dari SPREADSHEET_COLUMNS
-  const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+  
+  // Create dynamic columns with updated brand options
+  const dynamicColumns = useMemo(() => {
+    return SPREADSHEET_COLUMNS.map(col => {
+      if (col.key === 'brand') {
+        return {
+          ...col,
+          options: brandsOptions
+        };
+      }
+      return col;
+    });
+  }, [brandsOptions]);
+
+  // Inisialisasi visibleColumns dengan semua key dari dynamicColumns
+  const allColumnKeys = useMemo(() => dynamicColumns.map(col => col.key), [dynamicColumns]);
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(allColumnKeys));
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [isResizing, setIsResizing] = useState<{column: string; startX: number; startWidth: number} | null>(null);
@@ -762,8 +778,8 @@ export default function ViewAllTutorsPage() {
     const checkboxColumnWidth = 48; // Corresponds to w-12 class
     currentLeftOffset += checkboxColumnWidth; 
 
-    // Iterate through SPREADSHEET_COLUMNS to calculate offsets for other sticky columns
-    for (const column of SPREADSHEET_COLUMNS) {
+    // Iterate through dynamicColumns to calculate offsets for other sticky columns
+    for (const column of dynamicColumns) {
       if (column.sticky && visibleColumns.has(column.key)) {
         offsets[column.key] = currentLeftOffset;
         currentLeftOffset += (columnWidths[column.key] || column.width); // Use actual width or default
@@ -1017,11 +1033,40 @@ export default function ViewAllTutorsPage() {
     fetchProgramsData();
   }, []);
 
+  // Fetch brands data for filtering
+  useEffect(() => {
+    const fetchBrandsData = async () => {
+      try {
+        console.log('🔄 Fetching brands data for filtering...');
+        const response = await fetch('/api/brands', {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        const result = await response.json();
+        
+        console.log('🏷️ Brands API response:', result);
+        
+        if (result.success && result.brands) {
+          setBrandsOptions(result.brands);
+          console.log('✅ Brands loaded:', result.brands.length, 'brands');
+        } else {
+          console.error('❌ Failed to load brands:', result.error || 'Unknown error');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching brands:', err);
+      }
+    };
+
+    fetchBrandsData();
+  }, []);
+
   // Initialize visible columns (show essential columns by default)
   useEffect(() => {
-    setVisibleColumns(new Set(SPREADSHEET_COLUMNS.map(col => col.key)));
+    setVisibleColumns(new Set(dynamicColumns.map(col => col.key)));
     // ... existing code ...
-  }, []);
+  }, [dynamicColumns]);
 
   // 🚀 ADVANCED FETCH DATA - With pagination, column filters, and smart caching
   const fetchTutorData = async (search = '', page = 1, limit = 25) => {
@@ -1125,7 +1170,7 @@ export default function ViewAllTutorsPage() {
   const filterableColumns = useMemo(() => {
     const filterable = new Set([
       // System & Status columns (visible in screenshot)
-      'status_tutor', 'approval_level', 
+      'status_tutor', 'approval_level', 'brand',
       
       // Personal columns (visible in screenshot) 
       'namaLengkap', 'email', 'jenisKelamin', 'agama',
@@ -1616,15 +1661,15 @@ export default function ViewAllTutorsPage() {
     return label;
   };
 
-  // Filter columns by category
+  // Filter columns by category  
   const filteredColumns = useMemo(() => {
     console.log('DEBUG tutorData:', tutorData);
     if (tutorData && tutorData.length > 0) {
       console.log('DEBUG tutorData[0] example:', tutorData[0]);
     }
-    console.log('DEBUG filteredColumns:', SPREADSHEET_COLUMNS);
-    return SPREADSHEET_COLUMNS;
-  }, [tutorData]);
+    console.log('DEBUG filteredColumns:', dynamicColumns);
+    return dynamicColumns;
+  }, [tutorData, dynamicColumns]);
 
   // 🚀 KEYBOARD HANDLERS (placed after filteredColumns declaration)
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -2019,7 +2064,7 @@ export default function ViewAllTutorsPage() {
 
   // Bulk column management functions
   const selectAllColumns = () => {
-    setVisibleColumns(new Set(SPREADSHEET_COLUMNS.map(col => col.key)));
+    setVisibleColumns(new Set(dynamicColumns.map(col => col.key)));
   };
 
   const deselectAllColumns = () => {
@@ -2277,7 +2322,7 @@ export default function ViewAllTutorsPage() {
           itemsPerPage={itemsPerPage}
           exportToCSV={exportToTSV}
           columnManager={ <ColumnManager 
-                columns={SPREADSHEET_COLUMNS}
+                columns={dynamicColumns}
                 visibleColumns={visibleColumns}
                 onToggleColumn={toggleColumnVisibility}
                 categories={categories}

@@ -60,6 +60,11 @@ const COLUMN_MAPPING: Record<string, {
     type: 'select',
     staticValues: ['level_1', 'level_2', 'level_3', 'approved', 'rejected']
   },
+  'brand': {
+    source: 'management',
+    field: 'entity_code',
+    type: 'select'
+  },
   
   // Personal info (visible in screenshot)
   'namaLengkap': {
@@ -289,6 +294,28 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
     if (columnConfig.source === 'demographics') {
       const { data, error } = await supabase
         .from('user_demographics')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '');
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For management
+    if (columnConfig.source === 'management') {
+      const { data, error } = await supabase
+        .from('tutor_management')
         .select(columnConfig.field)
         .not(columnConfig.field, 'is', null)
         .not(columnConfig.field, 'eq', '');
