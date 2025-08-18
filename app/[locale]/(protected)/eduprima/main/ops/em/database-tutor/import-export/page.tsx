@@ -728,6 +728,7 @@ export default function ImportExportPage() {
     // Define custom column order as specified by user
     const customColumnOrder = [
       'trn', // TRN (Tutor Registration Number)
+      'brand', // Brand
       'namaLengkap', // Nama Lengkap
       'namaPanggilan', // Nama Panggilan
       'tanggalLahir', // Tanggal Lahir

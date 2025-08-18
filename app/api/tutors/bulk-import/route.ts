@@ -210,7 +210,9 @@ export async function POST(request: NextRequest) {
           hasPengalamanLain: !!record['Pengalaman Lain Relevan'],
           pengalamanLainValue: record['Pengalaman Lain Relevan'],
           hasMataPelajaranLainnya: !!record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
-          mataPelajaranLainnyaValue: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)']
+          mataPelajaranLainnyaValue: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
+          hasBrand: !!record['Brand'],
+          brandValue: record['Brand']
         });
         
         // Generate truly unique user_code and email for each record
@@ -833,6 +835,52 @@ export async function POST(request: NextRequest) {
               console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, bankingInsertError && bankingInsertError.message ? bankingInsertError.message : JSON.stringify(bankingInsertError));
             } else {
               console.log(`✅ Inserted tutor_banking_info for record ${rowNumber}`);
+            }
+          }
+        }
+
+        // === TUTOR MANAGEMENT (Brand -> entity_code) ===
+        if (record['Brand']) {
+          const tutorManagementData = {
+            entity_code: record['Brand'],
+            updated_at: new Date().toISOString()
+          };
+
+          // Cek apakah sudah ada data tutor_management untuk user ini
+          const { data: existingTutorManagement, error: tutorManagementCheckError } = await supabase
+            .from('tutor_management')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+
+          if (existingTutorManagement && !tutorManagementCheckError) {
+            // Update existing record
+            const { error: tutorManagementUpdateError } = await supabase
+              .from('tutor_management')
+              .update(tutorManagementData)
+              .eq('user_id', userId);
+            
+            if (tutorManagementUpdateError) {
+              console.warn(`⚠️ Warning: Could not update tutor_management entity_code for ${rowNumber}:`, tutorManagementUpdateError && tutorManagementUpdateError.message ? tutorManagementUpdateError.message : JSON.stringify(tutorManagementUpdateError));
+            } else {
+              console.log(`✅ Updated tutor_management entity_code for record ${rowNumber}`);
+            }
+          } else {
+            // Insert new record (include user_id for new records)
+            const newTutorManagementData = {
+              ...tutorManagementData,
+              user_id: userId,
+              created_at: new Date().toISOString()
+            };
+
+            const { error: tutorManagementInsertError } = await supabase
+              .from('tutor_management')
+              .insert(newTutorManagementData);
+            
+            if (tutorManagementInsertError) {
+              console.warn(`⚠️ Warning: Could not insert tutor_management entity_code for ${rowNumber}:`, tutorManagementInsertError && tutorManagementInsertError.message ? tutorManagementInsertError.message : JSON.stringify(tutorManagementInsertError));
+            } else {
+              console.log(`✅ Inserted tutor_management entity_code for record ${rowNumber}`);
             }
           }
         }
