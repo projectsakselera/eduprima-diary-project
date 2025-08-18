@@ -676,14 +676,13 @@ export default function ViewAllTutorsPage() {
   // 🚀 PAGINATION STATE - Advanced pagination system
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(() => {
-    // Initialize itemsPerPage from localStorage or searchParams
-    // Access searchParams directly here, it will be defined during client-side hydration
+    // Initialize itemsPerPage from sessionStorage or searchParams
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const rowsParam = urlParams?.get('rows');
     if (rowsParam) {
       return parseInt(rowsParam) || 25;
     }
-    const savedRows = typeof window !== 'undefined' ? localStorage.getItem('tutorViewAll:rowsPerPage') : null;
+    const savedRows = typeof window !== 'undefined' ? sessionStorage.getItem('tutorViewAll:rowsPerPage') : null;
     if (savedRows) {
       return parseInt(savedRows) || 25;
     }
@@ -719,9 +718,9 @@ export default function ViewAllTutorsPage() {
   
   // 🚀 ZOOM STATE - Table zoom functionality
   const [tableZoom, setTableZoom] = useState(() => {
-    // Initialize zoom from localStorage or default to 100%
+    // Initialize zoom from sessionStorage or default to 100%
     if (typeof window !== 'undefined') {
-      const savedZoom = localStorage.getItem('tutorViewAll:tableZoom');
+      const savedZoom = sessionStorage.getItem('tutorViewAll:tableZoom');
       return savedZoom ? parseInt(savedZoom) : 100;
     }
     return 100;
@@ -1041,9 +1040,6 @@ export default function ViewAllTutorsPage() {
         url.searchParams.set('search', search.trim());
       }
       
-      // Add timestamp and random string to prevent caching
-      url.searchParams.set('t', Date.now().toString());
-      url.searchParams.set('r', Math.random().toString(36).substring(7));
       
       // Add column filters (use filter_<column>=comma,separated,values)
       if (Object.keys(columnFilters).length > 0) {
@@ -1056,12 +1052,8 @@ export default function ViewAllTutorsPage() {
 
       const response = await fetch(url.toString(), {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'X-Timestamp': Date.now().toString()
-        },
-        cache: 'no-store'
+          'Content-Type': 'application/json'
+        }
       });
       
       // Check if response is ok
@@ -1106,15 +1098,17 @@ export default function ViewAllTutorsPage() {
 
   // 🚀 ADVANCED SEARCH EFFECT - With pagination reset
   useEffect(() => {
-    // Reset to page 1 when search changes
-    const debounceTimer = setTimeout(() => {
-      fetchTutorData(searchTerm, 1, itemsPerPage);
-    }, 500);
+    // Only fetch if searchTerm has changed or filters have changed
+    if (searchTerm || Object.keys(columnFilters).length > 0) {
+      const debounceTimer = setTimeout(() => {
+        fetchTutorData(searchTerm, 1, itemsPerPage);
+      }, 500);
 
-    return () => {
-      clearTimeout(debounceTimer);
-    };
-  }, [searchTerm, itemsPerPage, columnFilters]);
+      return () => {
+        clearTimeout(debounceTimer);
+      };
+    }
+  }, [searchTerm, columnFilters]);
   
   // Manual refresh function that can be called by user action
   const refreshData = useCallback(async () => {
@@ -1122,57 +1116,9 @@ export default function ViewAllTutorsPage() {
     await fetchTutorData(searchTerm, currentPage, itemsPerPage);
   }, [searchTerm, currentPage, itemsPerPage]);
 
-  // Load initial data on mount and refresh on focus
+  // Load initial data on mount only
   useEffect(() => {
-    // Clear any existing service workers and cache storage
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        registrations.forEach(function(registration) {
-          console.log('🧹 Clearing service worker:', registration.scope);
-        });
-      });
-    }
-    
-    // Clear cache storage
-    if ('caches' in window) {
-      caches.keys().then(function(cacheNames) {
-        cacheNames.forEach(function(cacheName) {
-          console.log('🧹 Clearing cache:', cacheName);
-          caches.delete(cacheName);
-        });
-      });
-    }
-    
     fetchTutorData('', 1, itemsPerPage);
-    
-    // Add focus event listener to refresh data when user returns to page
-    const handleFocus = () => {
-      console.log('🔄 Page focused, refreshing data...');
-      fetchTutorData(searchTerm, currentPage, itemsPerPage);
-    };
-    
-    // Add visibility change listener to refresh when page becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('🔄 Page visible, refreshing data...');
-        fetchTutorData(searchTerm, currentPage, itemsPerPage);
-      }
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Auto-refresh every 30 seconds to ensure fresh data
-    const autoRefreshInterval = setInterval(() => {
-      console.log('🔄 Auto refresh triggered');
-      fetchTutorData(searchTerm, currentPage, itemsPerPage);
-    }, 300000); // 30 seconds
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(autoRefreshInterval);
-    };
   }, []);
 
   // 🚀 COLUMN FILTERS: Define which columns support filtering
@@ -1222,8 +1168,7 @@ export default function ViewAllTutorsPage() {
       console.log(`🔍 Fetching column values for: ${columnKey}`);
       const response = await fetch(`/api/tutors/column-values?column=${columnKey}`, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -1299,8 +1244,7 @@ export default function ViewAllTutorsPage() {
         console.log(`Testing ${columnKey}...`);
         const response = await fetch(`/api/tutors/column-values?column=${columnKey}`, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache'
+          'Content-Type': 'application/json'
         }
       });
         
@@ -1371,7 +1315,7 @@ export default function ViewAllTutorsPage() {
   const handleItemsPerPageChange = (newLimit: number) => {
     setItemsPerPage(newLimit);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tutorViewAll:rowsPerPage', String(newLimit));
+      sessionStorage.setItem('tutorViewAll:rowsPerPage', String(newLimit));
       // Update URL without full page reload
       const currentParams = new URLSearchParams(searchParams?.toString() || '');
       currentParams.set('rows', String(newLimit));
@@ -1394,8 +1338,7 @@ export default function ViewAllTutorsPage() {
       // Fetch cascade preview
       const response = await fetch(`/api/tutors/delete-preview/${tutor.id}`, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -1510,8 +1453,7 @@ export default function ViewAllTutorsPage() {
       const firstTutorId = tutorIds[0];
       const response = await fetch(`/api/tutors/delete-preview/${firstTutorId}`, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -2200,9 +2142,9 @@ export default function ViewAllTutorsPage() {
   // 🚀 ZOOM HANDLERS - Table zoom functionality
   const handleZoomChange = useCallback((newZoom: number) => {
     setTableZoom(newZoom);
-    // Save to localStorage
+    // Save to sessionStorage
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tutorViewAll:tableZoom', newZoom.toString());
+      sessionStorage.setItem('tutorViewAll:tableZoom', newZoom.toString());
     }
   }, []);
 
