@@ -84,7 +84,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => fetchTutorData(searchTerm, currentPage, itemsPerPage)}
+            onClick={refreshData || (() => fetchTutorData(searchTerm, currentPage, itemsPerPage))}
             disabled={isLoading || isSearching}
             className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
             title="Refresh data"
@@ -103,17 +103,6 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
               title="Debug cache check"
             >
               <Icon icon="ph:bug" className="h-4 w-4" />
-            </Button>
-          )}
-          {refreshData && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={refreshData}
-              className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-primary"
-              title="Force refresh data"
-            >
-              <Icon icon="ph:arrows-clockwise" className="h-4 w-4" />
             </Button>
           )}
           <Button
@@ -138,34 +127,53 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-3 flex-1 mt-3">
-        <div className="relative flex-1 max-w-md">
-          <Icon
-            icon={isSearching ? "ph:spinner" : "ph:magnifying-glass"}
-            className={cn(
-              "absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground",
-              isSearching && "animate-spin"
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Icon
+              icon="ph:magnifying-glass"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            />
+            <Input
+              placeholder="Search by name, email, TRN, program, subjects..."
+              value={searchInput}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchClick();
+                }
+              }}
+              className="pl-10 pr-8 h-8 text-sm"
+            />
+            {searchInput && (
+              <Button
+                variant="ghost"
+                onClick={handleClearSearch}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+              >
+                <Icon icon="ph:x" className="h-3 w-3" />
+              </Button>
             )}
-          />
-          <Input
-            placeholder="Search by name, email, TRN, program, subjects..."
-            value={searchInput}
-            onChange={(e) => handleSearchInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearchClick();
-              }
-            }}
-            className="pl-10 pr-8 h-8 text-sm"
-          />
-          {searchInput && (
-            <Button
-              variant="ghost"
-              onClick={handleClearSearch}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            >
-              <Icon icon="ph:x" className="h-3 w-3" />
-            </Button>
-          )}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSearchClick}
+            disabled={isLoading || isSearching}
+            className="h-8 px-3 text-sm"
+          >
+            {isSearching ? (
+              <>
+                <Icon icon="ph:spinner" className="h-4 w-4 mr-2 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Icon icon="ph:magnifying-glass" className="h-4 w-4 mr-2" />
+                Search
+              </>
+            )}
+          </Button>
         </div>
 
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
