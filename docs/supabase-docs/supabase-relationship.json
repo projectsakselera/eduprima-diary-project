@@ -96,14 +96,6 @@
     "update_rule": "NO ACTION"
   },
   {
-    "child_table": "user_addresses",
-    "fk_column": "village_id",
-    "parent_table": "location_villages",
-    "parent_column": "id",
-    "delete_rule": "NO ACTION",
-    "update_rule": "NO ACTION"
-  },
-  {
     "child_table": "program_category_mappings",
     "fk_column": "main_category_id",
     "parent_table": "program_main_categories",
@@ -118,6 +110,14 @@
     "parent_column": "id",
     "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "programs_unit",
+    "fk_column": "popularity",
+    "parent_table": "program_popularity_levels",
+    "parent_column": "code",
+    "delete_rule": "RESTRICT",
+    "update_rule": "CASCADE"
   },
   {
     "child_table": "programs_unit",
@@ -161,10 +161,26 @@
   },
   {
     "child_table": "programs_unit",
+    "fk_column": "subcategory_id",
+    "parent_table": "program_sub_categories",
+    "parent_column": "id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "programs_unit",
     "fk_column": "program_type_id",
     "parent_table": "program_types",
     "parent_column": "id",
     "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "programs_unit",
+    "fk_column": "program_type_id",
+    "parent_table": "program_types",
+    "parent_column": "id",
+    "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
   {
@@ -313,18 +329,18 @@
   },
   {
     "child_table": "document_storage",
-    "fk_column": "user_id",
-    "parent_table": "users_universal",
-    "parent_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "child_table": "document_storage",
     "fk_column": "verified_by",
     "parent_table": "users_universal",
     "parent_column": "id",
     "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "document_storage",
+    "fk_column": "user_id",
+    "parent_table": "users_universal",
+    "parent_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {
@@ -364,7 +380,7 @@
     "fk_column": "status_changed_by",
     "parent_table": "users_universal",
     "parent_column": "id",
-    "delete_rule": "SET NULL",
+    "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
   },
   {
@@ -372,7 +388,15 @@
     "fk_column": "status_changed_by",
     "parent_table": "users_universal",
     "parent_column": "id",
-    "delete_rule": "NO ACTION",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "tutor_program_mappings",
+    "fk_column": "mapped_by",
+    "parent_table": "users_universal",
+    "parent_column": "id",
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -384,8 +408,16 @@
     "update_rule": "NO ACTION"
   },
   {
-    "child_table": "tutor_program_mappings",
-    "fk_column": "mapped_by",
+    "child_table": "user_addresses",
+    "fk_column": "verified_by",
+    "parent_table": "users_universal",
+    "parent_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "child_table": "user_addresses",
+    "fk_column": "verified_by",
     "parent_table": "users_universal",
     "parent_column": "id",
     "delete_rule": "SET NULL",
@@ -397,22 +429,6 @@
     "parent_table": "users_universal",
     "parent_column": "id",
     "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "child_table": "user_addresses",
-    "fk_column": "verified_by",
-    "parent_table": "users_universal",
-    "parent_column": "id",
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "child_table": "user_addresses",
-    "fk_column": "verified_by",
-    "parent_table": "users_universal",
-    "parent_column": "id",
-    "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
   },
   {

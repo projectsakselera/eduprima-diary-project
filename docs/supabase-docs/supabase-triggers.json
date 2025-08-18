@@ -21,6 +21,13 @@
     "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
+    "trigger_name": "trg_propagate_bank_name_change",
+    "table_name": "finance_banks_indonesia",
+    "action_timing": "AFTER",
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION fn_propagate_bank_name_change()"
+  },
+  {
     "trigger_name": "tr_cities_updated_at",
     "table_name": "location_cities",
     "action_timing": "BEFORE",
@@ -56,6 +63,20 @@
     "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
+    "trigger_name": "trg_set_main_id",
+    "table_name": "program_sub_categories",
+    "action_timing": "BEFORE",
+    "event_type": "INSERT",
+    "function_called": "EXECUTE FUNCTION set_main_id_from_sub_code()"
+  },
+  {
+    "trigger_name": "trg_set_main_id",
+    "table_name": "program_sub_categories",
+    "action_timing": "BEFORE",
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION set_main_id_from_sub_code()"
+  },
+  {
     "trigger_name": "tr_types_updated_at",
     "table_name": "program_types",
     "action_timing": "BEFORE",
@@ -63,11 +84,39 @@
     "function_called": "EXECUTE FUNCTION update_timestamp()"
   },
   {
+    "trigger_name": "trg_set_subcategory_id",
+    "table_name": "program_types",
+    "action_timing": "BEFORE",
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION set_subcategory_id_from_type_code()"
+  },
+  {
+    "trigger_name": "trg_set_subcategory_id",
+    "table_name": "program_types",
+    "action_timing": "BEFORE",
+    "event_type": "INSERT",
+    "function_called": "EXECUTE FUNCTION set_subcategory_id_from_type_code()"
+  },
+  {
     "trigger_name": "tr_programs_updated_at",
     "table_name": "programs_unit",
     "action_timing": "BEFORE",
     "event_type": "UPDATE",
     "function_called": "EXECUTE FUNCTION update_timestamp()"
+  },
+  {
+    "trigger_name": "trg_set_fks_from_program_code",
+    "table_name": "programs_unit",
+    "action_timing": "BEFORE",
+    "event_type": "INSERT",
+    "function_called": "EXECUTE FUNCTION set_fks_from_program_code()"
+  },
+  {
+    "trigger_name": "trg_set_fks_from_program_code",
+    "table_name": "programs_unit",
+    "action_timing": "BEFORE",
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION set_fks_from_program_code()"
   },
   {
     "trigger_name": "tr_tutor_additional_subjects_updated_at",
@@ -89,6 +138,20 @@
     "action_timing": "BEFORE",
     "event_type": "UPDATE",
     "function_called": "EXECUTE FUNCTION update_timestamp()"
+  },
+  {
+    "trigger_name": "trg_set_bank_name_on_tbi",
+    "table_name": "tutor_banking_info",
+    "action_timing": "BEFORE",
+    "event_type": "INSERT",
+    "function_called": "EXECUTE FUNCTION fn_set_bank_name_on_tbi()"
+  },
+  {
+    "trigger_name": "trg_set_bank_name_on_tbi",
+    "table_name": "tutor_banking_info",
+    "action_timing": "BEFORE",
+    "event_type": "UPDATE",
+    "function_called": "EXECUTE FUNCTION fn_set_bank_name_on_tbi()"
   },
   {
     "trigger_name": "tr_tutor_details_updated_at",

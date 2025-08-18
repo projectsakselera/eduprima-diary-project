@@ -293,13 +293,26 @@ export async function POST(request: NextRequest) {
         // Assign tutor role to the user so they appear in /view-all
         console.log(`📝 Assigning tutor role to user ${userId}...`);
         
-        // Get the tutor role ID (Database Tutor or similar)
-        const { data: tutorRole, error: roleError } = await supabase
+        // Get the tutor role ID - specifically for regular tutors (not managers)
+        let { data: tutorRole, error: roleError } = await supabase
           .from('user_roles')
           .select('id')
-          .or('role_name.ilike.%tutor%,role_name.ilike.%Tutor%,role_name.ilike.%educator%,role_name.ilike.%Educator%,role_code.eq.database_tutor_manager')
-          .limit(1)
+          .eq('role_code', 'tutor')
           .single();
+
+        // Fallback: try by role_name if role_code doesn't work
+        if (roleError || !tutorRole) {
+          const { data: tutorRoleByName, error: roleNameError } = await supabase
+            .from('user_roles')
+            .select('id')
+            .eq('role_name', 'Tutor')
+            .single();
+          
+          if (tutorRoleByName) {
+            tutorRole = tutorRoleByName;
+            roleError = null;
+          }
+        }
 
         if (tutorRole && !roleError) {
           // Update user with primary_role_id

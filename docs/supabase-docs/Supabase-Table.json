@@ -1,11 +1,163 @@
 [
   {
+    "table_name": "corporate_entities",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "uuid_generate_v4()",
+    "type": "🔑 PK"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "entity_code",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "type": "✅ REQ"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "entity_name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "type": "✅ REQ"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "entity_type",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "type": "✅ REQ"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "parent_entity_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "entity_status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'active'::character varying",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "business_focus",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "target_market",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "geographic_scope",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "launch_date",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "hierarchy_level",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "hierarchy_path",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "configuration_settings",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": "'{}'::jsonb",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "feature_flags",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": "'{}'::jsonb",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "corporate_entities",
+    "column_name": "updated_by",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
     "table_name": "document_storage",
     "column_name": "id",
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "document_storage",
@@ -13,7 +165,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "document_storage",
@@ -21,7 +173,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "document_storage",
@@ -29,7 +181,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "document_storage",
@@ -37,7 +189,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "document_storage",
@@ -45,7 +197,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "document_storage",
@@ -53,7 +205,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "document_storage",
@@ -61,7 +213,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -69,7 +221,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pending'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -77,7 +229,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -85,7 +237,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -93,7 +245,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -101,7 +253,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -109,7 +261,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -117,7 +269,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -125,7 +277,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -133,7 +285,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -141,7 +293,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "document_storage",
@@ -149,7 +301,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -157,7 +309,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -165,7 +317,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -173,7 +325,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -181,7 +333,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -189,7 +341,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -197,7 +349,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -205,7 +357,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'commercial'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -213,7 +365,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -221,7 +373,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "999",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -229,7 +381,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_banks_indonesia",
@@ -237,7 +389,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_payout_requests",
@@ -245,7 +397,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "finance_payout_requests",
@@ -253,7 +405,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "finance_payout_requests",
@@ -261,7 +413,7 @@
     "data_type": "date",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "finance_payout_requests",
@@ -269,7 +421,7 @@
     "data_type": "date",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "finance_payout_requests",
@@ -277,7 +429,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_payout_requests",
@@ -285,7 +437,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_payout_requests",
@@ -293,7 +445,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_payout_requests",
@@ -301,7 +453,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'submitted'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "finance_payout_requests",
@@ -309,7 +461,119 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "f_table_catalog",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "f_table_schema",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "f_table_name",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "f_geography_column",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "coord_dimension",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "srid",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "geography_columns",
+    "column_name": "type",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "f_table_catalog",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "f_table_schema",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "f_table_name",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "f_geometry_column",
+    "data_type": "name",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "coord_dimension",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "srid",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "geometry_columns",
+    "column_name": "type",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -317,7 +581,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "location_cities",
@@ -325,7 +589,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_cities",
@@ -333,7 +597,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_cities",
@@ -341,7 +605,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -349,7 +613,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_cities",
@@ -357,7 +621,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -365,7 +629,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -373,7 +637,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -381,7 +645,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -389,7 +653,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -397,7 +661,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -405,7 +669,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -413,7 +677,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -421,7 +685,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -429,7 +693,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -437,7 +701,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -445,7 +709,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -453,7 +717,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_cities",
@@ -461,7 +725,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -469,7 +733,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "location_countries",
@@ -477,7 +741,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_countries",
@@ -485,7 +749,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_countries",
@@ -493,7 +757,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -501,7 +765,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -509,7 +773,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -517,7 +781,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -525,7 +789,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -533,7 +797,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -541,7 +805,7 @@
     "data_type": "date",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -549,7 +813,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -557,7 +821,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -565,7 +829,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -573,7 +837,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -581,7 +845,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -589,7 +853,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -597,7 +861,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'ltr'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -605,7 +869,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -613,7 +877,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -621,7 +885,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -629,7 +893,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'developing'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -637,7 +901,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -645,7 +909,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_countries",
@@ -653,7 +917,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -661,7 +925,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": "nextval('location_districts_id_seq'::regclass)",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "location_districts",
@@ -669,7 +933,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -677,7 +941,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -685,7 +949,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -693,7 +957,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_districts",
@@ -701,7 +965,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -709,7 +973,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -717,7 +981,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -725,7 +989,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -733,7 +997,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -741,7 +1005,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "CURRENT_TIMESTAMP",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_districts",
@@ -749,7 +1013,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "CURRENT_TIMESTAMP",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -757,7 +1021,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "location_province",
@@ -765,7 +1029,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_province",
@@ -773,7 +1037,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_province",
@@ -781,7 +1045,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_province",
@@ -789,7 +1053,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -797,7 +1061,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -805,7 +1069,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -813,7 +1077,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -821,7 +1085,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -829,7 +1093,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "1",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -837,7 +1101,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_province",
@@ -845,7 +1109,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -853,7 +1117,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -861,7 +1125,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -869,7 +1133,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -877,7 +1141,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -885,7 +1149,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -893,7 +1157,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -901,7 +1165,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -909,7 +1173,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -917,7 +1181,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -925,7 +1189,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_province",
@@ -933,7 +1197,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -941,7 +1205,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "location_villages",
@@ -949,7 +1213,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "location_villages",
@@ -957,7 +1221,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -965,7 +1229,7 @@
     "data_type": "character varying",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "location_villages",
@@ -973,7 +1237,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -981,7 +1245,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": "'kelurahan'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -989,7 +1253,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -997,7 +1261,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1005,7 +1269,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1013,7 +1277,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1021,7 +1285,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1029,7 +1293,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1037,7 +1301,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "location_villages",
@@ -1045,7 +1309,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1053,7 +1317,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_category_mappings",
@@ -1061,7 +1325,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "program_category_mappings",
@@ -1069,7 +1333,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "program_category_mappings",
@@ -1077,7 +1341,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "program_category_mappings",
@@ -1085,7 +1349,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1093,7 +1357,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "1",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1101,7 +1365,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "1.0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1109,7 +1373,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1117,7 +1381,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1125,7 +1389,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1133,7 +1397,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_category_mappings",
@@ -1141,7 +1405,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_main_categories",
@@ -1149,7 +1413,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_main_categories",
@@ -1157,7 +1421,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_main_categories",
@@ -1165,7 +1429,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_main_categories",
@@ -1173,7 +1437,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_main_categories",
@@ -1181,7 +1445,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_main_categories",
@@ -1189,7 +1453,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_main_categories",
@@ -1197,7 +1461,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1205,7 +1469,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": "nextval('t_210_02_05_m_popularity_levels_id_seq'::regclass)",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1213,7 +1477,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1221,7 +1485,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1229,7 +1493,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1237,7 +1501,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1245,7 +1509,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1253,7 +1517,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_popularity_levels",
@@ -1261,7 +1525,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_simple_categories",
@@ -1269,7 +1533,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": "nextval('t_210_02_07_m_simple_categories_id_seq'::regclass)",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_simple_categories",
@@ -1277,7 +1541,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_simple_categories",
@@ -1285,7 +1549,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_simple_categories",
@@ -1293,7 +1557,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_simple_categories",
@@ -1301,7 +1565,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_simple_categories",
@@ -1309,7 +1573,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_simple_categories",
@@ -1317,7 +1581,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_simple_categories",
@@ -1325,7 +1589,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_sub_categories",
@@ -1333,7 +1597,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_sub_categories",
@@ -1341,7 +1605,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "program_sub_categories",
@@ -1349,7 +1613,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_sub_categories",
@@ -1357,7 +1621,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_sub_categories",
@@ -1365,7 +1629,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_sub_categories",
@@ -1373,7 +1637,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_sub_categories",
@@ -1381,7 +1645,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_sub_categories",
@@ -1389,7 +1653,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_sub_categories",
@@ -1397,7 +1661,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_types",
@@ -1405,7 +1669,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "program_types",
@@ -1413,7 +1677,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "program_types",
@@ -1421,7 +1685,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_types",
@@ -1429,7 +1693,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "program_types",
@@ -1437,7 +1701,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_types",
@@ -1445,7 +1709,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "program_types",
@@ -1453,7 +1717,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1461,7 +1725,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "programs_unit",
@@ -1469,15 +1733,15 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "programs_unit",
     "column_name": "program_type_id",
     "data_type": "uuid",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "programs_unit",
@@ -1485,15 +1749,15 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "programs_unit",
     "column_name": "program_name",
     "data_type": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1501,7 +1765,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1509,7 +1773,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1517,7 +1781,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1525,7 +1789,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1533,7 +1797,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1541,7 +1805,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1549,7 +1813,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1557,7 +1821,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1565,7 +1829,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1573,7 +1837,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1581,7 +1845,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1589,7 +1853,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1597,7 +1861,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "true",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1605,7 +1869,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'EXPLORATIVE'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1613,7 +1877,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "programs_unit",
@@ -1621,7 +1885,47 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "spatial_ref_sys",
+    "column_name": "srid",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "spatial_ref_sys",
+    "column_name": "auth_name",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "spatial_ref_sys",
+    "column_name": "auth_srid",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "spatial_ref_sys",
+    "column_name": "srtext",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "spatial_ref_sys",
+    "column_name": "proj4text",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1629,7 +1933,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1637,7 +1941,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1645,7 +1949,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1653,7 +1957,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1661,7 +1965,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1669,7 +1973,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1677,7 +1981,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1685,7 +1989,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pending'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1693,7 +1997,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1701,7 +2005,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1709,7 +2013,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1717,7 +2021,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_additional_subjects",
@@ -1725,7 +2029,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1733,7 +2037,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1741,7 +2045,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1749,7 +2053,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": "'active'::text",
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1757,7 +2061,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1765,7 +2069,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1773,7 +2077,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1781,7 +2085,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1789,7 +2093,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1797,7 +2101,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1805,7 +2109,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1813,7 +2117,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1821,7 +2125,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1829,7 +2133,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1837,7 +2141,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1845,7 +2149,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1853,7 +2157,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1861,7 +2165,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_availability_config",
@@ -1869,7 +2173,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1877,7 +2181,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1885,7 +2189,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1893,7 +2197,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1901,7 +2205,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1909,7 +2213,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1917,7 +2221,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1925,7 +2229,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1933,7 +2237,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1941,7 +2245,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'IDN'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1949,7 +2253,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1957,7 +2261,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1965,7 +2269,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1973,7 +2277,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1981,7 +2285,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1989,7 +2293,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -1997,7 +2301,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -2005,7 +2309,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_banking_info",
@@ -2013,7 +2317,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_banking_info",
@@ -2021,7 +2325,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2029,7 +2333,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_details",
@@ -2037,7 +2341,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_details",
@@ -2045,7 +2349,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2053,7 +2357,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2061,7 +2365,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pending_profile'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2069,7 +2373,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'not_started'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2077,7 +2381,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2085,7 +2389,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2093,7 +2397,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0.00",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2101,7 +2405,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2109,7 +2413,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0.00",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2117,7 +2421,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2125,7 +2429,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2133,7 +2437,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2141,7 +2445,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2149,7 +2453,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2157,7 +2461,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2165,7 +2469,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2173,7 +2477,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2181,7 +2485,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2189,7 +2493,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2197,7 +2501,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2205,7 +2509,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2213,7 +2517,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2221,7 +2525,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2229,7 +2533,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2237,7 +2541,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2245,7 +2549,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2253,7 +2557,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2261,7 +2565,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2269,7 +2573,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2277,7 +2581,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2285,7 +2589,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2293,7 +2597,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2301,7 +2605,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2309,7 +2613,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2317,7 +2621,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2325,7 +2629,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2333,7 +2637,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "NULL::numeric",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_details",
@@ -2341,7 +2645,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2349,7 +2653,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_management",
@@ -2357,7 +2661,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_management",
@@ -2365,7 +2669,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": "'registration'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2373,7 +2677,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": "'junior'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2381,7 +2685,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2389,7 +2693,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2397,7 +2701,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2405,7 +2709,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2413,7 +2717,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2421,7 +2725,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2429,7 +2733,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2437,7 +2741,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pending'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_management",
@@ -2445,7 +2749,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pending'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2453,7 +2757,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2461,7 +2765,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2469,7 +2773,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2477,7 +2781,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2485,7 +2789,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2493,7 +2797,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2501,7 +2805,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2509,7 +2813,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_personality_traits",
@@ -2517,7 +2821,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2525,7 +2829,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2533,7 +2837,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2541,7 +2845,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2549,7 +2853,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'intermediate'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2557,7 +2861,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2565,7 +2869,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2573,7 +2877,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": "0.5",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2581,7 +2885,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2589,7 +2893,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2597,7 +2901,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2605,7 +2909,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2613,7 +2917,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_program_mappings",
@@ -2621,7 +2925,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_sequences",
@@ -2629,7 +2933,7 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": "nextval('t_315_01_02_educator_sequences_id_seq'::regclass)",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_sequences",
@@ -2637,7 +2941,7 @@
     "data_type": "character varying",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_sequences",
@@ -2645,7 +2949,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_sequences",
@@ -2653,7 +2957,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2661,7 +2965,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2669,7 +2973,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2677,7 +2981,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2685,7 +2989,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2693,7 +2997,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'tidak'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2701,7 +3005,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'tidak'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2709,7 +3013,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": "'tidak_bisa'::text",
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2717,7 +3021,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'medium'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2725,7 +3029,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'pemula'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2733,7 +3037,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'bisa_dilatih'::text",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2741,7 +3045,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "tutor_teaching_preferences",
@@ -2749,7 +3053,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2757,7 +3061,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_addresses",
@@ -2765,7 +3069,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_addresses",
@@ -2773,7 +3077,7 @@
     "data_type": "character varying",
     "is_nullable": "NO",
     "column_default": "'domicile'::character varying",
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_addresses",
@@ -2781,7 +3085,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_addresses",
@@ -2789,7 +3093,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_addresses",
@@ -2797,7 +3101,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2805,7 +3109,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2813,7 +3117,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_addresses",
@@ -2821,7 +3125,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2829,7 +3133,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2837,7 +3141,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2845,7 +3149,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2853,7 +3157,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2861,7 +3165,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2869,7 +3173,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2877,7 +3181,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_addresses",
@@ -2885,7 +3189,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2893,7 +3197,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_demographics",
@@ -2901,7 +3205,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_demographics",
@@ -2909,7 +3213,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2917,7 +3221,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2925,7 +3229,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2933,7 +3237,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2941,7 +3245,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2949,7 +3253,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2957,7 +3261,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2965,7 +3269,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2973,7 +3277,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2981,7 +3285,7 @@
     "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": "'[]'::jsonb",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_demographics",
@@ -2989,7 +3293,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_permissions",
@@ -2997,7 +3301,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_permissions",
@@ -3005,7 +3309,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_permissions",
@@ -3013,7 +3317,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_permissions",
@@ -3021,7 +3325,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_permissions",
@@ -3029,7 +3333,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_permissions",
@@ -3037,7 +3341,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3045,7 +3349,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_profiles",
@@ -3053,7 +3357,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_profiles",
@@ -3061,7 +3365,7 @@
     "data_type": "date",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3069,7 +3373,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3077,7 +3381,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3085,7 +3389,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3093,7 +3397,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3101,7 +3405,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3109,7 +3413,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3117,7 +3421,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3125,7 +3429,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3133,7 +3437,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3141,7 +3445,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3149,7 +3453,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3157,7 +3461,7 @@
     "data_type": "character varying",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3165,7 +3469,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3173,7 +3477,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3181,7 +3485,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles",
@@ -3189,7 +3493,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3197,7 +3501,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3205,7 +3509,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3213,7 +3517,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3221,7 +3525,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3229,7 +3533,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3237,7 +3541,7 @@
     "data_type": "numeric",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3245,7 +3549,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3253,7 +3557,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_profiles_education_backup",
@@ -3261,7 +3565,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_role_user_permissions_mapping",
@@ -3269,7 +3573,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_role_user_permissions_mapping",
@@ -3277,7 +3581,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_role_user_permissions_mapping",
@@ -3285,7 +3589,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "user_role_user_permissions_mapping",
@@ -3293,7 +3597,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_roles",
@@ -3301,7 +3605,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "user_roles",
@@ -3309,7 +3613,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_roles",
@@ -3317,7 +3621,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "user_roles",
@@ -3325,7 +3629,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "user_roles",
@@ -3333,7 +3637,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3341,7 +3645,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "uuid_generate_v4()",
-    "field_type": "PK"
+    "type": "🔑 PK"
   },
   {
     "table_name": "users_universal",
@@ -3349,7 +3653,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "users_universal",
@@ -3357,7 +3661,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "users_universal",
@@ -3365,7 +3669,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3373,7 +3677,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3381,7 +3685,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3389,7 +3693,7 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "field_type": "REQUIRED"
+    "type": "✅ REQ"
   },
   {
     "table_name": "users_universal",
@@ -3397,7 +3701,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3405,7 +3709,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3413,7 +3717,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3421,7 +3725,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'active'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3429,7 +3733,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": "'individual'::character varying",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3437,7 +3741,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "users_universal",
@@ -3445,7 +3749,7 @@
     "data_type": "ARRAY",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3453,7 +3757,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3461,7 +3765,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
   },
   {
     "table_name": "users_universal",
@@ -3469,7 +3773,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3477,7 +3781,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3485,7 +3789,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3493,7 +3797,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3501,7 +3805,7 @@
     "data_type": "integer",
     "is_nullable": "YES",
     "column_default": "0",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3509,7 +3813,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3517,7 +3821,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3525,7 +3829,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3533,7 +3837,7 @@
     "data_type": "boolean",
     "is_nullable": "YES",
     "column_default": "false",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3541,7 +3845,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3549,7 +3853,7 @@
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3557,7 +3861,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3565,7 +3869,7 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "OPTIONAL"
+    "type": "📝 OPT"
   },
   {
     "table_name": "users_universal",
@@ -3573,6 +3877,526 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "field_type": "FK"
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔑 PK"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "bank_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "popular_bank_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "bank_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "swift_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_banks_indonesia_active",
+    "column_name": "display_order",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔑 PK"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "educator_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "account_holder_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "account_number",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "bank_branch",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "city",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "country_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "bank_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "popular_bank_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "bank_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "bank_swift_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "bank_category",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "is_verified",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "verification_document_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "last_verified_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "total_payouts",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "last_payout_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "payout_count",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_educator_banking_complete",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_popularity_dropdown",
+    "column_name": "value",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_popularity_dropdown",
+    "column_name": "text",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_popularity_dropdown",
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_popularity_dropdown",
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔑 PK"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "subcategory_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "program_type_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔗 FK"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "program_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "program_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "program_name_local",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "program_name_short",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "grade_level",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "subject_focus",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "target_age_min",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "target_age_max",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "ideal_session_duration_minutes",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "ideal_total_sessions",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "ideal_class_size_min",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "ideal_class_size_max",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "prerequisites",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "is_active",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "popularity",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "simple_category",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "simple_category_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "popularity_label",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "subcategory_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_programs_display",
+    "column_name": "main_category_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "🔑 PK"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "user_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "phone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "user_status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "account_type",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "primary_role_code",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "primary_role_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
+  },
+  {
+    "table_name": "v_users_with_primary_role",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "type": "📝 OPT"
   }
 ]
