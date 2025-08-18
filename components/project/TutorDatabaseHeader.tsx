@@ -134,7 +134,7 @@ export const TutorDatabaseHeader: React.FC<TutorDatabaseHeaderProps> = ({
               className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
-              placeholder="Search by name, email, program, education, address, skills, bank, status..."
+              placeholder="Search by name, email, phone, program, education, address, religion, skills, bank, status..."
               value={searchInput}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               onKeyDown={(e) => {

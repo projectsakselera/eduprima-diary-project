@@ -373,14 +373,37 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         console.log(`🎓 Found ${educationMatches.length} matches in education fields for "${searchTerm}":`, educationMatches.slice(0, 3));
       }
       
-      // 4. Search for user IDs that have matching full names in user_profiles
+      // 4. Search for user IDs that have matching full names and phone numbers in user_profiles
       const { data: profileMatches, error: profileError } = await supabase
         .from('user_profiles')
-        .select('user_id')
-        .ilike('full_name', `%${searchTerm}%`);
+        .select('user_id, full_name, mobile_phone_2')
+        .or(`full_name.ilike.%${searchTerm}%,mobile_phone_2.ilike.%${searchTerm}%`);
+      
+      if (profileError) {
+        console.error('❌ Error searching profiles:', profileError);
+      }
       
       if (!profileError && profileMatches) {
         matchingUserIds.push(...profileMatches.map(pm => pm.user_id));
+        const phoneMatches = profileMatches.filter(pm => pm.mobile_phone_2?.includes(searchTerm));
+        if (phoneMatches.length > 0) {
+          console.log(`📱 Found ${phoneMatches.length} matches in alternative phone for "${searchTerm}":`, phoneMatches.slice(0, 3));
+        }
+      }
+      
+      // 4b. Search for religion in user_demographics
+      const { data: religionMatches, error: religionError } = await supabase
+        .from('user_demographics')
+        .select('user_id, religion')
+        .ilike('religion', `%${searchTerm}%`);
+      
+      if (religionError) {
+        console.error('❌ Error searching religion:', religionError);
+      }
+      
+      if (!religionError && religionMatches) {
+        matchingUserIds.push(...religionMatches.map(rm => rm.user_id));
+        console.log(`🕌 Found ${religionMatches.length} matches in religion for "${searchTerm}":`, religionMatches.slice(0, 3));
       }
       
       // 5. Search in user_addresses for address fields
@@ -551,6 +574,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         step3_tutorDetails: tutorDetailsMatches?.length || 0,
         step3b_educationOnly: educationMatches?.length || 0,
         step4_profiles: profileMatches?.length || 0,
+        step4b_religion: religionMatches?.length || 0,
         step5a_addresses: addressMatches?.length || 0,
         step5b_provinces: provinceMatches?.length || 0,
         step5c_cities: cityMatches?.length || 0,
