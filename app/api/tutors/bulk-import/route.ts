@@ -212,7 +212,9 @@ export async function POST(request: NextRequest) {
           hasMataPelajaranLainnya: !!record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
           mataPelajaranLainnyaValue: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
           hasBrand: !!record['Brand'],
-          brandValue: record['Brand']
+          brandValue: record['Brand'],
+          hasOperationsStatus: !!record['Operations Status'],
+          operationsStatusValue: record['Operations Status']
         });
         
         // Generate truly unique user_code and email for each record
@@ -884,6 +886,114 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+
+        // === INSERT TO TUTOR_OPERATIONS_STATUS ===
+        console.log(`🔍 DEBUG: Checking operations status for record ${rowNumber}:`, {
+          'Operations Status': record['Operations Status'],
+          'operations_current_status': record['operations_current_status'],
+          userId: userId
+        });
+
+        if (record['Operations Status'] || record['operations_current_status']) {
+          const operationsStatus = record['Operations Status'] || record['operations_current_status'];
+          
+          console.log(`📝 Processing operations status for record ${rowNumber}: "${operationsStatus}" (userId: ${userId})`);
+          
+          try {
+            // First, we need to get the tutor_details.id for this user
+            console.log(`🔍 Getting tutor_details.id for user_id: ${userId}`);
+            const { data: tutorDetails, error: tutorDetailsError } = await supabase
+              .from('tutor_details')
+              .select('id')
+              .eq('user_id', userId)
+              .single();
+
+            if (tutorDetailsError || !tutorDetails) {
+              console.error(`❌ Could not find tutor_details for user_id ${userId}:`, tutorDetailsError);
+              return; // Skip this operations status insert
+            }
+
+            const tutorDetailsId = tutorDetails.id;
+            console.log(`✅ Found tutor_details.id: ${tutorDetailsId} for user_id: ${userId}`);
+
+            // Check if operations status record exists
+            console.log(`🔍 Checking if tutor_operations_status record exists for tutor_id: ${tutorDetailsId}`);
+            const { data: existingOperationsStatus, error: operationsCheckError } = await supabase
+              .from('tutor_operations_status')
+              .select('id')
+              .eq('tutor_id', tutorDetailsId)
+              .single();
+
+            console.log(`🔍 Existing operations status check result:`, {
+              existingOperationsStatus,
+              operationsCheckError: operationsCheckError?.message || 'no error'
+            });
+
+            const operationsStatusData = {
+              operations_current_status: operationsStatus,
+              updated_at: new Date().toISOString()
+            };
+
+            console.log(`📦 Operations status data to save:`, operationsStatusData);
+
+            if (existingOperationsStatus && !operationsCheckError) {
+              // Update existing record
+              console.log(`🔄 Updating existing tutor_operations_status record for tutor_id: ${tutorDetailsId}`);
+              const { data: updateResult, error: operationsUpdateError } = await supabase
+                .from('tutor_operations_status')
+                .update(operationsStatusData)
+                .eq('tutor_id', tutorDetailsId)
+                .select();
+              
+              if (operationsUpdateError) {
+                console.error(`❌ Error updating tutor_operations_status for ${rowNumber}:`, {
+                  error: operationsUpdateError,
+                  message: operationsUpdateError.message,
+                  details: operationsUpdateError.details,
+                  hint: operationsUpdateError.hint,
+                  code: operationsUpdateError.code
+                });
+              } else {
+                console.log(`✅ Successfully updated tutor_operations_status for record ${rowNumber}:`, updateResult);
+              }
+            } else {
+              // Insert new record
+              console.log(`➕ Inserting new tutor_operations_status record for tutor_id: ${tutorDetailsId}`);
+              const newOperationsStatusData = {
+                ...operationsStatusData,
+                tutor_id: tutorDetailsId,
+                effective_date: new Date().toISOString(),
+                created_at: new Date().toISOString()
+              };
+
+              console.log(`📦 New operations status data to insert:`, newOperationsStatusData);
+
+              const { data: insertResult, error: operationsInsertError } = await supabase
+                .from('tutor_operations_status')
+                .insert(newOperationsStatusData)
+                .select();
+              
+              if (operationsInsertError) {
+                console.error(`❌ Error inserting tutor_operations_status for ${rowNumber}:`, {
+                  error: operationsInsertError,
+                  message: operationsInsertError.message,
+                  details: operationsInsertError.details,
+                  hint: operationsInsertError.hint,
+                  code: operationsInsertError.code
+                });
+              } else {
+                console.log(`✅ Successfully inserted tutor_operations_status for record ${rowNumber}:`, insertResult);
+              }
+            }
+          } catch (operationsError) {
+            console.error(`❌ Exception in operations status processing for ${rowNumber}:`, operationsError);
+          }
+        } else {
+          console.log(`⚠️ No operations status data found for record ${rowNumber} - skipping tutor_operations_status insert`);
+        }
+
+        // Increment success counter
+        successCount++;
       } catch (error: any) {
         console.error(`❌ Error processing record ${rowNumber}:`, error);
         errors.push({ row: rowNumber, message: `Failed to process record: ${error.message || 'Unknown error'}` });

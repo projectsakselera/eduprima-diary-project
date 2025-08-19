@@ -501,7 +501,8 @@ interface TutorSpreadsheetData {
   id: string;
   trn: string;
   brand: string;
-  status_tutor: string;
+  registration_current_status: string; // tutor_registration_status.current_status
+  operations_current_status: string; // tutor_operations_status.current_status
   approval_level: string;
   staff_notes: string;
   
@@ -1170,7 +1171,7 @@ export default function ViewAllTutorsPage() {
   const filterableColumns = useMemo(() => {
     const filterable = new Set([
       // System & Status columns (visible in screenshot)
-      'status_tutor', 'approval_level', 'brand',
+      'registration_current_status', 'operations_current_status', 'approval_level', 'brand',
       
       // Personal columns (visible in screenshot) 
       'namaLengkap', 'email', 'jenisKelamin', 'agama',
@@ -1854,7 +1855,7 @@ export default function ViewAllTutorsPage() {
     }
   };
 
-  // Save status_tutor change to API and update local state
+  // Save registration_current_status change to API and update local state
   const handleStatusTutorChange = async (userId: string, newStatus: string) => {
     if (!newStatus) return;
     try {
@@ -1862,7 +1863,7 @@ export default function ViewAllTutorsPage() {
       const response = await fetch('/api/tutors/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, status_tutor: newStatus })
+        body: JSON.stringify({ user_id: userId, registration_current_status: newStatus })
       });
       const result = await response.json();
       if (!response.ok || !result?.success) {
@@ -1873,7 +1874,7 @@ export default function ViewAllTutorsPage() {
         t.id === userId
           ? {
               ...t,
-              status_tutor: result.data?.status_tutor ?? newStatus,
+              registration_current_status: result.data?.registration_current_status ?? newStatus,
               last_status_change: result.data?.last_status_change ?? t.last_status_change,
               status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
               updated_at: result.data?.updated_at ?? t.updated_at,
@@ -1907,7 +1908,7 @@ export default function ViewAllTutorsPage() {
       const response = await fetch('/api/tutors/status/bulk', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_ids: ids, status_tutor: bulkStatus })
+        body: JSON.stringify({ user_ids: ids, registration_current_status: bulkStatus })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.success) {
@@ -1922,7 +1923,7 @@ export default function ViewAllTutorsPage() {
         selectedRows.has(t.id)
           ? {
               ...t,
-              status_tutor: bulkStatus,
+              registration_current_status: bulkStatus,
               last_status_change: result.data?.last_status_change_map?.[t.id] ?? t.last_status_change,
               status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
               updated_at: result.data?.updated_at_map?.[t.id] ?? t.updated_at,
@@ -2740,7 +2741,7 @@ export default function ViewAllTutorsPage() {
                                 onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
                                 isLoading={loadingColumnValues[column.key] || false}
                                 error={columnValuesErrors[column.key]}
-                                isStatusColumn={column.key === 'status_tutor' || column.key === 'statusMenerimaSiswa'}
+                                isStatusColumn={column.key === 'registration_current_status' || column.key === 'operations_current_status' || column.key === 'statusMenerimaSiswa'}
                                 onClick={(e) => {
                                   console.log(`🔍 Column filter clicked for: ${column.key}`);
                                   fetchColumnValues(column.key);
@@ -2868,7 +2869,7 @@ export default function ViewAllTutorsPage() {
                               type
                             })}
                           />
-                        ) : column.key === 'status_tutor' ? (
+                        ) : column.key === 'registration_current_status' ? (
                           // Inline editable status using dropdown menu styled as badge
                           (() => {
                             const current = String(tutor[column.key] || '');
@@ -2917,6 +2918,26 @@ export default function ViewAllTutorsPage() {
                                     ))}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
+                              </div>
+                            );
+                          })()
+                        ) : column.key === 'operations_current_status' ? (
+                          // Operations status from tutor_operations_status table
+                          (() => {
+                            const current = String(tutor[column.key] || '');
+                            const statusStyle = getStatusStyle(current);
+                            return (
+                              <div className="flex justify-center">
+                                <span
+                                  className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
+                                  style={{
+                                    backgroundColor: statusStyle.backgroundColor,
+                                    color: statusStyle.color
+                                  }}
+                                  title={`Operations Status: ${current}`}
+                                >
+                                  {statusStyle.text}
+                                </span>
                               </div>
                             );
                           })()
@@ -3163,7 +3184,8 @@ export default function ViewAllTutorsPage() {
             email: '',
             noTelepon: '',
             alamat: '',
-            status_tutor: 'menunggu'
+            registration_current_status: 'menunggu',
+            operations_current_status: 'inactive'
           } as any}
           isLoading={bulkDeleteModal.isLoading}
           cascadePreview={bulkDeleteModal.cascadePreview}

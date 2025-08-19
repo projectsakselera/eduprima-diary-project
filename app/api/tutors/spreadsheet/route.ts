@@ -54,6 +54,8 @@ interface CompleteTutorData {
   id: string;
   trn: string;
   brand: string;
+  registration_current_status: string;
+  operations_current_status: string;
   status_tutor: string;
   approval_level: string;
   staff_notes: string;
@@ -644,6 +646,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       addressesResult,
       tutorDetailsResult,
       managementResult,
+      operationsStatusResult,
+      registrationStatusResult,
       bankingResult,
       availabilityResult,
       preferencesResult,
@@ -684,6 +688,16 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .from('tutor_management')
         .select('*')
         .in('user_id', userIds),
+      
+      // Tutor operations status (via tutor_id lookup)
+      supabase
+        .from('tutor_operations_status')
+        .select('*'),
+      
+      // Tutor registration status (via tutor_id lookup)  
+      supabase
+        .from('tutor_registration_status')
+        .select('*'),
       
       // Banking info (via tutor_id)
       supabase
@@ -757,6 +771,31 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     const tutorIdToUserIdMap = new Map();
     tutorDetailsResult.data?.forEach(td => {
       tutorIdToUserIdMap.set(td.id, td.user_id);
+    });
+
+    // Create operations status map
+    const operationsStatusMap = new Map();
+    operationsStatusResult.data?.forEach(ops => {
+      const userId = tutorIdToUserIdMap.get(ops.tutor_id);
+      if (userId) {
+        operationsStatusMap.set(userId, ops);
+      }
+    });
+
+    // Create registration status map
+    const registrationStatusMap = new Map();
+    registrationStatusResult.data?.forEach(reg => {
+      const userId = tutorIdToUserIdMap.get(reg.tutor_id);
+      if (userId) {
+        registrationStatusMap.set(userId, reg);
+      }
+    });
+
+    console.log('📊 Status data loaded:', {
+      operationsStatus: operationsStatusMap.size,
+      registrationStatus: registrationStatusMap.size,
+      sampleOperationsData: Array.from(operationsStatusMap.entries()).slice(0, 2),
+      sampleRegistrationData: Array.from(registrationStatusMap.entries()).slice(0, 2)
     });
 
     const bankingMap = new Map(bankingResult.data?.map(b => [tutorIdToUserIdMap.get(b.tutor_id), b]) || []);
@@ -876,6 +915,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       const addresses = addressesMap.get(user.id) || {};
       const tutorDetails = tutorDetailsMap.get(user.id);
       const management = managementMap.get(user.id);
+      const operationsStatus = operationsStatusMap.get(user.id);
+      const registrationStatus = registrationStatusMap.get(user.id);
       const banking = bankingMap.get(user.id);
       const availability = availabilityMap.get(user.id);
       const preferences = preferencesMap.get(user.id);
@@ -891,6 +932,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
         brand: management?.entity_code || '',
+        registration_current_status: registrationStatus?.current_status || 'pending',
+        operations_current_status: operationsStatus?.operations_current_status || 'inactive',
         status_tutor: management?.status_tutor || 'unknown',
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',

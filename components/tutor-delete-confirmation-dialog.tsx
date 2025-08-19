@@ -18,7 +18,8 @@ interface TutorInfo {
   namaLengkap: string;
   email: string;
   trn: string;
-  status_tutor: string;
+  registration_current_status: string;
+  operations_current_status?: string; // optional karena mungkin belum ada di semua data
 }
 
 interface CascadePreview {
@@ -132,8 +133,8 @@ const TutorDeleteConfirmationDialog: React.FC<TutorDeleteConfirmationDialogProps
                     <Shield className="h-4 w-4 text-gray-500" />
                     <div>
                       <div className="text-sm text-gray-500">Status</div>
-                      <Badge className={getStatusBadgeClassName(tutor.status_tutor)}>
-                        {tutor.status_tutor}
+                      <Badge className={getStatusBadgeClassName(tutor.registration_current_status)}>
+                        {tutor.registration_current_status}
                       </Badge>
                     </div>
                   </div>

@@ -426,6 +426,7 @@ export default function ImportExportPage() {
         icon: 'ph:user-circle',
         fields: [
           { key: 'TRN (Tutor Registration Number)', type: 'text', mappedKey: 'trn' },
+          { key: 'Operations Status', type: 'select', mappedKey: 'operations_current_status' },
           { key: 'Email Aktif', type: 'email', mappedKey: 'email' },
           { key: 'No. HP Utama (+62)', type: 'tel_split', mappedKey: 'noHp1' },
           { key: 'Nama Lengkap', type: 'text', mappedKey: 'namaLengkap' },
@@ -626,6 +627,7 @@ export default function ImportExportPage() {
       
       // 11. TUTOR MANAGEMENT & STATUS
       { name: 'status_tutor', label: 'Status Tutor', type: 'select', required: true },
+      { name: 'Operations Status', label: 'Operations Status', type: 'select', required: false },
       { name: 'approval_level', label: 'Level Approval', type: 'select', required: true },
       { name: 'staff_notes', label: 'Catatan Staff', type: 'textarea', required: false },
       { name: 'additionalScreening', label: 'Screening Tambahan', type: 'text', required: false },
@@ -729,6 +731,7 @@ export default function ImportExportPage() {
     const customColumnOrder = [
       'trn', // TRN (Tutor Registration Number)
       'brand', // Brand
+      'Operations Status', // Operations Status
       'namaLengkap', // Nama Lengkap
       'namaPanggilan', // Nama Panggilan
       'tanggalLahir', // Tanggal Lahir
@@ -1215,6 +1218,15 @@ export default function ImportExportPage() {
           mappedData['selectedPrograms_matched'] = matchedProgramNames;
           resolvedProgramIds = matchedPrograms;
         }
+      }
+      
+      // === DIRECT MAPPING FOR OPERATIONS STATUS ===
+      if (row['Operations Status'] && typeof row['Operations Status'] === 'string' && row['Operations Status'].trim()) {
+        // Direct mapping untuk operations status ke operations_current_status
+        mappedData['operations_current_status'] = row['Operations Status'].trim();
+        console.log(`✅ Operations Status mapped: "${row['Operations Status']}" → operations_current_status`);
+      } else {
+        console.log(`⚠️ Operations Status NOT found for row ${rowNumber} - value:`, row['Operations Status']);
       }
       
       // === COMPREHENSIVE VALIDATION ===
