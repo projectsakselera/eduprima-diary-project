@@ -213,8 +213,8 @@ export async function POST(request: NextRequest) {
           mataPelajaranLainnyaValue: record['Mata Pelajaran Lainnya (Jika Tidak Ditemukan)'],
           hasBrand: !!record['Brand'],
           brandValue: record['Brand'],
-          hasOperationsStatus: !!record['Operations Status'],
-          operationsStatusValue: record['Operations Status']
+          hasTutorStatus: !!record['Operations Status'],
+          tutorStatusValue: record['Operations Status']
         });
         
         // Generate truly unique user_code and email for each record
@@ -887,17 +887,17 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // === INSERT TO TUTOR_OPERATIONS_STATUS ===
+        // === INSERT TO TUTOR_STATUS ===
         console.log(`🔍 DEBUG: Checking operations status for record ${rowNumber}:`, {
           'Operations Status': record['Operations Status'],
-          'operations_current_status': record['operations_current_status'],
+          'current_status': record['current_status'],
           userId: userId
         });
 
-        if (record['Operations Status'] || record['operations_current_status']) {
-          const operationsStatus = record['Operations Status'] || record['operations_current_status'];
+        if (record['Operations Status'] || record['current_status']) {
+          const currentStatus = record['Operations Status'] || record['current_status'];
           
-          console.log(`📝 Processing operations status for record ${rowNumber}: "${operationsStatus}" (userId: ${userId})`);
+          console.log(`📝 Processing tutor status for record ${rowNumber}: "${currentStatus}" (userId: ${userId})`);
           
           try {
             // First, we need to get the tutor_details.id for this user
@@ -910,86 +910,86 @@ export async function POST(request: NextRequest) {
 
             if (tutorDetailsError || !tutorDetails) {
               console.error(`❌ Could not find tutor_details for user_id ${userId}:`, tutorDetailsError);
-              return; // Skip this operations status insert
+              return; // Skip this tutor status insert
             }
 
             const tutorDetailsId = tutorDetails.id;
             console.log(`✅ Found tutor_details.id: ${tutorDetailsId} for user_id: ${userId}`);
 
-            // Check if operations status record exists
-            console.log(`🔍 Checking if tutor_operations_status record exists for tutor_id: ${tutorDetailsId}`);
-            const { data: existingOperationsStatus, error: operationsCheckError } = await supabase
-              .from('tutor_operations_status')
+            // Check if tutor status record exists
+            console.log(`🔍 Checking if tutor_status record exists for tutor_id: ${tutorDetailsId}`);
+            const { data: existingTutorStatus, error: statusCheckError } = await supabase
+              .from('tutor_status')
               .select('id')
               .eq('tutor_id', tutorDetailsId)
               .single();
 
-            console.log(`🔍 Existing operations status check result:`, {
-              existingOperationsStatus,
-              operationsCheckError: operationsCheckError?.message || 'no error'
+            console.log(`🔍 Existing tutor status check result:`, {
+              existingTutorStatus,
+              statusCheckError: statusCheckError?.message || 'no error'
             });
 
-            const operationsStatusData = {
-              operations_current_status: operationsStatus,
+            const tutorStatusData = {
+              current_status: currentStatus,
               updated_at: new Date().toISOString()
             };
 
-            console.log(`📦 Operations status data to save:`, operationsStatusData);
+            console.log(`📦 Tutor status data to save:`, tutorStatusData);
 
-            if (existingOperationsStatus && !operationsCheckError) {
+            if (existingTutorStatus && !statusCheckError) {
               // Update existing record
-              console.log(`🔄 Updating existing tutor_operations_status record for tutor_id: ${tutorDetailsId}`);
-              const { data: updateResult, error: operationsUpdateError } = await supabase
-                .from('tutor_operations_status')
-                .update(operationsStatusData)
+              console.log(`🔄 Updating existing tutor_status record for tutor_id: ${tutorDetailsId}`);
+              const { data: updateResult, error: statusUpdateError } = await supabase
+                .from('tutor_status')
+                .update(tutorStatusData)
                 .eq('tutor_id', tutorDetailsId)
                 .select();
               
-              if (operationsUpdateError) {
-                console.error(`❌ Error updating tutor_operations_status for ${rowNumber}:`, {
-                  error: operationsUpdateError,
-                  message: operationsUpdateError.message,
-                  details: operationsUpdateError.details,
-                  hint: operationsUpdateError.hint,
-                  code: operationsUpdateError.code
+              if (statusUpdateError) {
+                console.error(`❌ Error updating tutor_status for ${rowNumber}:`, {
+                  error: statusUpdateError,
+                  message: statusUpdateError.message,
+                  details: statusUpdateError.details,
+                  hint: statusUpdateError.hint,
+                  code: statusUpdateError.code
                 });
               } else {
-                console.log(`✅ Successfully updated tutor_operations_status for record ${rowNumber}:`, updateResult);
+                console.log(`✅ Successfully updated tutor_status for record ${rowNumber}:`, updateResult);
               }
             } else {
               // Insert new record
-              console.log(`➕ Inserting new tutor_operations_status record for tutor_id: ${tutorDetailsId}`);
-              const newOperationsStatusData = {
-                ...operationsStatusData,
+              console.log(`➕ Inserting new tutor_status record for tutor_id: ${tutorDetailsId}`);
+              const newTutorStatusData = {
+                ...tutorStatusData,
                 tutor_id: tutorDetailsId,
                 effective_date: new Date().toISOString(),
                 created_at: new Date().toISOString()
               };
 
-              console.log(`📦 New operations status data to insert:`, newOperationsStatusData);
+              console.log(`📦 New tutor status data to insert:`, newTutorStatusData);
 
-              const { data: insertResult, error: operationsInsertError } = await supabase
-                .from('tutor_operations_status')
-                .insert(newOperationsStatusData)
+              const { data: insertResult, error: statusInsertError } = await supabase
+                .from('tutor_status')
+                .insert(newTutorStatusData)
                 .select();
               
-              if (operationsInsertError) {
-                console.error(`❌ Error inserting tutor_operations_status for ${rowNumber}:`, {
-                  error: operationsInsertError,
-                  message: operationsInsertError.message,
-                  details: operationsInsertError.details,
-                  hint: operationsInsertError.hint,
-                  code: operationsInsertError.code
+              if (statusInsertError) {
+                console.error(`❌ Error inserting tutor_status for ${rowNumber}:`, {
+                  error: statusInsertError,
+                  message: statusInsertError.message,
+                  details: statusInsertError.details,
+                  hint: statusInsertError.hint,
+                  code: statusInsertError.code
                 });
               } else {
-                console.log(`✅ Successfully inserted tutor_operations_status for record ${rowNumber}:`, insertResult);
+                console.log(`✅ Successfully inserted tutor_status for record ${rowNumber}:`, insertResult);
               }
             }
-          } catch (operationsError) {
-            console.error(`❌ Exception in operations status processing for ${rowNumber}:`, operationsError);
+          } catch (statusError) {
+            console.error(`❌ Exception in tutor status processing for ${rowNumber}:`, statusError);
           }
         } else {
-          console.log(`⚠️ No operations status data found for record ${rowNumber} - skipping tutor_operations_status insert`);
+          console.log(`⚠️ No tutor status data found for record ${rowNumber} - skipping tutor_status insert`);
         }
 
         // Increment success counter

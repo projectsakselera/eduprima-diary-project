@@ -48,42 +48,16 @@ function extractFromEducationHistory(educationHistory: any[], level: string, fie
   return education ? education[field] : null;
 }
 
-// Helper function to determine current tutor status based on business logic
-function getCurrentTutorStatus(registrationStatus: any, operationsStatus: any): string {
-  const regStatus = registrationStatus?.current_status;
-  const opsStatus = operationsStatus?.operations_current_status;
+// Helper function to get current tutor status from tutor_status table
+function getCurrentTutorStatus(tutorStatus: any): string {
+  const currentStatus = tutorStatus?.current_status;
   
-  // PHASE 1: Recruitment Process (priority if exists)
-  if (regStatus && ['registration', 'learning_materials', 'examination', 'exam_verification', 'data_completion'].includes(regStatus)) {
-    const statusLabels: Record<string, string> = {
-      'registration': 'Registration',
-      'learning_materials': 'Learning Materials', 
-      'examination': 'Examination',
-      'exam_verification': 'Exam Verification',
-      'data_completion': 'Data Completion'
-    };
-    return statusLabels[regStatus] || regStatus;
+  if (!currentStatus) {
+    return 'Pending Registration';
   }
   
-  // PHASE 2 & 3: Operations (after recruitment completed)
-  if (opsStatus) {
-    const statusLabels: Record<string, string> = {
-      'active': 'Active',
-      'inactive': 'Inactive',
-      'suspended': 'Suspended', 
-      'blacklisted': 'Blacklisted'
-    };
-    return statusLabels[opsStatus] || opsStatus;
-  }
-  
-  // Validation: Check for inconsistent state (should not happen)
-  if (regStatus && opsStatus) {
-    console.warn(`⚠️ Inconsistent state: user has both reg=${regStatus}, ops=${opsStatus}`);
-    return 'Error: Dual Status';
-  }
-  
-  // Fallback for new tutors
-  return 'Pending Registration';
+  // Return status directly from tutor_status table
+  return currentStatus;
 }
 
 // Complete Tutor Interface matching form fields
@@ -92,8 +66,6 @@ interface CompleteTutorData {
   id: string;
   trn: string;
   brand: string;
-  registration_current_status: string;
-  operations_current_status: string;
   status_tutor: string;
   approval_level: string;
   staff_notes: string;
@@ -194,7 +166,6 @@ interface CompleteTutorData {
   catatanAvailability: string;
   
   // Transportation & Location Coordinates
-  transportasiTutor: string[];
   titikLokasiLat: number | null;
   titikLokasiLng: number | null;
   
@@ -518,14 +489,34 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         }
       }
       
-      // 7. Search in tutor_management for status fields and brand/entity_code
+      // 7. Search in tutor_management for approval_level and brand/entity_code
       const { data: managementMatches, error: managementError } = await supabase
         .from('tutor_management')
         .select('user_id')
-        .or(`status_tutor.ilike.%${searchTerm}%,approval_level.ilike.%${searchTerm}%,entity_code.ilike.%${searchTerm}%`);
+        .or(`approval_level.ilike.%${searchTerm}%,entity_code.ilike.%${searchTerm}%`);
       
       if (!managementError && managementMatches) {
         matchingUserIds.push(...managementMatches.map(mm => mm.user_id));
+      }
+      
+      // 7b. Search in tutor_status for status fields
+      const { data: statusMatches, error: statusError } = await supabase
+        .from('tutor_status')
+        .select('tutor_id')
+        .ilike('current_status', `%${searchTerm}%`);
+      
+      if (!statusError && statusMatches) {
+        const tutorIds = statusMatches.map(sm => sm.tutor_id);
+        if (tutorIds.length > 0) {
+          const { data: tutorDetailsForStatus } = await supabase
+            .from('tutor_details')
+            .select('user_id')
+            .in('id', tutorIds);
+          
+          if (tutorDetailsForStatus) {
+            matchingUserIds.push(...tutorDetailsForStatus.map(td => td.user_id));
+          }
+        }
       }
       
       // 8. Search in tutor_availability_config for availability fields
@@ -625,6 +616,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         step5c_cities: cityMatches?.length || 0,
         step6_banking: bankingMatches?.length || 0,
         step7_management: managementMatches?.length || 0,
+        step7b_status: statusMatches?.length || 0,
         step8_availability: availabilityMatches?.length || 0,
         step9_documents: documentMatches?.length || 0,
         step10_trn: trnMatches?.length || 0,
@@ -684,8 +676,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       addressesResult,
       tutorDetailsResult,
       managementResult,
-      operationsStatusResult,
-      registrationStatusResult,
+      tutorStatusResult,
       bankingResult,
       availabilityResult,
       preferencesResult,
@@ -727,14 +718,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .select('*')
         .in('user_id', userIds),
       
-      // Tutor operations status (via tutor_id lookup)
+      // Tutor status (via tutor_id lookup)
       supabase
-        .from('tutor_operations_status')
-        .select('*'),
-      
-      // Tutor registration status (via tutor_id lookup)  
-      supabase
-        .from('tutor_registration_status')
+        .from('tutor_status')
         .select('*'),
       
       // Banking info (via tutor_id)
@@ -817,33 +803,22 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       sampleMappings: Array.from(tutorIdToUserIdMap.entries()).slice(0, 3)
     });
 
-    // Create operations status map
-    const operationsStatusMap = new Map();
-    operationsStatusResult.data?.forEach(ops => {
-      const userId = tutorIdToUserIdMap.get(ops.tutor_id);
-      console.log(`🔗 Operations mapping: tutor_id=${ops.tutor_id} → user_id=${userId}`, {
-        operations_current_status: ops.operations_current_status,
-        hasTutorIdMapping: tutorIdToUserIdMap.has(ops.tutor_id)
+    // Create tutor status map
+    const tutorStatusMap = new Map();
+    tutorStatusResult.data?.forEach(status => {
+      const userId = tutorIdToUserIdMap.get(status.tutor_id);
+      console.log(`🔗 Tutor Status mapping: tutor_id=${status.tutor_id} → user_id=${userId}`, {
+        current_status: status.current_status,
+        hasTutorIdMapping: tutorIdToUserIdMap.has(status.tutor_id)
       });
       if (userId) {
-        operationsStatusMap.set(userId, ops);
-      }
-    });
-
-    // Create registration status map
-    const registrationStatusMap = new Map();
-    registrationStatusResult.data?.forEach(reg => {
-      const userId = tutorIdToUserIdMap.get(reg.tutor_id);
-      if (userId) {
-        registrationStatusMap.set(userId, reg);
+        tutorStatusMap.set(userId, status);
       }
     });
 
     console.log('📊 Status data loaded:', {
-      operationsStatus: operationsStatusMap.size,
-      registrationStatus: registrationStatusMap.size,
-      sampleOperationsData: Array.from(operationsStatusMap.entries()).slice(0, 2),
-      sampleRegistrationData: Array.from(registrationStatusMap.entries()).slice(0, 2)
+      tutorStatus: tutorStatusMap.size,
+      sampleStatusData: Array.from(tutorStatusMap.entries()).slice(0, 2)
     });
 
     const bankingMap = new Map(bankingResult.data?.map(b => [tutorIdToUserIdMap.get(b.tutor_id), b]) || []);
@@ -963,8 +938,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       const addresses = addressesMap.get(user.id) || {};
       const tutorDetails = tutorDetailsMap.get(user.id);
       const management = managementMap.get(user.id);
-      const operationsStatus = operationsStatusMap.get(user.id);
-      const registrationStatus = registrationStatusMap.get(user.id);
+      const tutorStatus = tutorStatusMap.get(user.id);
       const banking = bankingMap.get(user.id);
       const availability = availabilityMap.get(user.id);
       const preferences = preferencesMap.get(user.id);
@@ -980,15 +954,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
         brand: management?.entity_code || '',
-        registration_current_status: registrationStatus?.current_status || 'pending',
-        operations_current_status: operationsStatus?.operations_current_status || 'inactive',
         status_tutor: (() => {
-          const managementStatus = management?.status_tutor;
-          const result = getCurrentTutorStatus(registrationStatus, operationsStatus);
+          const result = getCurrentTutorStatus(tutorStatus);
           console.log(`🔍 Status for user ${user.id}:`, {
-            managementStatus,
-            registrationStatus: registrationStatus?.current_status,
-            operationsStatus: operationsStatus?.operations_current_status,
+            tutorStatus: tutorStatus?.current_status,
             finalStatus: result
           });
           return result;
@@ -1139,7 +1108,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         catatanAvailability: availability?.availability_notes || '',
         
         // Transportation & Location Coordinates
-        transportasiTutor: Array.isArray(availability?.transportation_method) ? availability.transportation_method : (availability?.transportation_method ? [availability.transportation_method] : []),
         titikLokasiLat: availability?.teaching_center_lat || null,
         titikLokasiLng: availability?.teaching_center_lng || null,
         
