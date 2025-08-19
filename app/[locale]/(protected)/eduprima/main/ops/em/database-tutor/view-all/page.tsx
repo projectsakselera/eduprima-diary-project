@@ -503,7 +503,7 @@ interface TutorSpreadsheetData {
   brand: string;
   registration_current_status: string; // tutor_registration_status.current_status
   operations_current_status: string; // tutor_operations_status.current_status
-  approval_level: string;
+
   staff_notes: string;
   
   // Personal Info
@@ -1171,7 +1171,7 @@ export default function ViewAllTutorsPage() {
   const filterableColumns = useMemo(() => {
     const filterable = new Set([
       // System & Status columns (visible in screenshot)
-      'status_tutor', 'approval_level', 'brand',
+      'status_tutor', 'brand',
       
       // Personal columns (visible in screenshot) 
       'namaLengkap', 'email', 'jenisKelamin', 'agama',

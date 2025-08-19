@@ -20,7 +20,7 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'trn', label: 'TRN (Tutor Registration Number)', width: 120, type: 'text', category: 'System & Management', sticky: true, frozen: true },
   { key: 'brand', label: 'Brand', width: 100, type: 'select', category: 'System & Management', filterable: true, options: [] },
   { key: 'status_tutor', label: 'Status Tutor', width: 180, type: 'text', category: 'System & Management', filterable: true },
-  { key: 'approval_level', label: 'Level Approval', width: 130, type: 'select', category: 'System & Management' },
+
   { key: 'staff_notes', label: 'Catatan Staff', width: 200, type: 'text', category: 'System & Management' },
   { key: 'additional_screening', label: 'Additional Screening Checklist', width: 200, type: 'array', category: 'System & Management' },
   { key: 'recruitment_stage_history', label: 'Riwayat Stage', width: 250, type: 'text', category: 'System & Management' },

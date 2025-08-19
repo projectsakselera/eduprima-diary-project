@@ -67,7 +67,7 @@ interface CompleteTutorData {
   trn: string;
   brand: string;
   status_tutor: string;
-  approval_level: string;
+
   staff_notes: string;
   
   // Personal Info
@@ -256,7 +256,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     // 🚀 PERFORMANCE UPGRADE: Server-side filtering for related tables
     const relatedFilters: Record<string, { table: string; column: string }> = {
         // status_tutor is handled client-side to correctly manage 'unknown' default
-        approval_level: { table: 'tutor_management', column: 'approval_level' },
+
         brand: { table: 'tutor_management', column: 'entity_code' }
     };
 
@@ -489,11 +489,11 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         }
       }
       
-      // 7. Search in tutor_management for approval_level and brand/entity_code
+      // 7. Search in tutor_management for brand/entity_code
       const { data: managementMatches, error: managementError } = await supabase
         .from('tutor_management')
         .select('user_id')
-        .or(`approval_level.ilike.%${searchTerm}%,entity_code.ilike.%${searchTerm}%`);
+        .or(`entity_code.ilike.%${searchTerm}%`);
       
       if (!managementError && managementMatches) {
         matchingUserIds.push(...managementMatches.map(mm => mm.user_id));
@@ -962,7 +962,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
           });
           return result;
         })(),
-        approval_level: management?.approval_level || '',
+
         staff_notes: management?.staff_notes || '',
         
         // Personal Info  

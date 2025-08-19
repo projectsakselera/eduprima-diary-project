@@ -628,7 +628,7 @@ export default function ImportExportPage() {
       // 11. TUTOR MANAGEMENT & STATUS
       { name: 'status_tutor', label: 'Status Tutor', type: 'select', required: true },
       { name: 'Operations Status', label: 'Operations Status', type: 'select', required: false },
-      { name: 'approval_level', label: 'Level Approval', type: 'select', required: true },
+
       { name: 'staff_notes', label: 'Catatan Staff', type: 'textarea', required: false },
       { name: 'additionalScreening', label: 'Screening Tambahan', type: 'text', required: false },
       { name: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', type: 'select', required: false },
