@@ -43,8 +43,8 @@ export interface SupabaseTutorDetails {
   id: string;
   user_id: string;
   tutor_registration_number?: string;
-  onboarding_status: string;
-  background_check_status: string;
+  registration_status: string;
+  background_check: string;
   bio_summary?: string;
   teaching_philosophy?: string;
   education_history?: any;
@@ -84,8 +84,8 @@ export interface CombinedTutorData {
   
   // Tutor specific
   tutor_registration_number?: string;
-  onboarding_status: string;
-  background_check_status: string;
+  registration_status: string;
+  background_check: string;
   bio_summary?: string;
   teaching_philosophy?: string;
   teaching_experience?: string;

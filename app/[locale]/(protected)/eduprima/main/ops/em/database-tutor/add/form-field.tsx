@@ -141,11 +141,11 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               disabled: false
             }));
           } else if (data.data && Array.isArray(data.data)) {
-            // Handle banks API response format
+            // Handle tutor-status-types and other generic API response format
             options = data.data.map((item: any) => ({
               value: item.value,
               label: item.label,
-              disabled: false
+              disabled: item.disabled || false
             }));
           }
 
@@ -251,10 +251,11 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               disabled: false
             }));
           } else if (data.data && Array.isArray(data.data)) {
+            // Handle tutor-status-types and other generic API response format
             options = data.data.map((item: any) => ({
               value: item.value,
               label: item.label,
-              disabled: false
+              disabled: item.disabled || false
             }));
           }
 
