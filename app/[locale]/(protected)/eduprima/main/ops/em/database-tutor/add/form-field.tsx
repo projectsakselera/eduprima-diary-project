@@ -62,35 +62,28 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
   // Load dynamic options from API
   useEffect(() => {
-    if (field.apiEndpoint && field.type === 'select') {
+    if (field.apiEndpoint && (field.type === 'select' || field.type === 'checkbox')) {
       const loadOptions = async (attempt: number = 0) => {
         setIsLoadingOptions(true);
         setLoadingError(null);
-        
         try {
           let url = field.apiEndpoint;
-          if (!url) return; // Type guard
-          
-          // Handle dependent fields (e.g., cities depend on province)
+          if (!url) return;
           if (field.dependsOn && formData) {
             const dependentValue = formData[field.dependsOn as keyof TutorFormData];
             if (dependentValue) {
-              const paramName = field.dependsOn.includes('provinsi') ? 'province_id' : 
-                               field.dependsOn.includes('kota') ? 'city_id' : 
-                               field.dependsOn.includes('kecamatan') ? 'district_id' : 'parent_id';
+              const paramName = field.dependsOn.includes('provinsi') ? 'province_id' :
+                field.dependsOn.includes('kota') ? 'city_id' :
+                field.dependsOn.includes('kecamatan') ? 'district_id' : 'parent_id';
               url += `?${paramName}=${dependentValue}`;
             } else {
-              // If dependent field is not selected, clear options and disable
               setDynamicOptions([]);
               setIsLoadingOptions(false);
               return;
             }
           }
-
-          // Add timeout to fetch request
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
           const response = await fetch(url, {
             signal: controller.signal,
             headers: {
@@ -98,77 +91,41 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
               'Content-Type': 'application/json',
             }
           });
-          
           clearTimeout(timeoutId);
-
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-
           const data = await response.json();
-          
-          // Map API response to options format
           let options: Array<{ value: string; label: string; disabled?: boolean }> = [];
-          
-                     if (data.provinces) {
-             options = data.provinces.map((item: any) => ({
-               value: item.value,
-               label: item.label,
-               disabled: false
-             }));
-           } else if (data.cities) {
-             options = data.cities.map((item: any) => ({
-               value: item.value,
-               label: item.label,
-               disabled: false
-             }));
-           } else if (data.districts) {
-             options = data.districts.map((item: any) => ({
-               value: item.value,
-               label: item.label,
-               disabled: false
-             }));
-           } else if (data.villages) {
-             options = data.villages.map((item: any) => ({
-               value: item.value,
-               label: item.label,
-               disabled: false
-             }));
-                     } else if (data.banks) {
-            options = data.banks.map((item: any) => ({
+          if (Array.isArray(data.brands)) {
+            options = data.brands.map((item: any) => ({
               value: item.value,
               label: item.label,
-              disabled: false
+              disabled: item.disabled || false
             }));
           } else if (data.data && Array.isArray(data.data)) {
-            // Handle tutor-status-types and other generic API response format
             options = data.data.map((item: any) => ({
               value: item.value,
               label: item.label,
               disabled: item.disabled || false
             }));
           }
-
           setDynamicOptions(options);
-          setRetryCount(0); // Reset retry count on success
+          setRetryCount(0);
         } catch (error) {
-  
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           setLoadingError(errorMessage);
           setDynamicOptions([]);
-          
-          // Retry mechanism - max 3 attempts
           if (attempt < 2) {
             setTimeout(() => {
               setRetryCount(attempt + 1);
               loadOptions(attempt + 1);
-            }, 1000 * (attempt + 1)); // Exponential backoff: 1s, 2s
+            }, 1000 * (attempt + 1));
           }
         } finally {
           setIsLoadingOptions(false);
         }
       };
-
       loadOptions();
     }
   }, [field.apiEndpoint, field.dependsOn, formData?.[field.dependsOn as keyof TutorFormData]]);
@@ -851,62 +808,58 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
         );
 
       case 'checkbox':
-        if (field.multiple && field.options) {
-          // Multiple checkbox (checkbox group)
+        // Dynamic checkbox group support
+        if (field.multiple && (field.apiEndpoint || field.options)) {
+          const optionsToUse = field.apiEndpoint ? dynamicOptions : (field.options || []);
+          const isDisabled = Boolean(disabled) || (Boolean(field.apiEndpoint) && isLoadingOptions);
+          if (field.apiEndpoint && isLoadingOptions && optionsToUse.length === 0 && retryCount === 0) {
+            return (
+              <div className="space-y-2">
+                <div className={cn("animate-pulse bg-muted rounded-md border", field.size === 'lg' ? 'h-12' : 'h-10')} />
+                <div className="text-xs text-muted-foreground">Loading options...</div>
+              </div>
+            );
+          }
+          if (field.apiEndpoint && loadingError && optionsToUse.length === 0 && !isLoadingOptions) {
+            return (
+              <div className="space-y-2">
+                <div className={cn("border-2 border-destructive/20 bg-destructive/5 rounded-md flex items-center justify-between px-3", field.size === 'lg' ? 'h-12' : 'h-10')}>
+                  <div className="flex items-center">
+                    {field.icon && (
+                      <Icon icon={field.icon} className="h-4 w-4 mr-2 text-destructive" />
+                    )}
+                    <span className="text-sm text-destructive">Failed to load</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRetry}
+                  >Retry</Button>
+                </div>
+                <div className="text-xs text-muted-foreground">{loadingError}</div>
+              </div>
+            );
+          }
           return (
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-4 bg-muted/20 rounded-lg border">
-                {field.options.map((option) => {
+                {optionsToUse.map((option) => {
                   const isChecked = Array.isArray(value) && value.includes(option.value);
                   return (
                     <div key={option.value} className="flex items-center space-x-3">
                       <Checkbox
                         id={`${field.name}-${option.value}`}
                         checked={isChecked}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           handleCheckboxGroupChange(option.value, checked as boolean)
                         }
-                        disabled={disabled || option.disabled}
-                        color={field.color || 'primary'}
-                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        disabled={isDisabled || option.disabled}
                       />
-                      <Label 
-                        htmlFor={`${field.name}-${option.value}`}
-                        className={cn("text-sm cursor-pointer", {
-                          "text-muted-foreground": option.disabled
-                        })}
-                      >
-                        {option.label}
-                      </Label>
+                      <Label htmlFor={`${field.name}-${option.value}`}>{option.label}</Label>
                     </div>
                   );
                 })}
               </div>
-              {Array.isArray(value) && value.length > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  {value.length} item dipilih
-                </div>
-              )}
-            </div>
-          );
-        } else {
-          // Single checkbox
-          return (
-            <div className="flex items-center space-x-3 p-4 bg-muted/20 rounded-lg border">
-              <Checkbox
-                id={field.name}
-                checked={!!value}
-                onCheckedChange={handleChange}
-                disabled={disabled}
-                color={field.color || 'primary'}
-                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-              />
-              <Label 
-                htmlFor={field.name}
-                className="text-sm cursor-pointer leading-relaxed"
-              >
-                {field.helperText}
-              </Label>
             </div>
           );
         }

@@ -45,7 +45,7 @@ interface TutorData {
   id: string;
   trn: string;
   status_tutor: string;
-  approval_level: string;
+
   staff_notes: string;
   
   // Personal Info
@@ -2005,12 +2005,7 @@ export default function ViewTutorPage() {
                           <span className="text-sm font-medium text-gray-500">TRN</span>
                           <span className="text-sm font-mono">{tutorData.trn || '-'}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-500">Approval Level</span>
-                          <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.approval_level))}>
-                            {tutorData.approval_level || 'Not Set'}
-                          </Badge>
-                        </div>
+
                       </CardContent>
                     </Card>
 

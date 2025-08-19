@@ -87,13 +87,7 @@ const FIELD_MAPPINGS: FieldMapping[] = [
     description: 'Tutor status in management table', status: 'mapped',
     usageMap: { formAdd: true, viewAll: true, viewSingle: true, edit: true, dashboard: true, analytics: true }
   },
-  { 
-    id: '4', category: 'System', 
-    dbColumn: 'approval_level', dbTable: 't_315_02_01_tutor_management', 
-    formField: 'approval_level', dataType: 'string', required: true, validation: 'enum', 
-    description: 'Approval level in management table', status: 'mapped',
-    usageMap: { formAdd: true, viewAll: true, viewSingle: true, edit: true, dashboard: true, analytics: false }
-  },
+
   
   // Personal Information
   { 
@@ -405,7 +399,6 @@ export default function FieldMappingPage() {
         { name: 'educator_registration_number', type: 'text', nullable: true },
         { name: 'form_submission_timestamp', type: 'timestamp', nullable: true },
         { name: 'onboarding_status', type: 'text', nullable: true },
-        { name: 'background_check_status', type: 'text', nullable: true },
         { name: 'bio_summary', type: 'text', nullable: true },
         { name: 'teaching_experience', type: 'text', nullable: true },
         { name: 'special_skills', type: 'text', nullable: true },
@@ -441,7 +434,7 @@ export default function FieldMappingPage() {
         { name: 'id', type: 'uuid', nullable: false },
         { name: 'user_id', type: 'uuid', nullable: false },
         { name: 'status_tutor', type: 'text', nullable: true },
-        { name: 'approval_level', type: 'text', nullable: true },
+
         { name: 'last_status_change', type: 'timestamp', nullable: true },
         { name: 'recruitment_stage_history', type: 'jsonb', nullable: true },
         { name: 'additional_screening', type: 'text[]', nullable: true },

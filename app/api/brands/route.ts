@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    console.log('🔍 Fetching distinct brands from tutor_management...');
+    console.log('🔍 Fetching brands from corporate_entities...');
 
-    // Get distinct entity_code values from tutor_management table
+    // Get entity_code and entity_name values from corporate_entities table
     const { data: brandsData, error: brandsError } = await supabase
-      .from('tutor_management')
-      .select('entity_code')
+      .from('corporate_entities')
+      .select('entity_code, entity_name')
       .not('entity_code', 'is', null)
       .not('entity_code', 'eq', '');
 
@@ -55,17 +55,25 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Extract unique brands and sort them
-    const uniqueBrands = [...new Set(brandsData?.map(b => b.entity_code) || [])]
-      .filter(brand => brand && brand.trim() !== '')
-      .sort();
+    // Format brands as options with value and label
+    const brandOptions = brandsData?.map(brand => ({
+      value: brand.entity_code,
+      label: brand.entity_name || brand.entity_code
+    })) || [];
 
-    console.log(`✅ Found ${uniqueBrands.length} distinct brands:`, uniqueBrands);
+    // Remove duplicates based on entity_code and sort by label
+    const uniqueBrandOptions = brandOptions
+      .filter((brand, index, arr) => 
+        arr.findIndex(b => b.value === brand.value) === index
+      )
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    console.log(`✅ Found ${uniqueBrandOptions.length} brands:`, uniqueBrandOptions);
 
     return NextResponse.json({
       success: true,
-      brands: uniqueBrands,
-      count: uniqueBrands.length
+      brands: uniqueBrandOptions,
+      count: uniqueBrandOptions.length
     });
 
   } catch (error: any) {

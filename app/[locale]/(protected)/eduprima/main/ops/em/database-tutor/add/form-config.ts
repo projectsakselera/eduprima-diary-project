@@ -114,10 +114,10 @@ export interface AIRecommendationEngine {
 export interface TutorFormData {
   // System & Status Information (Staff only)
   status_tutor?: string;
-  approval_level?: string;
+  brand?: string[];
+
   identity_verification?: string;
   education_verification?: string;
-  background_check?: string;
   additional_screening?: string;
   top_educator?: boolean;
   staff_notes?: string;
@@ -1182,20 +1182,16 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
-          name: 'approval_level',
-          label: 'Level Approval',
-          type: 'select',
-          placeholder: 'Pilih level...',
-          options: [
-            { value: 'junior', label: 'Junior Tutor' },
-            { value: 'senior', label: 'Senior Tutor' },
-            { value: 'expert', label: 'Expert Tutor' },
-            { value: 'master', label: 'Master Tutor' }
-          ],
-          helperText: 'Level kemampuan tutor.',
-          icon: 'ph:star',
+          name: 'brand',
+          label: 'Brand',
+          type: 'checkbox',
+          multiple: true,
+          apiEndpoint: '/api/brands',
+          helperText: 'Pilih satu atau beberapa brand/entitas organisasi untuk tutor ini.',
+          icon: 'ph:buildings',
           size: 'lg'
         },
+
         {
           name: 'identity_verification',
           label: 'Identity Verification',
@@ -1227,22 +1223,6 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
-          name: 'background_check',
-          label: 'Background Check',
-          type: 'select',
-          placeholder: 'Pilih status background check...',
-          options: [
-            { value: 'not_started', label: '⏳ Not Started - Belum dimulai' },
-            { value: 'in_progress', label: '🔍 In Progress - Sedang berlangsung' },
-            { value: 'completed_clear', label: '✅ Completed Clear - Selesai, bersih' },
-            { value: 'completed_with_notes', label: '📋 Completed with Notes - Selesai dengan catatan' },
-            { value: 'failed', label: '❌ Failed - Gagal' }
-          ],
-          helperText: 'Status background check tutor.',
-          icon: 'ph:shield-check',
-          size: 'lg'
-        },
-        {
           name: 'top_educator',
           label: 'Top Educator',
           type: 'switch',
@@ -1267,7 +1247,6 @@ export const tutorFormConfig: FormConfig = {
           options: [
             { value: 'psikotes', label: '🧠 Tes Psikotes' },
             { value: 'sharing_session', label: '💬 Sharing Session dengan Staff' },
-            { value: 'background_check', label: '🔍 Background Check' },
             { value: 'teaching_demo', label: '🎭 Teaching Demo/Mock Session' },
             { value: 'reference_check', label: '📞 Reference Check' },
             { value: 'continuous_assessment', label: '📊 Continuous Assessment' }
@@ -2819,10 +2798,10 @@ export const defaultFormData: Partial<TutorFormData> = {
   
   // System & Status Information (Staff only)
   status_tutor: '',
-  approval_level: '',
+  brand: [],
+
   identity_verification: '',
   education_verification: '',
-  background_check: '',
   additional_screening: '',
   top_educator: false,
   staff_notes: '',

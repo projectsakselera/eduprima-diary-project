@@ -36,6 +36,16 @@ import bcrypt from 'bcryptjs';
 import { migrationConfig } from '@/config';
 import { createTutorWithMigrationSupport, type BasicTutorData } from '@/services/tutor-edge.service';
 
+// Local type override to add brand field without modifying the service file
+interface LocalBasicTutorData extends Omit<BasicTutorData, 'system'> {
+  system: {
+    status_tutor?: string;
+    brand?: string[];
+    staff_notes?: string;
+    additionalScreening?: string[];
+  };
+}
+
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -586,7 +596,6 @@ export default function AddTutorPage() {
         
         // Defaults for required operational fields in new schema
         onboarding_status: 'registration',
-        background_check_status: 'pending',
         is_top_educator: false,
         cancellation_rate: 0,
         total_teaching_hours: 0,
@@ -658,7 +667,8 @@ export default function AddTutorPage() {
       // 2h. Prepare tutor_management data (EXISTING TABLE)
       const tutorManagementData = {
         status_tutor: formData.status_tutor || 'registration',
-        approval_level: formData.approval_level || 'junior',
+        entity_code: (formData.brand && formData.brand.length > 0) ? formData.brand[0] : null,
+
         staff_notes: formData.staff_notes || null,
         additional_screening: formData.additionalScreening || [],
         
@@ -679,6 +689,11 @@ export default function AddTutorPage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+
+      console.log('🔍 Brand data:', {
+        selectedBrands: formData.brand,
+        entityCodeForDB: tutorManagementData.entity_code
+      });
 
       // 2i. Get bank name from bank ID (REQUIRED FIELD!)
       let bankName = null;
@@ -874,10 +889,10 @@ export default function AddTutorPage() {
           scheduleFlexibilityLevel: formData.scheduleFlexibilityLevel
         });
         
-        const basicTutorData: BasicTutorData = {
+        const basicTutorData: LocalBasicTutorData = {
           system: {
             status_tutor: formData.status_tutor,
-            approval_level: formData.approval_level,
+            brand: formData.brand || [],
             staff_notes: formData.staff_notes,
             additionalScreening: formData.additionalScreening,
           },
