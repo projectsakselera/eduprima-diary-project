@@ -48,6 +48,44 @@ function extractFromEducationHistory(educationHistory: any[], level: string, fie
   return education ? education[field] : null;
 }
 
+// Helper function to determine current tutor status based on business logic
+function getCurrentTutorStatus(registrationStatus: any, operationsStatus: any): string {
+  const regStatus = registrationStatus?.current_status;
+  const opsStatus = operationsStatus?.operations_current_status;
+  
+  // PHASE 1: Recruitment Process (priority if exists)
+  if (regStatus && ['registration', 'learning_materials', 'examination', 'exam_verification', 'data_completion'].includes(regStatus)) {
+    const statusLabels: Record<string, string> = {
+      'registration': 'Registration',
+      'learning_materials': 'Learning Materials', 
+      'examination': 'Examination',
+      'exam_verification': 'Exam Verification',
+      'data_completion': 'Data Completion'
+    };
+    return statusLabels[regStatus] || regStatus;
+  }
+  
+  // PHASE 2 & 3: Operations (after recruitment completed)
+  if (opsStatus) {
+    const statusLabels: Record<string, string> = {
+      'active': 'Active',
+      'inactive': 'Inactive',
+      'suspended': 'Suspended', 
+      'blacklisted': 'Blacklisted'
+    };
+    return statusLabels[opsStatus] || opsStatus;
+  }
+  
+  // Validation: Check for inconsistent state (should not happen)
+  if (regStatus && opsStatus) {
+    console.warn(`⚠️ Inconsistent state: user has both reg=${regStatus}, ops=${opsStatus}`);
+    return 'Error: Dual Status';
+  }
+  
+  // Fallback for new tutors
+  return 'Pending Registration';
+}
+
 // Complete Tutor Interface matching form fields
 interface CompleteTutorData {
   // System & Status
@@ -772,11 +810,21 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     tutorDetailsResult.data?.forEach(td => {
       tutorIdToUserIdMap.set(td.id, td.user_id);
     });
+    
+    console.log('🔗 TutorId to UserId mapping:', {
+      tutorDetailsCount: tutorDetailsResult.data?.length || 0,
+      mappingSize: tutorIdToUserIdMap.size,
+      sampleMappings: Array.from(tutorIdToUserIdMap.entries()).slice(0, 3)
+    });
 
     // Create operations status map
     const operationsStatusMap = new Map();
     operationsStatusResult.data?.forEach(ops => {
       const userId = tutorIdToUserIdMap.get(ops.tutor_id);
+      console.log(`🔗 Operations mapping: tutor_id=${ops.tutor_id} → user_id=${userId}`, {
+        operations_current_status: ops.operations_current_status,
+        hasTutorIdMapping: tutorIdToUserIdMap.has(ops.tutor_id)
+      });
       if (userId) {
         operationsStatusMap.set(userId, ops);
       }
@@ -934,7 +982,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         brand: management?.entity_code || '',
         registration_current_status: registrationStatus?.current_status || 'pending',
         operations_current_status: operationsStatus?.operations_current_status || 'inactive',
-        status_tutor: management?.status_tutor || 'unknown',
+        status_tutor: (() => {
+          const managementStatus = management?.status_tutor;
+          const result = getCurrentTutorStatus(registrationStatus, operationsStatus);
+          console.log(`🔍 Status for user ${user.id}:`, {
+            managementStatus,
+            registrationStatus: registrationStatus?.current_status,
+            operationsStatus: operationsStatus?.operations_current_status,
+            finalStatus: result
+          });
+          return result;
+        })(),
         approval_level: management?.approval_level || '',
         staff_notes: management?.staff_notes || '',
         

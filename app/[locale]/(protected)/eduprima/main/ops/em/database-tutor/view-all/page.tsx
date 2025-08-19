@@ -1171,7 +1171,7 @@ export default function ViewAllTutorsPage() {
   const filterableColumns = useMemo(() => {
     const filterable = new Set([
       // System & Status columns (visible in screenshot)
-      'registration_current_status', 'operations_current_status', 'approval_level', 'brand',
+      'status_tutor', 'approval_level', 'brand',
       
       // Personal columns (visible in screenshot) 
       'namaLengkap', 'email', 'jenisKelamin', 'agama',
@@ -1863,7 +1863,7 @@ export default function ViewAllTutorsPage() {
       const response = await fetch('/api/tutors/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, registration_current_status: newStatus })
+        body: JSON.stringify({ user_id: userId, status_tutor: newStatus })
       });
       const result = await response.json();
       if (!response.ok || !result?.success) {
@@ -1874,7 +1874,7 @@ export default function ViewAllTutorsPage() {
         t.id === userId
           ? {
               ...t,
-              registration_current_status: result.data?.registration_current_status ?? newStatus,
+              status_tutor: result.data?.status_tutor ?? newStatus,
               last_status_change: result.data?.last_status_change ?? t.last_status_change,
               status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
               updated_at: result.data?.updated_at ?? t.updated_at,
@@ -1908,7 +1908,7 @@ export default function ViewAllTutorsPage() {
       const response = await fetch('/api/tutors/status/bulk', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_ids: ids, registration_current_status: bulkStatus })
+        body: JSON.stringify({ user_ids: ids, status_tutor: bulkStatus })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.success) {
@@ -1923,7 +1923,7 @@ export default function ViewAllTutorsPage() {
         selectedRows.has(t.id)
           ? {
               ...t,
-              registration_current_status: bulkStatus,
+              status_tutor: bulkStatus,
               last_status_change: result.data?.last_status_change_map?.[t.id] ?? t.last_status_change,
               status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
               updated_at: result.data?.updated_at_map?.[t.id] ?? t.updated_at,
@@ -2741,7 +2741,7 @@ export default function ViewAllTutorsPage() {
                                 onFilterChange={(col, selectedValues) => handleColumnFilter(col, selectedValues)}
                                 isLoading={loadingColumnValues[column.key] || false}
                                 error={columnValuesErrors[column.key]}
-                                isStatusColumn={column.key === 'registration_current_status' || column.key === 'operations_current_status' || column.key === 'statusMenerimaSiswa'}
+                                isStatusColumn={column.key === 'status_tutor' || column.key === 'statusMenerimaSiswa'}
                                 onClick={(e) => {
                                   console.log(`🔍 Column filter clicked for: ${column.key}`);
                                   fetchColumnValues(column.key);
@@ -2869,77 +2869,78 @@ export default function ViewAllTutorsPage() {
                               type
                             })}
                           />
-                        ) : column.key === 'registration_current_status' ? (
-                          // Inline editable status using dropdown menu styled as badge
+                        ) : column.key === 'status_tutor' ? (
+                          // Combined status with conditional editable logic
                           (() => {
                             const current = String(tutor[column.key] || '');
                             const statusStyle = getStatusStyle(current);
-                            return (
-                              <div className="flex justify-center">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px] focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                      style={{
-                                        backgroundColor: statusStyle.backgroundColor,
-                                        color: statusStyle.color
-                                      }}
-                                      title="Ubah status tutor"
-                                      disabled={savingStatusUserId === tutor.id}
-                                    >
-                                      {savingStatusUserId === tutor.id ? (
-                                        <span className="inline-flex items-center gap-1">
-                                          <Icon icon="ph:spinner" className="h-3 w-3 animate-spin" />
-                                          Saving
-                                        </span>
-                                      ) : (
-                                        statusStyle.text
-                                      )}
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="center" className="w-40">
-                                    <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {TUTOR_STATUS_OPTIONS.map((opt) => (
-                                      <DropdownMenuItem
-                                        key={opt}
-                                        onClick={() => handleStatusTutorChange(tutor.id, opt)}
-                                        className="flex items-center gap-2"
+                            const isEditable = !['Registration', 'Learning Materials', 'Examination', 'Exam Verification', 'Data Completion'].includes(current);
+                            
+                            if (isEditable) {
+                              // Editable dropdown for operations status
+                              return (
+                                <div className="flex justify-center">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        style={{
+                                          backgroundColor: statusStyle.backgroundColor,
+                                          color: statusStyle.color
+                                        }}
+                                        title="Ubah status tutor"
+                                        disabled={savingStatusUserId === tutor.id}
                                       >
-                                        <span
-                                          className="inline-block h-2 w-2 rounded-full"
-                                          style={{ backgroundColor: getStatusStyle(opt).backgroundColor }}
-                                        />
-                                        <span className="capitalize">{opt}</span>
-                                        {current === opt && (
-                                          <Icon icon="ph:check" className="ml-auto h-4 w-4 text-primary" />
+                                        {savingStatusUserId === tutor.id ? (
+                                          <span className="inline-flex items-center gap-1">
+                                            <Icon icon="ph:spinner" className="h-3 w-3 animate-spin" />
+                                            Saving
+                                          </span>
+                                        ) : (
+                                          current
                                         )}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            );
-                          })()
-                        ) : column.key === 'operations_current_status' ? (
-                          // Operations status from tutor_operations_status table
-                          (() => {
-                            const current = String(tutor[column.key] || '');
-                            const statusStyle = getStatusStyle(current);
-                            return (
-                              <div className="flex justify-center">
-                                <span
-                                  className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
-                                  style={{
-                                    backgroundColor: statusStyle.backgroundColor,
-                                    color: statusStyle.color
-                                  }}
-                                  title={`Operations Status: ${current}`}
-                                >
-                                  {statusStyle.text}
-                                </span>
-                              </div>
-                            );
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="center" className="w-40">
+                                      <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
+                                      <DropdownMenuSeparator />
+                                      {['Active', 'Inactive', 'Suspended', 'Blacklisted'].map((opt) => (
+                                        <DropdownMenuItem
+                                          key={opt}
+                                          onClick={() => handleStatusTutorChange(tutor.id, opt)}
+                                          className="flex items-center gap-2"
+                                        >
+                                          <span
+                                            className="inline-block h-2 w-2 rounded-full"
+                                            style={{ backgroundColor: getStatusStyle(opt).backgroundColor }}
+                                          />
+                                          <span>{opt}</span>
+                                          {current === opt && (
+                                            <Icon icon="ph:check" className="ml-auto h-4 w-4 text-primary" />
+                                          )}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              );
+                            } else {
+                              // Read-only badge for recruitment statuses
+                              return (
+                                <div className="flex justify-center">
+                                  <span
+                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
+                                    style={{
+                                      backgroundColor: statusStyle.backgroundColor,
+                                      color: statusStyle.color
+                                    }}
+                                    title={`Recruitment Status: ${current}`}
+                                  >
+                                    {current}
+                                  </span>
+                                </div>
+                              );
+                            }
                           })()
                         ) : column.key === 'statusMenerimaSiswa' ? (
                           // Special rendering for status menerima siswa with colored badges
