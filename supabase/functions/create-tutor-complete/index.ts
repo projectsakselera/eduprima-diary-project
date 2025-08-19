@@ -6,6 +6,11 @@ interface EdgeFunctionRequest {
   system?: {
     status_tutor?: string
     approval_level?: string
+    identity_verification?: string
+    education_verification?: string
+    background_check?: string
+    additional_screening?: string
+    top_educator?: boolean
     staff_notes?: string
     additionalScreening?: string[] // Checklist for additional screening
   }
@@ -421,8 +426,8 @@ serve(async (req: Request): Promise<Response> => {
         // System fields
         form_agreement_check: true,
         registration_notes_to_admin: `Created via Edge Function${data.system?.additionalScreening?.length ? ` | Additional Screening: ${data.system.additionalScreening.join(', ')}` : ''}`,
-        onboarding_status: 'pending',
-        background_check_status: 'pending',
+        registration_status: 'pending_profile', // Default value - status_tutor akan disimpan di tutor_management
+        background_check: data.system?.background_check || 'not_started',
         is_top_educator: false,
         cancellation_rate: 0.0,
         total_teaching_hours: 0,
@@ -454,16 +459,17 @@ serve(async (req: Request): Promise<Response> => {
       .from('tutor_management')
       .insert([{
         user_id: userData.id,
-        status_tutor: data.system?.status_tutor || 'registration',
-        approval_level: data.system?.approval_level || 'junior',
+        status_tutor: data.system?.status_tutor || 'registration', // Gunakan status_tutor dari form
+        approval_level: data.system?.approval_level || 'senior',
         staff_notes: data.system?.staff_notes || '',
         additional_screening: data.system?.additionalScreening || [],
         recruitment_stage_history: [],
         last_status_change: new Date().toISOString(),
         status_changed_by: null, // Will be set when staff changes status
         // 📄 STEP 5: Document verification status (Staff can override)
-        identity_verification_status: data.documents?.status_verifikasi_identitas || 'pending',
-        education_verification_status: data.documents?.status_verifikasi_pendidikan || 'pending',
+        identity_verification: data.system?.identity_verification || data.documents?.status_verifikasi_identitas || 'pending',
+        education_verification: data.system?.education_verification || data.documents?.status_verifikasi_pendidikan || 'pending',
+        top_educator: data.system?.top_educator || false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])

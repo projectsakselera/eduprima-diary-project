@@ -115,6 +115,11 @@ export interface TutorFormData {
   // System & Status Information (Staff only)
   status_tutor?: string;
   approval_level?: string;
+  identity_verification?: string;
+  education_verification?: string;
+  background_check?: string;
+  additional_screening?: string;
+  top_educator?: boolean;
   staff_notes?: string;
   additionalScreening?: string[]; // Checklist for additional screening
 
@@ -1170,34 +1175,9 @@ export const tutorFormConfig: FormConfig = {
           name: 'status_tutor',
           label: 'Status Tutor',
           type: 'select',
-          placeholder: 'Pilih status...',
-          options: [
-            // Recruitment Flow Stages
-            { value: 'registration', label: '📝 Registrasi - Upload berkas & data' },
-            { value: 'learning_materials', label: '📚 Belajar Materi & SOP' },
-            { value: 'examination', label: '📋 Ujian Tutor Online' },
-            { value: 'exam_verification', label: '🔍 Verifikasi Hasil Ujian' },
-            { value: 'data_completion', label: '📄 Melengkapi Data Tutor' },
-            { value: 'waiting_students', label: '⏳ Menunggu Siswa Pertama' },
-            
-            // Active Status
-            { value: 'active', label: '✅ Aktif - Mengajar' },
-            
-            // Management Status  
-            { value: 'inactive', label: '⏸️ Tidak Aktif' },
-            { value: 'suspended', label: '🚫 Ditangguhkan' },
-            { value: 'blacklisted', label: '❌ Blacklist' },
-            
-            // Special Status
-            { value: 'on_trial', label: '🧪 Masa Percobaan' },
-            { value: 'additional_screening', label: '🔬 Additional Screening' },
-            
-            // Legacy statuses for compatibility
-            { value: 'pending', label: '⏳ Pending' },
-            { value: 'verified', label: '✅ Verified' },
-            { value: 'unknown', label: '❓ Unknown' }
-          ],
-          helperText: 'Status tutor dalam sistem. Status akan mempengaruhi workflow dan permissions.',
+          placeholder: 'Pilih status tutor...',
+          apiEndpoint: '/api/tutor-status-types',
+          helperText: 'Status tutor dalam sistem. Data diambil dari database.',
           icon: 'ph:shield-check',
           size: 'lg'
         },
@@ -1215,6 +1195,59 @@ export const tutorFormConfig: FormConfig = {
           helperText: 'Level kemampuan tutor.',
           icon: 'ph:star',
           size: 'lg'
+        },
+        {
+          name: 'identity_verification',
+          label: 'Identity Verification',
+          type: 'select',
+          placeholder: 'Pilih status verifikasi...',
+          options: [
+            { value: 'pending', label: '⏳ Pending - Belum diverifikasi' },
+            { value: 'verified', label: '✅ Verified - Sudah diverifikasi' },
+            { value: 'rejected', label: '❌ Rejected - Ditolak' },
+            { value: 'needs_resubmission', label: '📋 Needs Resubmission - Perlu kirim ulang' }
+          ],
+          helperText: 'Status verifikasi identitas (KTP/ID).',
+          icon: 'ph:identification-card',
+          size: 'lg'
+        },
+        {
+          name: 'education_verification',
+          label: 'Education Verification',
+          type: 'select',
+          placeholder: 'Pilih status verifikasi...',
+          options: [
+            { value: 'pending', label: '⏳ Pending - Belum diverifikasi' },
+            { value: 'verified', label: '✅ Verified - Sudah diverifikasi' },
+            { value: 'rejected', label: '❌ Rejected - Ditolak' },
+            { value: 'needs_resubmission', label: '📋 Needs Resubmission - Perlu kirim ulang' }
+          ],
+          helperText: 'Status verifikasi pendidikan (Ijazah/Transkrip).',
+          icon: 'ph:graduation-cap',
+          size: 'lg'
+        },
+        {
+          name: 'background_check',
+          label: 'Background Check',
+          type: 'select',
+          placeholder: 'Pilih status background check...',
+          options: [
+            { value: 'not_started', label: '⏳ Not Started - Belum dimulai' },
+            { value: 'in_progress', label: '🔍 In Progress - Sedang berlangsung' },
+            { value: 'completed_clear', label: '✅ Completed Clear - Selesai, bersih' },
+            { value: 'completed_with_notes', label: '📋 Completed with Notes - Selesai dengan catatan' },
+            { value: 'failed', label: '❌ Failed - Gagal' }
+          ],
+          helperText: 'Status background check tutor.',
+          icon: 'ph:shield-check',
+          size: 'lg'
+        },
+        {
+          name: 'top_educator',
+          label: 'Top Educator',
+          type: 'switch',
+          helperText: 'Tandai sebagai Top Educator (educator unggulan).',
+          icon: 'ph:crown'
         },
         {
           name: 'staff_notes',
@@ -2787,6 +2820,11 @@ export const defaultFormData: Partial<TutorFormData> = {
   // System & Status Information (Staff only)
   status_tutor: '',
   approval_level: '',
+  identity_verification: '',
+  education_verification: '',
+  background_check: '',
+  additional_screening: '',
+  top_educator: false,
   staff_notes: '',
   additionalScreening: [],
   

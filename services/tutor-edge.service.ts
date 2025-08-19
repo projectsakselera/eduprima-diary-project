@@ -280,6 +280,11 @@ export interface BasicTutorData {
   system: {
     status_tutor?: string;
     approval_level?: string;
+    identity_verification?: string;
+    education_verification?: string;
+    background_check?: string;
+    additional_screening?: string;
+    top_educator?: boolean;
     staff_notes?: string;
     additionalScreening?: string[]; // Checklist for additional screening
   };
@@ -642,6 +647,11 @@ export async function createTutorWithMigrationSupport(
         system: {
           status_tutor: formData.status_tutor || undefined,
           approval_level: formData.approval_level || undefined,
+          identity_verification: formData.identity_verification || undefined,
+          education_verification: formData.education_verification || undefined,
+          background_check: formData.background_check || undefined,
+          additional_screening: formData.additional_screening || undefined,
+          top_educator: formData.top_educator || false,
           staff_notes: formData.staff_notes || undefined,
           additionalScreening: formData.additionalScreening || undefined,
         },
