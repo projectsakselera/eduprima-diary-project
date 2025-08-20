@@ -49,6 +49,15 @@ const getProxyUrl = (url: string) => {
   return `/api/files/${cleanUrl}`;
 };
 
+// Utility function for truncating text to maximum number of words
+const truncateToWords = (text: string | null | undefined, maxWords: number = 4): string => {
+  if (!text || typeof text !== 'string') return '';
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + '...';
+};
+
+
 // Tutor status options used in inline editor - synchronized with database
 const TUTOR_STATUS_OPTIONS: Array<
   'registration' | 'learning_materials' | 'examination' | 'exam_verification' | 
@@ -2023,6 +2032,12 @@ export default function ViewAllTutorsPage() {
     }
   };
 
+  // Format cell value for display (with truncation)
+  const formatCellValueForDisplay = (value: any, column: Column): string => {
+    const fullValue = formatCellValue(value, column);
+    return truncateToWords(fullValue, 4);
+  };
+
   // Sort data
   const sortedData = useMemo(() => {
     if (!sortConfig) return tutorData;
@@ -2672,7 +2687,7 @@ export default function ViewAllTutorsPage() {
           >
             <table 
               className={cn(
-                "w-full border-collapse",
+                "w-full border-collapse table-fixed",
                 isScrollable ? "min-h-[calc(100% + 1px)]" : ""
               )}
               style={{ 
@@ -2711,9 +2726,9 @@ export default function ViewAllTutorsPage() {
                         column.sticky && "sticky left-12 z-20"
                       )}
                       style={{ 
-                        width: '150px',
-                        maxWidth: '150px',
-                        minWidth: '100px'
+                        width: '280px',
+                        maxWidth: '280px',
+                        minWidth: '260px'
                       }}
                       onClick={() => handleSort(column.key as keyof TutorSpreadsheetData)}
                     >
@@ -2853,9 +2868,9 @@ export default function ViewAllTutorsPage() {
                           selectionRange.end?.row === rowIndex && selectionRange.end?.col === column.key && selectionMode === 'range' && "ring-2 ring-primary ring-dashed"
                         )}
                         style={{
-                          width: '150px',
-                          maxWidth: '150px',
-                          minWidth: '100px'
+                          width: '280px',
+                          maxWidth: '280px',
+                          minWidth: '260px'
                         }}
                         onMouseDown={(e) => handleCellMouseDown(e, rowIndex, column.key)}
                         onMouseEnter={() => handleCellMouseEnter(rowIndex, column.key)}
@@ -2886,7 +2901,7 @@ export default function ViewAllTutorsPage() {
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <button
-                                        className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        className="px-2 py-1 rounded-full text-xs font-semibold text-center w-20 max-w-20 focus:outline-none focus:ring-2 focus:ring-primary/50 truncate"
                                         style={{
                                           backgroundColor: statusStyle.backgroundColor,
                                           color: statusStyle.color
@@ -2932,7 +2947,7 @@ export default function ViewAllTutorsPage() {
                               return (
                                 <div className="flex justify-center">
                                   <span
-                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[80px]"
+                                    className="px-2 py-1 rounded-full text-xs font-semibold text-center w-20 max-w-20 truncate"
                                     style={{
                                       backgroundColor: statusStyle.backgroundColor,
                                       color: statusStyle.color
@@ -2952,7 +2967,7 @@ export default function ViewAllTutorsPage() {
                             return (
                               <div className="flex justify-center">
                                 <span
-                                  className="px-2 py-1 rounded-full text-xs font-semibold text-center min-w-[90px]"
+                                  className="px-2 py-1 rounded-full text-xs font-semibold text-center w-20 max-w-20 truncate"
                                   style={{
                                     backgroundColor: statusStyle.backgroundColor,
                                     color: statusStyle.color
@@ -2966,13 +2981,8 @@ export default function ViewAllTutorsPage() {
                           })()
                         ) : (
                           <div 
-                            className="truncate whitespace-nowrap cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1"
+                            className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1 w-full flex items-center justify-start"
                             title={formatCellValue(tutor[column.key] ?? '-', column)}
-                            style={{ 
-                              maxWidth: '130px',
-                              overflow: 'hidden', 
-                              textOverflow: 'ellipsis' 
-                            }}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCellClick(
@@ -2982,8 +2992,16 @@ export default function ViewAllTutorsPage() {
                               );
                             }}
                           >
-                            {formatCellValue(tutor[column.key] ?? '-', column)}
-                            <Icon icon="ph:magnifying-glass-plus" className="inline-block ml-1 h-3 w-3 opacity-60" />
+                            <span 
+                              className="flex-1 text-sm leading-relaxed" 
+                              style={{ 
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word'
+                              }}
+                            >
+                              {formatCellValueForDisplay(tutor[column.key] ?? '-', column)}
+                            </span>
+                            <Icon icon="ph:magnifying-glass-plus" className="ml-1 h-3 w-3 opacity-60 flex-shrink-0" />
                           </div>
                         )}
                       </td>
