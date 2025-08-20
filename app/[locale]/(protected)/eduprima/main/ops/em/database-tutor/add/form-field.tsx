@@ -99,8 +99,15 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
           let options: Array<{ value: string; label: string; disabled?: boolean }> = [];
 
             // Tambahkan penanganan untuk provinces di bagian pertama
+            // Tambahkan penanganan untuk provinces dan cities di bagian pertama
             if (data.provinces && Array.isArray(data.provinces)) {
               options = data.provinces.map((item: any) => ({
+                value: item.value,
+                label: item.label,
+                disabled: false
+              }));
+            } else if (data.cities && Array.isArray(data.cities)) {
+              options = data.cities.map((item: any) => ({
                 value: item.value,
                 label: item.label,
                 disabled: false
