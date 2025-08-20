@@ -1234,11 +1234,20 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
               )
             );
           } else if (tutorValue !== null && tutorValue !== undefined) {
-            // For single values, check if the value matches any of the filter values
+            // For single values, use exact match for status columns and partial match for others
             const stringValue = String(tutorValue).toLowerCase();
-            return values.some(filterValue => 
-              stringValue.includes(filterValue.toLowerCase())
-            );
+            
+            // For status columns (status_tutor), use exact match to avoid "active" matching "inactive"
+            if (column === 'status_tutor' || column.includes('status_')) {
+              return values.some(filterValue => 
+                stringValue === filterValue.toLowerCase()
+              );
+            } else {
+              // For other columns, use partial match
+              return values.some(filterValue => 
+                stringValue.includes(filterValue.toLowerCase())
+              );
+            }
           }
           
           return false; // Null/undefined values don't match any filter

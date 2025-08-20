@@ -75,7 +75,7 @@ export default function DatabaseTutorPage() {
   const calculateStats = (tutorData: TutorData[]) => {
     const total = tutorData.length;
     const active = tutorData.filter(t => t.user_status === 'active').length;
-    const pending = tutorData.filter(t => t.registration_status === 'pending' || t.registration_status === 'registration').length;
+    const pending = tutorData.filter(t => t.user_status === 'pending' || t.user_status === 'registration').length;
     const inactive = total - active - pending;
     
     // Calculate average rating (if available)
@@ -148,7 +148,6 @@ export default function DatabaseTutorPage() {
           profile_photo_url: tutor.fotoProfil,
           
           educator_registration_number: tutor.trn,
-          registration_status: tutor.status_tutor || 'pending',
           bio_summary: tutor.headline,
           teaching_philosophy: tutor.motivasiMenjadiTutor,
           teaching_experience: tutor.pengalamanMengajar,

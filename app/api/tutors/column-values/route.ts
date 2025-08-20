@@ -19,49 +19,17 @@ const COLUMN_MAPPING: Record<string, {
   table?: string;
   field: string;
   type: 'text' | 'select' | 'array' | 'boolean' | 'number';
-  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking';
+  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types' | 'corporate_entities' | 'programs_unit';
   staticValues?: string[];
 }> = {
   // Status and system fields
   'status_tutor': {
-    source: 'static',
-    field: 'status_tutor',
-    type: 'select',
-    staticValues: [
-      // Recruitment Flow Stages
-      'registration',
-      'learning_materials', 
-      'examination',
-      'exam_verification',
-      'data_completion',
-      'waiting_students',
-      
-      // Active Status
-      'active',
-      
-      // Management Status  
-      'inactive',
-      'suspended',
-      'blacklisted',
-      
-      // Special Status
-      'on_trial',
-      'additional_screening',
-      
-      // Legacy statuses for compatibility
-      'pending',
-      'verified', 
-      'unknown'
-    ]
-  },
-  'approval_level': {
-    source: 'static', 
-    field: 'approval_level',
-    type: 'select',
-    staticValues: ['level_1', 'level_2', 'level_3', 'approved', 'rejected']
+    source: 'tutor_status_types',
+    field: 'code',
+    type: 'select'
   },
   'brand': {
-    source: 'management',
+    source: 'corporate_entities',
     field: 'entity_code',
     type: 'select'
   },
@@ -155,27 +123,13 @@ const COLUMN_MAPPING: Record<string, {
     type: 'text'
   },
   
-  // Programs - this is complex, will need special handling
+  // Programs - dynamic from programs_unit table
   'selectedPrograms': {
-    source: 'static',
-    field: 'selectedPrograms',
-    type: 'array',
-    staticValues: ['SD Matematika', 'SD Bahasa Indonesia', 'SD IPA', 'SMP Matematika', 'SMP IPA', 'SMP Bahasa Indonesia', 'SMA Matematika', 'SMA Fisika', 'SMA Kimia', 'SMA Biologi', 'SMA Bahasa Indonesia', 'SMA Bahasa Inggris']
+    source: 'programs_unit',
+    field: 'program_name',
+    type: 'array'
   },
   
-  // Verification status
-  'status_verifikasi_identitas': {
-    source: 'static',
-    field: 'status_verifikasi_identitas',
-    type: 'select',
-    staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
-  },
-  'status_verifikasi_pendidikan': {
-    source: 'static',
-    field: 'status_verifikasi_pendidikan', 
-    type: 'select',
-    staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
-  },
   
   // Banking fields
   'namaBank': {
@@ -388,6 +342,75 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
       if (error) {
         console.error(`❌ Error fetching ${column} values:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For tutor status types
+    if (columnConfig.source === 'tutor_status_types') {
+      const { data, error } = await supabase
+        .from('tutor_status_types')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from tutor_status_types:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues;
+    }
+
+    // For corporate entities
+    if (columnConfig.source === 'corporate_entities') {
+      const { data, error } = await supabase
+        .from('corporate_entities')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from corporate_entities:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For programs unit
+    if (columnConfig.source === 'programs_unit') {
+      const { data, error } = await supabase
+        .from('programs_unit')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order(columnConfig.field, { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from programs_unit:`, error);
         return [];
       }
 

@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
 
     // Transform data to format expected by form fields with flexible field names
     const options = finalStatusTypes.map((status, index) => {
-      // Try different possible field names for the data
-      const statusCode = status.status_code || status.code || status.value || status.type_code || `status_${index}`;
+      // Prioritize 'code' column as requested, then try other possible field names for the data
+      const statusCode = status.code || status.status_code || status.value || status.type_code || `status_${index}`;
       const statusName = status.status_name || status.name || status.label || status.type_name || 'Unknown Status';
       const statusIcon = status.status_icon || status.icon || status.emoji || '';
       

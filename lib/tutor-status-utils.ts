@@ -6,13 +6,16 @@ export type TutorStatus =
   | 'examination' 
   | 'exam_verification'
   | 'data_completion' 
-  | 'waiting_students' 
+  | 'waiting_students'
+  | 'registration_complete'
   | 'active' 
   | 'inactive' 
   | 'suspended'
   | 'blacklisted' 
   | 'on_trial' 
-  | 'additional_screening' 
+  | 'additional_screening'
+  | 'top_educator'
+  | 'priority_tutor'
   | 'pending' 
   | 'verified' 
   | 'unknown';
@@ -26,16 +29,19 @@ export const TUTOR_STATUS_OPTIONS: TutorStatus[] = [
   'exam_verification',
   'data_completion',
   'waiting_students',
+  'registration_complete',
   
   // Active Status
   'active',
+  
+  // Special Status
+  'top_educator',
+  'priority_tutor',
   
   // Management Status  
   'inactive',
   'suspended',
   'blacklisted',
-  
-  // Special Status
   'on_trial',
   'additional_screening',
   
@@ -54,16 +60,19 @@ export const TUTOR_STATUS_LABELS: Record<TutorStatus, string> = {
   'exam_verification': '🔍 Verifikasi Hasil Ujian',
   'data_completion': '📄 Melengkapi Data Tutor',
   'waiting_students': '⏳ Menunggu Siswa Pertama',
+  'registration_complete': '✅ Registrasi Lengkap',
   
   // Active Status
   'active': '✅ Aktif - Mengajar',
+  
+  // Special Status
+  'top_educator': '🏆 Top Educator',
+  'priority_tutor': '⭐ Priority Tutor',
   
   // Management Status  
   'inactive': '⏸️ Tidak Aktif',
   'suspended': '🚫 Ditangguhkan',
   'blacklisted': '❌ Blacklist',
-  
-  // Special Status
   'on_trial': '🧪 Masa Percobaan',
   'additional_screening': '🔬 Additional Screening',
   
@@ -106,12 +115,29 @@ export const TUTOR_STATUS_COLORS: Record<TutorStatus, { backgroundColor: string;
     color: '#ffffff',
     text: 'WAITING'
   },
+  'registration_complete': {
+    backgroundColor: '#059669', // emerald-600
+    color: '#ffffff',
+    text: 'COMPLETE'
+  },
   
   // Active Status (Green)
   'active': {
     backgroundColor: '#10b981', // green-500
     color: '#ffffff',
     text: 'ACTIVE'
+  },
+  
+  // Special Status
+  'top_educator': {
+    backgroundColor: '#dc2626', // red-600
+    color: '#ffffff',
+    text: 'TOP EDUCATOR'
+  },
+  'priority_tutor': {
+    backgroundColor: '#7c3aed', // violet-600
+    color: '#ffffff',
+    text: 'PRIORITY TUTOR'
   },
   
   // Management Status (Gray/Red)
@@ -130,8 +156,6 @@ export const TUTOR_STATUS_COLORS: Record<TutorStatus, { backgroundColor: string;
     color: '#ffffff',
     text: 'BLACKLISTED'
   },
-  
-  // Special Status (Yellow/Orange)
   'on_trial': {
     backgroundColor: '#f59e0b', // amber-500
     color: '#ffffff',
