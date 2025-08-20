@@ -706,12 +706,42 @@ export async function POST(request: NextRequest) {
               if (directInsertError) {
                 console.warn(`⚠️ Could not create tutor_details for ${rowNumber}:`, directInsertError);
               } else {
-                // Successfully created, now update with data including TRN override
+                // Successfully created with auto-generated TRN, now preserve original TRN if provided
+                console.log(`✅ Successfully created tutor_details for ${rowNumber}, now preserving TRN...`);
+                
+                // First, check if TRN already exists, then preserve if unique
+                if (record['TRN (Tutor Registration Number)']) {
+                  const originalTRN = record['TRN (Tutor Registration Number)'];
+                  console.log(`🔍 Checking if TRN exists: ${originalTRN} for ${rowNumber}`);
+                  
+                  // Check if TRN already exists in database
+                  const { data: existingTRN } = await supabase
+                    .from('tutor_details')
+                    .select('tutor_registration_number, user_id')
+                    .eq('tutor_registration_number', originalTRN)
+                    .single();
+                    
+                  if (existingTRN) {
+                    console.warn(`⚠️ TRN ${originalTRN} already exists (user_id: ${existingTRN.user_id}). Skipping preservation, using auto-generated TRN for ${rowNumber}`);
+                  } else {
+                    console.log(`🎯 TRN is unique, preserving: ${originalTRN} for ${rowNumber}`);
+                    const { error: trnPreserveError } = await supabase
+                      .from('tutor_details')
+                      .update({ tutor_registration_number: originalTRN })
+                      .eq('user_id', userId);
+                      
+                    if (trnPreserveError) {
+                      console.warn(`⚠️ Warning: Could not preserve TRN for ${rowNumber}:`, trnPreserveError);
+                    } else {
+                      console.log(`✅ TRN preserved successfully for ${rowNumber}`);
+                    }
+                  }
+                }
+                
                 await supabase
                   .from('tutor_details')
                   .update({
-                    // Override TRN if provided in CSV
-                    tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
+                    // TRN already preserved above, skip here to avoid conflicts
                     teaching_experience: record['Pengalaman Mengajar'] || null,
                     special_skills: record['Keahlian Spesialisasi'] || null,
                     other_skills: record['Keahlian Lainnya'] || null,
@@ -744,12 +774,42 @@ export async function POST(request: NextRequest) {
                 console.log(`✅ Created and updated tutor_details for record ${rowNumber}`);
               }
             } else {
-              // RPC succeeded, now update with data including TRN override
+              // RPC succeeded, now preserve original TRN if provided
+              console.log(`✅ RPC create_tutor_details_minimal succeeded for ${rowNumber}, now preserving TRN...`);
+              
+              // First, check if TRN already exists, then preserve if unique
+              if (record['TRN (Tutor Registration Number)']) {
+                const originalTRN = record['TRN (Tutor Registration Number)'];
+                console.log(`🔍 Checking if TRN exists (RPC): ${originalTRN} for ${rowNumber}`);
+                
+                // Check if TRN already exists in database
+                const { data: existingTRN } = await supabase
+                  .from('tutor_details')
+                  .select('tutor_registration_number, user_id')
+                  .eq('tutor_registration_number', originalTRN)
+                  .single();
+                  
+                if (existingTRN) {
+                  console.warn(`⚠️ TRN ${originalTRN} already exists (user_id: ${existingTRN.user_id}). Skipping preservation, using auto-generated TRN for ${rowNumber}`);
+                } else {
+                  console.log(`🎯 TRN is unique, preserving (RPC): ${originalTRN} for ${rowNumber}`);
+                  const { error: trnPreserveError } = await supabase
+                    .from('tutor_details')
+                    .update({ tutor_registration_number: originalTRN })
+                    .eq('user_id', userId);
+                    
+                  if (trnPreserveError) {
+                    console.warn(`⚠️ Warning: Could not preserve TRN (RPC) for ${rowNumber}:`, trnPreserveError);
+                  } else {
+                    console.log(`✅ TRN preserved successfully (RPC) for ${rowNumber}`);
+                  }
+                }
+              }
+              
               await supabase
                 .from('tutor_details')
                 .update({
-                  // Override TRN if provided in CSV
-                  tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
+                  // TRN already preserved above, skip here to avoid conflicts
                   teaching_experience: record['Pengalaman Mengajar'] || null,
                   special_skills: record['Keahlian Spesialisasi'] || null,
                   other_skills: record['Keahlian Lainnya'] || null,
