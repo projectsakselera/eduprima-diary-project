@@ -97,19 +97,27 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
           }
           const data = await response.json();
           let options: Array<{ value: string; label: string; disabled?: boolean }> = [];
-          if (Array.isArray(data.brands)) {
-            options = data.brands.map((item: any) => ({
-              value: item.value,
-              label: item.label,
-              disabled: item.disabled || false
-            }));
-          } else if (data.data && Array.isArray(data.data)) {
-            options = data.data.map((item: any) => ({
-              value: item.value,
-              label: item.label,
-              disabled: item.disabled || false
-            }));
-          }
+
+            // Tambahkan penanganan untuk provinces di bagian pertama
+            if (data.provinces && Array.isArray(data.provinces)) {
+              options = data.provinces.map((item: any) => ({
+                value: item.value,
+                label: item.label,
+                disabled: false
+              }));
+            } else if (Array.isArray(data.brands)) {
+              options = data.brands.map((item: any) => ({
+                value: item.value,
+                label: item.label,
+                disabled: item.disabled || false
+              }));
+            } else if (data.data && Array.isArray(data.data)) {
+              options = data.data.map((item: any) => ({
+                value: item.value,
+                label: item.label,
+                disabled: item.disabled || false
+              }));
+            }
           setDynamicOptions(options);
           setRetryCount(0);
         } catch (error) {
