@@ -49,11 +49,11 @@ const getProxyUrl = (url: string) => {
   return `/api/files/${cleanUrl}`;
 };
 
-// Tutor status options used in inline editor - synchronized with add form
+// Tutor status options used in inline editor - synchronized with database
 const TUTOR_STATUS_OPTIONS: Array<
   'registration' | 'learning_materials' | 'examination' | 'exam_verification' | 
-  'data_completion' | 'waiting_students' | 'active' | 'inactive' | 'suspended' | 
-  'blacklisted' | 'on_trial' | 'additional_screening' | 'pending' | 'verified' | 'unknown'
+  'data_completion' | 'waiting_students' | 'registration_complete' | 'active' | 'inactive' | 'suspended' | 
+  'blacklisted' | 'on_trial' | 'additional_screening' | 'top_educator' | 'priority_tutor' | 'pending' | 'verified' | 'unknown'
 > = [
   // Recruitment Flow Stages
   'registration',
@@ -62,16 +62,19 @@ const TUTOR_STATUS_OPTIONS: Array<
   'exam_verification',
   'data_completion',
   'waiting_students',
+  'registration_complete',
   
   // Active Status
   'active',
+  
+  // Special Status
+  'top_educator',
+  'priority_tutor',
   
   // Management Status  
   'inactive',
   'suspended',
   'blacklisted',
-  
-  // Special Status
   'on_trial',
   'additional_screening',
   
@@ -2904,7 +2907,7 @@ export default function ViewAllTutorsPage() {
                                     <DropdownMenuContent align="center" className="w-40">
                                       <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
                                       <DropdownMenuSeparator />
-                                      {['Active', 'Inactive', 'Suspended', 'Blacklisted'].map((opt) => (
+                                      {TUTOR_STATUS_OPTIONS.map((opt) => (
                                         <DropdownMenuItem
                                           key={opt}
                                           onClick={() => handleStatusTutorChange(tutor.id, opt)}
@@ -2914,7 +2917,7 @@ export default function ViewAllTutorsPage() {
                                             className="inline-block h-2 w-2 rounded-full"
                                             style={{ backgroundColor: getStatusStyle(opt).backgroundColor }}
                                           />
-                                          <span>{opt}</span>
+                                          <span className="capitalize">{opt.replace(/_/g, ' ')}</span>
                                           {current === opt && (
                                             <Icon icon="ph:check" className="ml-auto h-4 w-4 text-primary" />
                                           )}

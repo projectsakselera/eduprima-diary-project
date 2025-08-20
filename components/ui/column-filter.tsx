@@ -164,6 +164,24 @@ export default function ColumnFilter({
           color: '#ffffff',
           text: 'SCREENING'
         };
+      case 'top_educator':
+        return {
+          backgroundColor: '#dc2626', // red-600
+          color: '#ffffff',
+          text: 'TOP EDUCATOR'
+        };
+      case 'priority_tutor':
+        return {
+          backgroundColor: '#7c3aed', // violet-600
+          color: '#ffffff',
+          text: 'PRIORITY TUTOR'
+        };
+      case 'registration_complete':
+        return {
+          backgroundColor: '#059669', // emerald-600
+          color: '#ffffff',
+          text: 'COMPLETE'
+        };
       
       // Legacy statuses for compatibility
       case 'pending':

@@ -19,40 +19,14 @@ const COLUMN_MAPPING: Record<string, {
   table?: string;
   field: string;
   type: 'text' | 'select' | 'array' | 'boolean' | 'number';
-  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking';
+  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types';
   staticValues?: string[];
 }> = {
   // Status and system fields
   'status_tutor': {
-    source: 'static',
-    field: 'status_tutor',
-    type: 'select',
-    staticValues: [
-      // Recruitment Flow Stages
-      'registration',
-      'learning_materials', 
-      'examination',
-      'exam_verification',
-      'data_completion',
-      'waiting_students',
-      
-      // Active Status
-      'active',
-      
-      // Management Status  
-      'inactive',
-      'suspended',
-      'blacklisted',
-      
-      // Special Status
-      'on_trial',
-      'additional_screening',
-      
-      // Legacy statuses for compatibility
-      'pending',
-      'verified', 
-      'unknown'
-    ]
+    source: 'tutor_status_types',
+    field: 'code',
+    type: 'select'
   },
   'approval_level': {
     source: 'static', 
@@ -398,6 +372,29 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
       )] as string[];
 
       return uniqueValues.sort();
+    }
+
+    // For tutor status types
+    if (columnConfig.source === 'tutor_status_types') {
+      const { data, error } = await supabase
+        .from('tutor_status_types')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from tutor_status_types:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues;
     }
 
     // Add other sources as needed
