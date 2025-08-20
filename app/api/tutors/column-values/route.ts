@@ -19,7 +19,7 @@ const COLUMN_MAPPING: Record<string, {
   table?: string;
   field: string;
   type: 'text' | 'select' | 'array' | 'boolean' | 'number';
-  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types' | 'corporate_entities';
+  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types' | 'corporate_entities' | 'programs_unit';
   staticValues?: string[];
 }> = {
   // Status and system fields
@@ -123,12 +123,11 @@ const COLUMN_MAPPING: Record<string, {
     type: 'text'
   },
   
-  // Programs - this is complex, will need special handling
+  // Programs - dynamic from programs_unit table
   'selectedPrograms': {
-    source: 'static',
-    field: 'selectedPrograms',
-    type: 'array',
-    staticValues: ['SD Matematika', 'SD Bahasa Indonesia', 'SD IPA', 'SMP Matematika', 'SMP IPA', 'SMP Bahasa Indonesia', 'SMA Matematika', 'SMA Fisika', 'SMA Kimia', 'SMA Biologi', 'SMA Bahasa Indonesia', 'SMA Bahasa Inggris']
+    source: 'programs_unit',
+    field: 'program_name',
+    type: 'array'
   },
   
   // Verification status
@@ -402,6 +401,29 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
 
       if (error) {
         console.error(`❌ Error fetching ${column} values from corporate_entities:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
+    }
+
+    // For programs unit
+    if (columnConfig.source === 'programs_unit') {
+      const { data, error } = await supabase
+        .from('programs_unit')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order(columnConfig.field, { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from programs_unit:`, error);
         return [];
       }
 

@@ -315,7 +315,10 @@ export default function ColumnFilter({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-8 left-0 z-50 w-72 bg-background border rounded-lg shadow-lg">
+        <div className={cn(
+          "absolute top-8 left-0 z-50 bg-background border rounded-lg shadow-lg",
+          uniqueValues.length > 12 ? "w-96" : "w-72"
+        )}>
           <div className="p-3">
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
@@ -411,17 +414,22 @@ export default function ColumnFilter({
                   )}
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className={
+                  filteredValues.length > 12 
+                    ? "grid grid-cols-4 gap-1" 
+                    : "space-y-1"
+                }>
                   {filteredValues.map((value) => (
                     <div key={value} className="flex items-center space-x-2">
                       <Checkbox
                         id={`${column}-${value}`}
                         checked={tempSelected.includes(value)}
                         onCheckedChange={() => handleValueToggle(value)}
+                        className="flex-shrink-0"
                       />
                       <label 
                         htmlFor={`${column}-${value}`}
-                        className="text-sm cursor-pointer flex-1 truncate flex items-center"
+                        className="text-sm cursor-pointer flex-1 truncate flex items-center min-w-0"
                         title={value}
                       >
                         {isStatusColumn && value ? (
@@ -442,7 +450,9 @@ export default function ColumnFilter({
                             );
                           })()
                         ) : (
-                          value || '(Empty)'
+                          <span className="truncate">
+                            {value || '(Empty)'}
+                          </span>
                         )}
                       </label>
                     </div>
