@@ -439,8 +439,7 @@ export default function FieldMappingPage() {
         { name: 'recruitment_stage_history', type: 'jsonb', nullable: true },
         { name: 'additional_screening', type: 'text[]', nullable: true },
         { name: 'staff_notes', type: 'text', nullable: true },
-        { name: 'education_verification_status', type: 'text', nullable: true },
-        { name: 'identity_verification_status', type: 'text', nullable: true },
+        // REMOVED: education_verification_status dan identity_verification_status - tidak ada di database
         { name: 'status_changed_by', type: 'uuid', nullable: true },
         { name: 'created_at', type: 'timestamp', nullable: true },
         { name: 'updated_at', type: 'timestamp', nullable: true }

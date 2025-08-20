@@ -116,10 +116,12 @@ export interface TutorFormData {
   status_tutor?: string;
   brand?: string[];
 
-  identity_verification?: string;
-  education_verification?: string;
+  // REMOVED: identity_verification dan education_verification - tidak ada di database
+  // identity_verification?: string;
+  // education_verification?: string;
   additional_screening?: string;
-  top_educator?: boolean;
+  // REMOVED: top_educator - tidak diperlukan
+  // top_educator?: boolean;
   staff_notes?: string;
   additionalScreening?: string[]; // Checklist for additional screening
 
@@ -265,9 +267,9 @@ export interface TutorFormData {
   dokumenPendidikanPreview?: string | null;
   dokumenSertifikatPreview?: string | null;
   
-  // Document Verification (Staff only)
-  status_verifikasi_identitas?: string;
-  status_verifikasi_pendidikan?: string;
+  // Document Verification (Staff only) - REMOVED: tidak ada di database
+  // status_verifikasi_identitas?: string;
+  // status_verifikasi_pendidikan?: string;
   
 
 
@@ -1192,6 +1194,8 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
 
+        // REMOVED: identity_verification dan education_verification - tidak ada di database
+        /*
         {
           name: 'identity_verification',
           label: 'Identity Verification',
@@ -1222,6 +1226,9 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:graduation-cap',
           size: 'lg'
         },
+        */
+        // REMOVED: top_educator - tidak diperlukan
+        /*
         {
           name: 'top_educator',
           label: 'Top Educator',
@@ -1229,6 +1236,7 @@ export const tutorFormConfig: FormConfig = {
           helperText: 'Tandai sebagai Top Educator (educator unggulan).',
           icon: 'ph:crown'
         },
+        */
         {
           name: 'staff_notes',
           label: 'Catatan Staff',
@@ -2627,6 +2635,8 @@ export const tutorFormConfig: FormConfig = {
           className: 'section-divider',
           icon: 'ph:shield-check'
         },
+        // REMOVED: status_verifikasi_identitas dan status_verifikasi_pendidikan - tidak ada di database
+        /*
         {
           name: 'status_verifikasi_identitas',
           label: 'Status Verifikasi Identitas',
@@ -2657,6 +2667,7 @@ export const tutorFormConfig: FormConfig = {
           icon: 'ph:shield-check',
           size: 'lg'
         }
+        */
       ]
     },
     
@@ -2800,16 +2811,18 @@ export const defaultFormData: Partial<TutorFormData> = {
   status_tutor: '',
   brand: [],
 
-  identity_verification: '',
-  education_verification: '',
+  // REMOVED: identity_verification dan education_verification - tidak ada di database
+  // identity_verification: '',
+  // education_verification: '',
   additional_screening: '',
-  top_educator: false,
+  // REMOVED: top_educator - tidak diperlukan
+  // top_educator: false,
   staff_notes: '',
   additionalScreening: [],
   
-  // Document Verification (Staff only)
-  status_verifikasi_identitas: '',
-  status_verifikasi_pendidikan: '',
+  // Document Verification (Staff only) - REMOVED: tidak ada di database
+  // status_verifikasi_identitas: '',
+  // status_verifikasi_pendidikan: '',
 
 };
 

@@ -115,6 +115,6 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'dokumenPendidikan', label: 'Dokumen Pendidikan', width: 200, type: 'file', category: 'Dokumen' },
   { key: 'dokumenSertifikat', label: 'Dokumen Sertifikat', width: 200, type: 'file', category: 'Dokumen' },
   { key: 'transkripNilai', label: 'Transkrip Nilai', width: 200, type: 'file', category: 'Dokumen' },
-  { key: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', width: 200, type: 'text', category: 'Dokumen' },
-  { key: 'status_verifikasi_pendidikan', label: 'Status Verifikasi Pendidikan', width: 200, type: 'text', category: 'Dokumen' },
+  // REMOVED: { key: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', width: 200, type: 'text', category: 'Dokumen' } - tidak ada di database
+  // REMOVED: { key: 'status_verifikasi_pendidikan', label: 'Status Verifikasi Pendidikan', width: 200, type: 'text', category: 'Dokumen' } - tidak ada di database
 ];

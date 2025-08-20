@@ -646,9 +646,7 @@ interface TutorSpreadsheetData {
   
   // ✅ ADDED: Document Preview Fields (missing from Form Add)
   
-  // Document Verification
-  status_verifikasi_identitas: string;
-  status_verifikasi_pendidikan: string;
+  // Document Verification - REMOVED: Fields tidak ada di database
   
   // Timestamps
   created_at: string;
@@ -1189,7 +1187,7 @@ export default function ViewAllTutorsPage() {
       'selectedPrograms',
       
       // Verification columns
-      'status_verifikasi_identitas', 'status_verifikasi_pendidikan',
+      // REMOVED: 'status_verifikasi_identitas', 'status_verifikasi_pendidikan' - tidak ada di database
       
       // Banking
       'namaBank'

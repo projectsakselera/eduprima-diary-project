@@ -595,7 +595,6 @@ export default function AddTutorPage() {
         registration_notes_to_admin: formData.catatanAvailability || null,
         
         // Defaults for required operational fields in new schema
-        onboarding_status: 'registration',
         is_top_educator: false,
         cancellation_rate: 0,
         total_teaching_hours: 0,
@@ -666,19 +665,17 @@ export default function AddTutorPage() {
 
       // 2h. Prepare tutor_management data (EXISTING TABLE)
       const tutorManagementData = {
-        status_tutor: formData.status_tutor || 'registration',
+        // ❌ REMOVED: status_tutor - kolom tidak ada di tabel tutor_management
         entity_code: (formData.brand && formData.brand.length > 0) ? formData.brand[0] : null,
 
         staff_notes: formData.staff_notes || null,
         additional_screening: formData.additionalScreening || [],
         
-        // ✅ Document Verification Status - kolom yang benar di tutor_management
-        identity_verification_status: formData.status_verifikasi_identitas || 'pending',
-        education_verification_status: formData.status_verifikasi_pendidikan || 'pending',
+        // ❌ HAPUS: Document verification status fields tidak ada di database
         
         // Initialize recruitment tracking
         recruitment_stage_history: [{
-          stage: formData.status_tutor || 'registration',
+          stage: 'registration', // Default stage - tidak menggunakan formData.status_tutor
           timestamp: new Date().toISOString(),
           changed_by: 'system', // Could be staff user ID in future
           notes: 'Initial registration via staff form'

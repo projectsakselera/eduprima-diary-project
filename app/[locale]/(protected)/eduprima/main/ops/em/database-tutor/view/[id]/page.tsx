@@ -197,10 +197,6 @@ interface TutorData {
   dokumenPendidikan: string | null;
   dokumenSertifikat: string | null;
   
-  // Document Verification
-  status_verifikasi_identitas: string;
-  status_verifikasi_pendidikan: string;
-  
   // Emergency Contact
   emergencyContactName: string;
   emergencyContactRelationship: string;
@@ -1939,20 +1935,7 @@ export default function ViewTutorPage() {
                           Verification Status
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-500">Identity Verification</span>
-                          <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.status_verifikasi_identitas))}>
-                            {tutorData.status_verifikasi_identitas || 'Pending'}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-500">Education Verification</span>
-                          <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.status_verifikasi_pendidikan))}>
-                            {tutorData.status_verifikasi_pendidikan || 'Pending'}
-                          </Badge>
-                        </div>
-                      </CardContent>
+                      
                     </Card>
                   </div>
                 </TabsContent>
@@ -2260,20 +2243,10 @@ export default function ViewTutorPage() {
                   <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.status_tutor))}>
                     {tutorData.status_tutor}
                   </Badge>
-        </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Identity Verification</span>
-                  <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.status_verifikasi_identitas))}>
-                    {tutorData.status_verifikasi_identitas || 'Pending'}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Education Verification</span>
-                  <Badge className={cn("text-xs", getStatusBadgeColor(tutorData.status_verifikasi_pendidikan))}>
-                    {tutorData.status_verifikasi_pendidikan || 'Pending'}
-                  </Badge>
                 </div>
               </div>
+
+  
               
               <Separator />
               

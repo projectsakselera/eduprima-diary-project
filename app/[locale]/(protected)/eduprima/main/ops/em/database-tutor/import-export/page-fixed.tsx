@@ -191,8 +191,7 @@ export default function ImportExportPage() {
 
       { name: 'staff_notes', label: 'Catatan Staff', type: 'textarea', required: false },
       { name: 'additionalScreening', label: 'Screening Tambahan', type: 'text', required: false },
-      { name: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', type: 'select', required: false },
-      { name: 'status_verifikasi_pendidikan', label: 'Status Verifikasi Pendidikan', type: 'select', required: false },
+      // REMOVED: status_verifikasi_identitas dan status_verifikasi_pendidikan - tidak ada di database
       
       // 12. AVAILABILITY CONFIGURATION
       { name: 'statusMenerimaSiswa', label: 'Status Menerima Siswa', type: 'select', required: true },
