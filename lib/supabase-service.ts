@@ -84,8 +84,6 @@ export interface CombinedTutorData {
   
   // Tutor specific
   tutor_registration_number?: string;
-  registration_status: string;
-  background_check: string;
   bio_summary?: string;
   teaching_philosophy?: string;
   teaching_experience?: string;
@@ -204,8 +202,6 @@ export class SupabaseTutorService {
           
           // Tutor info
           tutor_registration_number: tutor?.tutor_registration_number,
-          onboarding_status: tutor?.onboarding_status || 'pending_profile',
-          background_check_status: tutor?.background_check_status || 'not_started',
           bio_summary: tutor?.bio_summary,
           teaching_philosophy: tutor?.teaching_philosophy,
           teaching_experience: tutor?.teaching_experience,

@@ -35,9 +35,9 @@ const badgeVariants = cva(
 );
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-  VariantProps<typeof badgeVariants> {
+  Omit<VariantProps<typeof badgeVariants>, 'color'> {
 
-  color?: color;
+  color?: "default" | "outline" | "neutral" | "primary" | "secondary" | "success" | "info" | "warning" | "destructive";
   rounded?: rounded;
 }
 

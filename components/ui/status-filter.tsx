@@ -111,7 +111,7 @@ export default function StatusFilter({ selectedStatuses, onStatusChange, classNa
             <Icon icon="ph:funnel" className="h-4 w-4" />
             Filter Status Tutor
             {getSelectedCount() > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge color="secondary" className="text-xs">
                 {getSelectedCount()} selected
               </Badge>
             )}
@@ -120,19 +120,19 @@ export default function StatusFilter({ selectedStatuses, onStatusChange, classNa
           {/* Data source indicator */}
           <div className="flex items-center gap-1">
             {dataSource === 'database' && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+              <Badge color="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                 <Icon icon="ph:database" className="h-3 w-3 mr-1" />
                 Database
               </Badge>
             )}
             {dataSource === 'fallback' && (
-              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+              <Badge color="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
                 <Icon icon="ph:warning" className="h-3 w-3 mr-1" />
                 Fallback
               </Badge>
             )}
             {dataSource === 'error_fallback' && (
-              <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+              <Badge color="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
                 <Icon icon="ph:x-circle" className="h-3 w-3 mr-1" />
                 Error
               </Badge>
@@ -214,7 +214,7 @@ export default function StatusFilter({ selectedStatuses, onStatusChange, classNa
                   )}
                 </div>
                 {option.disabled && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge color="secondary" className="text-xs">
                     Disabled
                   </Badge>
                 )}
