@@ -317,6 +317,7 @@ export default function ColumnFilter({
       {isOpen && (
         <div className={cn(
           "absolute top-8 left-0 z-50 bg-background border rounded-lg shadow-lg",
+          column === 'selectedPrograms' ? "w-[32rem]" : 
           uniqueValues.length > 12 ? "w-96" : "w-72"
         )}>
           <div className="p-3">
@@ -415,8 +416,8 @@ export default function ColumnFilter({
                 </div>
               ) : (
                 <div className={
-                  filteredValues.length > 12 
-                    ? "grid grid-cols-4 gap-1" 
+                  (filteredValues.length > 12 && column === 'selectedPrograms') 
+                    ? "grid grid-cols-4 gap-2 w-full" 
                     : "space-y-1"
                 }>
                   {filteredValues.map((value) => (
