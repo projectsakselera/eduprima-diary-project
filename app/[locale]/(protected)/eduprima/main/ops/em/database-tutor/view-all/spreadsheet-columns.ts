@@ -22,8 +22,6 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'status_tutor', label: 'Status Tutor', width: 180, type: 'text', category: 'System & Management', filterable: true },
 
   { key: 'staff_notes', label: 'Catatan Staff', width: 200, type: 'text', category: 'System & Management' },
-  { key: 'additional_screening', label: 'Additional Screening Checklist', width: 200, type: 'array', category: 'System & Management' },
-  { key: 'recruitment_stage_history', label: 'Riwayat Stage', width: 250, type: 'text', category: 'System & Management' },
   { key: 'last_status_change', label: 'Perubahan Status Terakhir', width: 180, type: 'date', category: 'System & Management' },
   { key: 'status_changed_by', label: 'Diubah Oleh', width: 150, type: 'text', category: 'System & Management' },
   { key: 'form_agreement_check', label: 'Persetujuan Form', width: 140, type: 'boolean', category: 'System & Management' },
@@ -115,6 +113,4 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'dokumenPendidikan', label: 'Dokumen Pendidikan', width: 200, type: 'file', category: 'Dokumen' },
   { key: 'dokumenSertifikat', label: 'Dokumen Sertifikat', width: 200, type: 'file', category: 'Dokumen' },
   { key: 'transkripNilai', label: 'Transkrip Nilai', width: 200, type: 'file', category: 'Dokumen' },
-  { key: 'status_verifikasi_identitas', label: 'Status Verifikasi Identitas', width: 200, type: 'text', category: 'Dokumen' },
-  { key: 'status_verifikasi_pendidikan', label: 'Status Verifikasi Pendidikan', width: 200, type: 'text', category: 'Dokumen' },
 ];

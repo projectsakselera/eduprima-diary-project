@@ -130,19 +130,6 @@ const COLUMN_MAPPING: Record<string, {
     type: 'array'
   },
   
-  // Verification status
-  'status_verifikasi_identitas': {
-    source: 'static',
-    field: 'status_verifikasi_identitas',
-    type: 'select',
-    staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
-  },
-  'status_verifikasi_pendidikan': {
-    source: 'static',
-    field: 'status_verifikasi_pendidikan', 
-    type: 'select',
-    staticValues: ['pending', 'verified', 'rejected', 'recheck_needed']
-  },
   
   // Banking fields
   'namaBank': {
