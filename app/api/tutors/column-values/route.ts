@@ -19,7 +19,7 @@ const COLUMN_MAPPING: Record<string, {
   table?: string;
   field: string;
   type: 'text' | 'select' | 'array' | 'boolean' | 'number';
-  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types';
+  source: 'users' | 'profiles' | 'demographics' | 'addresses' | 'educator' | 'management' | 'static' | 'location_province' | 'location_cities' | 'banking' | 'tutor_status_types' | 'corporate_entities';
   staticValues?: string[];
 }> = {
   // Status and system fields
@@ -28,14 +28,8 @@ const COLUMN_MAPPING: Record<string, {
     field: 'code',
     type: 'select'
   },
-  'approval_level': {
-    source: 'static', 
-    field: 'approval_level',
-    type: 'select',
-    staticValues: ['level_1', 'level_2', 'level_3', 'approved', 'rejected']
-  },
   'brand': {
-    source: 'management',
+    source: 'corporate_entities',
     field: 'entity_code',
     type: 'select'
   },
@@ -395,6 +389,29 @@ async function getUniqueValuesForColumn(column: string): Promise<string[]> {
       )] as string[];
 
       return uniqueValues;
+    }
+
+    // For corporate entities
+    if (columnConfig.source === 'corporate_entities') {
+      const { data, error } = await supabase
+        .from('corporate_entities')
+        .select(columnConfig.field)
+        .not(columnConfig.field, 'is', null)
+        .not(columnConfig.field, 'eq', '')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error(`❌ Error fetching ${column} values from corporate_entities:`, error);
+        return [];
+      }
+
+      const uniqueValues = [...new Set(
+        data
+          ?.map((row: any) => row[columnConfig.field] as string)
+          .filter(val => val !== null && val !== '')
+      )] as string[];
+
+      return uniqueValues.sort();
     }
 
     // Add other sources as needed
