@@ -18,13 +18,29 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'user_id and status_tutor are required' }, { status: 400 });
     }
 
+    // Convert status to CAPS for consistent database storage
+    const status_tutor_caps = status_tutor.toUpperCase();
+
     const supabase = createAdminSupabaseClient();
 
-    // Ensure tutor_management row exists for the user; if not, create it
-    const { data: existing, error: existingError } = await supabase
-      .from('tutor_management')
-      .select('id, status_tutor, status_changed_by, last_status_change, updated_at')
+    // Get tutor_details.id from user_id first
+    const { data: tutorDetails, error: tutorDetailsError } = await supabase
+      .from('tutor_details')
+      .select('id')
       .eq('user_id', user_id)
+      .single();
+    
+    if (tutorDetailsError) {
+      return NextResponse.json({ success: false, message: 'Tutor not found' }, { status: 404 });
+    }
+    
+    const tutorId = tutorDetails.id;
+    
+    // Check if tutor_status row exists for the tutor; if not, create it
+    const { data: existing, error: existingError } = await supabase
+      .from('tutor_status')
+      .select('id, current_status, effective_date, updated_at')
+      .eq('tutor_id', tutorId)
       .single();
 
     const nowIso = new Date().toISOString();
@@ -37,27 +53,26 @@ export async function PUT(req: NextRequest) {
     let upsertResult;
     if (!existing) {
       upsertResult = await supabase
-        .from('tutor_management')
+        .from('tutor_status')
         .insert({
-          user_id,
-          status_tutor,
-          status_changed_by: session.user.id,
-          last_status_change: nowIso,
+          tutor_id: tutorId,
+          current_status: status_tutor_caps,
+          effective_date: nowIso,
+          created_at: nowIso,
           updated_at: nowIso,
         })
-        .select('status_tutor, status_changed_by, last_status_change, updated_at')
+        .select('current_status, effective_date, updated_at')
         .single();
     } else {
       upsertResult = await supabase
-        .from('tutor_management')
+        .from('tutor_status')
         .update({
-          status_tutor,
-          status_changed_by: session.user.id,
-          last_status_change: nowIso,
+          current_status: status_tutor_caps,
+          effective_date: nowIso,
           updated_at: nowIso,
         })
-        .eq('user_id', user_id)
-        .select('status_tutor, status_changed_by, last_status_change, updated_at')
+        .eq('tutor_id', tutorId)
+        .select('current_status, effective_date, updated_at')
         .single();
     }
 

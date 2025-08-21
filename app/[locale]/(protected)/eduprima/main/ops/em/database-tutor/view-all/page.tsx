@@ -1884,9 +1884,8 @@ export default function ViewAllTutorsPage() {
         t.id === userId
           ? {
               ...t,
-              status_tutor: result.data?.status_tutor ?? newStatus,
-              last_status_change: result.data?.last_status_change ?? t.last_status_change,
-              status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
+              status_tutor: result.data?.current_status ?? newStatus.toUpperCase(),
+              last_status_change: result.data?.effective_date ?? t.last_status_change,
               updated_at: result.data?.updated_at ?? t.updated_at,
             }
           : t
@@ -1933,9 +1932,8 @@ export default function ViewAllTutorsPage() {
         selectedRows.has(t.id)
           ? {
               ...t,
-              status_tutor: bulkStatus,
-              last_status_change: result.data?.last_status_change_map?.[t.id] ?? t.last_status_change,
-              status_changed_by: result.data?.status_changed_by ?? t.status_changed_by,
+              status_tutor: result.data?.status_tutor ?? bulkStatus.toUpperCase(),
+              last_status_change: result.data?.effective_date_map?.[t.id] ?? t.last_status_change,
               updated_at: result.data?.updated_at_map?.[t.id] ?? t.updated_at,
             }
           : t
@@ -2374,8 +2372,8 @@ export default function ViewAllTutorsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {TUTOR_STATUS_OPTIONS.map(opt => (
-                      <SelectItem key={opt} value={opt} className="capitalize">
-                        {opt}
+                      <SelectItem key={opt} value={opt} className="uppercase">
+                        {opt.replace(/_/g, ' ')}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -2930,7 +2928,7 @@ export default function ViewAllTutorsPage() {
                                             className="inline-block h-2 w-2 rounded-full"
                                             style={{ backgroundColor: getStatusStyle(opt).backgroundColor }}
                                           />
-                                          <span className="capitalize">{opt.replace(/_/g, ' ')}</span>
+                                          <span className="uppercase">{opt.replace(/_/g, ' ')}</span>
                                           {current === opt && (
                                             <Icon icon="ph:check" className="ml-auto h-4 w-4 text-primary" />
                                           )}
