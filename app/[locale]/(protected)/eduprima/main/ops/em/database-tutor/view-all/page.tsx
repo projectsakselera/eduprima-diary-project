@@ -726,9 +726,15 @@ export default function ViewAllTutorsPage() {
     });
   }, [brandsOptions]);
 
-  // Inisialisasi visibleColumns dengan semua key dari dynamicColumns
+  // Essential columns to show by default
+  const essentialColumns = useMemo(() => [
+    'trn', 'namaLengkap', 'email', 'noHp1', 'status_tutor', 'brand',
+    'tanggalLahir', 'jenisKelamin', 'provinsiDomisili', 'kotaKabupatenDomisili',
+    'statusMenerimaSiswa', 'created_at', 'updated_at'
+  ], []);
+
   const allColumnKeys = useMemo(() => dynamicColumns.map(col => col.key), [dynamicColumns]);
-  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(allColumnKeys));
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(essentialColumns));
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [isResizing, setIsResizing] = useState<{column: string; startX: number; startWidth: number} | null>(null);
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
@@ -1075,9 +1081,18 @@ export default function ViewAllTutorsPage() {
 
   // Initialize visible columns (show essential columns by default)
   useEffect(() => {
-    setVisibleColumns(new Set(dynamicColumns.map(col => col.key)));
-    // ... existing code ...
-  }, [dynamicColumns]);
+    // Only initialize if visibleColumns is empty or contains invalid columns
+    setVisibleColumns(prev => {
+      const validEssentialColumns = essentialColumns.filter(key => 
+        dynamicColumns.some(col => col.key === key)
+      );
+      // If no valid visible columns, use essential columns
+      if (prev.size === 0 || !Array.from(prev).some(key => dynamicColumns.some(col => col.key === key))) {
+        return new Set(validEssentialColumns);
+      }
+      return prev;
+    });
+  }, [dynamicColumns, essentialColumns]);
 
   // 🚀 ADVANCED FETCH DATA - With pagination, column filters, and smart caching
   const fetchTutorData = async (search = '', page = 1, limit = 25) => {
@@ -1672,15 +1687,10 @@ export default function ViewAllTutorsPage() {
     return label;
   };
 
-  // Filter columns by category  
+  // Filter columns by visibility selection
   const filteredColumns = useMemo(() => {
-    console.log('DEBUG tutorData:', tutorData);
-    if (tutorData && tutorData.length > 0) {
-      console.log('DEBUG tutorData[0] example:', tutorData[0]);
-    }
-    console.log('DEBUG filteredColumns:', dynamicColumns);
-    return dynamicColumns;
-  }, [tutorData, dynamicColumns]);
+    return dynamicColumns.filter(col => visibleColumns.has(col.key));
+  }, [dynamicColumns, visibleColumns]);
 
   // 🚀 KEYBOARD HANDLERS (placed after filteredColumns declaration)
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -2087,7 +2097,7 @@ export default function ViewAllTutorsPage() {
   };
 
   const invertColumnSelection = () => {
-    const allColumnKeys = SPREADSHEET_COLUMNS.map(col => col.key);
+    const allColumnKeys = dynamicColumns.map(col => col.key);
     setVisibleColumns(prev => {
       const newSet = new Set<string>();
       allColumnKeys.forEach(key => {
@@ -2100,7 +2110,7 @@ export default function ViewAllTutorsPage() {
   };
 
   const showAllInCategory = (category: string) => {
-    const categoryColumns = SPREADSHEET_COLUMNS
+    const categoryColumns = dynamicColumns
       .filter(col => col.category === category)
       .map(col => col.key);
     
@@ -2112,7 +2122,7 @@ export default function ViewAllTutorsPage() {
   };
 
   const hideAllInCategory = (category: string) => {
-    const categoryColumns = SPREADSHEET_COLUMNS
+    const categoryColumns = dynamicColumns
       .filter(col => col.category === category)
       .map(col => col.key);
     
