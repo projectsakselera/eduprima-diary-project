@@ -199,12 +199,24 @@ export async function POST(request: NextRequest) {
       
       try {
         console.log(`📝 Processing record ${rowNumber}:`, {
-          keys: Object.keys(record),
-          hasNamaLengkap: !!record['Nama Lengkap'],
-          hasEmail: !!record['Email Aktif'],
-          hasUserCode: !!record['User Code'],
-          hasTRN: !!record['TRN (Tutor Registration Number)'],
-          trnValue: record['TRN (Tutor Registration Number)'],
+          // Show ALL keys to see exact column names
+          allKeys: Object.keys(record),
+          // Show first 10 key-value pairs to see actual data
+          first10Fields: Object.entries(record).slice(0, 10).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
+          // Focus on TRN-related
+          trnRelatedKeys: Object.keys(record).filter(key => key.toLowerCase().includes('trn')),
+          allTrnValues: Object.keys(record)
+            .filter(key => key.toLowerCase().includes('trn'))
+            .reduce((acc, key) => ({ ...acc, [key]: record[key] }), {}),
+          // Check exact TRN field - find the actual key
+          exactTrnField: record['TRN (Tutor Registration Number)'],
+          trnFieldType: typeof record['TRN (Tutor Registration Number)'],
+          // Find TRN key dynamically
+          actualTrnKey: Object.keys(record).find(key => key.toLowerCase().includes('trn') && key.toLowerCase().includes('tutor')),
+          actualTrnValue: (() => {
+            const trnKey = Object.keys(record).find(key => key.toLowerCase().includes('trn') && key.toLowerCase().includes('tutor'));
+            return trnKey ? record[trnKey] : null;
+          })(),
           hasIPK: !!record['IPK/GPA'],
           ipkValue: record['IPK/GPA'],
           hasPengalamanLain: !!record['Pengalaman Lain Relevan'],
@@ -646,11 +658,8 @@ export async function POST(request: NextRequest) {
 
         if (existingTutorDetails && !checkError) {
           // Record exists, update it including TRN override
-          const { error: updateError } = await supabase
-            .from('tutor_details')
-            .update({
-              // Override TRN if provided in CSV
-              tutor_registration_number: record['TRN (Tutor Registration Number)'] || null,
+          // Prepare update data
+          const updateData: any = {
               teaching_experience: record['Pengalaman Mengajar'] || null,
               special_skills: record['Keahlian Spesialisasi'] || null,
               other_skills: record['Keahlian Lainnya'] || null,
@@ -677,7 +686,17 @@ export async function POST(request: NextRequest) {
               vocational_school_detail: record['Jurusan SMK Detail'] || null,
               alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
               certifications_training: record['Sertifikasi Pelatihan'] || null,
-            })
+              // TRN mapping - find actual key dynamically
+              tutor_registration_number: (() => {
+                const trnKey = Object.keys(record).find(key => key.toLowerCase().includes('trn') && key.toLowerCase().includes('tutor'));
+                return trnKey ? record[trnKey] : null;
+              })(),
+            };
+
+          console.log(`🔄 PATH 1 - About to update tutor_details with data:`, updateData);
+          const { error: updateError } = await supabase
+            .from('tutor_details')
+            .update(updateData)
             .eq('user_id', userId);
 
           if (updateError) {
@@ -698,45 +717,23 @@ export async function POST(request: NextRequest) {
             if (createError) {
               console.warn(`⚠️ Could not create tutor_details via RPC, trying direct approach:`, createError && createError.message ? createError.message : JSON.stringify(createError));
               
-              // Fallback: try direct insert with minimal data
+              // Fallback: try direct insert with TRN mapping
+              const trnKey = Object.keys(record).find(key => key.toLowerCase().includes('trn') && key.toLowerCase().includes('tutor'));
+              const insertData: any = { 
+                user_id: userId,
+                tutor_registration_number: trnKey ? record[trnKey] : null,
+              };
+
+              console.log(`🔄 PATH 2 - About to insert tutor_details with data:`, insertData);
               const { error: directInsertError } = await supabase
                 .from('tutor_details')
-                .insert({ user_id: userId });
+                .insert(insertData);
               
               if (directInsertError) {
                 console.warn(`⚠️ Could not create tutor_details for ${rowNumber}:`, directInsertError);
               } else {
-                // Successfully created with auto-generated TRN, now preserve original TRN if provided
-                console.log(`✅ Successfully created tutor_details for ${rowNumber}, now preserving TRN...`);
-                
-                // First, check if TRN already exists, then preserve if unique
-                if (record['TRN (Tutor Registration Number)']) {
-                  const originalTRN = record['TRN (Tutor Registration Number)'];
-                  console.log(`🔍 Checking if TRN exists: ${originalTRN} for ${rowNumber}`);
-                  
-                  // Check if TRN already exists in database
-                  const { data: existingTRN } = await supabase
-                    .from('tutor_details')
-                    .select('tutor_registration_number, user_id')
-                    .eq('tutor_registration_number', originalTRN)
-                    .single();
-                    
-                  if (existingTRN) {
-                    console.warn(`⚠️ TRN ${originalTRN} already exists (user_id: ${existingTRN.user_id}). Skipping preservation, using auto-generated TRN for ${rowNumber}`);
-                  } else {
-                    console.log(`🎯 TRN is unique, preserving: ${originalTRN} for ${rowNumber}`);
-                    const { error: trnPreserveError } = await supabase
-                      .from('tutor_details')
-                      .update({ tutor_registration_number: originalTRN })
-                      .eq('user_id', userId);
-                      
-                    if (trnPreserveError) {
-                      console.warn(`⚠️ Warning: Could not preserve TRN for ${rowNumber}:`, trnPreserveError);
-                    } else {
-                      console.log(`✅ TRN preserved successfully for ${rowNumber}`);
-                    }
-                  }
-                }
+                // Successfully created tutor_details (TRN already set via insert mapping)
+                console.log(`✅ Successfully created tutor_details for ${rowNumber} with TRN mapping`);
                 
                 await supabase
                   .from('tutor_details')
@@ -774,42 +771,11 @@ export async function POST(request: NextRequest) {
                 console.log(`✅ Created and updated tutor_details for record ${rowNumber}`);
               }
             } else {
-              // RPC succeeded, now preserve original TRN if provided
-              console.log(`✅ RPC create_tutor_details_minimal succeeded for ${rowNumber}, now preserving TRN...`);
+              // RPC succeeded, now apply TRN mapping if provided in CSV
+              console.log(`✅ RPC create_tutor_details_minimal succeeded for ${rowNumber}`);
               
-              // First, check if TRN already exists, then preserve if unique
-              if (record['TRN (Tutor Registration Number)']) {
-                const originalTRN = record['TRN (Tutor Registration Number)'];
-                console.log(`🔍 Checking if TRN exists (RPC): ${originalTRN} for ${rowNumber}`);
-                
-                // Check if TRN already exists in database
-                const { data: existingTRN } = await supabase
-                  .from('tutor_details')
-                  .select('tutor_registration_number, user_id')
-                  .eq('tutor_registration_number', originalTRN)
-                  .single();
-                  
-                if (existingTRN) {
-                  console.warn(`⚠️ TRN ${originalTRN} already exists (user_id: ${existingTRN.user_id}). Skipping preservation, using auto-generated TRN for ${rowNumber}`);
-                } else {
-                  console.log(`🎯 TRN is unique, preserving (RPC): ${originalTRN} for ${rowNumber}`);
-                  const { error: trnPreserveError } = await supabase
-                    .from('tutor_details')
-                    .update({ tutor_registration_number: originalTRN })
-                    .eq('user_id', userId);
-                    
-                  if (trnPreserveError) {
-                    console.warn(`⚠️ Warning: Could not preserve TRN (RPC) for ${rowNumber}:`, trnPreserveError);
-                  } else {
-                    console.log(`✅ TRN preserved successfully (RPC) for ${rowNumber}`);
-                  }
-                }
-              }
-              
-              await supabase
-                .from('tutor_details')
-                .update({
-                  // TRN already preserved above, skip here to avoid conflicts
+              // Prepare update data for RPC created record  
+              const rpcUpdateData: any = {
                   teaching_experience: record['Pengalaman Mengajar'] || null,
                   special_skills: record['Keahlian Spesialisasi'] || null,
                   other_skills: record['Keahlian Lainnya'] || null,
@@ -836,7 +802,17 @@ export async function POST(request: NextRequest) {
                   vocational_school_detail: record['Jurusan SMK Detail'] || null,
                   alternative_institution_name: record['Nama Institusi (Alternative)'] || null,
                   certifications_training: record['Sertifikasi Pelatihan'] || null,
-                })
+                  // TRN mapping - find actual key dynamically
+                  tutor_registration_number: (() => {
+                    const trnKey = Object.keys(record).find(key => key.toLowerCase().includes('trn') && key.toLowerCase().includes('tutor'));
+                    return trnKey ? record[trnKey] : null;
+                  })(),
+                };
+
+              console.log(`🔄 PATH 3 - About to update tutor_details (RPC path) with data:`, rpcUpdateData);
+              await supabase
+                .from('tutor_details')
+                .update(rpcUpdateData)
                 .eq('user_id', userId);
               
               console.log(`✅ Created (via RPC) and updated tutor_details for record ${rowNumber}`);
