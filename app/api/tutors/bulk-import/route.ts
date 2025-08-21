@@ -946,7 +946,7 @@ export async function POST(request: NextRequest) {
 
             if (tutorDetailsError || !tutorDetails) {
               console.error(`❌ Could not find tutor_details for user_id ${userId}:`, tutorDetailsError);
-              return; // Skip this tutor status insert
+              continue; // Skip this tutor status insert
             }
 
             const tutorDetailsId = tutorDetails.id;
