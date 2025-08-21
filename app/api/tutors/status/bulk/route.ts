@@ -38,8 +38,8 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'No tutors found for provided user_ids' }, { status: 404 });
     }
     
-    const tutorIdMap = new Map(tutorDetailsData.map(td => [td.user_id, td.id]));
-    const tutorIds = tutorDetailsData.map(td => td.id);
+    const tutorIdMap = new Map(tutorDetailsData.map((td: any) => [td.user_id, td.id]));
+    const tutorIds = tutorDetailsData.map((td: any) => td.id);
     
     // 1) Fetch which tutor_ids already have status rows
     const { data: existingRows, error: existingErr } = await supabase
@@ -51,7 +51,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const existingTutorIds = new Set((existingRows || []).map((r: any) => r.tutor_id));
-    const toInsert = tutorIds.filter(tutorId => !existingTutorIds.has(tutorId)).map(tutorId => ({
+    const toInsert = tutorIds.filter((tutorId: any) => !existingTutorIds.has(tutorId)).map((tutorId: any) => ({
       tutor_id: tutorId,
       current_status: status_tutor_caps,
       effective_date: nowIso,
