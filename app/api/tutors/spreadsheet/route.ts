@@ -754,7 +754,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       provincesResult,
       citiesResult,
       programsResult,
-      corporateEntitiesResult,
       statusTypesResult,
       banksResult
     ] = await Promise.all([
@@ -782,10 +781,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .select('*')
         .in('user_id', userIds),
       
-      // Tutor management
+      // Tutor management dengan JOIN ke corporate_entities
       supabase
         .from('tutor_management')
-        .select('*')
+        .select('*, corporate_entities(entity_code, entity_name)')
         .in('user_id', userIds),
       
       // Tutor status dengan JOIN ke tutor_status_types
@@ -844,10 +843,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .from('programs_unit')
         .select('id, program_name_local, program_name'),
       
-      // Master Data - Corporate Entities (for brand lookup)
-      supabase
-        .from('corporate_entities')
-        .select('id, entity_code, entity_name'),
       
       // Master Data - Status Types (for status lookup)
       supabase
@@ -985,10 +980,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       prog.id, 
       prog.program_name_local || prog.program_name
     ]) || []);
-    const corporateEntitiesMap = new Map(corporateEntitiesResult.data?.map(ce => [
-      ce.id, 
-      { entity_code: ce.entity_code, entity_name: ce.entity_name }
-    ]) || []);
     const statusTypesMap = new Map(statusTypesResult.data?.map(st => [
       st.id,
       { code: st.code, name: st.name }
@@ -1004,7 +995,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       programs: programsMap.size,
       programMappings: programMappingsMap.size,
       additionalSubjects: additionalSubjectsMap.size,
-      corporateEntities: corporateEntitiesMap.size,
       statusTypes: statusTypesMap.size,
       banks: banksMap.size
     });
@@ -1053,14 +1043,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         // System & Status
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
-        brand: (() => {
-          if (management?.brand_id) {
-            // Convert text UUID to actual UUID for lookup
-            const brandEntity = corporateEntitiesMap.get(management.brand_id);
-            return brandEntity?.entity_code || '';
-          }
-          return '';
-        })(),
+        brand: management?.corporate_entities?.entity_code || '',
         status_tutor: (() => {
           const result = getCurrentTutorStatus(tutorStatus);
           console.log(`🔍 Status for user ${user.id}:`, {
