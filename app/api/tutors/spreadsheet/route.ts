@@ -48,16 +48,17 @@ function extractFromEducationHistory(educationHistory: any[], level: string, fie
   return education ? education[field] : null;
 }
 
-// Helper function to get current tutor status from tutor_status table
+// Helper function to get current tutor status from tutor_status table with JOIN
 function getCurrentTutorStatus(tutorStatus: any): string {
-  const currentStatus = tutorStatus?.current_status;
+  const statusName = tutorStatus?.tutor_status_types?.name;
+  const statusCode = tutorStatus?.tutor_status_types?.code;
   
-  if (!currentStatus) {
+  if (!statusName && !statusCode) {
     return 'Pending Registration';
   }
   
-  // Return status directly from tutor_status table
-  return currentStatus;
+  // Return status name from tutor_status_types, fallback to code
+  return statusName || statusCode || 'Unknown Status';
 }
 
 // Complete Tutor Interface matching form fields
@@ -252,10 +253,52 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
     let userIdsToFilter: string[] | null = null;
 
     // 🚀 PERFORMANCE UPGRADE: Server-side filtering for related tables
+    // Brand filtering via brand_id lookup
+    if (columnFilters.brand && columnFilters.brand.length > 0) {
+        // First get corporate entity IDs for the filtered brand codes
+        const { data: brandEntities, error: brandError } = await supabase
+            .from('corporate_entities')
+            .select('id')
+            .in('entity_code', columnFilters.brand);
+
+        if (brandError) {
+            console.error(`❌ Error fetching brand entities:`, brandError);
+        } else {
+            const brandIds = brandEntities?.map(b => b.id) || [];
+            if (brandIds.length > 0) {
+                // Now get user_ids from tutor_management with matching brand_ids
+                const { data: brandData, error: managementError } = await supabase
+                    .from('tutor_management')
+                    .select('user_id')
+                    .in('brand_id', brandIds);
+
+                if (managementError) {
+                    console.error(`❌ Error fetching user_ids for brand filter:`, managementError);
+                } else {
+                    const ids = brandData?.map(m => m.user_id) || [];
+                    if (userIdsToFilter === null) {
+                        userIdsToFilter = ids;
+                    } else {
+                        // Intersect with previous results for an "AND" condition
+                        userIdsToFilter = (userIdsToFilter as string[]).filter(id => ids.includes(id));
+                    }
+
+                    // If the list of IDs is empty at any point, no need to continue.
+                    if (userIdsToFilter.length === 0) {
+                        return { data: [], error: null, total: 0, filtered: 0 };
+                    }
+                }
+            } else {
+                // No matching brands found, return empty result
+                return { data: [], error: null, total: 0, filtered: 0 };
+            }
+        }
+    }
+
+    // Handle other filters (currently none, but keeping structure for future)
     const relatedFilters: Record<string, { table: string; column: string }> = {
         // status_tutor is handled client-side to correctly manage 'unknown' default
-
-        brand: { table: 'tutor_management', column: 'entity_code' }
+        // brand is handled above with special JOIN logic
     };
 
     for (const column in relatedFilters) {
@@ -276,7 +319,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
                 userIdsToFilter = ids;
             } else {
                 // Intersect with previous results for an "AND" condition
-                userIdsToFilter = userIdsToFilter.filter(id => ids.includes(id));
+                userIdsToFilter = (userIdsToFilter as string[]).filter(id => ids.includes(id));
             }
 
             // If the list of IDs is empty at any point, no need to continue.
@@ -487,32 +530,58 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         }
       }
       
-      // 7. Search in tutor_management for brand/entity_code
+      // 7. Search in tutor_management via brand_id lookup
       const { data: managementMatches, error: managementError } = await supabase
         .from('tutor_management')
-        .select('user_id')
-        .or(`entity_code.ilike.%${searchTerm}%`);
+        .select('user_id, brand_id')
+        .not('brand_id', 'is', null);
       
+      // Then filter by searching corporate_entities for matching entity_code/entity_name
+      let brandMatchedUserIds: string[] = [];
       if (!managementError && managementMatches) {
-        matchingUserIds.push(...managementMatches.map(mm => mm.user_id));
+        const { data: brandMatches, error: brandError } = await supabase
+          .from('corporate_entities')
+          .select('id')
+          .or(`entity_code.ilike.%${searchTerm}%,entity_name.ilike.%${searchTerm}%`);
+        
+        if (!brandError && brandMatches) {
+          const matchingBrandIds = brandMatches.map(b => b.id);
+          brandMatchedUserIds = managementMatches
+            .filter(m => matchingBrandIds.includes(m.brand_id))
+            .map(m => m.user_id);
+        }
       }
       
-      // 7b. Search in tutor_status for status fields
-      const { data: statusMatches, error: statusError } = await supabase
-        .from('tutor_status')
-        .select('tutor_id')
-        .ilike('current_status', `%${searchTerm}%`);
+      if (brandMatchedUserIds.length > 0) {
+        matchingUserIds.push(...brandMatchedUserIds);
+      }
       
-      if (!statusError && statusMatches) {
-        const tutorIds = statusMatches.map(sm => sm.tutor_id);
-        if (tutorIds.length > 0) {
-          const { data: tutorDetailsForStatus } = await supabase
-            .from('tutor_details')
-            .select('user_id')
-            .in('id', tutorIds);
+      // 7b. Search in tutor_status via status_type_id lookup
+      const { data: statusTypeMatches, error: statusTypeError } = await supabase
+        .from('tutor_status_types')
+        .select('id')
+        .or(`code.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%`);
+      
+      if (!statusTypeError && statusTypeMatches) {
+        const statusTypeIds = statusTypeMatches.map(st => st.id);
+        if (statusTypeIds.length > 0) {
+          const { data: statusMatches, error: statusError } = await supabase
+            .from('tutor_status')
+            .select('tutor_id')
+            .in('status_type_id', statusTypeIds);
           
-          if (tutorDetailsForStatus) {
-            matchingUserIds.push(...tutorDetailsForStatus.map(td => td.user_id));
+          if (!statusError && statusMatches) {
+            const tutorIds = statusMatches.map(sm => sm.tutor_id);
+            if (tutorIds.length > 0) {
+              const { data: tutorDetailsForStatus } = await supabase
+                .from('tutor_details')
+                .select('user_id')
+                .in('id', tutorIds);
+              
+              if (tutorDetailsForStatus) {
+                matchingUserIds.push(...tutorDetailsForStatus.map(td => td.user_id));
+              }
+            }
           }
         }
       }
@@ -614,7 +683,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         step5c_cities: cityMatches?.length || 0,
         step6_banking: bankingMatches?.length || 0,
         step7_management: managementMatches?.length || 0,
-        step7b_status: statusMatches?.length || 0,
+        step7b_status: statusTypeMatches?.length || 0,
         step8_availability: availabilityMatches?.length || 0,
         step9_documents: documentMatches?.length || 0,
         step10_trn: trnMatches?.length || 0,
@@ -684,7 +753,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       documentsResult,
       provincesResult,
       citiesResult,
-      programsResult
+      programsResult,
+      corporateEntitiesResult,
+      statusTypesResult
     ] = await Promise.all([
       // User profiles
       supabase
@@ -716,10 +787,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .select('*')
         .in('user_id', userIds),
       
-      // Tutor status (via tutor_id lookup)
+      // Tutor status dengan JOIN ke tutor_status_types
       supabase
         .from('tutor_status')
-        .select('*'),
+        .select('*, tutor_status_types(code, name)'),
       
       // Banking info (via tutor_id)
       supabase
@@ -770,7 +841,17 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       // Master Data - Programs
       supabase
         .from('programs_unit')
-        .select('id, program_name_local, program_name')
+        .select('id, program_name_local, program_name'),
+      
+      // Master Data - Corporate Entities (for brand lookup)
+      supabase
+        .from('corporate_entities')
+        .select('id, entity_code, entity_name'),
+      
+      // Master Data - Status Types (for status lookup)
+      supabase
+        .from('tutor_status_types')
+        .select('id, code, name')
     ]);
 
     // Create lookup maps for efficient data joining
@@ -898,13 +979,23 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       prog.id, 
       prog.program_name_local || prog.program_name
     ]) || []);
+    const corporateEntitiesMap = new Map(corporateEntitiesResult.data?.map(ce => [
+      ce.id, 
+      { entity_code: ce.entity_code, entity_name: ce.entity_name }
+    ]) || []);
+    const statusTypesMap = new Map(statusTypesResult.data?.map(st => [
+      st.id,
+      { code: st.code, name: st.name }
+    ]) || []);
     
     console.log('🗺️ Master data loaded:', {
       provinces: provincesMap.size,
       cities: citiesMap.size,
       programs: programsMap.size,
       programMappings: programMappingsMap.size,
-      additionalSubjects: additionalSubjectsMap.size
+      additionalSubjects: additionalSubjectsMap.size,
+      corporateEntities: corporateEntitiesMap.size,
+      statusTypes: statusTypesMap.size
     });
     
     // Debug: Sample lookups
@@ -951,7 +1042,14 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         // System & Status
         id: user.id,
         trn: tutorDetails?.tutor_registration_number || user.user_code || '',
-        brand: management?.entity_code || '',
+        brand: (() => {
+          if (management?.brand_id) {
+            // Convert text UUID to actual UUID for lookup
+            const brandEntity = corporateEntitiesMap.get(management.brand_id);
+            return brandEntity?.entity_code || '';
+          }
+          return '';
+        })(),
         status_tutor: (() => {
           const result = getCurrentTutorStatus(tutorStatus);
           console.log(`🔍 Status for user ${user.id}:`, {

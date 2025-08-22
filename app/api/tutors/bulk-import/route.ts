@@ -877,10 +877,21 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // === TUTOR MANAGEMENT (Brand -> entity_code) ===
+        // === TUTOR MANAGEMENT (Brand -> brand_id) ===
         if (record['Brand']) {
+          // Lookup brand ID dari corporate_entities
+          const { data: brandEntity, error: brandError } = await supabase
+            .from('corporate_entities')
+            .select('id')
+            .eq('entity_code', record['Brand'])
+            .single();
+
+          if (brandError) {
+            console.warn(`⚠️ Brand lookup failed for "${record['Brand']}":`, brandError);
+          }
+
           const tutorManagementData = {
-            entity_code: record['Brand'],
+            brand_id: brandEntity?.id || null,  // Simpan UUID, bukan TEXT
             updated_at: new Date().toISOString()
           };
 
@@ -899,9 +910,9 @@ export async function POST(request: NextRequest) {
               .eq('user_id', userId);
             
             if (tutorManagementUpdateError) {
-              console.warn(`⚠️ Warning: Could not update tutor_management entity_code for ${rowNumber}:`, tutorManagementUpdateError && tutorManagementUpdateError.message ? tutorManagementUpdateError.message : JSON.stringify(tutorManagementUpdateError));
+              console.warn(`⚠️ Warning: Could not update tutor_management brand_id for ${rowNumber}:`, tutorManagementUpdateError && tutorManagementUpdateError.message ? tutorManagementUpdateError.message : JSON.stringify(tutorManagementUpdateError));
             } else {
-              console.log(`✅ Updated tutor_management entity_code for record ${rowNumber}`);
+              console.log(`✅ Updated tutor_management brand_id for record ${rowNumber}`);
             }
           } else {
             // Insert new record (include user_id for new records)
@@ -916,9 +927,9 @@ export async function POST(request: NextRequest) {
               .insert(newTutorManagementData);
             
             if (tutorManagementInsertError) {
-              console.warn(`⚠️ Warning: Could not insert tutor_management entity_code for ${rowNumber}:`, tutorManagementInsertError && tutorManagementInsertError.message ? tutorManagementInsertError.message : JSON.stringify(tutorManagementInsertError));
+              console.warn(`⚠️ Warning: Could not insert tutor_management brand_id for ${rowNumber}:`, tutorManagementInsertError && tutorManagementInsertError.message ? tutorManagementInsertError.message : JSON.stringify(tutorManagementInsertError));
             } else {
-              console.log(`✅ Inserted tutor_management entity_code for record ${rowNumber}`);
+              console.log(`✅ Inserted tutor_management brand_id for record ${rowNumber}`);
             }
           }
         }
@@ -952,6 +963,17 @@ export async function POST(request: NextRequest) {
             const tutorDetailsId = tutorDetails.id;
             console.log(`✅ Found tutor_details.id: ${tutorDetailsId} for user_id: ${userId}`);
 
+            // Lookup status type ID from tutor_status_types
+            const { data: statusType, error: statusTypeError } = await supabase
+              .from('tutor_status_types')
+              .select('id')
+              .eq('code', currentStatus.toLowerCase())
+              .single();
+
+            if (statusTypeError) {
+              console.warn(`⚠️ Status type lookup failed for "${currentStatus}":`, statusTypeError);
+            }
+
             // Check if tutor status record exists
             console.log(`🔍 Checking if tutor_status record exists for tutor_id: ${tutorDetailsId}`);
             const { data: existingTutorStatus, error: statusCheckError } = await supabase
@@ -966,7 +988,7 @@ export async function POST(request: NextRequest) {
             });
 
             const tutorStatusData = {
-              current_status: currentStatus,
+              status_type_id: statusType?.id || null,  // Simpan UUID, bukan TEXT
               updated_at: new Date().toISOString()
             };
 

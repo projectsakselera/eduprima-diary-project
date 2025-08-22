@@ -35,11 +35,25 @@ export async function PUT(req: NextRequest) {
     }
     
     const tutorId = tutorDetails.id;
+
+    // Lookup status type ID from tutor_status_types
+    const { data: statusType, error: statusTypeError } = await supabase
+      .from('tutor_status_types')
+      .select('id')
+      .eq('code', status_tutor.toLowerCase())
+      .single();
+
+    if (statusTypeError) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `Invalid status type: ${status_tutor}` 
+      }, { status: 400 });
+    }
     
     // Check if tutor_status row exists for the tutor; if not, create it
     const { data: existing, error: existingError } = await supabase
       .from('tutor_status')
-      .select('id, current_status, effective_date, updated_at')
+      .select('id, status_type_id, effective_date, updated_at')
       .eq('tutor_id', tutorId)
       .single();
 
@@ -56,23 +70,23 @@ export async function PUT(req: NextRequest) {
         .from('tutor_status')
         .insert({
           tutor_id: tutorId,
-          current_status: status_tutor_caps,
+          status_type_id: statusType.id,  // Simpan UUID, bukan TEXT
           effective_date: nowIso,
           created_at: nowIso,
           updated_at: nowIso,
         })
-        .select('current_status, effective_date, updated_at')
+        .select('status_type_id, effective_date, updated_at')
         .single();
     } else {
       upsertResult = await supabase
         .from('tutor_status')
         .update({
-          current_status: status_tutor_caps,
+          status_type_id: statusType.id,  // Simpan UUID, bukan TEXT
           effective_date: nowIso,
           updated_at: nowIso,
         })
         .eq('tutor_id', tutorId)
-        .select('current_status, effective_date, updated_at')
+        .select('status_type_id, effective_date, updated_at')
         .single();
     }
 
