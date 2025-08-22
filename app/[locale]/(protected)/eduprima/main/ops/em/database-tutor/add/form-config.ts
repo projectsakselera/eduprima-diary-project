@@ -187,8 +187,6 @@ export interface TutorFormData {
   
   // Alternative Learning Background (for "Lainnya")
   namaInstitusi?: string;
-  bidangKeahlian?: string;
-  pengalamanBelajar?: string;
   sertifikatKeahlian?: File | string | null;
   
   // Professional Profile & Experience
@@ -1890,29 +1888,6 @@ export const tutorFormConfig: FormConfig = {
           size: 'lg'
         },
         {
-          name: 'bidangKeahlian',
-          label: 'Bidang Keahlian / Spesialisasi',
-          type: 'text',
-          required: true,
-          placeholder: 'Contoh: Web Development, Data Science, Digital Marketing, dll.',
-          helperText: 'Bidang utama yang Anda kuasai dan akan diajarkan.',
-          conditional: (data) => data.statusAkademik === 'lainnya',
-          icon: 'ph:target',
-          size: 'lg'
-        },
-        {
-          name: 'pengalamanBelajar',
-          label: 'Pengalaman Pembelajaran',
-          type: 'textarea',
-          required: true,
-          rows: 4,
-          placeholder: 'Ceritakan perjalanan pembelajaran Anda, sertifikat yang dimiliki, proyek yang pernah dikerjakan, atau pengalaman relevan lainnya...',
-          helperText: 'Jelaskan bagaimana Anda memperoleh keahlian dan pengalaman di bidang yang akan Anda ajarkan.',
-          conditional: (data) => data.statusAkademik === 'lainnya',
-          icon: 'ph:book-open',
-          size: 'lg'
-        },
-        {
           name: 'sertifikatKeahlian',
           label: 'Sertifikat / Portofolio Keahlian',
           type: 'file',
@@ -2731,8 +2706,6 @@ export const defaultFormData: Partial<TutorFormData> = {
   
   // Alternative Learning Background
   namaInstitusi: '',
-  bidangKeahlian: '',
-  pengalamanBelajar: '',
   sertifikatKeahlian: null,
   
   // Professional Profile & Experience

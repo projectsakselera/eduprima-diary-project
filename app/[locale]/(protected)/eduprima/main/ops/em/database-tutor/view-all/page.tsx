@@ -320,7 +320,7 @@ export default function ViewAllTutorsPage() {
     'trn', 'brand', 'status_tutor', 'created_at', 'updated_at', 'fotoProfil', 'namaLengkap',
     'tanggalLahir', 'jenisKelamin', 'agama', 'email', 'noHp1', 'headline', 'deskripsiDiri',
     'socialMedia1', 'provinsiDomisili', 'kotaKabupatenDomisili', 'kecamatanDomisili',
-    'kelurahanDomisili', 'alamatLengkapDomisili', 'jurusanSMKDetail', 'ipk', 'namaSMA',
+    'kelurahanDomisili', 'alamatLengkapDomisili', 'jurusanSMKDetail', 'statusAkademik', 'current_university', 'current_faculty', 'current_major', 'ipk', 'namaSMA',
     'jurusanSMA', 'keahlianSpesialisasi', 'keahlianLainnya', 'pengalamanMengajar',
     'pengalamanLainRelevan', 'prestasiAkademik', 'prestasiNonAkademik', 'sertifikasiPelatihan',
     'selectedPrograms', 'mataPelajaranLainnya', 'statusMenerimaSiswa', 'available_schedule',

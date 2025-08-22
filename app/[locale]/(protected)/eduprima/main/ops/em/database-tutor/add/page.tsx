@@ -560,12 +560,6 @@ export default function AddTutorPage() {
         alternative_institution_name: (formData.statusAkademik === 'lainnya') 
           ? (formData.namaInstitusi || null) 
           : null,
-        expertise_field: (formData.statusAkademik === 'lainnya') 
-          ? (formData.bidangKeahlian || null) 
-          : null,
-        learning_experience: (formData.statusAkademik === 'lainnya') 
-          ? (formData.pengalamanBelajar || null) 
-          : null,
         
         // Teaching Experience - gunakan nama kolom yang benar
         teaching_experience: formData.pengalamanMengajar || null, // ✅ Fix: pengalaman_mengajar → teaching_experience
@@ -938,8 +932,6 @@ export default function AddTutorPage() {
             
             // Alternative Learning (for statusAkademik = 'lainnya')
             namaInstitusi: formData.namaInstitusi,
-            bidangKeahlian: formData.bidangKeahlian,
-            pengalamanBelajar: formData.pengalamanBelajar,
             
             // B. KEAHLIAN & SPESIALISASI
             keahlianSpesialisasi: formData.keahlianSpesialisasi,

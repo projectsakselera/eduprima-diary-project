@@ -59,6 +59,10 @@ export const SPREADSHEET_COLUMNS: Column[] = [
   { key: 'namaBank', label: 'Nama Bank', width: 160, type: 'text', category: 'Identitas Dasar' },
   // ...lanjutkan seluruh kolom lain dari page.tsx ke sini sesuai urutan dan tipe...
   { key: 'jurusanSMKDetail', label: 'Jurusan SMK Detail', width: 180, type: 'text', category: 'Pendidikan' },
+  { key: 'statusAkademik', label: 'Status Akademik', width: 150, type: 'select', category: 'Pendidikan' },
+  { key: 'current_university', label: 'Nama Universitas', width: 200, type: 'text', category: 'Pendidikan' },
+  { key: 'current_faculty', label: 'Fakultas', width: 200, type: 'text', category: 'Pendidikan' },
+  { key: 'current_major', label: 'Jurusan/Program Studi', width: 200, type: 'text', category: 'Pendidikan' },
   { key: 'ipk', label: 'IPK/GPA', width: 100, type: 'number', category: 'Pendidikan' },
   { key: 'tahunMasuk', label: 'Tahun Masuk', width: 100, type: 'text', category: 'Pendidikan' },
   { key: 'tahunLulus', label: 'Tahun Lulus', width: 100, type: 'text', category: 'Pendidikan' },

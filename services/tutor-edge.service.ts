@@ -338,8 +338,6 @@ export interface BasicTutorData {
     
     // Alternative Learning (for statusAkademik = 'lainnya')
     namaInstitusi?: string; // Institution name
-    bidangKeahlian?: string; // Field of expertise
-    pengalamanBelajar?: string; // Learning experience
     
     // B. KEAHLIAN & SPESIALISASI
     keahlianSpesialisasi?: string; // Special skills/expertise (required in form)
@@ -703,8 +701,6 @@ export async function createTutorWithMigrationSupport(
           
           // Alternative Learning (for statusAkademik = 'lainnya')
           namaInstitusi: formData.namaInstitusi || undefined,
-          bidangKeahlian: formData.bidangKeahlian || undefined,
-          pengalamanBelajar: formData.pengalamanBelajar || undefined,
           
           // B. KEAHLIAN & SPESIALISASI
           keahlianSpesialisasi: formData.keahlianSpesialisasi || undefined,

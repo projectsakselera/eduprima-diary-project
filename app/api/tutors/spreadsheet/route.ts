@@ -135,8 +135,6 @@ interface CompleteTutorData {
   
   // Education - Alternative Learning
   namaInstitusi: string;
-  bidangKeahlian: string;
-  pengalamanBelajar: string;
   
   // Professional Profile
   keahlianSpesialisasi: string;
@@ -1032,8 +1030,6 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         
         // ✅ FIXED: Education - Alternative Learning (use dedicated columns)
         namaInstitusi: tutorDetails?.alternative_institution_name || '',   // ✅ FIXED: Use dedicated alternative column
-        bidangKeahlian: tutorDetails?.expertise_field || '',               // ✅ FIXED: Use dedicated alternative column
-        pengalamanBelajar: tutorDetails?.learning_experience || '',        // ✅ FIXED: Use dedicated alternative column
         
         // Professional Profile
         keahlianSpesialisasi: tutorDetails?.special_skills || '',
