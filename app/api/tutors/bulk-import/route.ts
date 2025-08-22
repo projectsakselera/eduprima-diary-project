@@ -831,20 +831,54 @@ export async function POST(request: NextRequest) {
           .single();
         const tutorId = tutorDetailsRow?.id;
 
+        console.log(`🔍 Banking condition check for row ${rowNumber}:`, {
+          tutorId: !!tutorId,
+          namaPemilik: !!record['Nama Pemilik Rekening'],
+          nomorRekening: !!record['Nomor Rekening'],
+          namaBank: !!record['Nama Bank'],
+          resolvedBankName,
+          csvNamaBank: record['Nama Bank']
+        });
+
         if (
           tutorId &&
           record['Nama Pemilik Rekening'] &&
           record['Nomor Rekening'] &&
-          (resolvedBankName || record['Nama Bank'])
+          record['Nama Bank']
         ) {
+          // Lookup bank ID dari finance_banks_indonesia  
+          // Use CSV data directly instead of relying on fuzzy matching
+          const bankInput = record['Nama Bank'];
+          const { data: bankResults, error: bankError } = await supabase
+            .from('finance_banks_indonesia')
+            .select('id, bank_code, popular_bank_name')
+            .or(`popular_bank_name.ilike.%${bankInput}%,bank_name.ilike.%${bankInput}%`)
+            .eq('is_active', true)
+            .limit(1);
+
+          const bankData = bankResults && bankResults.length > 0 ? bankResults[0] : null;
+
+          if (bankError) {
+            console.warn(`⚠️ Bank lookup failed for "${bankInput}":`, bankError);
+          }
+
+          console.log(`🏦 Bank lookup for "${bankInput}":`, {
+            found: !!bankData,
+            bankData: bankData,
+            error: bankError?.message || 'none'
+          });
+
           const bankingInfoData = {
             tutor_id: tutorId,
             account_holder_name: record['Nama Pemilik Rekening'],
             account_number: record['Nomor Rekening'],
-            bank_name: resolvedBankName || record['Nama Bank'],
+            bank_id: bankData?.id || null,  // Simpan UUID, bukan TEXT
+            bank_code: bankData?.bank_code || null,  // Simpan code untuk display
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
+
+          console.log(`💳 Banking data to insert for ${record['Nama Pemilik Rekening']}:`, bankingInfoData);
 
           // Cek apakah sudah ada data banking info
           const { data: existingBanking, error: bankingCheckError } = await supabase
@@ -862,7 +896,7 @@ export async function POST(request: NextRequest) {
             if (bankingUpdateError) {
               console.warn(`⚠️ Warning: Could not update tutor_banking_info for ${rowNumber}:`, bankingUpdateError && bankingUpdateError.message ? bankingUpdateError.message : JSON.stringify(bankingUpdateError));
             } else {
-              console.log(`✅ Updated tutor_banking_info for record ${rowNumber}`);
+              console.log(`✅ Updated tutor_banking_info for record ${rowNumber} with bank_id: ${bankData?.id}`);
             }
           } else {
             // Insert
@@ -872,7 +906,7 @@ export async function POST(request: NextRequest) {
             if (bankingInsertError) {
               console.warn(`⚠️ Warning: Could not insert tutor_banking_info for ${rowNumber}:`, bankingInsertError && bankingInsertError.message ? bankingInsertError.message : JSON.stringify(bankingInsertError));
             } else {
-              console.log(`✅ Inserted tutor_banking_info for record ${rowNumber}`);
+              console.log(`✅ Inserted tutor_banking_info for record ${rowNumber} with bank_id: ${bankData?.id}`);
             }
           }
         }

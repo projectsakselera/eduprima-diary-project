@@ -755,7 +755,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       citiesResult,
       programsResult,
       corporateEntitiesResult,
-      statusTypesResult
+      statusTypesResult,
+      banksResult
     ] = await Promise.all([
       // User profiles
       supabase
@@ -792,10 +793,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         .from('tutor_status')
         .select('*, tutor_status_types(code, name)'),
       
-      // Banking info (via tutor_id)
+      // Banking info dengan JOIN ke finance_banks_indonesia
       supabase
         .from('tutor_banking_info')
-        .select('*'),
+        .select('*, finance_banks_indonesia(popular_bank_name, bank_name, bank_code)'),
       
       // Availability config (via educator_id)
       supabase
@@ -851,7 +852,12 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       // Master Data - Status Types (for status lookup)
       supabase
         .from('tutor_status_types')
-        .select('id, code, name')
+        .select('id, code, name'),
+      
+      // Master Data - Banks (for banking lookup)
+      supabase
+        .from('finance_banks_indonesia')
+        .select('id, bank_code, popular_bank_name, bank_name')
     ]);
 
     // Create lookup maps for efficient data joining
@@ -987,6 +993,10 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       st.id,
       { code: st.code, name: st.name }
     ]) || []);
+    const banksMap = new Map(banksResult.data?.map(b => [
+      b.id,
+      { bank_code: b.bank_code, popular_bank_name: b.popular_bank_name, bank_name: b.bank_name }
+    ]) || []);
     
     console.log('🗺️ Master data loaded:', {
       provinces: provincesMap.size,
@@ -995,7 +1005,8 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       programMappings: programMappingsMap.size,
       additionalSubjects: additionalSubjectsMap.size,
       corporateEntities: corporateEntitiesMap.size,
-      statusTypes: statusTypesMap.size
+      statusTypes: statusTypesMap.size,
+      banks: banksMap.size
     });
     
     // Debug: Sample lookups
@@ -1099,7 +1110,9 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         // Banking
         namaNasabah: banking?.account_holder_name || '',
         nomorRekening: banking?.account_number || '',
-        namaBank: banking?.bank_name || '',
+        namaBank: banking?.finance_banks_indonesia?.popular_bank_name || 
+                  banking?.bank_code || 
+                  'Unknown Bank',
         
         // ✅ FIXED: Education - Current Education (matches Edge Function corrected structure)
         statusAkademik: tutorDetails?.academic_status || '',
