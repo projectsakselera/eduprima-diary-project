@@ -41,6 +41,10 @@ import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import { TutorDatabaseHeader } from '@/components/project/TutorDatabaseHeader';
 import { SPREADSHEET_COLUMNS, Column } from './spreadsheet-columns';
+import { ColumnManager } from './components/ColumnManager';
+import { FileCell } from './components/FileCell';
+import { getStatusStyle, getAvailabilityStatusStyle } from './utils/statusUtils';
+import { truncateToWords, formatHeaderLabel, formatCellValue, formatCellValueForDisplay } from './utils/formatUtils';
 
 // Utility function for converting R2 URLs to proxy URLs
 const getProxyUrl = (url: string) => {
@@ -49,13 +53,6 @@ const getProxyUrl = (url: string) => {
   return `/api/files/${cleanUrl}`;
 };
 
-// Utility function for truncating text to maximum number of words
-const truncateToWords = (text: string | null | undefined, maxWords: number = 4): string => {
-  if (!text || typeof text !== 'string') return '';
-  const words = text.trim().split(/\s+/);
-  if (words.length <= maxWords) return text;
-  return words.slice(0, maxWords).join(' ') + '...';
-};
 
 
 // Tutor status options used in inline editor - synchronized with database
@@ -97,415 +94,7 @@ const TUTOR_STATUS_OPTIONS: Array<
 const ROW_HEIGHT_PX = 45;
 const HEADER_HEIGHT_PX = 48; // approximate header row height for sticky thead
 
-// Column Manager Component - Simple & User-Friendly
-interface ColumnManagerProps {
-  columns: Column[];
-  visibleColumns: Set<string>;
-  onToggleColumn: (columnKey: string) => void;
-  categories: string[];
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
-  onInvertSelection: () => void;
-  onShowAllInCategory: (category: string) => void;
-  onHideAllInCategory: (category: string) => void;
-}
 
-const ColumnManager: React.FC<ColumnManagerProps> = ({ 
-  columns, 
-  visibleColumns, 
-  onToggleColumn, 
-  categories,
-  onSelectAll,
-  onDeselectAll,
-  onInvertSelection,
-  onShowAllInCategory,
-  onHideAllInCategory
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isOpen]);
-
-  // Filter columns based on search and category
-  const filteredColumns = useMemo(() => {
-    let filtered = columns;
-
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(col => col.category === selectedCategory);
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(col => 
-        col.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (col.key as string).toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    return filtered;
-  }, [columns, selectedCategory, searchTerm]);
-
-
-
-  const toggleAllInCategory = (category: string) => {
-    const categoryColumns = columns.filter(col => col.category === category);
-    const allVisible = categoryColumns.every(col => visibleColumns.has(col.key));
-    
-    categoryColumns.forEach(col => {
-      if (allVisible && visibleColumns.has(col.key)) {
-        onToggleColumn(col.key);
-      } else if (!allVisible && !visibleColumns.has(col.key)) {
-        onToggleColumn(col.key);
-      }
-    });
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Compact Gear Button - Icon Only */}
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-8 w-8 relative text-slate-700 dark:text-slate-300 hover:text-primary"
-        title={`Manage columns (${visibleColumns.size}/${columns.length} visible)`}
-      >
-        <Icon icon="ph:gear" className="h-4 w-4" />
-        {visibleColumns.size > 0 && (
-          <div className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
-            {visibleColumns.size}
-          </div>
-        )}
-      </Button>
-
-      {/* Dropdown Modal - Responsive */}
-      {isOpen && (
-        <div className="dark absolute top-10 right-0 z-[999] w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-lg shadow-lg max-h-[80vh] overflow-y-auto isolate">
-          <div className="p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-sm text-white">Manage Columns</h3>
-              <Button
-                variant="ghost"
-                onClick={() => setIsOpen(false)}
-                className="h-6 w-6 p-0"
-              >
-                <Icon icon="ph:x" className="h-4 w-4 text-slate-400" />
-              </Button>
-            </div>
-
-
-
-            {/* Search */}
-            <div className="relative mb-4">
-              <Icon icon="ph:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search columns..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-8 bg-slate-800 border-slate-700 placeholder:text-slate-400 text-slate-50"
-              />
-            </div>
-
-            {/* Bulk Selection Controls */}
-            <div className="mb-4 space-y-2">
-              <div className="text-xs font-medium text-slate-300 mb-2">⚡ Bulk Actions:</div>
-              
-              {/* Main bulk actions */}
-              <div className="flex flex-wrap gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onSelectAll}
-                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  <Icon icon="ph:checks" className="h-3 w-3 mr-1" />
-                  Select All
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onDeselectAll}
-                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  <Icon icon="ph:square" className="h-3 w-3 mr-1" />
-                  Deselect All
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onInvertSelection}
-                  className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  <Icon icon="ph:arrows-clockwise" className="h-3 w-3 mr-1" />
-                  Invert
-                </Button>
-              </div>
-
-              {/* Category-specific bulk actions */}
-              {selectedCategory !== 'all' && (
-                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-700">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onShowAllInCategory(selectedCategory)}
-                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    <Icon icon="ph:eye" className="h-3 w-3 mr-1" />
-                    Show All in {selectedCategory}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onHideAllInCategory(selectedCategory)}
-                    className="h-7 text-xs px-2 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    <Icon icon="ph:eye-slash" className="h-3 w-3 mr-1" />
-                    Hide All in {selectedCategory}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Category Filter - Cleaner */}
-            <div className="mb-4">
-              <div className="text-xs font-medium text-slate-300 mb-2">📁 Categories:</div>
-              <div className="max-h-20 overflow-y-auto">
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    variant={selectedCategory === 'all' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setSelectedCategory('all')}
-                    className="text-xs h-6 px-2"
-                  >
-                    All
-                  </Button>
-                  {categories.map(category => {
-                    const categoryColumns = columns.filter(col => col.category === category);
-                    const visibleCount = categoryColumns.filter(col => visibleColumns.has(col.key)).length;
-                    return visibleCount > 0 ? (
-                      <Button
-                        key={category}
-                        variant={selectedCategory === category ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setSelectedCategory(category)}
-                        className="text-xs h-6 px-2"
-                      >
-                        {category}
-                        <span className="ml-1 text-muted-foreground">({visibleCount})</span>
-                      </Button>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Category Toggle All */}
-            {selectedCategory !== 'all' && (
-              <div className="mb-3">
-                <Button
-                  variant="outline"
-                  onClick={() => toggleAllInCategory(selectedCategory)}
-                  className="text-xs h-7"
-                >
-                  <Icon icon="ph:check-square" className="h-3 w-3 mr-1" />
-                  Toggle All {selectedCategory}
-                </Button>
-              </div>
-            )}
-
-            {/* Columns List */}
-            <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 hover:scrollbar-thumb-slate-400">
-              <div className="space-y-1">
-                {filteredColumns.map(col => (
-                  <div key={col.key} className="flex items-center space-x-2 p-1 hover:bg-slate-800/50 rounded">
-                    <Checkbox
-                      checked={visibleColumns.has(col.key)}
-                      onCheckedChange={() => onToggleColumn(col.key)}
-                      className="h-4 w-4"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate text-slate-100">{col.label}</div>
-                      <div className="text-xs text-slate-400">
-                        {col.category} • {col.type}
-                        {col.required && <span className="text-red-500 ml-1">*</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {filteredColumns.length === 0 && (
-                <div className="text-center py-4 text-sm text-slate-400">
-                  {searchTerm ? `No columns found for "${searchTerm}" ` : 'No columns in this category'}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-4 pt-3 border-t border-slate-700">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>{visibleColumns.size} of {columns.length} columns visible</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('all');
-                  }}
-                  className="text-xs h-6"
-                >
-                  Clear search
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// FileCell component for handling file display with links and previews
-interface FileCellProps {
-  value: string | null;
-  filename: string;
-  tutorName: string;
-  onPreview: (url: string, title: string, type: string) => void;
-}
-
-const FileCell: React.FC<FileCellProps> = ({ value, filename, tutorName, onPreview }) => {
-  if (!value) {
-    return (
-      <div className="text-muted-foreground text-xs">
-        No file
-      </div>
-    );
-  }
-
-  const getFileIcon = (filename: string) => {
-    if (filename === 'fotoProfil') return '🖼️';
-    if (filename === 'dokumenIdentitas') return '🆔';
-    if (filename === 'dokumenPendidikan') return '🎓';
-    if (filename === 'dokumenSertifikat') return '📜';
-    return '📎';
-  };
-
-  const getFileLabel = (filename: string) => {
-    if (filename === 'fotoProfil') return 'Foto';
-    if (filename === 'dokumenIdentitas') return 'ID';
-    if (filename === 'dokumenPendidikan') return 'Edu';
-    if (filename === 'dokumenSertifikat') return 'Cert';
-    return 'File';
-  };
-
-  const getFileTitle = (filename: string, tutorName: string) => {
-    if (filename === 'fotoProfil') return `Foto Profil - ${tutorName}`;
-    if (filename === 'dokumenIdentitas') return `Dokumen Identitas - ${tutorName}`;
-    if (filename === 'dokumenPendidikan') return `Dokumen Pendidikan - ${tutorName}`;
-    if (filename === 'dokumenSertifikat') return `Dokumen Sertifikat - ${tutorName}`;
-    return `File - ${tutorName}`;
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent cell selection
-    onPreview(value, getFileTitle(filename, tutorName), filename);
-  };
-
-  const handleDirectLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.open(value, '_blank');
-  };
-
-  // Special handling for profile photo - show thumbnail directly
-  if (filename === 'fotoProfil') {
-    return (
-      <div className="flex items-center gap-2 min-w-0">
-        <div className="relative">
-          <img 
-            src={getProxyUrl(value)} 
-            alt={`Foto profil ${tutorName}`}
-            className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={handleClick}
-            onError={(e) => {
-              // Log error for debugging
-              const target = e.target as HTMLImageElement;
-              console.error('❌ Image load failed:', {
-                src: target.src,
-                originalValue: value,
-                proxyUrl: getProxyUrl(value)
-              });
-              
-              // Fallback to icon if image fails to load
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `
-                  <div class="w-8 h-8 rounded-full bg-red-100 border border-red-300 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors" title="Image failed to load">
-                    <span class="text-xs">❌</span>
-                  </div>
-                `;
-                parent.onclick = (e) => {
-                  e.stopPropagation();
-                  onPreview(value, getFileTitle(filename, tutorName), filename);
-                };
-              }
-            }}
-            title={`${tutorName} - Click to enlarge`}
-          />
-          {/* Small indicator for Cloudflare R2 */}
-          <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full border border-white" title="Cloudflare R2 Storage" />
-        </div>
-        <div className="flex flex-col min-w-0">
-          <button
-            onClick={handleClick}
-            className="text-xs text-primary hover:text-primary/80 hover:underline text-left truncate max-w-[60px]"
-            title={`Preview ${getFileLabel(filename)} - ${tutorName}`}
-          >
-            {getFileLabel(filename)}
-          </button>
-          <div className="text-[10px] text-muted-foreground">
-            Click to enlarge
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // For other file types, show the original layout
-  return (
-    <div className="flex items-center gap-1 min-w-0">
-      <span className="text-sm">{getFileIcon(filename)}</span>
-      <div className="flex flex-col min-w-0">
-        <button
-          onClick={handleClick}
-          className="text-xs text-primary hover:text-primary/80 hover:underline text-left truncate max-w-[80px]"
-          title={`Preview ${getFileLabel(filename)} - ${tutorName}`}
-        >
-          {getFileLabel(filename)}
-        </button>
-        <div className="text-[10px] text-muted-foreground">
-          Click to preview
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Complete Tutor Interface matching API response
 interface TutorSpreadsheetData {
@@ -972,7 +561,7 @@ export default function ViewAllTutorsPage() {
             const column = filteredColumns[col];
             const tutor = tutorData[row];
             if (tutor && column) {
-              const value = formatCellValue(tutor[column.key], column);
+              const value = formatCellValue(tutor[column.key], column, programsLookup);
               rowData.push(value || '');
             }
           }
@@ -991,7 +580,7 @@ export default function ViewAllTutorsPage() {
           const column = filteredColumns.find(col => col.key === cell.col);
           const tutor = tutorData[cell.row];
           if (tutor && column) {
-            const value = formatCellValue(tutor[column.key], column);
+            const value = formatCellValue(tutor[column.key], column, programsLookup);
             dataToCopy.push([value || '']);
           }
         }
@@ -1000,7 +589,7 @@ export default function ViewAllTutorsPage() {
         const column = filteredColumns.find(col => col.key === selectedCell.col);
         const tutor = tutorData[selectedCell.row];
         if (tutor && column) {
-          const value = formatCellValue(tutor[column.key], column);
+          const value = formatCellValue(tutor[column.key], column, programsLookup);
           dataToCopy.push([value || '']);
         }
       }
@@ -1660,32 +1249,6 @@ export default function ViewAllTutorsPage() {
   };
 
   // Safe line breaking for header labels - preserves ALL characters
-  const formatHeaderLabel = (label: string) => {
-    // Pattern 1: Break before parentheses (keep all characters including spaces)
-    if (label.includes('(') && label.includes(')')) {
-      return label.replace(/\s+(\([^)]+\))$/, '\n$1');
-    }
-    
-    // Pattern 2: Break long text at word boundary (no character loss)
-    if (label.length > 30) {
-      const words = label.split(' ');
-      let line1 = '';
-      let line2 = '';
-      
-      for (const word of words) {
-        if (line1.length + word.length + 1 <= 30) {
-          line1 += (line1 ? ' ' : '') + word;
-        } else {
-          line2 += (line2 ? ' ' : '') + word;
-        }
-      }
-      
-      return line2 ? line1 + '\n' + line2 : label;
-    }
-    
-    // Return exactly as-is for short text - NO CHANGES
-    return label;
-  };
 
   // Filter columns by visibility selection
   const filteredColumns = useMemo(() => {
@@ -1762,118 +1325,6 @@ export default function ViewAllTutorsPage() {
     };
   }, [handleKeyDown]);
 
-  // Get status color and style for tutor status
-  const getStatusStyle = (status: string) => {
-    const statusLower = status?.toLowerCase() || '';
-    
-    switch (statusLower) {
-      // Recruitment Flow Stages (Blue tones)
-      case 'registration':
-        return {
-          backgroundColor: '#3b82f6', // blue-500
-          color: '#ffffff',
-          text: 'REGISTRATION'
-        };
-      case 'learning_materials':
-        return {
-          backgroundColor: '#6366f1', // indigo-500
-          color: '#ffffff',
-          text: 'LEARNING'
-        };
-      case 'examination':
-        return {
-          backgroundColor: '#8b5cf6', // violet-500
-          color: '#ffffff',
-          text: 'EXAM'
-        };
-      case 'exam_verification':
-        return {
-          backgroundColor: '#a855f7', // purple-500
-          color: '#ffffff',
-          text: 'VERIFYING'
-        };
-      case 'data_completion':
-        return {
-          backgroundColor: '#0ea5e9', // sky-500
-          color: '#ffffff',
-          text: 'COMPLETING'
-        };
-      case 'waiting_students':
-        return {
-          backgroundColor: '#06b6d4', // cyan-500
-          color: '#ffffff',
-          text: 'WAITING'
-        };
-      
-      // Active Status (Green)
-      case 'active':
-        return {
-          backgroundColor: '#10b981', // green-500
-          color: '#ffffff',
-          text: 'ACTIVE'
-        };
-      
-      // Management Status (Gray/Red)
-      case 'inactive':
-        return {
-          backgroundColor: '#6b7280', // gray-500
-          color: '#ffffff',
-          text: 'INACTIVE'
-        };
-      case 'suspended':
-        return {
-          backgroundColor: '#ef4444', // red-500
-          color: '#ffffff',
-          text: 'SUSPENDED'
-        };
-      case 'blacklisted':
-        return {
-          backgroundColor: '#991b1b', // red-800
-          color: '#ffffff',
-          text: 'BLACKLISTED'
-        };
-      
-      // Special Status (Yellow/Orange)
-      case 'on_trial':
-        return {
-          backgroundColor: '#f59e0b', // amber-500
-          color: '#ffffff',
-          text: 'TRIAL'
-        };
-      case 'additional_screening':
-        return {
-          backgroundColor: '#d97706', // amber-600
-          color: '#ffffff',
-          text: 'SCREENING'
-        };
-      
-      // Legacy statuses for compatibility
-      case 'pending':
-        return {
-          backgroundColor: '#f59e0b', // amber-500
-          color: '#ffffff',
-          text: 'PENDING'
-        };
-      case 'verified':
-        return {
-          backgroundColor: '#059669', // emerald-600
-          color: '#ffffff',
-          text: 'VERIFIED'
-        };
-      case 'unknown':
-        return {
-          backgroundColor: '#9ca3af', // gray-400
-          color: '#ffffff',
-          text: 'UNKNOWN'
-        };
-      default:
-        return {
-          backgroundColor: '#9ca3af', // gray-400
-          color: '#ffffff',
-          text: status?.toUpperCase() || 'UNKNOWN'
-        };
-    }
-  };
 
   // Save registration_current_status change to API and update local state
   const handleStatusTutorChange = async (userId: string, newStatus: string) => {
@@ -1960,89 +1411,7 @@ export default function ViewAllTutorsPage() {
     }
   };
 
-  // Get availability status color and style for status menerima siswa
-  const getAvailabilityStatusStyle = (status: string) => {
-    const statusLower = status?.toLowerCase() || '';
-    
-    switch (statusLower) {
-      case 'available':
-        return {
-          backgroundColor: '#10b981', // green-500
-          color: '#ffffff',
-          text: 'AVAILABLE'
-        };
-      case 'limited':
-        return {
-          backgroundColor: '#f59e0b', // amber-500
-          color: '#ffffff',
-          text: 'LIMITED'
-        };
-      case 'unavailable':
-        return {
-          backgroundColor: '#ef4444', // red-500
-          color: '#ffffff',
-          text: 'UNAVAILABLE'
-        };
-      case 'leave':
-        return {
-          backgroundColor: '#6b7280', // gray-500
-          color: '#ffffff',
-          text: 'LEAVE'
-        };
-      default:
-        return {
-          backgroundColor: '#9ca3af', // gray-400
-          color: '#ffffff',
-          text: status?.toUpperCase() || 'UNKNOWN'
-        };
-    }
-  };
 
-  // Format cell value based on column type
-  const formatCellValue = (value: any, column: Column): string => {
-    if (value === null || value === undefined || value === '') {
-      return '';
-    }
-
-    if (column.formatter) {
-      return column.formatter(value);
-    }
-
-    switch (column.type) {
-      case 'array':
-        if (Array.isArray(value)) {
-          // Special handling for selectedPrograms to show names instead of IDs
-          if (column.key === 'selectedPrograms') {
-            return value.map(id => programsLookup[id] || id).join(', ');
-          }
-          return value.join(', ');
-        }
-        return String(value);
-      case 'boolean':
-        return value ? '✓' : '✗';
-      case 'date':
-        return new Date(value).toLocaleDateString('id-ID');
-      case 'number':
-        if (column.key === 'hourly_rate') {
-          return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-          }).format(value);
-        }
-        return String(value);
-      case 'file':
-        return value ? '📎 File' : '';
-      default:
-        return String(value);
-    }
-  };
-
-  // Format cell value for display (with truncation)
-  const formatCellValueForDisplay = (value: any, column: Column): string => {
-    const fullValue = formatCellValue(value, column);
-    return truncateToWords(fullValue, 4);
-  };
 
   // Sort data
   const sortedData = useMemo(() => {
@@ -2159,7 +1528,7 @@ export default function ViewAllTutorsPage() {
   const exportToTSV = () => {
     const headers = filteredColumns.map(col => col.label);
     const rows = sortedData.map(tutor => 
-      filteredColumns.map(col => formatCellValue(tutor[col.key], col))
+      filteredColumns.map(col => formatCellValue(tutor[col.key], col, programsLookup))
     );
 
     const tsvContent = [headers, ...rows]
@@ -2978,7 +2347,7 @@ export default function ViewAllTutorsPage() {
                                     backgroundColor: statusStyle.backgroundColor,
                                     color: statusStyle.color
                                   }}
-                                  title={formatCellValue(tutor[column.key], column)}
+                                  title={formatCellValue(tutor[column.key], column, programsLookup)}
                                 >
                                   {statusStyle.text}
                                 </span>
@@ -2988,11 +2357,11 @@ export default function ViewAllTutorsPage() {
                         ) : (
                           <div 
                             className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors rounded px-1 w-full flex items-center justify-start"
-                            title={formatCellValue(tutor[column.key] ?? '-', column)}
+                            title={formatCellValue(tutor[column.key] ?? '-', column, programsLookup)}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCellClick(
-                                formatCellValue(tutor[column.key] ?? '-', column),
+                                formatCellValue(tutor[column.key] ?? '-', column, programsLookup),
                                 column.label,
                                 tutor.namaLengkap
                               );
@@ -3005,7 +2374,7 @@ export default function ViewAllTutorsPage() {
                                 overflowWrap: 'break-word'
                               }}
                             >
-                              {formatCellValueForDisplay(tutor[column.key] ?? '-', column)}
+                              {formatCellValueForDisplay(tutor[column.key] ?? '-', column, programsLookup)}
                             </span>
                             <Icon icon="ph:magnifying-glass-plus" className="ml-1 h-3 w-3 opacity-60 flex-shrink-0" />
                           </div>
