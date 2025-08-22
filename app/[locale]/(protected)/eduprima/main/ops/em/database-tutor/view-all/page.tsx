@@ -317,9 +317,19 @@ export default function ViewAllTutorsPage() {
 
   // Essential columns to show by default
   const essentialColumns = useMemo(() => [
-    'trn', 'namaLengkap', 'email', 'noHp1', 'status_tutor', 'brand',
-    'tanggalLahir', 'jenisKelamin', 'provinsiDomisili', 'kotaKabupatenDomisili',
-    'statusMenerimaSiswa', 'created_at', 'updated_at'
+    'trn', 'brand', 'status_tutor', 'created_at', 'updated_at', 'fotoProfil', 'namaLengkap',
+    'tanggalLahir', 'jenisKelamin', 'agama', 'email', 'noHp1', 'headline', 'deskripsiDiri',
+    'socialMedia1', 'provinsiDomisili', 'kotaKabupatenDomisili', 'kecamatanDomisili',
+    'kelurahanDomisili', 'alamatLengkapDomisili', 'jurusanSMKDetail', 'ipk', 'namaSMA',
+    'jurusanSMA', 'keahlianSpesialisasi', 'keahlianLainnya', 'pengalamanMengajar',
+    'pengalamanLainRelevan', 'prestasiAkademik', 'prestasiNonAkademik', 'sertifikasiPelatihan',
+    'selectedPrograms', 'mataPelajaranLainnya', 'statusMenerimaSiswa', 'available_schedule',
+    'teaching_methods', 'maksimalSiswaBaru', 'maksimalTotalSiswa', 'usiaTargetSiswa',
+    'teaching_radius_km', 'catatanAvailability', 'teachingMethods', 'studentLevelPreferences',
+    'specialNeedsCapable', 'groupClassWilling', 'onlineTeachingCapable', 'techSavviness',
+    'tutorPersonalityType', 'communicationStyle', 'teachingPatienceLevel', 'studentMotivationAbility',
+    'scheduleFlexibilityLevel', 'namaUniversitasS1', 'fakultasS1', 'jurusanS1', 'namaInstitusi',
+    'dokumenSertifikat'
   ], []);
 
   const allColumnKeys = useMemo(() => dynamicColumns.map(col => col.key), [dynamicColumns]);
