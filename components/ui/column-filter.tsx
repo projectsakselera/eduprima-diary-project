@@ -317,7 +317,7 @@ export default function ColumnFilter({
       {isOpen && (
         <div className={cn(
           "absolute top-8 left-0 z-50 bg-background border rounded-lg shadow-lg",
-          column === 'selectedPrograms' ? "w-[32rem]" : 
+          column === 'selectedPrograms' ? "w-[56rem]" : 
           uniqueValues.length > 12 ? "w-96" : "w-72"
         )}>
           <div className="p-3">

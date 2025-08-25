@@ -315,69 +315,70 @@ export default function ViewAllTutorsPage() {
     });
   }, [brandsOptions]);
 
-  // Essential columns to show by default
+  // Essential columns to show by default - Updated based on user testing feedback
   const essentialColumns = useMemo(() => [
-    'trn',                     // 1. Tutor Registration Number
-    'brand',                   // 2. Brand segmentation
-    'status_tutor',            // 3. Operational status
-    'namaLengkap',             // 4. Full name
-    'staff_notes',             // 5. Staff internal notes
-    'alamatLengkapDomisili',   // 6. Full address
-    'fotoProfil',              // 7. Profile photo
-    'email',                   // 8. Primary email
-    'noHp1',                   // 9. WhatsApp number
-    'headline',                // 10. Tutor tagline
-    'deskripsiDiri',           // 11. Bio description
-    'socialMedia1',            // 12. Social media link 1
-    'tanggalLahir',            // 13. Birth date
-    'jenisKelamin',            // 14. Gender
-    'agama',                   // 15. Religion
-    'provinsiDomisili',        // 16. Province
-    'kotaKabupatenDomisili',   // 17. City/Regency
-    'kecamatanDomisili',       // 18. District
-    'kelurahanDomisili',       // 19. Village/Ward
-    'created_at',              // 20. Registration date
-    'updated_at',              // 21. Last update
-    'jurusanSMKDetail',        // 22. SMK major details
-    'statusAkademik',          // 23. Academic status
-    'current_university',      // 24. Current university
-    'current_faculty',         // 25. Faculty
-    'current_major',           // 26. Major/Study program
-    'ipk',                     // 27. GPA
-    'namaSMA',                 // 28. High school name
-    'jurusanSMA',              // 29. High school major
-    'keahlianSpesialisasi',    // 30. Teaching specialization
-    'keahlianLainnya',         // 31. Other skills
-    'pengalamanMengajar',      // 32. Teaching experience
-    'pengalamanLainRelevan',   // 33. Other relevant experience
-    'prestasiAkademik',        // 34. Academic achievements
-    'prestasiNonAkademik',     // 35. Non-academic achievements
-    'sertifikasiPelatihan',    // 36. Certifications & training
-    'mataPelajaranLainnya',    // 37. Other subjects (if not found)
-    'statusMenerimaSiswa',     // 38. Student acceptance status
-    'available_schedule',      // 39. Available schedule
-    'teaching_methods',        // 40. Teaching methods
-    'maksimalSiswaBaru',       // 41. Max new students
-    'maksimalTotalSiswa',      // 42. Max total students
-    'usiaTargetSiswa',         // 43. Target student age
-    'teaching_radius_km',      // 44. Teaching radius (km)
-    'catatanAvailability',     // 45. Availability notes
-    'teachingMethods',         // 46. Preferred teaching methods
-    'studentLevelPreferences', // 47. Student level preferences
-    'specialNeedsCapable',     // 48. Special needs capability
-    'groupClassWilling',       // 49. Group class willingness
-    'onlineTeachingCapable',   // 50. Online teaching capability
-    'techSavviness',           // 51. Tech savvy level
-    'tutorPersonalityType',    // 52. Personality type
-    'communicationStyle',      // 53. Communication style
-    'teachingPatienceLevel',   // 54. Teaching patience level
-    'studentMotivationAbility', // 55. Student motivation ability
-    'scheduleFlexibilityLevel', // 56. Schedule flexibility level
-    'namaUniversitasS1',       // 57. S1 University name
-    'fakultasS1',              // 58. S1 Faculty
-    'jurusanS1',               // 59. S1 Major
-    'namaInstitusi',           // 60. Institution name
-    'dokumenSertifikat'        // 61. Certificate documents
+    'trn',
+    'brand',
+    'status_tutor',
+    'namaLengkap',
+    'staff_notes',
+    'jenisKelamin',
+    'tanggalLahir',
+    'agama',
+    'selectedPrograms',
+    'mataPelajaranLainnya',
+    'provinsiDomisili',
+    'kotaKabupatenDomisili',
+    'kecamatanDomisili',
+    'kelurahanDomisili',
+    'alamatLengkapDomisili',
+    'jurusanSMKDetail',
+    'statusAkademik',
+    'current_university',
+    'current_faculty',
+    'current_major',
+    'ipk',
+    'namaUniversitasS1',
+    'fakultasS1',
+    'jurusanS1',
+    'namaSMA',
+    'jurusanSMA',
+    'namaInstitusi',
+    'keahlianSpesialisasi',
+    'keahlianLainnya',
+    'pengalamanMengajar',
+    'pengalamanLainRelevan',
+    'prestasiAkademik',
+    'prestasiNonAkademik',
+    'sertifikasiPelatihan',
+    'statusMenerimaSiswa',
+    'available_schedule',
+    'teaching_methods',
+    'maksimalSiswaBaru',
+    'maksimalTotalSiswa',
+    'usiaTargetSiswa',
+    'teaching_radius_km',
+    'catatanAvailability',
+    'teachingMethods',
+    'studentLevelPreferences',
+    'specialNeedsCapable',
+    'groupClassWilling',
+    'onlineTeachingCapable',
+    'techSavviness',
+    'tutorPersonalityType',
+    'communicationStyle',
+    'teachingPatienceLevel',
+    'fotoProfil',
+    'email',
+    'noHp1',
+    'headline',
+    'deskripsiDiri',
+    'socialMedia1',
+    'studentMotivationAbility',
+    'scheduleFlexibilityLevel',
+    'dokumenSertifikat',
+    'created_at',
+    'updated_at'
   ], []);
 
   const allColumnKeys = useMemo(() => dynamicColumns.map(col => col.key), [dynamicColumns]);
