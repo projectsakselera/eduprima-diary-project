@@ -101,6 +101,44 @@ const generatePasswordFromBirthDate = (birthDate: string): string => {
   }
 };
 
+// Helper function to get status type ID from tutor_status_types
+const getStatusTypeId = async (statusName: string): Promise<string | null> => {
+  if (!supabase || !statusName) return null;
+  
+  try {
+    console.log('🔍 Looking up status type ID for:', statusName);
+    const { data, error } = await supabase
+      .from('tutor_status_types')
+      .select('id')
+      .eq('name', statusName)
+      .single();
+    
+    if (error) {
+      console.error('❌ Error fetching status type ID:', error);
+      // Try with code if name fails
+      const { data: codeData, error: codeError } = await supabase
+        .from('tutor_status_types')
+        .select('id')
+        .eq('code', statusName)
+        .single();
+      
+      if (codeError) {
+        console.error('❌ Error fetching status type ID by code:', codeError);
+        return null;
+      }
+      
+      console.log('✅ Found status type by code:', codeData);
+      return codeData?.id || null;
+    }
+    
+    console.log('✅ Found status type by name:', data);
+    return data?.id || null;
+  } catch (error) {
+    console.error('❌ Exception getting status type ID:', error);
+    return null;
+  }
+};
+
 export default function AddTutorPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -660,7 +698,7 @@ export default function AddTutorPage() {
       // 2h. Prepare tutor_management data (EXISTING TABLE)
       const tutorManagementData = {
         // ❌ REMOVED: status_tutor - kolom tidak ada di tabel tutor_management
-        entity_code: (formData.brand && formData.brand.length > 0) ? formData.brand[0] : null,
+        brand_id: (formData.brand && formData.brand.length > 0) ? formData.brand[0] : null, // ✅ Use UUID instead of entity_code
 
         staff_notes: formData.staff_notes || null,
         additional_screening: formData.additionalScreening || [],
@@ -683,44 +721,15 @@ export default function AddTutorPage() {
 
       console.log('🔍 Brand data:', {
         selectedBrands: formData.brand,
-        entityCodeForDB: tutorManagementData.entity_code
+        brandIdForDB: tutorManagementData.brand_id
       });
 
-      // 2i. Get bank name from bank ID (REQUIRED FIELD!)
-      let bankName = null;
-      if (formData.namaBank) {
-        try {
-          console.log('🏦 Looking up bank name for ID:', formData.namaBank);
-          const bankResponse = await fetch(`/api/banks/indonesia`);
-          if (bankResponse.ok) {
-            const bankData = await bankResponse.json();
-            console.log('🏦 Banks API response:', bankData);
-            const selectedBank = bankData.data?.find((bank: any) => bank.value === formData.namaBank);
-            console.log('🏦 Found bank:', selectedBank);
-            bankName = selectedBank?.fullName || selectedBank?.label || null;
-            console.log('🏦 Using bank name:', bankName);
-          } else {
-            console.error('❌ Banks API failed:', bankResponse.status, bankResponse.statusText);
-          }
-        } catch (error) {
-          console.error('❌ Error fetching bank name:', error);
-        }
-      }
-
-      // Fallback: jika bank name tidak ketemu, coba ambil dari form validation
-      if (!bankName && formData.namaBank) {
-        // Cek apakah namaBank sebenarnya sudah berisi nama bank (bukan UUID)
-        if (typeof formData.namaBank === 'string' && formData.namaBank.length < 50 && !formData.namaBank.includes('-')) {
-          bankName = formData.namaBank; // Kemungkinan ini sudah nama bank
-        } else {
-          bankName = 'Bank Indonesia'; // Generic fallback yang lebih baik dari 'Unknown Bank'
-        }
-      }
+      // 2i. Bank validation - no need for bank name lookup
+      // The bank_id will be JOINed with finance_banks_indonesia table in View-All
 
       // 2i. Prepare banking data (EDUCATOR BANKING INFO TABLE) - only if bank selected and UUID valid
       const bankingData = (formData.namaBank && isUuid(String(formData.namaBank))) ? {
-        bank_id: String(formData.namaBank), // UUID from bank dropdown
-        bank_name: bankName || 'Bank Indonesia', // ✅ REQUIRED FIELD - fallback untuk avoid NULL constraint
+        bank_id: String(formData.namaBank), // UUID from bank dropdown - JOINs with finance_banks_indonesia
         account_holder_name: formData.namaNasabah || '',
         account_number: sanitizeAccountNumber(formData.nomorRekening || ''),
         country_code: 'ID', // Default to Indonesia (ISO-2)
@@ -1413,7 +1422,44 @@ export default function AddTutorPage() {
 
       // Step 3m: Document storage rows will be created by the upload API after successful uploads
 
-      console.log('🎉 ALL 8 TABLES inserted successfully!');
+      // Step 3n: Insert to tutor_status (NEW - Fix for status_tutor mapping)
+      console.log('Step 3n: Inserting to tutor_status...');
+      
+      // Get status type ID for the selected status
+      const statusTypeId = await getStatusTypeId(formData.status_tutor || 'registration');
+      
+      if (statusTypeId) {
+        const tutorStatusData = {
+          tutor_id: tutorId,              // ✅ Use tutor_id
+          status_type_id: statusTypeId,   // ✅ Correct column name (singular)
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const statusResult = await supabase
+          ?.from('tutor_status')
+          .insert([tutorStatusData])
+          .select('id')
+          .single();
+
+        if (statusResult?.error) {
+          console.error('❌ Error inserting to tutor_status:', statusResult.error);
+          console.error('❌ Error details:', {
+            message: statusResult.error.message,
+            details: statusResult.error.details,
+            hint: statusResult.error.hint,
+            code: statusResult.error.code
+          });
+          throw new Error(`Failed to create tutor status: ${statusResult.error.message}`);
+        }
+
+        console.log('✅ Tutor status created with ID:', statusResult?.data?.id);
+      } else {
+        console.warn('⚠️ Could not find status type ID for:', formData.status_tutor);
+        console.warn('⚠️ Skipping tutor_status insert - status will show as default');
+      }
+
+      console.log('🎉 ALL 9 TABLES inserted successfully!');
 
       // Return the main user data for reference
       const insertedData = {

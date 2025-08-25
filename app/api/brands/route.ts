@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 Fetching brands from corporate_entities...');
 
-    // Get entity_code and entity_name values from corporate_entities table
+    // Get id, entity_code and entity_name values from corporate_entities table
     const { data: brandsData, error: brandsError } = await supabase
       .from('corporate_entities')
-      .select('entity_code, entity_name')
+      .select('id, entity_code, entity_name')
       .not('entity_code', 'is', null)
       .not('entity_code', 'eq', '');
 
@@ -55,13 +55,14 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Format brands as options with value and label
+    // Format brands as options with UUID as value for database consistency
     const brandOptions = brandsData?.map(brand => ({
-      value: brand.entity_code,
-      label: brand.entity_name || brand.entity_code
+      value: brand.id,                                    // ✅ UUID for database consistency
+      label: brand.entity_name || brand.entity_code,     // Display name
+      code: brand.entity_code                             // Keep code for reference
     })) || [];
 
-    // Remove duplicates based on entity_code and sort by label
+    // Remove duplicates based on UUID and sort by label
     const uniqueBrandOptions = brandOptions
       .filter((brand, index, arr) => 
         arr.findIndex(b => b.value === brand.value) === index
