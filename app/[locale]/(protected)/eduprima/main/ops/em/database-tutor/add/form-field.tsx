@@ -1228,10 +1228,6 @@ const getPopularityOrder = (popularity: string | undefined) => {
   }
 };
 
-// Session-based cache for development safety
-const sessionCache = new Map<string, { data: Program[], timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for development
-
 const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   field,
   value = [],
@@ -1256,50 +1252,25 @@ const CategoryProgramSelector: React.FC<CategoryProgramSelectorProps> = ({
   
   const PROGRAMS_PER_PAGE = 100;
 
-  // Helper function to check cache validity
-  const isCacheValid = (cacheKey: string): boolean => {
-    const cached = sessionCache.get(cacheKey);
-    if (!cached) return false;
-    return Date.now() - cached.timestamp < CACHE_DURATION;
-  };
-
-  // Helper function to get cached data
-  const getCachedData = (cacheKey: string): Program[] | null => {
-    if (!isCacheValid(cacheKey)) return null;
-    return sessionCache.get(cacheKey)?.data || null;
-  };
-
-  // Helper function to set cache data
-  const setCacheData = (cacheKey: string, data: Program[]): void => {
-    sessionCache.set(cacheKey, { data, timestamp: Date.now() });
-  };
-
-  // Lazy fetch function for specific category (performance optimized)
+  // Lazy fetch function for specific category (always fresh data)
   const fetchCategoryPrograms = async (categoryCode: string): Promise<Program[]> => {
-    const cacheKey = `programs_${categoryCode}`;
-    
-    // Check cache first
-    const cachedData = getCachedData(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
-
     try {
+      console.log(`🔄 Fetching fresh programs for category: ${categoryCode}`);
       const response = await fetch(
-        `/api/subjects/programs?category=${categoryCode}&limit=1000&offset=0`
+        `/api/subjects/programs?category=${categoryCode}&limit=1000&offset=0&t=${Date.now()}`
       );
       
       if (response.ok) {
         const data = await response.json();
         const programs = data.programs || data.data || [];
-        
-        // Cache the result
-        setCacheData(cacheKey, programs);
+        console.log(`✅ Fetched ${programs.length} fresh programs for category: ${categoryCode}`);
         return programs;
+      } else {
+        console.error(`❌ Failed to fetch programs for category ${categoryCode}:`, response.status, response.statusText);
+        return [];
       }
-      
-      return [];
     } catch (error) {
+      console.error(`❌ Error fetching programs for category ${categoryCode}:`, error);
       return [];
     }
   };

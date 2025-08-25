@@ -97,39 +97,41 @@ export async function POST(request: NextRequest) {
           error: uploadResult.error
         });
       } else {
-        // Update or insert document storage record in database (upsert behavior)
+        // 🔄 SIMPLIFIED: Update document storage using simplified structure (only URL columns)
+        const updateData = {
+          [`${fileType}_url`]: uploadResult.url,
+          updated_at: new Date().toISOString()
+        };
+
+        // Try to update existing user row first
         const updateResult = await adminSupabase
           .from('document_storage')
-          .update({
-            file_url: uploadResult.url,
-            stored_filename: fileName,
-            file_size: file.size,
-            upload_status: 'uploaded',
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('user_id', userId)
-          .eq('document_type', fileType);
+          .eq('document_type', 'user_documents');
 
-        // If no row was updated, insert a new record
+        // If no row exists for this user, create a new one
         if (!updateResult.error && (updateResult.count === 0 || (Array.isArray(updateResult.data) && updateResult.data.length === 0))) {
+          const insertData = {
+            user_id: userId,
+            document_type: 'user_documents',
+            original_filename: 'consolidated_record',
+            stored_filename: 'consolidated_record',
+            file_size: 0,
+            mime_type: 'application/json',
+            file_url: null,
+            upload_status: 'uploaded',
+            verification_status: 'pending',
+            uploaded_at: new Date().toISOString(),
+            uploaded_by: session.user.id ?? null,
+            created_at: new Date().toISOString(),
+            // Add the specific document URL
+            ...updateData
+          };
+          
           await adminSupabase
             .from('document_storage')
-            .insert({
-              user_id: userId,
-              document_type: fileType,
-              original_filename: file.name,
-              stored_filename: fileName,
-              file_size: file.size,
-              mime_type: file.type,
-              file_url: uploadResult.url,
-              storage_path: fileName,
-              upload_status: 'uploaded',
-              verification_status: 'pending',
-              uploaded_at: new Date().toISOString(),
-              uploaded_by: session.user.id ?? null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+            .insert(insertData);
         }
         
         // 📸 SPECIAL HANDLING: Update user_profiles.profile_photo_url for profile photos
@@ -164,21 +166,22 @@ export async function POST(request: NextRequest) {
         });
         
         console.log(`✅ R2 Upload success for ${fileType}:`, uploadResult.url);
+        console.log(`💾 Cloudflare URL saved to document_storage.${fileType}_url column for user:`, userId);
         
         // 🎓 Additional logging for Step 2 documents
         if (fileType === 'transcript_document') {
-          console.log('📜 Transcript document uploaded successfully for tutor:', userId);
+          console.log('📜 Transcript document uploaded successfully to document_storage.transcript_document_url for tutor:', userId);
         } else if (fileType === 'expertise_certificate') {
-          console.log('🏆 Expertise certificate uploaded successfully for tutor:', userId);
+          console.log('🏆 Expertise certificate uploaded successfully to document_storage.expertise_certificate_url for tutor:', userId);
         }
         
         // 📄 Additional logging for Step 5 documents
         if (fileType === 'identity_document') {
-          console.log('📄 Identity document uploaded successfully for tutor:', userId);
+          console.log('📄 Identity document uploaded successfully to document_storage.identity_document_url for tutor:', userId);
         } else if (fileType === 'education_document') {
-          console.log('📄 Education document uploaded successfully for tutor:', userId);
+          console.log('📄 Education document uploaded successfully to document_storage.education_document_url for tutor:', userId);
         } else if (fileType === 'certificate_document') {
-          console.log('📄 Certificate document uploaded successfully for tutor:', userId);
+          console.log('📄 Certificate document uploaded successfully to document_storage.certificate_document_url for tutor:', userId);
         }
       }
     }

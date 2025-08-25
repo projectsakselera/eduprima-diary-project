@@ -606,11 +606,12 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         }
       }
       
-      // 9. Search in document_storage for document fields  
+      // 9. Search in document_storage for document URLs in simplified structure
       const { data: documentMatches, error: documentError } = await supabase
         .from('document_storage')
         .select('user_id')
-        .or(`document_type.ilike.%${searchTerm}%,original_filename.ilike.%${searchTerm}%`);
+        .eq('document_type', 'user_documents')
+        .or(`profile_photo_url.ilike.%${searchTerm}%,identity_document_url.ilike.%${searchTerm}%,education_document_url.ilike.%${searchTerm}%,certificate_document_url.ilike.%${searchTerm}%,transcript_document_url.ilike.%${searchTerm}%,expertise_certificate_url.ilike.%${searchTerm}%`);
       
       if (!documentError && documentMatches) {
         matchingUserIds.push(...documentMatches.map(dm => dm.user_id));
@@ -964,13 +965,63 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
       }
     });
 
-    // Group documents by user_id and type
+    // 🔄 SIMPLIFIED: Create documents map from simplified document_storage structure
+    // Each user now has one row with only URL columns for each document type
     const documentsMap = new Map();
     documentsResult.data?.forEach(doc => {
-      if (!documentsMap.has(doc.user_id)) {
-        documentsMap.set(doc.user_id, {});
+      // Only process consolidated user_documents rows (simplified structure)
+      if (doc.document_type === 'user_documents') {
+        documentsMap.set(doc.user_id, {
+          // Simplified mapping - only URLs with fallback to existing metadata
+          profile_photo: doc.profile_photo_url ? {
+            file_url: doc.profile_photo_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null,
+          
+          identity_document: doc.identity_document_url ? {
+            file_url: doc.identity_document_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null,
+          
+          education_document: doc.education_document_url ? {
+            file_url: doc.education_document_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null,
+          
+          certificate_document: doc.certificate_document_url ? {
+            file_url: doc.certificate_document_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null,
+          
+          transcript_document: doc.transcript_document_url ? {
+            file_url: doc.transcript_document_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null,
+          
+          expertise_certificate: doc.expertise_certificate_url ? {
+            file_url: doc.expertise_certificate_url,
+            original_filename: doc.original_filename,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at,
+            verification_status: doc.verification_status
+          } : null
+        });
       }
-      documentsMap.get(doc.user_id)[doc.document_type] = doc;
     });
     
     // Create master data lookup maps
@@ -1112,7 +1163,7 @@ async function fetchAllTutorData(limit = 25, offset = 0, search = '', columnFilt
         
         // Education Documents
         transkripNilai: documents.transcript_document?.file_url || null,
-        sertifikatKeahlian: documents.skill_certificate?.file_url || null,
+        sertifikatKeahlian: documents.expertise_certificate?.file_url || null,
         
         // Education - Middle School
 
