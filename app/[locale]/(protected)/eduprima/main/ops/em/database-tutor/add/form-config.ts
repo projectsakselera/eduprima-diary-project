@@ -1707,7 +1707,7 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Contoh: Universitas Gadjah Mada',
           helperText: 'Nama lengkap universitas atau institusi pendidikan tinggi terakhir.',
-          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik), // ✅ FIXED: Hide for SMA
           icon: 'ph:building',
           size: 'lg'
         },
@@ -1717,7 +1717,7 @@ export const tutorFormConfig: FormConfig = {
           type: 'text',
           placeholder: 'Contoh: Fakultas Teknik',
           helperText: 'Nama fakultas (opsional).',
-          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik), // ✅ FIXED: Hide for SMA
           icon: 'ph:buildings',
           size: 'lg'
         },
@@ -1728,7 +1728,7 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Contoh: Teknik Informatika',
           helperText: 'Nama jurusan atau program studi yang diambil.',
-          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik), // ✅ FIXED: Hide for SMA
           icon: 'ph:books',
           size: 'lg'
         },
@@ -1740,7 +1740,7 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: '3.76',
           helperText: 'WAJIB gunakan titik (.) sebagai pemisah desimal. Format boleh: 4, 3.76, 2.7, atau 3.766 (BUKAN 3,75)',
-          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
+          conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3'].includes(data.statusAkademik), // ✅ FIXED: Hide for SMA
           icon: 'ph:trophy',
           size: 'lg',
           inputProps: {
@@ -1775,7 +1775,7 @@ export const tutorFormConfig: FormConfig = {
           required: true,
           placeholder: 'Pilih tahun masuk...',
           options: generateYearOptions(1990, new Date().getFullYear()),
-          helperText: 'Tahun mulai kuliah.',
+          helperText: 'Tahun mulai pendidikan terakhir (kuliah/sekolah).',
           conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
           icon: 'ph:calendar',
           size: 'lg'
@@ -1797,7 +1797,7 @@ export const tutorFormConfig: FormConfig = {
           type: 'file',
           required: true,
           accept: 'image/*,.pdf',
-          helperText: 'Unggah transkrip nilai terakhir (bukan ijazah). Ijazah akan diupload di langkah dokumentasi nanti. Format: PDF, JPG, PNG. Maksimal 5MB.',
+          helperText: 'Unggah transkrip nilai terakhir (rapor untuk SMA, transkrip untuk perguruan tinggi). Ijazah akan diupload di langkah dokumentasi nanti. Format: PDF, JPG, PNG. Maksimal 5MB.',
           conditional: (data) => ['mahasiswa_s1', 'mahasiswa_s2', 'lulusan_s1', 'lulusan_s2', 'lulusan_d3', 'lulusan_sma', 'lainnya'].includes(data.statusAkademik),
           icon: 'ph:file-text',
           size: 'lg'
