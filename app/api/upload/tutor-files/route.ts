@@ -16,19 +16,38 @@ export async function POST(request: NextRequest) {
     console.log('✅ API Upload: User authenticated:', session.user.email);
     
     const formData = await request.formData();
-    const userId = formData.get('userId') as string;
+    const authUserId = formData.get('userId') as string;
     const files = formData.getAll('files') as File[];
     const fileTypes = formData.getAll('fileTypes') as string[];
     
-    if (!userId) {
+    if (!authUserId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
     
+    // Create admin client for database operations
+    const adminSupabase = createAdminSupabaseClient();
+    
+    // 🔄 NEW: Lookup users_universal.id from auth.users.id for proper foreign key reference
+    console.log('🔍 Looking up users_universal.id for auth user:', authUserId);
+    const { data: universalUser, error: userLookupError } = await adminSupabase
+      .from('users_universal')
+      .select('id, email')
+      .eq('id', authUserId)
+      .single();
+    
+    if (userLookupError || !universalUser) {
+      console.error('❌ User not found in users_universal:', userLookupError);
+      return NextResponse.json({ 
+        error: 'User not found in users_universal table. Please ensure user is properly registered.',
+        details: userLookupError?.message 
+      }, { status: 400 });
+    }
+    
+    const userId = universalUser.id; // Use users_universal.id for foreign key compliance
+    console.log('✅ Found users_universal user:', { id: userId, email: universalUser.email });
+    
     console.log('📁 Received files:', files.length, 'for user:', userId);
     console.log('📋 File types:', fileTypes);
-    
-    // Create admin client for database updates
-    const adminSupabase = createAdminSupabaseClient();
     
     // Upload files to Cloudflare R2
     const uploadResults = [];
@@ -97,21 +116,47 @@ export async function POST(request: NextRequest) {
           error: uploadResult.error
         });
       } else {
+        console.log(`\n🔄 === DOCUMENT STORAGE OPERATION START ===`);
+        console.log(`📊 Processing ${fileType} for user: ${userId}`);
+        console.log(`🔗 Cloudflare URL: ${uploadResult.url}`);
+        
         // 🔄 SIMPLIFIED: Update document storage using simplified structure (only URL columns)
         const updateData = {
           [`${fileType}_url`]: uploadResult.url,
           updated_at: new Date().toISOString()
         };
 
+        console.log(`💾 Update data object:`, JSON.stringify(updateData, null, 2));
+        console.log(`🎯 Target column: ${fileType}_url`);
+        console.log(`🆔 User ID: ${userId}`);
+        
         // Try to update existing user row first
+        console.log(`\n💾 STEP 1: Attempting UPDATE on document_storage...`);
+        
         const updateResult = await adminSupabase
           .from('document_storage')
           .update(updateData)
           .eq('user_id', userId)
           .eq('document_type', 'user_documents');
 
+        console.log(`\n📊 UPDATE RESULT:`);
+        console.log(`  ✅ Success: ${!updateResult.error}`);
+        console.log(`  📊 Count: ${updateResult.count}`);
+        console.log(`  🗃️ Data:`, updateResult.data);
+        if (updateResult.error) {
+          console.error(`  ❌ Error:`, JSON.stringify(updateResult.error, null, 2));
+        }
+
         // If no row exists for this user, create a new one
-        if (!updateResult.error && (updateResult.count === 0 || (Array.isArray(updateResult.data) && updateResult.data.length === 0))) {
+        const shouldInsert = !updateResult.error && (updateResult.count === 0 || updateResult.count === null || (Array.isArray(updateResult.data) && updateResult.data.length === 0));
+        console.log(`\n🤔 DECISION LOGIC:`);
+        console.log(`  📊 Update error: ${!!updateResult.error}`);
+        console.log(`  📊 Update count: ${updateResult.count}`);
+        console.log(`  📊 Should insert: ${shouldInsert}`);
+        
+        if (shouldInsert) {
+          console.log(`\n💾 STEP 2: No existing row found, creating new document_storage row for user: ${userId}`);
+          
           const insertData = {
             user_id: userId,
             document_type: 'user_documents',
@@ -129,10 +174,31 @@ export async function POST(request: NextRequest) {
             ...updateData
           };
           
-          await adminSupabase
+          console.log(`💾 Insert data:`, JSON.stringify(insertData, null, 2));
+          
+          const insertResult = await adminSupabase
             .from('document_storage')
             .insert(insertData);
+            
+          console.log(`\n📊 INSERT RESULT:`);
+          console.log(`  ✅ Success: ${!insertResult.error}`);
+          console.log(`  🗃️ Data:`, insertResult.data);
+          if (insertResult.error) {
+            console.error(`  ❌ Error:`, JSON.stringify(insertResult.error, null, 2));
+          }
+          
+          if (insertResult.error) {
+            console.error(`❌ Failed to insert document_storage row:`, insertResult.error);
+          } else {
+            console.log(`✅ Successfully created document_storage row for user: ${userId}`);
+          }
+        } else if (updateResult.error) {
+          console.error(`❌ Failed to update document_storage row:`, updateResult.error);
+        } else {
+          console.log(`\n✅ STEP 2: Successfully updated existing document_storage row for user: ${userId}`);
         }
+        
+        console.log(`🔄 === DOCUMENT STORAGE OPERATION END ===\n`);
         
         // 📸 SPECIAL HANDLING: Update user_profiles.profile_photo_url for profile photos
         let profileUpdateSuccess = true;
